@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.exclude": {},
+		"search.exclude": {
+			"**/node_modules": true
+		},
+		"search.quickOpen.includeHistory": false
+	}
+}

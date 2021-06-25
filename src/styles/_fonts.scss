@@ -1,0 +1,85 @@
+// https://rsms.me/inter
+// https://npm.im/inter-ui
+
+$font-display: swap;
+$font-family: 'Inter';
+$font-path: 'https://cdn.jsdelivr.net/npm/inter-ui/Inter%20(web)/';
+
+@mixin fontface($weight, $style, $name) {
+	@font-face {
+		font-display: $font-display;
+		font-family: $font-family;
+		font-style: $style;
+		font-weight: $weight;
+		src: url('#{$font-path}Inter-#{$name}.woff2') format('woff2'), url('#{$font-path}Inter-#{$name}.woff') format('woff');
+	}
+}
+
+@include fontface(100, italic, ThinItalic);
+@include fontface(100, normal, Thin);
+@include fontface(200, italic, ExtraLightItalic);
+@include fontface(200, normal, ExtraLight);
+@include fontface(300, italic, LightItalic);
+@include fontface(300, normal, Light);
+@include fontface(400, italic, Italic);
+@include fontface(400, normal, Regular);
+@include fontface(500, italic, MediumItalic);
+@include fontface(500, normal, Medium);
+@include fontface(600, italic, SemiBoldItalic);
+@include fontface(600, normal, SemiBold);
+@include fontface(700, italic, BoldItalic);
+@include fontface(700, normal, Bold);
+@include fontface(800, italic, ExtraBoldItalic);
+@include fontface(800, normal, ExtraBold);
+@include fontface(900, italic, BlackItalic);
+@include fontface(900, normal, Black);
+
+@font-face {
+	font-display: $font-display;
+	font-family: '#{$font-family} var';
+	font-style: normal;
+	font-weight: 100 900;
+	font-named-instance: 'Regular';
+	src: url('#{$font-path}Inter-roman.var.woff2') format('woff2');
+}
+
+@font-face {
+	font-display: $font-display;
+	font-family: '#{$font-family} var';
+	font-style: italic;
+	font-weight: 100 900;
+	font-named-instance: 'Italic';
+	src: url('#{$font-path}Inter-italic.var.woff2') format('woff2');
+}
+
+@font-face {
+	font-display: $font-display;
+	font-family: '#{$font-family} var experimental';
+	font-style: oblique 0deg 10deg;
+	font-weight: 100 900;
+	src: url('#{$font-path}Inter.var.woff2') format('woff2');
+}
+
+// ###############################################
+@import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600&display=swap');
+
+$font-default-sans: -apple-system, BlinkMacSystemFont, 'Inter var', 'Inter', 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, Roboto, Ubuntu, sans-serif;
+$font-default-mono: 'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', 'Lucida Console', monospace;
+$font-default-serf: 'Iowan Old Style', 'Apple Garamond', Baskerville, 'Times New Roman', 'Droid Serif', Times, 'Source Serif Pro', Cambria, serif;
+
+$font-chakra-petch: 'Chakra Petch', $font-default-sans;
+
+:root {
+	-moz-tab-size: 4;
+	-o-tab-size: 4;
+	tab-size: 4;
+}
+
+html {
+	font-family: $font-default-sans;
+	font-size: 10px;
+}
+
+body {
+	font-size: 1.3rem;
+}

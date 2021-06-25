@@ -1,0 +1,12 @@
+@charset "utf-8";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import 'normalize';
+
+@import 'colors';
+@import 'fonts';
+@import 'root';
+@import 'layout';

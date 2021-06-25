@@ -1,0 +1,55 @@
+@import '@csstools/normalize.css/normalize.css';
+
+@mixin noselect {
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	-webkit-tap-highlight-color: transparent;
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	user-select: none;
+
+	&,
+	&:hover,
+	&:focus,
+	&:active {
+		outline: none;
+		box-shadow: none;
+	}
+}
+
+.noselect {
+	@include noselect;
+}
+
+* {
+	box-sizing: border-box;
+	line-height: 1.25;
+}
+
+a {
+	text-decoration: none;
+	transition: opacity 200ms ease-in-out;
+
+	&:hover {
+		opacity: 0.75;
+	}
+
+	&,
+	&:active,
+	&:hover,
+	&:visited {
+		color: currentColor;
+		outline: 0;
+	}
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+strong {
+	font-weight: 600;
+}

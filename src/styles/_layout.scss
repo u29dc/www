@@ -1,0 +1,42 @@
+main {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate3d(-50%, -50%, 0);
+
+	text-align: center;
+
+	section {
+		width: 80vw;
+		max-width: 40rem;
+
+		&.section {
+			&--title {
+				font-family: $font-chakra-petch;
+				font-size: 4.5rem;
+				font-weight: 600;
+				letter-spacing: -1px;
+			}
+
+			&--subtitle {
+				margin: 3rem 0;
+			}
+
+			&--links {
+				color: $color-060;
+				margin: 1.5rem 0;
+
+				.link {
+					display: inline-block;
+					margin: 0.5rem;
+				}
+			}
+		}
+	}
+}
+
+header {
+}
+
+footer {
+}

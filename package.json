@@ -1,0 +1,45 @@
+{
+	"browserslist": [
+		"defaults"
+	],
+	"dependencies": {
+		"next": "11.0.1",
+		"next-seo": "^4.26.0",
+		"react": "^17.0.2",
+		"react-dom": "^17.0.2",
+		"sass": "^1.35.1"
+	},
+	"devDependencies": {
+		"@csstools/normalize.css": "^11.0.1",
+		"@types/node": "^15.12.4",
+		"@types/react": "^17.0.11",
+		"@types/react-dom": "^17.0.8",
+		"autoprefixer": "^10.2.6",
+		"cssnano": "^5.0.6",
+		"eslint": "^7.29.0",
+		"eslint-config-next": "^11.0.1",
+		"husky": "^6.0.0",
+		"next-offline": "^5.0.5",
+		"postcss": "^8.3.5",
+		"postcss-import": "^14.0.2",
+		"postcss-import-url": "^7.0.0",
+		"postcss-preset-env": "^6.7.0",
+		"postcss-sorting": "^6.0.0",
+		"prettier": "^2.3.1",
+		"pretty-quick": "^3.1.1",
+		"tailwindcss": "^2.2.4",
+		"typescript": "^4.3.4"
+	},
+	"husky": {
+		"hooks": {
+			"pre-commit": "pretty-quick --staged"
+		}
+	},
+	"scripts": {
+		"build": "next build",
+		"dev": "next",
+		"export": "next build && next export",
+		"start": "next start",
+		"tsc": "tsc"
+	}
+}
