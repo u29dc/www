@@ -21,12 +21,12 @@
         "@biomejs/biome": "2.2.5",
         "@commitlint/cli": "^20.1.0",
         "@commitlint/config-conventional": "^20.0.0",
-        "@semantic-release/changelog": "^6",
-        "@semantic-release/commit-analyzer": "^13",
-        "@semantic-release/git": "^10",
-        "@semantic-release/github": "^11",
-        "@semantic-release/npm": "^12",
-        "@semantic-release/release-notes-generator": "^14",
+        "@semantic-release/changelog": "^6.0.3",
+        "@semantic-release/commit-analyzer": "^13.0.1",
+        "@semantic-release/git": "^10.0.1",
+        "@semantic-release/github": "^11.0.6",
+        "@semantic-release/npm": "^12.0.2",
+        "@semantic-release/release-notes-generator": "^14.1.0",
         "@tailwindcss/postcss": "^4.1.14",
         "@types/mdx": "^2.0.13",
         "@types/node": "^24.7.2",
@@ -40,7 +40,7 @@
         "husky": "^9.1.7",
         "lint-staged": "^16.2.4",
         "pino-pretty": "^13.1.2",
-        "semantic-release": "^24",
+        "semantic-release": "^24.2.9",
         "tailwindcss": "^4.1.14",
         "typescript": "^5.9.3",
       },
@@ -1400,6 +1400,8 @@
     "estree-util-visit/@types/unist": ["@types/unist@3.0.3", "", {}, "sha512-ko/gIFJRv177XgZsZcBwnqJN5x/Gien8qNOn0D5bQU/zAzVf9Zt3BlcUiLqhV9y4ARk0GbT3tnUiPNgnTXzc/Q=="],
 
     "execa/get-stream": ["get-stream@6.0.1", "", {}, "sha512-ts6Wi+2j3jQjqi70w5AlN8DFnkSwC+MqmxEzdEALB2qXZYV3X/b1CTfgPLGJNMeAWxdPfU8FO1ms3NUfaHCPYg=="],
+
+    "fdir/picomatch": ["picomatch@4.0.3", "", {}, "sha512-5gTmgEY/sqK6gFXLIsQNH19lWb4ebPDLA4SdLP7dsWkIXHWlG66oPuVvXSGFPppYZz8ZDZq0dYYrbHfBCVUb1Q=="],
 
     "foreground-child/signal-exit": ["signal-exit@4.1.0", "", {}, "sha512-bzyZ1e88w9O1iNJbKnOlvYTrWPDl46O1bG0D3XInv+9tkPrxrN8jUUTiFlDkkmKWgn1M6CfIA13SuGqOa9Korw=="],
 
