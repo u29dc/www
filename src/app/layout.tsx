@@ -23,6 +23,7 @@ import type { ReactNode } from 'react';
 import { ThemeProvider } from '@/components/core/theme-provider';
 import { ViewportHeightFix } from '@/components/core/viewport-height-fix';
 import { BlurGradient } from '@/components/ui/blur-gradient';
+import { neueHaas } from '@/lib/fonts';
 import { metadata, viewport } from '@/lib/utils/metadata';
 import { RESOLVED_COOKIE, type ResolvedTheme, THEME_COOKIE, type Theme } from '@/lib/utils/theme';
 import '@/styles/globals.css';
@@ -54,16 +55,8 @@ export default async function RootLayout({ children }: RootLayoutProps) {
 	}
 
 	return (
-		<html lang="en" className={themeClass} suppressHydrationWarning>
-			<head>
-				<link rel="preconnect" href="https://use.typekit.net" crossOrigin="anonymous" />
-				<link rel="preconnect" href="https://p.typekit.net" crossOrigin="anonymous" />
-				<link rel="dns-prefetch" href="https://use.typekit.net" />
-				<link rel="dns-prefetch" href="https://p.typekit.net" />
-				<link rel="stylesheet" href="https://use.typekit.net/iui4tie.css" />
-
-				{nonce && <meta property="csp-nonce" content={nonce} />}
-			</head>
+		<html lang="en" className={`${themeClass} ${neueHaas.variable}`} suppressHydrationWarning>
+			<head>{nonce && <meta property="csp-nonce" content={nonce} />}</head>
 			<body className="min-h-screen font-sm">
 				<ViewportHeightFix />
 				<ThemeProvider

@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-	--font-sans: "neue-haas-grotesk-display", sans-serif;
+	--font-sans: var(--font-neue-haas), sans-serif;
 	--color-white: oklch(97% 0 0);
 	--color-black: oklch(15% 0 0);
 }
@@ -50,7 +50,7 @@
 		@apply antialiased;
 		@apply select-none;
 		@apply font-sm;
-		font-family: "neue-haas-grotesk-display", sans-serif;
+		font-family: var(--font-neue-haas), sans-serif;
 		font-weight: 600;
 		font-style: normal;
 		text-rendering: optimizeLegibility;
