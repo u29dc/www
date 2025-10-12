@@ -11,6 +11,7 @@
  * - Apply directional gradient masks for smooth transitions
  * - Support configurable curves for blur distribution
  * - Handle scroll-triggered animations via intersection observer
+ * - Prevent mobile Safari UI bar gaps via automatic size extension
  *
  * ## USAGE
  * ```tsx
@@ -22,7 +23,16 @@
  *
  * // Viewport-level blur (fixed to viewport)
  * <BlurGradient position="bottom" strength={2} fixed />
+ *
+ * // Disable mobile gap prevention if needed
+ * <BlurGradient position="bottom" preventMobileGaps={false} />
  * ```
+ *
+ * ## MOBILE SAFARI HANDLING
+ * iOS Safari's dynamic UI bars (address bar, bottom navigation) cause viewport
+ * height changes when scrolling. By default, this component extends the blur area
+ * by 10rem on all viewports to ensure complete coverage even when bars hide.
+ * Disable via `preventMobileGaps={false}` or adjust via `mobileExtension`.
  *
  * @module components/ui/blur-gradient
  */
@@ -52,6 +62,10 @@ export interface BlurGradientProps {
 	opacity?: number;
 	/** Use fixed positioning (viewport-level) instead of absolute (parent-relative) */
 	fixed?: boolean;
+	/** Prevent mobile Safari UI bar gaps by extending blur area */
+	preventMobileGaps?: boolean;
+	/** Extension size for mobile gap prevention (CSS unit) */
+	mobileExtension?: string;
 	/** Additional CSS classes */
 	className?: string;
 	/** Optional children to render above blur layers */
@@ -68,6 +82,8 @@ const DEFAULT_CONFIG = {
 	animated: false,
 	opacity: 1,
 	fixed: true,
+	preventMobileGaps: true,
+	mobileExtension: '10rem',
 	className: '',
 } as const;
 
@@ -196,6 +212,15 @@ export function BlurGradient(props: BlurGradientProps) {
 
 	// Determine container positioning and dimensions
 	const isVertical = config.position === 'top' || config.position === 'bottom';
+
+	// Calculate effective size with mobile gap prevention
+	const effectiveSize = config.preventMobileGaps
+		? `calc(${config.size} + ${config.mobileExtension})`
+		: config.size;
+
+	// Offset position to extend blur away from content (not into it)
+	const positionOffset = config.preventMobileGaps ? `-${config.mobileExtension}` : 0;
+
 	const containerStyle: CSSProperties = {
 		position: config.fixed ? 'fixed' : 'absolute',
 		pointerEvents: 'none',
@@ -203,16 +228,16 @@ export function BlurGradient(props: BlurGradientProps) {
 		transition: config.animated ? 'opacity 0.3s ease-out' : undefined,
 		zIndex: 1000,
 		contain: 'layout style paint',
-		[config.position]: 0,
+		[config.position]: positionOffset,
 	};
 
 	if (isVertical) {
-		containerStyle.height = config.size;
+		containerStyle.height = effectiveSize;
 		containerStyle.width = '100%';
 		containerStyle.left = 0;
 		containerStyle.right = 0;
 	} else {
-		containerStyle.width = config.size;
+		containerStyle.width = effectiveSize;
 		containerStyle.height = '100%';
 		containerStyle.top = 0;
 		containerStyle.bottom = 0;
