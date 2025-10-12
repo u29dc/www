@@ -1,0 +1,49 @@
+{
+	"name": "Incomplete Infinity",
+	"short_name": "U29DC",
+	"description": "We turn complex futures into decision-grade narratives and public prototypes",
+	"start_url": "/",
+	"scope": "/",
+	"display": "standalone",
+	"orientation": "portrait-primary",
+	"theme_color": "#000000",
+	"background_color": "#FFFFFF",
+	"categories": ["design", "creative"],
+	"lang": "en-GB",
+	"dir": "ltr",
+	"icons": [
+		{
+			"src": "/meta/icon-192x192.png",
+			"sizes": "192x192",
+			"type": "image/png",
+			"purpose": "any"
+		},
+		{
+			"src": "/meta/icon-512x512.png",
+			"sizes": "512x512",
+			"type": "image/png",
+			"purpose": "any"
+		},
+		{
+			"src": "/meta/icon-maskable-192x192.png",
+			"sizes": "192x192",
+			"type": "image/png",
+			"purpose": "maskable"
+		},
+		{
+			"src": "/meta/icon-maskable-512x512.png",
+			"sizes": "512x512",
+			"type": "image/png",
+			"purpose": "maskable"
+		}
+	],
+	"screenshots": [
+		{
+			"src": "/meta/og-image.png",
+			"sizes": "1200x630",
+			"type": "image/png",
+			"form_factor": "wide",
+			"label": "Incomplete Infinity — Complex futures into narratives"
+		}
+	]
+}

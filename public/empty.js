@@ -1,0 +1,1 @@
+// CSP nonce initialization script
