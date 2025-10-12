@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/u29dc/www/compare/v1.2.0...v1.2.1) (2025-10-12)
+
+
+### Bug Fixes
+
+* **ui:** hide blur gradient on mobile instead of gap prevention ([3cb225a](https://github.com/u29dc/www/commit/3cb225a489a26874e241a43136b80949e1caf530))
+
 # [1.2.0](https://github.com/u29dc/www/compare/v1.1.0...v1.2.0) (2025-10-12)
 
 
