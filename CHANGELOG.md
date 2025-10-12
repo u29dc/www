@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/u29dc/www/compare/v1.1.0...v1.2.0) (2025-10-12)
+
+
+### Features
+
+* **ui:** add mobile safari gap prevention to blur gradient ([167ee0e](https://github.com/u29dc/www/commit/167ee0eaa7d7c7b9b1c2e7f6fc4d3feb67cc8e84))
+
 # [1.1.0](https://github.com/u29dc/www/compare/v1.0.0...v1.1.0) (2025-10-12)
 
 
