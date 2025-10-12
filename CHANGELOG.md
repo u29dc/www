@@ -1,3 +1,11 @@
+# [1.1.0](https://github.com/u29dc/www/compare/v1.0.0...v1.1.0) (2025-10-12)
+
+
+### Features
+
+* **ui:** add fade-in transition to mdx media layout ([a0394d4](https://github.com/u29dc/www/commit/a0394d4c5a267fd61b22b5e259f12f2ea4954845))
+* **ui:** migrate to self-hosted fonts with next/font optimization ([95fdfe2](https://github.com/u29dc/www/commit/95fdfe289e0fb2ea9ecf40fde3e9de65de7efe5b))
+
 # 1.0.0 (2025-10-12)
 
 
