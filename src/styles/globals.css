@@ -1,0 +1,120 @@
+@import "tailwindcss";
+
+@theme {
+	--font-sans: "neue-haas-grotesk-display", sans-serif;
+	--color-white: oklch(97% 0 0);
+	--color-black: oklch(15% 0 0);
+}
+
+@layer base {
+	:root {
+		color-scheme: light;
+		font-size: 10px;
+	}
+
+	html.dark {
+		color-scheme: dark;
+	}
+
+	@media (prefers-color-scheme: dark) {
+		html:not(.light) {
+			background: var(--color-black);
+			color: var(--color-white);
+		}
+
+		html:not(.light) body {
+			background: var(--color-black);
+			color: var(--color-white);
+		}
+	}
+
+	@media (prefers-color-scheme: light) {
+		html:not(.dark) {
+			background: var(--color-white);
+			color: var(--color-black);
+		}
+
+		html:not(.dark) body {
+			background: var(--color-white);
+			color: var(--color-black);
+		}
+	}
+
+	html.dark,
+	html.dark body {
+		background: var(--color-black);
+		color: var(--color-white);
+	}
+
+	body {
+		@apply antialiased;
+		@apply select-none;
+		@apply font-sm;
+		font-family: "neue-haas-grotesk-display", sans-serif;
+		font-weight: 600;
+		font-style: normal;
+		text-rendering: optimizeLegibility;
+	}
+
+	h1 {
+		@apply font-xl;
+	}
+
+	h2,
+	h3 {
+		@apply font-md;
+	}
+
+	html,
+	* {
+		@apply scrollbar-hidden;
+	}
+
+	img,
+	video {
+		@apply pointer-events-none select-none;
+	}
+
+	a {
+		@apply transition-opacity duration-200;
+	}
+	
+	a:hover {
+		@apply opacity-50;
+	}
+}
+
+@utility min-h-screen-safe {
+	min-height: calc(var(--vh, 1vh) * 100);
+}
+
+@utility h-screen-safe {
+	height: calc(var(--vh, 1vh) * 100);
+}
+
+@utility font-xl {
+	font-size: 2.5rem;
+}
+
+@utility font-lg {
+	font-size: 1.8rem;
+}
+
+@utility font-md {
+	font-size: 1.5rem;
+}
+
+@utility font-sm {
+	font-size: 1.3rem;
+}
+
+@utility scrollbar-hidden {
+	scrollbar-width: none;
+	&::-webkit-scrollbar {
+		display: none;
+	}
+}
+
+@utility content-column {
+	@apply col-start-1 col-span-10 md:col-start-6 md:col-span-5 lg:col-start-6 lg:col-span-4;
+}

@@ -1,0 +1,157 @@
+/**
+ * MDX Media Item Component
+ *
+ * ## SUMMARY
+ * Individual media item that loads natural dimensions, calculates aspect ratio,
+ * and applies proportional flex-basis from parent context for optimal layout.
+ *
+ * ## RESPONSIBILITIES
+ * - Detect media type (image vs video) from filename extension
+ * - Load natural dimensions after media load event
+ * - Calculate aspect ratio: width ÷ height
+ * - Register aspect ratio with parent via MediaLayoutContext
+ * - Apply flex-basis styling for proportional width distribution
+ * - Maintain aspect ratio without distortion using object-fit
+ *
+ * ## USAGE
+ * ```mdx
+ * <MdxMedia>
+ *   <MdxMediaItem src="Image.webp" alt="Description" />
+ *   <MdxMediaItem src="Video.webm" />
+ * </MdxMedia>
+ * ```
+ *
+ * ## KEY FLOWS
+ * 1. Component mounts, generates unique ID via useId()
+ * 2. Media element begins loading from BunnyCDN
+ * 3. useEffect checks if media already loaded (cached):
+ *    - Images: Check img.complete && img.naturalWidth > 0
+ *    - Videos: Check video.readyState >= 1 && video.videoWidth > 0
+ *    - If loaded, register aspect ratio immediately
+ * 4. For non-cached media, onLoad/onLoadedMetadata event fires
+ * 5. Extract naturalWidth/Height (images) or videoWidth/Height (videos)
+ * 6. Calculate aspect ratio (width ÷ height)
+ * 7. Register with parent: context.registerItem(id, aspectRatio)
+ * 8. Receive flex-basis from parent: context.getFlexBasis(id)
+ * 9. Apply inline style for proportional width within flex container
+ *
+ * @module components/ui/mdx-media-item
+ */
+
+'use client';
+
+import type { SyntheticEvent } from 'react';
+import { useContext, useEffect, useId, useRef } from 'react';
+import { MediaLayoutContext } from '@/components/ui/mdx-media';
+
+interface MdxMediaItemProps {
+	src: string;
+	alt?: string;
+}
+
+const BUNNY_CDN_BASE_URL = 'https://storage.u29dc.com/media/';
+const VIDEO_EXTENSIONS = ['.webm'];
+
+function isVideo(filename: string): boolean {
+	const lowercase = filename.toLowerCase();
+	return VIDEO_EXTENSIONS.some((ext) => lowercase.includes(ext));
+}
+
+/**
+ * Extract aspect ratio from already-loaded media element
+ * Returns 0 if media is not yet loaded or dimensions are invalid
+ */
+function getLoadedAspectRatio(
+	element: HTMLImageElement | HTMLVideoElement,
+	isVideoFile: boolean,
+): number {
+	if (isVideoFile) {
+		const video = element as HTMLVideoElement;
+		// Check if video metadata is already loaded (readyState >= HAVE_METADATA)
+		if (video.readyState >= 1 && video.videoWidth > 0) {
+			return video.videoWidth / video.videoHeight;
+		}
+	} else {
+		const img = element as HTMLImageElement;
+		// Check if image is already loaded (cached)
+		if (img.complete && img.naturalWidth > 0) {
+			return img.naturalWidth / img.naturalHeight;
+		}
+	}
+	return 0;
+}
+
+export function MdxMediaItem({ src, alt }: MdxMediaItemProps) {
+	const id = useId();
+	const context = useContext(MediaLayoutContext);
+	const mediaRef = useRef<HTMLImageElement | HTMLVideoElement>(null);
+	const fullUrl = `${BUNNY_CDN_BASE_URL}${src}`;
+	const isVideoFile = isVideo(src);
+
+	// Handle image load: extract natural dimensions and calculate aspect ratio
+	const handleImageLoad = (event: SyntheticEvent<HTMLImageElement>) => {
+		const img = event.currentTarget;
+		const aspectRatio = img.naturalWidth / img.naturalHeight;
+
+		if (context && Number.isFinite(aspectRatio) && aspectRatio > 0) {
+			context.registerItem(id, aspectRatio);
+		}
+	};
+
+	// Handle video metadata load: extract video dimensions and calculate aspect ratio
+	const handleVideoMetadata = (event: SyntheticEvent<HTMLVideoElement>) => {
+		const video = event.currentTarget;
+		const aspectRatio = video.videoWidth / video.videoHeight;
+
+		if (context && Number.isFinite(aspectRatio) && aspectRatio > 0) {
+			context.registerItem(id, aspectRatio);
+		}
+	};
+
+	// Handle already-loaded media (cached images/videos)
+	// For cached media, load events fire before React attaches handlers
+	// biome-ignore lint/correctness/useExhaustiveDependencies: context omitted to prevent infinite loops - only need to register once on mount
+	useEffect(() => {
+		const element = mediaRef.current;
+		if (!element || !context) return;
+
+		const aspectRatio = getLoadedAspectRatio(element, isVideoFile);
+
+		if (Number.isFinite(aspectRatio) && aspectRatio > 0) {
+			context.registerItem(id, aspectRatio);
+		}
+		// Note: context is intentionally omitted from dependencies to prevent infinite loops
+		// We only need to register the aspect ratio once when the media loads
+		// The context reference changes when aspectRatios updates, which would trigger re-registration
+	}, [id, isVideoFile]);
+
+	// Get flex-basis from parent context (proportional to aspect ratio)
+	const flexBasis = context?.getFlexBasis(id) ?? '1';
+
+	return (
+		<div style={{ flexBasis, flexShrink: 0 }} className="h-full">
+			{isVideoFile ? (
+				<video
+					ref={mediaRef as React.RefObject<HTMLVideoElement>}
+					src={fullUrl}
+					muted
+					loop
+					playsInline
+					autoPlay
+					onLoadedMetadata={handleVideoMetadata}
+					className="h-full w-full object-cover"
+				/>
+			) : (
+				// biome-ignore lint/performance/noImgElement: MDX content requires direct HTML img control
+				<img
+					ref={mediaRef as React.RefObject<HTMLImageElement>}
+					src={fullUrl}
+					alt={alt || ''}
+					loading="lazy"
+					onLoad={handleImageLoad}
+					className="h-full w-full object-cover"
+				/>
+			)}
+		</div>
+	);
+}
