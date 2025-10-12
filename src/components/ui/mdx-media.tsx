@@ -117,6 +117,9 @@ export function MdxMedia({ children }: MdxMediaProps) {
 
 	const calculatedHeight = calculateHeight();
 
+	// Track when layout is ready to fade in (prevents jump during calculation)
+	const isLayoutReady = containerWidth > 0 && aspectRatios.size > 0 && calculatedHeight > 0;
+
 	// Memoize context value to prevent infinite render loops
 	// Only recreates when callbacks change
 	const contextValue = useMemo(
@@ -131,7 +134,9 @@ export function MdxMedia({ children }: MdxMediaProps) {
 		<MediaLayoutContext.Provider value={contextValue}>
 			<div
 				ref={containerRef}
-				className="flex gap-2 md:gap-5 col-span-full px-[5px]"
+				className={`flex gap-2 md:gap-5 col-span-full px-[5px] transition-opacity duration-300 ${
+					isLayoutReady ? 'opacity-100' : 'opacity-0'
+				}`}
 				style={calculatedHeight > 0 ? { height: `${calculatedHeight}px` } : {}}
 			>
 				{children}
