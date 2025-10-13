@@ -20,20 +20,17 @@
  */
 
 import { Fragment } from 'react';
-import type { ContentItem } from '@/lib/types/content';
+import type { MetadataListProps } from '@/lib/types/components';
 import { isFragment, isSignal, isStudy } from '@/lib/types/content';
+import type { MetadataItem } from '@/lib/types/utils';
 import {
 	formatDate,
 	getFragmentMetadata,
 	getSignalMetadata,
 	getStudyMetadata,
-	type MetadataItem,
 } from '@/lib/utils/formatters';
 
-export interface MetadataListProps {
-	frontmatter: ContentItem;
-	className?: string;
-}
+export type { MetadataListProps };
 
 export function MetadataList({ frontmatter, className = '' }: MetadataListProps) {
 	// Format date and build metadata items based on content type

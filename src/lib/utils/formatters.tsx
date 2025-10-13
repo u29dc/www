@@ -21,7 +21,6 @@
  * @module lib/utils/formatters
  */
 
-import type { ReactNode } from 'react';
 import type {
 	ContentItem,
 	FragmentContent,
@@ -29,14 +28,9 @@ import type {
 	StudyContent,
 } from '@/lib/types/content';
 import { isFragment } from '@/lib/types/content';
+import type { MetadataItem } from '@/lib/types/utils';
 
-/**
- * Metadata item for display
- */
-export interface MetadataItem {
-	label: string;
-	value: ReactNode;
-}
+export type { MetadataItem };
 
 /**
  * Format ISO date string to human-readable format

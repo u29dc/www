@@ -19,14 +19,8 @@
  */
 
 import Link from 'next/link';
-import type { ContentItem } from '@/lib/types/content';
+import type { HeaderProps } from '@/lib/types/components';
 import { SITE } from '@/lib/utils/metadata';
-
-interface HeaderProps {
-	type: 'page-home' | 'page-content';
-	frontmatter?: ContentItem | undefined;
-	title?: string | undefined;
-}
 
 export function Header({ type, frontmatter, title }: HeaderProps) {
 	const siteTitle = title ?? SITE.title;

@@ -29,34 +29,9 @@
 
 import type { CSSProperties, ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
+import type { BlurCurve, BlurGradientProps, BlurPosition } from '@/lib/types/components';
 
-type BlurPosition = 'top' | 'bottom' | 'left' | 'right';
-type BlurCurve = 'linear' | 'ease-in' | 'ease-out' | 'bezier';
-
-export interface BlurGradientProps {
-	/** Position of the blur effect */
-	position?: BlurPosition;
-	/** Blur intensity multiplier (0-5 recommended) */
-	strength?: number;
-	/** Size of the blur area (CSS unit) */
-	size?: string;
-	/** Number of blur layers to generate */
-	layers?: number;
-	/** Distribution curve for blur progression */
-	curve?: BlurCurve;
-	/** Use exponential blur progression for more dramatic ramp-up */
-	exponential?: boolean;
-	/** Enable scroll-triggered fade-in animation */
-	animated?: boolean;
-	/** Overall opacity of the effect */
-	opacity?: number;
-	/** Use fixed positioning (viewport-level) instead of absolute (parent-relative) */
-	fixed?: boolean;
-	/** Additional CSS classes */
-	className?: string;
-	/** Optional children to render above blur layers */
-	children?: ReactNode;
-}
+export type { BlurGradientProps };
 
 const DEFAULT_CONFIG = {
 	position: 'bottom' as BlurPosition,

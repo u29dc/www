@@ -19,12 +19,8 @@
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
+import type { CspDirective } from '@/lib/types/utils';
 import { isValidTheme, RESOLVED_COOKIE, THEME_COOKIE } from '@/lib/utils/theme';
-
-type CspDirective = {
-	name: string;
-	values: string[];
-};
 
 /**
  * Build a nonce-scoped Content Security Policy header for the incoming request.

@@ -18,11 +18,7 @@
  * @module components/ui/mdx-content-block
  */
 
-import type { ReactNode } from 'react';
-
-interface MdxContentBlockProps {
-	children: ReactNode;
-}
+import type { MdxContentBlockProps } from '@/lib/types/components';
 
 export function MdxContent({ children }: MdxContentBlockProps) {
 	return <div className="content-column p-5 font-lg">{children}</div>;

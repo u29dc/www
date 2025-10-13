@@ -23,7 +23,8 @@
 
 'use client';
 
-import { ThemeContext, type ThemeProviderProps, useThemeProvider } from '@/lib/utils/theme';
+import type { ThemeProviderProps } from '@/lib/types/utils';
+import { ThemeContext, useThemeProvider } from '@/lib/utils/theme';
 
 export function ThemeProvider({
 	children,

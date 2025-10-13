@@ -43,11 +43,7 @@
 import type { SyntheticEvent } from 'react';
 import { useContext, useEffect, useId, useRef } from 'react';
 import { MediaLayoutContext } from '@/components/ui/mdx-media';
-
-interface MdxMediaItemProps {
-	src: string;
-	alt?: string;
-}
+import type { MdxMediaItemProps } from '@/lib/types/components';
 
 const BUNNY_CDN_BASE_URL = 'https://storage.u29dc.com/media/';
 const VIDEO_EXTENSIONS = ['.webm'];

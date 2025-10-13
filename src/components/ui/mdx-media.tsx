@@ -36,19 +36,10 @@
 
 'use client';
 
-import type { ReactNode } from 'react';
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-
-interface MediaLayoutContextValue {
-	registerItem: (id: string, aspectRatio: number) => void;
-	getFlexBasis: (id: string) => string;
-}
+import type { MdxMediaProps, MediaLayoutContextValue } from '@/lib/types/components';
 
 export const MediaLayoutContext = createContext<MediaLayoutContextValue | null>(null);
-
-interface MdxMediaProps {
-	children: ReactNode;
-}
 
 export function MdxMedia({ children }: MdxMediaProps) {
 	const containerRef = useRef<HTMLDivElement>(null);

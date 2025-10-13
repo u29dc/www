@@ -14,16 +14,9 @@
  * @module components/ui/wrapper
  */
 
-import type { ReactNode } from 'react';
 import { BlurGradient } from '@/components/ui/blur-gradient';
 import { Header } from '@/components/ui/header';
-import type { ContentItem } from '@/lib/types/content';
-
-interface WrapperProps {
-	type: 'page-home' | 'page-content';
-	children: ReactNode;
-	frontmatter?: ContentItem;
-}
+import type { WrapperProps } from '@/lib/types/components';
 
 export function Wrapper({ type, children, frontmatter }: WrapperProps) {
 	return (

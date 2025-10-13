@@ -18,17 +18,9 @@
  * @module lib/utils/class
  */
 
-/**
- * ClassValue represents valid className input types
- */
-export type ClassValue =
-	| string
-	| number
-	| boolean
-	| undefined
-	| null
-	| ClassValue[]
-	| Record<string, boolean | undefined | null>;
+import type { ClassValue } from '@/lib/types/utils';
+
+export type { ClassValue };
 
 /**
  * Converts ClassValue input to flat className string

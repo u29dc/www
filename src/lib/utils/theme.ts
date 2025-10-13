@@ -28,13 +28,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import type { ResolvedTheme, Theme, ThemeContextValue } from '@/lib/types/utils';
 
-export type {
-	ResolvedTheme,
-	Theme,
-	ThemeContextValue,
-	ThemeProviderProps,
-} from '@/lib/types/utils';
-
 // Cookie configuration
 const THEME_COOKIE_NAME = 'www-theme';
 const RESOLVED_THEME_COOKIE_NAME = 'www-resolved-theme';

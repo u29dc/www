@@ -19,12 +19,10 @@
 
 import Link from 'next/link';
 import { MetadataList } from '@/components/ui/metadata-list';
-import type { ParsedContent } from '@/lib/types/content';
+import type { FeedItemProps } from '@/lib/types/components';
 import { formatDate } from '@/lib/utils/formatters';
 
-export interface FeedItemProps {
-	item: ParsedContent;
-}
+export type { FeedItemProps };
 
 export function FeedItem({ item }: FeedItemProps) {
 	const { frontmatter } = item;

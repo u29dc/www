@@ -21,21 +21,9 @@
  */
 
 import pino from 'pino';
+import type { LoggerInstance, LogMeta } from '@/lib/types/utils';
 
-/**
- * Log metadata type
- */
-export type LogMeta = Record<string, unknown>;
-
-/**
- * Logger instance interface
- */
-export interface LoggerInstance {
-	info(message: string, meta?: LogMeta): void;
-	warn(message: string, meta?: LogMeta): void;
-	error(message: string, error?: unknown, meta?: LogMeta): void;
-	child(bindings: LogMeta): LoggerInstance;
-}
+export type { LoggerInstance, LogMeta };
 
 /**
  * Pino logger wrapper with environment awareness
