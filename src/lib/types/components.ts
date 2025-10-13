@@ -132,9 +132,13 @@ export interface MdxContentBlockProps {
 
 /**
  * MDX media container component props
+ * Accepts array of media sources
  */
 export interface MdxMediaProps {
-	children: ReactNode;
+	/** Array of media sources (always array, even for single item) */
+	src: string[];
+	/** Optional alt text applied to all media items */
+	alt?: string;
 }
 
 /**

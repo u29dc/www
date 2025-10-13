@@ -15,10 +15,8 @@
  *
  * ## USAGE
  * ```mdx
- * <MdxMedia>
- *   <MdxMediaItem src="Square.webp" />      <!-- 1:1 aspect ratio -->
- *   <MdxMediaItem src="Landscape.webp" />   <!-- 2:1 aspect ratio -->
- * </MdxMedia>
+ * <MdxMedia src={["Square.webp"]} />                        <!-- Single item -->
+ * <MdxMedia src={["Square.webp", "Landscape.webp"]} />      <!-- Multiple items -->
  * ```
  * Result: If container is 1200px wide, height = 1200 ÷ (1+2) = 400px
  *         Square gets 400px width, Landscape gets 800px width
@@ -26,10 +24,11 @@
  * ## KEY FLOWS
  * 1. Component mounts, measures container width via ref
  * 2. ResizeObserver tracks width changes for responsive behavior
- * 3. Children register aspect ratios after media loads
- * 4. Calculate height: width ÷ sumOfAspectRatios
- * 5. Calculate flex-basis for each child: (ratio ÷ sumOfRatios) × 100%
- * 6. Children receive flex-basis via context and render proportionally
+ * 3. Maps over src array to create MdxMediaItem components
+ * 4. Children register aspect ratios after media loads
+ * 5. Calculate height: width ÷ sumOfAspectRatios
+ * 6. Calculate flex-basis for each child: (ratio ÷ sumOfRatios) × 100%
+ * 7. Children receive flex-basis via context and render proportionally
  *
  * @module components/ui/mdx-media
  */
@@ -37,11 +36,12 @@
 'use client';
 
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { MdxMediaItem } from '@/components/ui/mdx-media-item';
 import type { MdxMediaProps, MediaLayoutContextValue } from '@/lib/types/components';
 
 export const MediaLayoutContext = createContext<MediaLayoutContextValue | null>(null);
 
-export function MdxMedia({ children }: MdxMediaProps) {
+export function MdxMedia({ src, alt }: MdxMediaProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [containerWidth, setContainerWidth] = useState<number>(0);
 	const [aspectRatios, setAspectRatios] = useState<Map<string, number>>(new Map());
@@ -51,11 +51,17 @@ export function MdxMedia({ children }: MdxMediaProps) {
 		const container = containerRef.current;
 		if (!container) return;
 
+		// Mount guard to prevent state updates after unmount
+		let isMounted = true;
+
 		// Initial measurement
 		setContainerWidth(container.offsetWidth);
 
 		// Track resize with ResizeObserver
 		const resizeObserver = new ResizeObserver((entries) => {
+			// Guard against callbacks firing after component unmount
+			if (!isMounted) return;
+
 			for (const entry of entries) {
 				const width = entry.contentBoxSize?.[0]?.inlineSize ?? entry.contentRect.width;
 				setContainerWidth(width);
@@ -65,6 +71,8 @@ export function MdxMedia({ children }: MdxMediaProps) {
 		resizeObserver.observe(container);
 
 		return () => {
+			// Set flag before disconnect to prevent any pending callbacks
+			isMounted = false;
 			resizeObserver.disconnect();
 		};
 	}, []);
@@ -130,7 +138,9 @@ export function MdxMedia({ children }: MdxMediaProps) {
 				}`}
 				style={calculatedHeight > 0 ? { height: `${calculatedHeight}px` } : {}}
 			>
-				{children}
+				{src.map((source) => (
+					<MdxMediaItem key={source} src={source} alt={alt || ''} />
+				))}
 			</div>
 		</MediaLayoutContext.Provider>
 	);
