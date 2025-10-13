@@ -43,3 +43,24 @@ export class NotFoundError extends AppError {
 		super(404, `${resource} not found`, 'NOT_FOUND');
 	}
 }
+
+/**
+ * 400 Bad Request - Validation failure
+ */
+export class ValidationError extends AppError {
+	constructor(message: string) {
+		super(400, message, 'VALIDATION_ERROR');
+	}
+}
+
+/**
+ * 500 Internal Server Error - Processing failure
+ */
+export class ProcessingError extends AppError {
+	constructor(
+		message: string,
+		public readonly details?: unknown,
+	) {
+		super(500, message, 'PROCESSING_ERROR');
+	}
+}

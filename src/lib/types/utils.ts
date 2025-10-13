@@ -110,3 +110,27 @@ export type CspDirective = {
 	name: string;
 	values: string[];
 };
+
+// =============================================================================
+// Error Handling
+// =============================================================================
+
+/**
+ * Options for error response formatting
+ */
+export interface ErrorResponseOptions {
+	format?: 'json' | 'text'; // Default: 'json'
+	headers?: HeadersInit; // Additional headers to merge
+}
+
+/**
+ * Structured error response data
+ */
+export interface ErrorResponseData {
+	error: {
+		code: string;
+		message: string;
+		statusCode: number;
+		stack?: string;
+	};
+}
