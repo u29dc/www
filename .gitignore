@@ -15,6 +15,7 @@ coverage/
 .next/
 out/
 dist/
+certificates
 
 # Production builds
 build/
@@ -51,5 +52,4 @@ next-env.d.ts
 *.swo
 *~
 
-# OS
 Thumbs.db

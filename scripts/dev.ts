@@ -84,7 +84,7 @@ class DevServer {
 		console.log(`${colors.blue}Starting development server...${colors.reset}`);
 		console.log(`${colors.dim}Press Ctrl+C to stop${colors.reset}\n`);
 
-		this.process = Bun.spawn(['bun', 'next', 'dev', '--turbopack'], {
+		this.process = Bun.spawn(['bun', 'next', 'dev', '--turbopack', '--experimental-https'], {
 			stdout: 'pipe',
 			stderr: 'pipe',
 			env: process.env,
