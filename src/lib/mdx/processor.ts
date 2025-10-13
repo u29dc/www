@@ -34,6 +34,7 @@ import type { ContentItem, ParsedContent } from '@/lib/types/content';
 import { ContentSchema } from '@/lib/types/content';
 import { NotFoundError } from '@/lib/utils/errors';
 import { logEvent } from '@/lib/utils/logger';
+import { CDN } from '@/lib/utils/metadata';
 
 /**
  * Allowed media file extensions for URL construction
@@ -206,7 +207,7 @@ export function toMarkdown(frontmatter: ContentItem, content: string): string {
 						return null;
 					}
 
-					const url = `https://storage.u29dc.com/media/${sanitized}`;
+					const url = `${CDN.mediaUrl}${sanitized}`;
 					// Use consistent markdown image syntax (works for both images and videos)
 					return `![Media](${url})`;
 				})

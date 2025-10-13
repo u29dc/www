@@ -23,7 +23,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { MDXRemote } from 'next-mdx-remote/rsc';
 import { Wrapper } from '@/components/ui/wrapper';
-import { getAllContent, getContentBySlug } from '@/lib/mdx/aggregator';
+import { getContentBySlug, getFeedContent } from '@/lib/mdx/aggregator';
 import { useMDXComponents } from '@/lib/mdx/components';
 import type { ContentPageProps } from '@/lib/types/components';
 import { getContentDescription } from '@/lib/utils/formatters';
@@ -33,6 +33,11 @@ export default async function ContentPage({ params }: ContentPageProps) {
 	const content = await getContentBySlug(slug);
 
 	if (!content) notFound();
+
+	// Block non-feed items from HTML rendering (they should only be accessible via .md/.txt)
+	if (content.frontmatter.isFeedItem === false) {
+		notFound();
+	}
 
 	const { frontmatter, content: mdxContent } = content;
 
@@ -45,8 +50,8 @@ export default async function ContentPage({ params }: ContentPageProps) {
 }
 
 export async function generateStaticParams() {
-	const allContent = await getAllContent();
-	return allContent.map(({ frontmatter }) => ({
+	const feedContent = await getFeedContent();
+	return feedContent.map(({ frontmatter }) => ({
 		slug: frontmatter.slug,
 	}));
 }

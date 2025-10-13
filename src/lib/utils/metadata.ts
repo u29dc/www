@@ -53,6 +53,15 @@ const SITE = {
 	creator: 'u29dc',
 } as const;
 
+const CDN = {
+	baseUrl: 'https://storage.u29dc.com',
+	hostname: 'storage.u29dc.com',
+	mediaPath: '/media/',
+	get mediaUrl(): string {
+		return `${this.baseUrl}${this.mediaPath}`;
+	},
+} as const;
+
 const sharedImages = [
 	{
 		url: '/meta/og-image.png',
@@ -157,4 +166,4 @@ export const metadata: Metadata = {
 	},
 };
 
-export { SITE };
+export { SITE, CDN };

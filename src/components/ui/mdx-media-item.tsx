@@ -37,8 +37,8 @@ import type { SyntheticEvent } from 'react';
 import { useContext, useEffect, useId, useRef } from 'react';
 import { MediaLayoutContext } from '@/components/ui/mdx-media';
 import type { MdxMediaItemProps } from '@/lib/types/components';
+import { CDN } from '@/lib/utils/metadata';
 
-const BUNNY_CDN_BASE_URL = 'https://storage.u29dc.com/media/';
 const VIDEO_EXTENSIONS = ['.webm'];
 
 function isVideo(filename: string): boolean {
@@ -74,7 +74,7 @@ export function MdxMediaItem({ src, alt }: MdxMediaItemProps) {
 	const id = useId();
 	const context = useContext(MediaLayoutContext);
 	const mediaRef = useRef<HTMLImageElement | HTMLVideoElement>(null);
-	const fullUrl = `${BUNNY_CDN_BASE_URL}${src}`;
+	const fullUrl = `${CDN.mediaUrl}${src}`;
 	const isVideoFile = isVideo(src);
 
 	// Handle image load: extract natural dimensions and calculate aspect ratio

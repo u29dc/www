@@ -20,6 +20,7 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
 import type { CspDirective } from '@/lib/types/utils';
+import { CDN } from '@/lib/utils/metadata';
 import { isValidTheme, RESOLVED_COOKIE, THEME_COOKIE } from '@/lib/utils/theme';
 
 /**
@@ -40,8 +41,8 @@ export function generateCsp(): { cspHeader: string; nonce: string } {
 		{ name: 'frame-ancestors', values: ["'none'"] },
 		{ name: 'object-src', values: ["'none'"] },
 		{ name: 'style-src', values: ["'self'", "'unsafe-inline'"] },
-		{ name: 'media-src', values: ["'self'", 'https://storage.u29dc.com'] },
-		{ name: 'img-src', values: ["'self'", 'data:', 'blob:', 'https://storage.u29dc.com'] },
+		{ name: 'media-src', values: ["'self'", CDN.baseUrl] },
+		{ name: 'img-src', values: ["'self'", 'data:', 'blob:', CDN.baseUrl] },
 		{ name: 'font-src', values: ["'self'", 'data:'] },
 		{
 			name: 'script-src',
