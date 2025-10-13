@@ -27,13 +27,11 @@ export function Header({ type, frontmatter, title }: HeaderProps) {
 
 	return (
 		<header className="relative h-full p-5">
-			<div className="relative h-full w-full font-md">
+			<div className="relative full-container font-md">
 				{type === 'page-home' && (
 					<>
-						<div className="absolute bottom-0 w-full left-1/2 -translate-x-1/2 text-center">
-							{siteTitle}
-						</div>
-						<nav className="absolute bottom-0 left-0">
+						<div className="header-title-centered">{siteTitle}</div>
+						<nav className="header-nav-corner">
 							<span>U29DC™</span>
 						</nav>
 					</>
@@ -41,10 +39,8 @@ export function Header({ type, frontmatter, title }: HeaderProps) {
 
 				{type === 'page-content' && frontmatter && (
 					<>
-						<div className="absolute bottom-0 w-full left-1/2 -translate-x-1/2 text-center">
-							{frontmatter.title}
-						</div>
-						<nav className="absolute bottom-0 left-0">
+						<div className="header-title-centered">{frontmatter.title}</div>
+						<nav className="header-nav-corner">
 							<Link href="/">
 								<span>Back</span>
 							</Link>

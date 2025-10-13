@@ -20,10 +20,10 @@ import type { WrapperProps } from '@/lib/types/components';
 
 export function Wrapper({ type, children, frontmatter }: WrapperProps) {
 	return (
-		<main className="grid grid-cols-10 grid-rows-[15rem_auto_1fr] h-full w-full min-h-screen">
+		<main className="grid grid-cols-10 grid-rows-[15rem_auto_1fr] full-container min-h-screen">
 			<section className="sticky top-0 col-start-1 col-span-full row-start-1 md:col-start-6 md:col-span-5 lg:col-start-6 lg:col-span-4">
 				<BlurGradient position="top" size="15rem" fixed={false} strength={3} layers={10} />
-				<div className="relative z-[1001] h-full w-full">
+				<div className="relative z-[1001] full-container">
 					<Header type={type} frontmatter={frontmatter} />
 				</div>
 			</section>

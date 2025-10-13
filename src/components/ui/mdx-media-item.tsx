@@ -128,7 +128,7 @@ export function MdxMediaItem({ src, alt }: MdxMediaItemProps) {
 					playsInline
 					autoPlay
 					onLoadedMetadata={handleVideoMetadata}
-					className="h-full w-full object-cover"
+					className="media-fill"
 				/>
 			) : (
 				// biome-ignore lint/performance/noImgElement: MDX content requires direct HTML img control
@@ -138,7 +138,7 @@ export function MdxMediaItem({ src, alt }: MdxMediaItemProps) {
 					alt={alt || ''}
 					loading="lazy"
 					onLoad={handleImageLoad}
-					className="h-full w-full object-cover"
+					className="media-fill"
 				/>
 			)}
 		</div>
