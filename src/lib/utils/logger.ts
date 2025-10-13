@@ -23,8 +23,6 @@
 import pino from 'pino';
 import type { LoggerInstance, LogMeta } from '@/lib/types/utils';
 
-export type { LoggerInstance, LogMeta };
-
 /**
  * Pino logger wrapper with environment awareness
  */

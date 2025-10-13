@@ -22,8 +22,6 @@ import { MetadataList } from '@/components/ui/metadata-list';
 import type { FeedItemProps } from '@/lib/types/components';
 import { formatDate } from '@/lib/utils/formatters';
 
-export type { FeedItemProps };
-
 export function FeedItem({ item }: FeedItemProps) {
 	const { frontmatter } = item;
 	const { title, slug, description, date } = frontmatter;

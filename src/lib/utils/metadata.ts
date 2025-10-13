@@ -32,10 +32,6 @@
  * };
  * ```
  *
- * ## PERFORMANCE
- * - Reuses shared image descriptors to prevent duplication
- * - Static configuration with zero runtime overhead
- *
  * ## DEPENDENCIES
  * - Uses Next.js built-in `Metadata` and `Viewport` types (no external dependencies)
  *
@@ -87,7 +83,7 @@ export const metadata: Metadata = {
 	metadataBase: new URL(SITE.url),
 	title: {
 		default: SITE.title,
-		template: `%s | ${SITE.name}`,
+		template: `${SITE.name} | %s`,
 	},
 	description: SITE.description,
 	applicationName: SITE.name,

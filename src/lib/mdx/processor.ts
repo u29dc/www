@@ -30,9 +30,9 @@
 import fs from 'node:fs/promises';
 import matter from 'gray-matter';
 import yaml from 'js-yaml';
-import { NotFoundError } from '@/lib/errors/classes';
 import type { ContentItem, ParsedContent } from '@/lib/types/content';
 import { ContentSchema } from '@/lib/types/content';
+import { NotFoundError } from '@/lib/utils/errors';
 import { logEvent } from '@/lib/utils/logger';
 
 /**
@@ -176,7 +176,6 @@ export function toMarkdown(frontmatter: ContentItem, content: string): string {
 
 	let markdown = content;
 
-	// Strip MdxContent wrappers (preserve inner content)
 	markdown = markdown.replace(/<MdxContent>\s*/g, '');
 	markdown = markdown.replace(/\s*<\/MdxContent>/g, '');
 
@@ -228,13 +227,8 @@ export function toMarkdown(frontmatter: ContentItem, content: string): string {
 		}
 	});
 
-	// Remove import statements
 	markdown = markdown.replace(/^import\s+.*$/gm, '');
-
-	// Remove export statements
 	markdown = markdown.replace(/^export\s+.*$/gm, '');
-
-	// Clean up excessive whitespace
 	markdown = markdown.replace(/\n{3,}/g, '\n\n');
 	markdown = markdown.trim();
 

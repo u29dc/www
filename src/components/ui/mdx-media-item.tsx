@@ -22,18 +22,11 @@
  * ```
  *
  * ## KEY FLOWS
- * 1. Component mounts, generates unique ID via useId()
- * 2. Media element begins loading from BunnyCDN
- * 3. useEffect checks if media already loaded (cached):
- *    - Images: Check img.complete && img.naturalWidth > 0
- *    - Videos: Check video.readyState >= 1 && video.videoWidth > 0
- *    - If loaded, register aspect ratio immediately
- * 4. For non-cached media, onLoad/onLoadedMetadata event fires
- * 5. Extract naturalWidth/Height (images) or videoWidth/Height (videos)
- * 6. Calculate aspect ratio (width ÷ height)
- * 7. Register with parent: context.registerItem(id, aspectRatio)
- * 8. Receive flex-basis from parent: context.getFlexBasis(id)
- * 9. Apply inline style for proportional width within flex container
+ * 1. Component mounts and media begins loading from BunnyCDN
+ * 2. Check if media already loaded (cached) or wait for load event
+ * 3. Extract natural dimensions and calculate aspect ratio (width ÷ height)
+ * 4. Register aspect ratio with parent via MediaLayoutContext
+ * 5. Receive proportional flex-basis from parent and apply to container
  *
  * @module components/ui/mdx-media-item
  */

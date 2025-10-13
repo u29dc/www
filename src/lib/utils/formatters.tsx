@@ -15,7 +15,7 @@
  *
  * const date = formatDate(item.date);
  * const description = getContentDescription(item);
- * const metadata = getStudyMetadata(study, date);
+ * const metadata = getStudyMetadata(study);
  * ```
  *
  * @module lib/utils/formatters
@@ -30,28 +30,20 @@ import type {
 import { isFragment } from '@/lib/types/content';
 import type { MetadataItem } from '@/lib/types/utils';
 
-export type { MetadataItem };
-
-/**
- * Format ISO date string to human-readable format
- */
+// Format ISO date string to human-readable format
 export function formatDate(dateString: string): string {
 	return new Date(dateString).toLocaleDateString('en-US', {
 		year: 'numeric',
 	});
 }
 
-/**
- * Extract description text from content item based on type
- */
+// Extract description text from content item based on type
 export function getContentDescription(item: ContentItem): string {
 	if (isFragment(item) && item.excerpt) return item.excerpt;
 	return item.description;
 }
 
-/**
- * Build metadata items for Study content
- */
+// Build metadata items for Study content
 export function getStudyMetadata(study: StudyContent): MetadataItem[] {
 	return [
 		{ label: 'Client', value: study.client },
@@ -60,9 +52,7 @@ export function getStudyMetadata(study: StudyContent): MetadataItem[] {
 	];
 }
 
-/**
- * Build metadata items for Fragment content
- */
+// Build metadata items for Fragment content
 export function getFragmentMetadata(
 	fragment: FragmentContent,
 	formattedDate: string,
@@ -73,9 +63,7 @@ export function getFragmentMetadata(
 	];
 }
 
-/**
- * Build metadata items for Signal content
- */
+// Build metadata items for Signal content
 export function getSignalMetadata(signal: SignalContent, formattedDate: string): MetadataItem[] {
 	const items: MetadataItem[] = [];
 	if (signal.source) {

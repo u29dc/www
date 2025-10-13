@@ -1,15 +1,78 @@
 /**
- * Error Response System
+ * Error Handling System
  *
+ * ## SUMMARY
+ * Typed error class hierarchy with HTTP status codes and response utilities.
  * Centralized error-to-HTTP-response conversion with format awareness,
  * security headers, automatic logging, and environment-aware sanitization.
  *
- * @module lib/errors/responses
+ * ## RESPONSIBILITIES
+ * - Provide domain-specific error classes with HTTP status codes
+ * - Enable type-safe error handling throughout the application
+ * - Convert errors to HTTP responses with consistent formatting
+ * - Apply security headers and environment-aware sanitization
+ *
+ * ## USAGE
+ * ```typescript
+ * import { NotFoundError, createErrorResponse } from '@/lib/errors';
+ *
+ * // Throw typed errors
+ * if (!user) throw new NotFoundError('User');
+ *
+ * // Convert to HTTP responses
+ * return createErrorResponse(new NotFoundError('User'));
+ * return createErrorResponse(error, { format: 'text' });
+ * return createErrorResponse(error, { headers: { 'X-Custom': 'value' } });
+ * ```
+ *
+ * @module lib/utils/errors
  */
 
-import { AppError } from '@/lib/errors/classes';
 import type { ErrorResponseData, ErrorResponseOptions } from '@/lib/types/utils';
 import { logEvent } from '@/lib/utils/logger';
+
+// Error Classes
+
+/** Base operational error class with HTTP status code */
+export class AppError extends Error {
+	public readonly isOperational: boolean = true;
+
+	constructor(
+		public readonly statusCode: number,
+		message: string,
+		public readonly code?: string,
+	) {
+		super(message);
+		this.name = this.constructor.name;
+		Error.captureStackTrace(this, this.constructor);
+	}
+}
+
+/** 404 Not Found - Resource not found */
+export class NotFoundError extends AppError {
+	constructor(resource: string) {
+		super(404, `${resource} not found`, 'NOT_FOUND');
+	}
+}
+
+/** 400 Bad Request - Validation failure */
+export class ValidationError extends AppError {
+	constructor(message: string) {
+		super(400, message, 'VALIDATION_ERROR');
+	}
+}
+
+/** 500 Internal Server Error - Processing failure */
+export class ProcessingError extends AppError {
+	constructor(
+		message: string,
+		public readonly details?: unknown,
+	) {
+		super(500, message, 'PROCESSING_ERROR');
+	}
+}
+
+// Response Utilities
 
 /** Converts error to structured data with environment-aware sanitization */
 function errorToData(error: AppError | Error): ErrorResponseData {

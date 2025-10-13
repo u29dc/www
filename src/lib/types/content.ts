@@ -26,18 +26,17 @@
  * ```
  */
 
+import { z } from 'zod';
+
 /**
  * Study Schema - Case Studies / Project Work
  *
  * Represents completed client work or portfolio projects.
  * Includes client information, role, and project metadata.
  */
-
-import { z } from 'zod';
-
 export const StudySchema = z.object({
 	type: z.literal('study'),
-	date: z.string().datetime(),
+	date: z.iso.datetime(),
 	title: z.string().min(1),
 	description: z.string().min(1),
 	slug: z.string().min(1),
@@ -57,7 +56,7 @@ export const StudySchema = z.object({
  */
 export const FragmentSchema = z.object({
 	type: z.literal('fragment'),
-	date: z.string().datetime(),
+	date: z.iso.datetime(),
 	title: z.string().min(1),
 	description: z.string().min(1),
 	slug: z.string().min(1),
@@ -73,12 +72,12 @@ export const FragmentSchema = z.object({
  */
 export const SignalSchema = z.object({
 	type: z.literal('signal'),
-	date: z.string().datetime(),
+	date: z.iso.datetime(),
 	title: z.string().min(1),
 	description: z.string().min(1),
 	slug: z.string().min(1),
 	source: z.string().optional(),
-	link: z.string().url().optional(),
+	link: z.url().optional(),
 	image: z.string().optional(),
 });
 

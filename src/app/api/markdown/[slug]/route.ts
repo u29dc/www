@@ -26,10 +26,9 @@
  */
 
 import type { NextRequest } from 'next/server';
-import { NotFoundError, ProcessingError } from '@/lib/errors/classes';
-import { createErrorResponse } from '@/lib/errors/responses';
 import { getAllContent, getContentBySlug } from '@/lib/mdx/aggregator';
 import { toMarkdown } from '@/lib/mdx/processor';
+import { createErrorResponse, NotFoundError, ProcessingError } from '@/lib/utils/errors';
 import { logEvent } from '@/lib/utils/logger';
 import { validateSlug } from '@/lib/utils/validators';
 
@@ -97,8 +96,8 @@ export async function GET(
 	}
 
 	// Retrieve MDX content
-	const parsed = await getContentBySlug(slug);
-	if (!parsed) {
+	const content = await getContentBySlug(slug);
+	if (!content) {
 		logEvent('MARKDOWN', 'SERVE', 'NOT_FOUND', { slug });
 		return createErrorResponse(new NotFoundError(`Content with slug '${slug}'`), {
 			format: 'json',
@@ -107,7 +106,7 @@ export async function GET(
 
 	try {
 		// Transform to markdown
-		const markdown = toMarkdown(parsed.frontmatter, parsed.content);
+		const markdown = toMarkdown(content.frontmatter, content.content);
 
 		// Construct response with appropriate headers
 		const response = new Response(markdown, {

@@ -30,16 +30,16 @@ import { getContentDescription } from '@/lib/utils/formatters';
 
 export default async function ContentPage({ params }: ContentPageProps) {
 	const { slug } = await params;
-	const parsed = await getContentBySlug(slug);
+	const content = await getContentBySlug(slug);
 
-	if (!parsed) notFound();
+	if (!content) notFound();
 
-	const { frontmatter, content } = parsed;
+	const { frontmatter, content: mdxContent } = content;
 
 	return (
 		<Wrapper type="page-content" frontmatter={frontmatter}>
 			<div></div>
-			<MDXRemote source={content} components={useMDXComponents({})} />
+			<MDXRemote source={mdxContent} components={useMDXComponents({})} />
 		</Wrapper>
 	);
 }
@@ -53,14 +53,14 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: ContentPageProps): Promise<Metadata> {
 	const { slug } = await params;
-	const parsed = await getContentBySlug(slug);
+	const content = await getContentBySlug(slug);
 
-	if (!parsed) return { title: 'Not Found' };
+	if (!content) return { title: 'Not Found' };
 
-	const description = getContentDescription(parsed.frontmatter);
+	const description = getContentDescription(content.frontmatter);
 
 	return {
-		title: parsed.frontmatter.title,
+		title: content.frontmatter.title,
 		description,
 		alternates: {
 			canonical: `/${slug}`,

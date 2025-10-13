@@ -1,14 +1,27 @@
 /**
  * Input Validators
  *
+ * ## SUMMARY
  * Security-focused validation utilities for URL slugs and user input.
  * Prevents path traversal, injection attacks, and DoS via input validation.
+ *
+ * ## RESPONSIBILITIES
+ * - Validate URL slug format and length
+ * - Prevent path traversal attacks
+ * - Sanitize user input
+ * - Log validation failures for monitoring
+ *
+ * ## USAGE
+ * ```typescript
+ * import { validateSlug } from '@/lib/utils/validators';
+ * const slug = validateSlug(rawSlug); // Throws ValidationError if invalid
+ * ```
  *
  * @module lib/utils/validators
  */
 
 import path from 'node:path';
-import { ValidationError } from '@/lib/errors/classes';
+import { ValidationError } from '@/lib/utils/errors';
 import { logEvent } from '@/lib/utils/logger';
 
 /** Slug pattern: lowercase alphanumeric and hyphens only */
