@@ -1,3 +1,15 @@
+# [1.3.0](https://github.com/u29dc/www/compare/v1.2.1...v1.3.0) (2025-10-13)
+
+
+### Bug Fixes
+
+* **ci:** remove biome markdown formatting from release workflow ([791c228](https://github.com/u29dc/www/commit/791c228c407a5f3cfecc173e604acdb1f02f4ff8))
+
+
+### Features
+
+* **types:** add centralized component type library ([4305910](https://github.com/u29dc/www/commit/43059101fe655f227540fc6dd5ef9dd82e9a4b0f))
+
 ## [1.2.1](https://github.com/u29dc/www/compare/v1.2.0...v1.2.1) (2025-10-12)
 
 ### Bug Fixes
