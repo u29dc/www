@@ -4,10 +4,10 @@
  * Shared Script Utilities
  */
 
-/**
- * ANSI color codes for terminal output
- * Using standard 16-color palette for maximum compatibility
- */
+// ==================================================
+// CONSTANTS
+// ==================================================
+
 export const colors = {
 	red: '\x1b[31m',
 	green: '\x1b[32m',
@@ -19,9 +19,6 @@ export const colors = {
 	dim: '\x1b[2m',
 } as const;
 
-/**
- * Status indicators for consistent output formatting
- */
 export const status = {
 	success: `${colors.green}[OK]${colors.reset}`,
 	error: `${colors.red}[FAIL]${colors.reset}`,
@@ -30,9 +27,10 @@ export const status = {
 	skip: `${colors.dim}[SKIP]${colors.reset}`,
 } as const;
 
-/**
- * Format milliseconds into human-readable duration
- */
+// ==================================================
+// FORMATTING
+// ==================================================
+
 export function formatDuration(ms: number): string {
 	if (ms < 1000) return `${Math.round(ms)}ms`;
 	if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
@@ -42,42 +40,6 @@ export function formatDuration(ms: number): string {
 	return `${minutes}m ${seconds}s`;
 }
 
-/**
- * Timer utility for measuring script performance
- */
-export class Timer {
-	private readonly startTime: number;
-
-	constructor() {
-		this.startTime = performance.now();
-	}
-
-	/**
-	 * Get elapsed time since timer started
-	 */
-	elapsed(): number {
-		return performance.now() - this.startTime;
-	}
-
-	/**
-	 * Get elapsed time as formatted string
-	 */
-	elapsedFormatted(): string {
-		return formatDuration(this.elapsed());
-	}
-}
-
-/**
- * Print a formatted section divider
- */
-export function printSection(title: string, width = 40): void {
-	console.log(`\n${colors.bold}${title.toUpperCase()}${colors.reset}`);
-	console.log('─'.repeat(width));
-}
-
-/**
- * Format an error message with context
- */
 export function formatError(error: unknown, context?: string): string {
 	const errorMessage = error instanceof Error ? error.message : String(error);
 	const contextStr = context ? `${context}: ` : '';
@@ -85,9 +47,35 @@ export function formatError(error: unknown, context?: string): string {
 	return `${status.error} ${contextStr}${errorMessage}`;
 }
 
-/**
- * Parse command line arguments into flags
- */
+// ==================================================
+// TIMER
+// ==================================================
+
+export class Timer {
+	private readonly startTime: number;
+
+	constructor() {
+		this.startTime = performance.now();
+	}
+
+	elapsed(): number {
+		return performance.now() - this.startTime;
+	}
+
+	elapsedFormatted(): string {
+		return formatDuration(this.elapsed());
+	}
+}
+
+// ==================================================
+// CLI
+// ==================================================
+
+export function printSection(title: string, width = 40): void {
+	console.log(`\n${colors.bold}${title.toUpperCase()}${colors.reset}`);
+	console.log('─'.repeat(width));
+}
+
 export function parseFlags(args: string[] = process.argv.slice(2)): Set<string> {
 	const flags = new Set<string>();
 
@@ -105,9 +93,6 @@ export function parseFlags(args: string[] = process.argv.slice(2)): Set<string> 
 	return flags;
 }
 
-/**
- * Run an async function with error handling
- */
 export async function runScript(fn: () => Promise<void>, scriptName = 'Script'): Promise<void> {
 	try {
 		await fn();

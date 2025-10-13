@@ -1,20 +1,17 @@
 #!/usr/bin/env bun
 
 /**
- * clean.ts - Development environment cleanup
- *
- * Removes build artifacts and kills development server processes.
- *
- * Usage:
- *   bun scripts/clean.ts              # Clean artifacts and kill ports
- *   bun scripts/clean.ts --skip-ports # Clean artifacts only
- *   bun run util:clean                # Via package.json script
+ * clean.ts - Clean build artifacts and dev ports
  */
 
 import { rm, stat } from 'node:fs/promises';
 import { isAbsolute, join, relative } from 'node:path';
 import { Glob, spawn } from 'bun';
-import { colors, parseFlags, printSection, runScript, status, Timer } from './utils';
+import { colors, parseFlags, runScript, Timer } from './utils';
+
+// ==================================================
+// CONFIGURATION
+// ==================================================
 
 type RemovalResult = {
 	path: string;
@@ -25,24 +22,21 @@ type RemovalResult = {
 const CLEAN_PATHS = ['.next', 'out', 'dist', 'build'] as const;
 const CLEAN_PATTERNS = ['*.tsbuildinfo'] as const;
 const CLEAN_PORTS = [3000, 3001, 3002, 3003] as const;
+// Delay to ensure SIGTERM is processed before continuing
 const PROCESS_KILL_GRACE_PERIOD_MS = 100;
 
-async function pathExists(path: string): Promise<boolean> {
-	try {
-		await stat(path);
-		return true;
-	} catch (error) {
-		if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-			return false;
-		}
-		throw error;
-	}
-}
+// ==================================================
+// UTILITIES
+// ==================================================
 
 async function removePath(path: string): Promise<RemovalResult> {
-	const exists = await pathExists(path);
-	if (!exists) {
-		return { path, removed: false };
+	try {
+		await stat(path);
+	} catch (error) {
+		if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+			return { path, removed: false };
+		}
+		throw error;
 	}
 
 	try {
@@ -93,6 +87,10 @@ function queueRemoval(targetPath: string, label?: string): Promise<RemovalResult
 	}));
 }
 
+// ==================================================
+// OPERATIONS
+// ==================================================
+
 function queueArtifactRemovals(): Promise<RemovalResult>[] {
 	const removalTasks: Promise<RemovalResult>[] = [];
 
@@ -118,20 +116,23 @@ async function cleanPorts(): Promise<number> {
 	const killResults = await Promise.all(
 		CLEAN_PORTS.map(async (port) => {
 			const killed = await killPortProcess(port);
-			return { port, killed };
+			return { killed };
 		}),
 	);
 
 	let portsKilled = 0;
-	for (const { port, killed } of killResults) {
+	for (const { killed } of killResults) {
 		if (killed) {
 			portsKilled++;
-			console.log(`${status.success} Port ${colors.cyan}${port}${colors.reset} cleared`);
 		}
 	}
 
 	return portsKilled;
 }
+
+// ==================================================
+// REPORTING
+// ==================================================
 
 function reportRemovalResults(removalResults: RemovalResult[]): {
 	cleanedCount: number;
@@ -140,14 +141,10 @@ function reportRemovalResults(removalResults: RemovalResult[]): {
 	let cleanedCount = 0;
 	let failureCount = 0;
 
-	for (const { path, removed, error } of removalResults) {
+	for (const { removed, error } of removalResults) {
 		if (removed) {
-			console.log(`${status.success} Removed: ${colors.cyan}${path}${colors.reset}`);
 			cleanedCount++;
 		} else if (error) {
-			console.log(
-				`${status.error} Failed: ${colors.cyan}${path}${colors.reset} ${colors.dim}- ${error}${colors.reset}`,
-			);
 			failureCount++;
 		}
 	}
@@ -162,40 +159,37 @@ function printCleanupSummary(
 	skipPorts: boolean,
 	timer: Timer,
 ): void {
-	console.log(`\n${colors.bold}Cleanup complete!${colors.reset}`);
-	const portSummary = skipPorts ? '' : `, ports: ${portsKilled} cleared`;
-	console.log(
-		`  ${colors.green}Artifacts:${colors.reset} ${cleanedCount} cleaned${portSummary}\n` +
-			`  ${colors.blue}Time:${colors.reset} ${timer.elapsedFormatted()}`,
-	);
-
-	const totalActions = cleanedCount + portsKilled;
 	if (failureCount > 0) {
+		const failureWord = failureCount === 1 ? 'failure' : 'failures';
+		const artifactWord = cleanedCount === 1 ? 'artifact' : 'artifacts';
 		console.log(
-			`\n${status.warning} Completed with ${failureCount} failures ${colors.dim}(${timer.elapsedFormatted()})${colors.reset}`,
+			`${colors.blue}Cleaned ${cleanedCount} ${artifactWord} with ${colors.red}${failureCount}${colors.reset} ${failureWord} in ${timer.elapsedFormatted()}.${colors.reset}`,
 		);
 		process.exitCode = 1;
-	} else if (totalActions > 0) {
-		console.log(
-			`\n${status.success} Development environment cleaned ${colors.dim}(${timer.elapsedFormatted()})${colors.reset}`,
-		);
 	} else {
+		const artifactWord = cleanedCount === 1 ? 'artifact' : 'artifacts';
+		const portSummary =
+			skipPorts || portsKilled === 0
+				? ''
+				: `, cleared ${portsKilled} ${portsKilled === 1 ? 'port' : 'ports'}`;
 		console.log(
-			`\n${status.info} Environment already clean ${colors.dim}(${timer.elapsedFormatted()})${colors.reset}`,
+			`${colors.blue}Cleaned ${cleanedCount} ${artifactWord}${portSummary} in ${timer.elapsedFormatted()}.${colors.reset}`,
 		);
 	}
 }
+
+// ==================================================
+// MAIN EXECUTION
+// ==================================================
 
 async function main(): Promise<void> {
 	const timer = new Timer();
 	const flags = parseFlags();
 	const skipPorts = flags.has('skip-ports');
 
-	printSection('Development Cleanup');
-	if (skipPorts) {
-		console.log('Cleaning build artifacts only (--skip-ports)');
-	} else {
-		console.log('Cleaning build artifacts and development ports');
+	if (flags.has('help') || flags.has('h')) {
+		console.log('Usage: bun scripts/clean.ts [--skip-ports]');
+		return;
 	}
 
 	// Queue and execute artifact removals

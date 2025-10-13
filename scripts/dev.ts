@@ -1,17 +1,15 @@
 #!/usr/bin/env bun
 
 /**
- * dev.ts - Development orchestrator with timestamp logging
- *
- * Runs Next.js development server with enhanced logging.
- *
- * Usage:
- *   bun scripts/dev.ts       # Run development server
- *   bun run dev:full         # Via package.json script
+ * dev.ts - Run Next.js dev server with logging
  */
 
 import { spawn } from 'bun';
-import { colors, formatError, printSection, runScript, status, Timer } from './utils';
+import { colors, formatError, parseFlags, runScript, Timer } from './utils';
+
+// ==================================================
+// CONFIGURATION
+// ==================================================
 
 /**
  * Threshold for clock drift correction (milliseconds)
@@ -44,6 +42,10 @@ const formatTimestamp = (() => {
 		return `${hours}:${minutes}:${seconds}.${milliseconds}`;
 	};
 })();
+
+// ==================================================
+// SERVER
+// ==================================================
 
 class DevServer {
 	private process?: ReturnType<typeof Bun.spawn>;
@@ -79,8 +81,7 @@ class DevServer {
 	}
 
 	public async start(): Promise<void> {
-		printSection('Development Environment');
-		console.log(`Starting Next.js with Turbopack...`);
+		console.log(`${colors.blue}Starting development server...${colors.reset}`);
 		console.log(`${colors.dim}Press Ctrl+C to stop${colors.reset}\n`);
 
 		this.process = Bun.spawn(['bun', 'next', 'dev', '--turbopack'], {
@@ -206,13 +207,23 @@ class DevServer {
 		}
 
 		console.log(
-			`\n${status.success} Development environment stopped ${colors.dim}(${this.timer.elapsedFormatted()})${colors.reset}`,
+			`\n${colors.blue}Stopped development server (${this.timer.elapsedFormatted()}).${colors.reset}`,
 		);
 		process.exit(0);
 	}
 }
 
+// ==================================================
+// MAIN EXECUTION
+// ==================================================
+
 async function main(): Promise<void> {
+	const flags = parseFlags();
+	if (flags.has('help') || flags.has('h')) {
+		console.log('Usage: bun scripts/dev.ts');
+		return;
+	}
+
 	const server = new DevServer();
 	await server.start();
 }
