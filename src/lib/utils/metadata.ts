@@ -32,10 +32,6 @@
  * };
  * ```
  *
- * ## PERFORMANCE
- * - Reuses shared image descriptors to prevent duplication
- * - Static configuration with zero runtime overhead
- *
  * ## DEPENDENCIES
  * - Uses Next.js built-in `Metadata` and `Viewport` types (no external dependencies)
  *
@@ -55,6 +51,15 @@ const SITE = {
 	backgroundColor: '#FFFFFF',
 	keywords: ['design', 'creative', 'media'],
 	creator: 'u29dc',
+} as const;
+
+const CDN = {
+	baseUrl: 'https://storage.u29dc.com',
+	hostname: 'storage.u29dc.com',
+	mediaPath: '/media/',
+	get mediaUrl(): string {
+		return `${this.baseUrl}${this.mediaPath}`;
+	},
 } as const;
 
 const sharedImages = [
@@ -87,7 +92,7 @@ export const metadata: Metadata = {
 	metadataBase: new URL(SITE.url),
 	title: {
 		default: SITE.title,
-		template: `%s | ${SITE.name}`,
+		template: `${SITE.name} | %s`,
 	},
 	description: SITE.description,
 	applicationName: SITE.name,
@@ -161,4 +166,4 @@ export const metadata: Metadata = {
 	},
 };
 
-export { SITE };
+export { SITE, CDN };

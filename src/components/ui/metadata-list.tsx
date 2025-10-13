@@ -30,8 +30,6 @@ import {
 	getStudyMetadata,
 } from '@/lib/utils/formatters';
 
-export type { MetadataListProps };
-
 export function MetadataList({ frontmatter, className = '' }: MetadataListProps) {
 	// Format date and build metadata items based on content type
 	const formattedDate = formatDate(frontmatter.date);

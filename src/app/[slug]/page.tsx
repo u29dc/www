@@ -23,44 +23,52 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { MDXRemote } from 'next-mdx-remote/rsc';
 import { Wrapper } from '@/components/ui/wrapper';
-import { getAllContent, getContentBySlug } from '@/lib/mdx/aggregator';
+import { getContentBySlug, getFeedContent } from '@/lib/mdx/aggregator';
 import { useMDXComponents } from '@/lib/mdx/components';
 import type { ContentPageProps } from '@/lib/types/components';
 import { getContentDescription } from '@/lib/utils/formatters';
 
 export default async function ContentPage({ params }: ContentPageProps) {
 	const { slug } = await params;
-	const parsed = await getContentBySlug(slug);
+	const content = await getContentBySlug(slug);
 
-	if (!parsed) notFound();
+	if (!content) notFound();
 
-	const { frontmatter, content } = parsed;
+	// Block non-feed items from HTML rendering (they should only be accessible via .md/.txt)
+	if (content.frontmatter.isFeedItem === false) {
+		notFound();
+	}
+
+	const { frontmatter, content: mdxContent } = content;
 
 	return (
 		<Wrapper type="page-content" frontmatter={frontmatter}>
 			<div></div>
-			<MDXRemote source={content} components={useMDXComponents({})} />
+			<MDXRemote source={mdxContent} components={useMDXComponents({})} />
 		</Wrapper>
 	);
 }
 
 export async function generateStaticParams() {
-	const allContent = await getAllContent();
-	return allContent.map(({ frontmatter }) => ({
+	const feedContent = await getFeedContent();
+	return feedContent.map(({ frontmatter }) => ({
 		slug: frontmatter.slug,
 	}));
 }
 
 export async function generateMetadata({ params }: ContentPageProps): Promise<Metadata> {
 	const { slug } = await params;
-	const parsed = await getContentBySlug(slug);
+	const content = await getContentBySlug(slug);
 
-	if (!parsed) return { title: 'Not Found' };
+	if (!content) return { title: 'Not Found' };
 
-	const description = getContentDescription(parsed.frontmatter);
+	const description = getContentDescription(content.frontmatter);
 
 	return {
-		title: parsed.frontmatter.title,
+		title: content.frontmatter.title,
 		description,
+		alternates: {
+			canonical: `/${slug}`,
+		},
 	};
 }

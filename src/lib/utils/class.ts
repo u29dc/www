@@ -20,11 +20,7 @@
 
 import type { ClassValue } from '@/lib/types/utils';
 
-export type { ClassValue };
-
-/**
- * Converts ClassValue input to flat className string
- */
+// Converts ClassValue input to flat className string
 function toClassString(value: ClassValue): string {
 	if (!value) return '';
 

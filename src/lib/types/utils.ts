@@ -52,9 +52,7 @@ export interface ThemeProviderProps {
 	initialResolved?: ResolvedTheme;
 }
 
-// =============================================================================
 // Class Utilities
-// =============================================================================
 
 /**
  * ClassValue represents valid className input types for class manipulation utilities
@@ -68,9 +66,7 @@ export type ClassValue =
 	| ClassValue[]
 	| Record<string, boolean | undefined | null>;
 
-// =============================================================================
 // Metadata Formatting
-// =============================================================================
 
 /**
  * Metadata item for display (used in metadata lists and formatters)
@@ -80,9 +76,7 @@ export interface MetadataItem {
 	value: ReactNode;
 }
 
-// =============================================================================
 // Logger Infrastructure
-// =============================================================================
 
 /**
  * Log metadata type (record of arbitrary key-value pairs)
@@ -99,9 +93,7 @@ export interface LoggerInstance {
 	child(bindings: LogMeta): LoggerInstance;
 }
 
-// =============================================================================
 // Security Infrastructure
-// =============================================================================
 
 /**
  * Content Security Policy directive definition
@@ -110,3 +102,25 @@ export type CspDirective = {
 	name: string;
 	values: string[];
 };
+
+// Error Handling
+
+/**
+ * Options for error response formatting
+ */
+export interface ErrorResponseOptions {
+	format?: 'json' | 'text'; // Default: 'json'
+	headers?: HeadersInit; // Additional headers to merge
+}
+
+/**
+ * Structured error response data
+ */
+export interface ErrorResponseData {
+	error: {
+		code: string;
+		message: string;
+		statusCode: number;
+		stack?: string;
+	};
+}

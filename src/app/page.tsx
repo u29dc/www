@@ -21,10 +21,10 @@ import Link from 'next/link';
 
 import { FeedItem } from '@/components/ui/feed-item';
 import { Wrapper } from '@/components/ui/wrapper';
-import { getAllContent } from '@/lib/mdx/aggregator';
+import { getFeedContent } from '@/lib/mdx/aggregator';
 
 export default async function HomePage() {
-	const content = await getAllContent();
+	const content = await getFeedContent();
 
 	return (
 		<Wrapper type="page-home">

@@ -46,7 +46,7 @@
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { parseMDX } from '@/lib/mdx/parser';
+import { parseMDX } from '@/lib/mdx/processor';
 import type { ParsedContent } from '@/lib/types/content';
 import { logEvent } from '@/lib/utils/logger';
 
@@ -99,6 +99,28 @@ export async function getAllContent(): Promise<ParsedContent[]> {
 	});
 
 	return sorted;
+}
+
+/**
+ * Get all feed-visible content sorted by date (newest first)
+ *
+ * Filters content based on isFeedItem flag. Only returns content
+ * where isFeedItem === true.
+ *
+ * @returns Promise resolving to array of ParsedContent sorted by date descending
+ * @throws Error if content directory cannot be read (propagated from getAllContent)
+ *
+ * @example
+ * ```typescript
+ * const feedContent = await getFeedContent();
+ * feedContent.forEach(item => {
+ *   console.log(`${item.frontmatter.title} - ${item.frontmatter.date}`);
+ * });
+ * ```
+ */
+export async function getFeedContent(): Promise<ParsedContent[]> {
+	const allContent = await getAllContent();
+	return allContent.filter((item) => item.frontmatter.isFeedItem === true);
 }
 
 /**

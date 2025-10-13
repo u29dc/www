@@ -31,8 +31,6 @@ import type { CSSProperties, ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import type { BlurCurve, BlurGradientProps, BlurPosition } from '@/lib/types/components';
 
-export type { BlurGradientProps };
-
 const DEFAULT_CONFIG = {
 	position: 'bottom' as BlurPosition,
 	strength: 3,
@@ -46,9 +44,7 @@ const DEFAULT_CONFIG = {
 	className: '',
 } as const;
 
-/**
- * Apply easing curve to progress value
- */
+// Apply easing curve to progress value
 function applyCurve(progress: number, curve: BlurCurve): number {
 	switch (curve) {
 		case 'linear':
@@ -64,9 +60,7 @@ function applyCurve(progress: number, curve: BlurCurve): number {
 	}
 }
 
-/**
- * Calculate blur value for a given layer
- */
+// Calculate blur value for a given layer
 function calculateBlur(
 	layerIndex: number,
 	totalLayers: number,
@@ -84,9 +78,7 @@ function calculateBlur(
 	return 0.0625 * (curvedProgress * totalLayers + 1) * strength;
 }
 
-/**
- * Get CSS gradient direction from position
- */
+// Get CSS gradient direction from position
 function getGradientDirection(position: BlurPosition): string {
 	const directions: Record<BlurPosition, string> = {
 		top: 'to top',
@@ -97,9 +89,7 @@ function getGradientDirection(position: BlurPosition): string {
 	return directions[position];
 }
 
-/**
- * Generate gradient mask stops for a layer
- */
+// Generate gradient mask stops for a layer
 function generateMaskGradient(layerIndex: number, totalLayers: number): string {
 	const increment = 100 / totalLayers;
 	const start = Math.round(increment * layerIndex * 10) / 10;
@@ -114,9 +104,7 @@ function generateMaskGradient(layerIndex: number, totalLayers: number): string {
 	return gradient;
 }
 
-/**
- * Intersection observer hook for scroll animations
- */
+// Intersection observer hook for scroll animations
 function useScrollVisible(ref: React.RefObject<HTMLDivElement | null>, enabled: boolean): boolean {
 	const [isVisible, setIsVisible] = useState(!enabled);
 
