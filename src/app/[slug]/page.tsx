@@ -22,15 +22,11 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { MDXRemote } from 'next-mdx-remote/rsc';
-// import { MetadataList } from '@/components/ui/metadata-list';
 import { Wrapper } from '@/components/ui/wrapper';
 import { getAllContent, getContentBySlug } from '@/lib/mdx/aggregator';
 import { useMDXComponents } from '@/lib/mdx/components';
+import type { ContentPageProps } from '@/lib/types/components';
 import { getContentDescription } from '@/lib/utils/formatters';
-
-interface ContentPageProps {
-	params: Promise<{ slug: string }>;
-}
 
 export default async function ContentPage({ params }: ContentPageProps) {
 	const { slug } = await params;
@@ -42,7 +38,6 @@ export default async function ContentPage({ params }: ContentPageProps) {
 
 	return (
 		<Wrapper type="page-content" frontmatter={frontmatter}>
-			{/*<MetadataList frontmatter={frontmatter} className="mb-10 content-column p-5" />*/}
 			<div></div>
 			<MDXRemote source={content} components={useMDXComponents({})} />
 		</Wrapper>

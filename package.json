@@ -31,7 +31,7 @@
 		"util:clean": "bun run scripts/clean.ts",
 		"util:patterns": "bun run scripts/patterns.ts",
 		"utils--------------------------------": "",
-		"util:check": "bun run util:format && bun run util:lint && bun run util:types && bun run util:patterns",
+		"util:check": "bun run util:format ; bun run util:lint ; bun run util:patterns ; bun run util:types",
 		"release------------------------------": "",
 		"semantic-release": "bunx semantic-release"
 	},

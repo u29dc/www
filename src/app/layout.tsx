@@ -19,20 +19,18 @@
 
 import { cookies, headers } from 'next/headers';
 import Script from 'next/script';
-import type { ReactNode } from 'react';
 import { ThemeProvider } from '@/components/core/theme-provider';
 import { ViewportHeightFix } from '@/components/core/viewport-height-fix';
 import { BlurGradient } from '@/components/ui/blur-gradient';
 import { neueHaas } from '@/lib/fonts';
+import type { RootLayoutProps } from '@/lib/types/components';
+import type { ResolvedTheme, Theme } from '@/lib/types/utils';
 import { metadata, viewport } from '@/lib/utils/metadata';
-import { RESOLVED_COOKIE, type ResolvedTheme, THEME_COOKIE, type Theme } from '@/lib/utils/theme';
+
+import { RESOLVED_COOKIE, THEME_COOKIE } from '@/lib/utils/theme';
 import '@/styles/globals.css';
 
 export { metadata, viewport };
-
-interface RootLayoutProps {
-	children: ReactNode;
-}
 
 export default async function RootLayout({ children }: RootLayoutProps) {
 	// Extract nonce from proxy headers for CSP compliance
