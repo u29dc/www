@@ -46,6 +46,7 @@ export const StudySchema = z.object({
 	mode: z.enum(['LAB', 'COM']),
 	image: z.string().optional(),
 	featured: z.boolean().optional(),
+	isFeedItem: z.boolean(),
 });
 
 /**
@@ -62,6 +63,7 @@ export const FragmentSchema = z.object({
 	slug: z.string().min(1),
 	excerpt: z.string().optional(),
 	image: z.string().optional(),
+	isFeedItem: z.boolean(),
 });
 
 /**
@@ -79,18 +81,36 @@ export const SignalSchema = z.object({
 	source: z.string().optional(),
 	link: z.url().optional(),
 	image: z.string().optional(),
+	isFeedItem: z.boolean(),
+});
+
+/**
+ * Meta Schema - Metadata / About Pages
+ *
+ * Represents metadata content, informational pages, or about sections.
+ * General-purpose content type for non-categorized pages.
+ */
+export const MetaSchema = z.object({
+	type: z.literal('meta'),
+	date: z.iso.datetime(),
+	title: z.string().min(1),
+	description: z.string().min(1),
+	slug: z.string().min(1),
+	isFeedItem: z.boolean(),
+	image: z.string().optional(),
 });
 
 /**
  * Content Schema - Discriminated Union
  *
  * Combines all content types into a single discriminated union.
- * The 'type' field discriminates between Study, Fragment, and Signal.
+ * The 'type' field discriminates between Study, Fragment, Signal, and Meta.
  */
 export const ContentSchema = z.discriminatedUnion('type', [
 	StudySchema,
 	FragmentSchema,
 	SignalSchema,
+	MetaSchema,
 ]);
 
 /**
@@ -99,6 +119,7 @@ export const ContentSchema = z.discriminatedUnion('type', [
 export type StudyContent = z.infer<typeof StudySchema>;
 export type FragmentContent = z.infer<typeof FragmentSchema>;
 export type SignalContent = z.infer<typeof SignalSchema>;
+export type Meta = z.infer<typeof MetaSchema>;
 export type ContentItem = z.infer<typeof ContentSchema>;
 
 /**
@@ -139,4 +160,14 @@ export function isFragment(item: ContentItem): item is FragmentContent {
  */
 export function isSignal(item: ContentItem): item is SignalContent {
 	return item.type === 'signal';
+}
+
+/**
+ * Type Guard: Check if content is a Meta
+ *
+ * @param item - Content item to check
+ * @returns True if item is Meta
+ */
+export function isMeta(item: ContentItem): item is Meta {
+	return item.type === 'meta';
 }

@@ -102,6 +102,28 @@ export async function getAllContent(): Promise<ParsedContent[]> {
 }
 
 /**
+ * Get all feed-visible content sorted by date (newest first)
+ *
+ * Filters content based on isFeedItem flag. Only returns content
+ * where isFeedItem === true.
+ *
+ * @returns Promise resolving to array of ParsedContent sorted by date descending
+ * @throws Error if content directory cannot be read (propagated from getAllContent)
+ *
+ * @example
+ * ```typescript
+ * const feedContent = await getFeedContent();
+ * feedContent.forEach(item => {
+ *   console.log(`${item.frontmatter.title} - ${item.frontmatter.date}`);
+ * });
+ * ```
+ */
+export async function getFeedContent(): Promise<ParsedContent[]> {
+	const allContent = await getAllContent();
+	return allContent.filter((item) => item.frontmatter.isFeedItem === true);
+}
+
+/**
  * Retrieves a single MDX content item by slug
  *
  * Constructs the file path from the slug and attempts to parse the MDX file.
