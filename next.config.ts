@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next';
+import { CDN } from '@/lib/utils/metadata';
 
 const nextConfig: NextConfig = {
 	reactCompiler: true,
@@ -24,24 +25,28 @@ const nextConfig: NextConfig = {
 	},
 
 	/**
-	 * URL rewrites for markdown endpoint
+	 * URL rewrites for raw content endpoints
 	 *
-	 * Maps /:slug.md URLs to API route handler at /api/markdown/:slug
-	 * Enables serving raw markdown versions of MDX content via .md extension
+	 * Maps /:slug.md and /:slug.txt URLs to universal raw API endpoint
+	 * Enables serving MDX content as markdown (.md) or plain text (.txt)
 	 */
 	async rewrites() {
 		return {
 			beforeFiles: [
 				{
 					source: '/:slug.md',
-					destination: '/api/markdown/:slug',
+					destination: '/api/raw/:slug',
+				},
+				{
+					source: '/:slug.txt',
+					destination: '/api/raw/:slug',
 				},
 			],
 		};
 	},
 
 	images: {
-		remotePatterns: [{ protocol: 'https', hostname: 'storage.u29dc.com' }],
+		remotePatterns: [{ protocol: 'https', hostname: CDN.hostname }],
 		localPatterns: [{ pathname: '/public/**', search: '' }],
 	},
 };
