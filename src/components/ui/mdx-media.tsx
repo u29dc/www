@@ -38,6 +38,7 @@
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MdxMediaItem } from '@/components/ui/mdx-media-item';
 import type { MdxMediaProps, MediaLayoutContextValue } from '@/lib/types/components';
+import { cn } from '@/lib/utils/class';
 
 export const MediaLayoutContext = createContext<MediaLayoutContextValue | null>(null);
 
@@ -130,18 +131,21 @@ export function MdxMedia({ src, alt }: MdxMediaProps) {
 	);
 
 	return (
-		<MediaLayoutContext.Provider value={contextValue}>
-			<div
-				ref={containerRef}
-				className={`flex gap-2 md:gap-5 col-span-full px-[5px] transition-opacity duration-300 ${
-					isLayoutReady ? 'opacity-100' : 'opacity-0'
-				}`}
-				style={calculatedHeight > 0 ? { height: `${calculatedHeight}px` } : {}}
-			>
-				{src.map((source) => (
-					<MdxMediaItem key={source} src={source} alt={alt || ''} />
-				))}
-			</div>
-		</MediaLayoutContext.Provider>
+		<div className="grid grid-cols-10 col-span-full">
+			<MediaLayoutContext.Provider value={contextValue}>
+				<div
+					ref={containerRef}
+					className={cn(
+						'flex col-start-1 col-span-full px-[5px] transition-opacity duration-300 md:col-start-2 md:col-span-8',
+						isLayoutReady ? 'opacity-100' : 'opacity-0',
+					)}
+					style={calculatedHeight > 0 ? { height: `${calculatedHeight}px` } : {}}
+				>
+					{src.map((source) => (
+						<MdxMediaItem key={source} src={source} alt={alt || ''} />
+					))}
+				</div>
+			</MediaLayoutContext.Provider>
+		</div>
 	);
 }

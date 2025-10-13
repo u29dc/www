@@ -28,7 +28,7 @@ export default async function HomePage() {
 
 	return (
 		<Wrapper type="page-home">
-			<div className="mb-10 content-column p-5">
+			<div className="content-column p-5 mb-10">
 				<div className="flex flex-col gap-4">
 					<h1>
 						An evolving, enigmatic, multifaceted creative practice, turning complex
