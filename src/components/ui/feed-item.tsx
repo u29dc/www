@@ -30,7 +30,7 @@ export function FeedItem({ item }: FeedItemProps) {
 	return (
 		<Link
 			href={`/${slug}`}
-			className="col-span-full group grid grid-cols-10 grid-rows-auto w-full"
+			className="group grid grid-cols-10 grid-rows-auto col-span-full w-full"
 		>
 			<div className="content-column p-5">
 				<div>{title}</div>

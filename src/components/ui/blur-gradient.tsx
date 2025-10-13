@@ -184,10 +184,10 @@ export function BlurGradient(props: BlurGradientProps) {
 	return (
 		<div
 			ref={containerRef}
-			className={`hidden md:block relative isolate ${config.className}`}
+			className={`relative isolate hidden md:block ${config.className}`}
 			style={containerStyle}
 		>
-			<div className="relative w-full h-full">{layers}</div>
+			<div className="relative full-container">{layers}</div>
 			{config.children && <div className="relative">{config.children}</div>}
 		</div>
 	);

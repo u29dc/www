@@ -118,3 +118,19 @@
 @utility content-column {
 	@apply col-start-1 col-span-10 md:col-start-6 md:col-span-5 lg:col-start-6 lg:col-span-4;
 }
+
+@utility full-container {
+	@apply h-full w-full;
+}
+
+@utility header-title-centered {
+	@apply absolute bottom-0 w-full left-1/2 -translate-x-1/2 text-center;
+}
+
+@utility header-nav-corner {
+	@apply absolute bottom-0 left-0;
+}
+
+@utility media-fill {
+	@apply h-full w-full object-cover;
+}
