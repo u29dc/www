@@ -62,5 +62,8 @@ export async function generateMetadata({ params }: ContentPageProps): Promise<Me
 	return {
 		title: parsed.frontmatter.title,
 		description,
+		alternates: {
+			canonical: `/${slug}`,
+		},
 	};
 }
