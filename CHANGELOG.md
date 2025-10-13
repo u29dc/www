@@ -1,3 +1,13 @@
+# [1.4.0](https://github.com/u29dc/www/compare/v1.3.0...v1.4.0) (2025-10-13)
+
+
+### Features
+
+* **api:** add markdown response endpoint for mdx content ([032c7e1](https://github.com/u29dc/www/commit/032c7e1653712061c380e8f32ed5e157927db154))
+* **api:** add universal raw content endpoint with sitemap injection ([487d49e](https://github.com/u29dc/www/commit/487d49e4f5da300cd2f3cbdf6becb81ab88cde6c))
+* **utils:** add error handling and validation infrastructure ([96c6397](https://github.com/u29dc/www/commit/96c639703628c9e044b4b124551f9983b594264d))
+* **utils:** add sitemap generation infrastructure ([a3beb8f](https://github.com/u29dc/www/commit/a3beb8fc9710bc41b3ad46c43ec8bf9281d3c75e))
+
 # [1.3.0](https://github.com/u29dc/www/compare/v1.2.1...v1.3.0) (2025-10-13)
 
 
