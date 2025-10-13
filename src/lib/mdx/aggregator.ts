@@ -46,7 +46,7 @@
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { parseMDX } from '@/lib/mdx/parser';
+import { parseMDX } from '@/lib/mdx/processor';
 import type { ParsedContent } from '@/lib/types/content';
 import { logEvent } from '@/lib/utils/logger';
 
