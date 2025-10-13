@@ -11,6 +11,12 @@
 			}
 		],
 		[
+			"@semantic-release/exec",
+			{
+				"prepareCmd": "bunx biome format --write CHANGELOG.md"
+			}
+		],
+		[
 			"@semantic-release/npm",
 			{
 				"npmPublish": false
