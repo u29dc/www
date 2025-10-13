@@ -209,7 +209,7 @@ export function toMarkdown(frontmatter: ContentItem, content: string): string {
 
 					const url = `${CDN.mediaUrl}${sanitized}`;
 					// Use consistent markdown image syntax (works for both images and videos)
-					return `![Media](${url})`;
+					return `![${sanitized}](${url})`;
 				})
 				.filter((item): item is string => item !== null) // Remove nulls (invalid files)
 				.join('\n\n');
@@ -220,8 +220,7 @@ export function toMarkdown(frontmatter: ContentItem, content: string): string {
 				return '\n\n<!-- Media gallery (no valid files) -->\n\n';
 			}
 
-			// Add section header
-			return `\n\n## Media Gallery\n\n${mediaItems}\n\n`;
+			return `\n\n${mediaItems}\n\n`;
 		} catch (error) {
 			logEvent('MARKDOWN', 'EXTRACT_MEDIA', 'FAIL', { error, match });
 			return '\n\n<!-- Media gallery (parsing error) -->\n\n';

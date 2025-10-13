@@ -17,8 +17,6 @@
  * @module app/page
  */
 
-import Link from 'next/link';
-
 import { FeedItem } from '@/components/ui/feed-item';
 import { Wrapper } from '@/components/ui/wrapper';
 import { getFeedContent } from '@/lib/mdx/aggregator';
@@ -57,9 +55,23 @@ export default async function HomePage() {
 					<p>After all, isn't true infinity always incomplete?</p>
 
 					<nav className="flex flex-row gap-4">
-						<Link href="https://instagram.com/u29dc">IG</Link>
-						<Link href="https://linkedin.com/in/u29dc">LI</Link>
-						<Link href="https://cal.com/u29dc">Calendar</Link>
+						<a
+							href="https://instagram.com/u29dc"
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							Instagram
+						</a>
+						<a
+							href="https://linkedin.com/in/u29dc"
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							LinkedIn
+						</a>
+						<a href="https://cal.com/u29dc" target="_blank" rel="noopener noreferrer">
+							Calendar
+						</a>
 					</nav>
 				</div>
 			</div>

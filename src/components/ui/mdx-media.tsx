@@ -136,7 +136,7 @@ export function MdxMedia({ src, alt }: MdxMediaProps) {
 				<div
 					ref={containerRef}
 					className={cn(
-						'flex col-start-1 col-span-full px-[5px] transition-opacity duration-300 md:col-start-2 md:col-span-8',
+						'flex col-start-1 col-span-full px-[5px] transition-opacity duration-300',
 						isLayoutReady ? 'opacity-100' : 'opacity-0',
 					)}
 					style={calculatedHeight > 0 ? { height: `${calculatedHeight}px` } : {}}
