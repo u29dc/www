@@ -28,16 +28,19 @@ export function FeedItem({ item }: FeedItemProps) {
 	const formattedDate = formatDate(date);
 
 	return (
-		<Link
-			href={`/${slug}`}
-			className="group grid grid-cols-10 grid-rows-auto col-span-full w-full"
-		>
-			<div className="content-column p-5">
-				<div>{title}</div>
-				<div>{description}</div>
-				<MetadataList frontmatter={frontmatter} />
-				<time>{formattedDate}</time>
-			</div>
-		</Link>
+		<article className="col-span-full w-full">
+			<Link
+				href={`/${slug}`}
+				className="group grid grid-cols-10 grid-rows-auto w-full"
+				aria-label={`Read ${title}`}
+			>
+				<div className="content-column p-5">
+					<h2>{title}</h2>
+					<p>{description}</p>
+					<MetadataList frontmatter={frontmatter} />
+					<time dateTime={date}>{formattedDate}</time>
+				</div>
+			</Link>
+		</article>
 	);
 }
