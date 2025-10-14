@@ -7,7 +7,7 @@
  * Provides format-agnostic access to content via URL rewrites.
  *
  * ## RESPONSIBILITIES
- * - Detect format from URL path (.md vs .txt extension)
+ * - Detect format from route segment (md or txt)
  * - Retrieve and transform content to markdown format
  * - Inject sitemap XML into llms.md and llms.txt (only)
  * - Set appropriate content-type headers based on format
@@ -17,12 +17,12 @@
  *
  * ## USAGE
  * Accessed via URL rewrites configured in next.config.ts:
- * - /raw/slug.md → /api/raw/slug (markdown format)
- * - /raw/slug.txt → /api/raw/slug (text format)
+ * - /slug.md → /api/raw/md/slug
+ * - /slug.txt → /api/raw/txt/slug
  *
  * ## KEY FLOWS
- * 1. Request arrives with slug parameter
- * 2. Detect format from URL pathname (.md vs .txt)
+ * 1. Request arrives with format and slug route segments
+ * 2. Validate format is either 'md' or 'txt'
  * 3. Strip format extension from slug if present
  * 4. Validate and sanitize slug for security
  * 5. Retrieve content from aggregator via getContentBySlug()
@@ -31,13 +31,18 @@
  * 8. Set headers based on detected format
  * 9. Return response with appropriate content-type
  *
- * @module app/api/raw/[slug]/route
+ * @module app/api/raw/[format]/[slug]/route
  */
 
 import type { NextRequest } from 'next/server';
-import { getAllContent, getContentBySlug } from '@/lib/mdx/aggregator';
+import { getContentBySlug } from '@/lib/mdx/aggregator';
 import { toMarkdown } from '@/lib/mdx/processor';
-import { createErrorResponse, NotFoundError, ProcessingError } from '@/lib/utils/errors';
+import {
+	createErrorResponse,
+	NotFoundError,
+	ProcessingError,
+	ValidationError,
+} from '@/lib/utils/errors';
 import { logEvent } from '@/lib/utils/logger';
 import { SITE } from '@/lib/utils/metadata';
 import { generateSitemapEntries, generateSitemapXML } from '@/lib/utils/sitemap';
@@ -46,69 +51,55 @@ import { validateSlug } from '@/lib/utils/validators';
 /**
  * Route segment configuration
  *
- * Enables ISR with 24-hour revalidation and forces static generation
- * at build time for all valid content slugs in both formats (.md and .txt).
+ * Route is dynamic to handle format route segment from rewrites.
+ * Edge caching is controlled via Cache-Control response headers.
+ * Expensive operations (MDX parsing) are cached in aggregator layer.
  */
-export const revalidate = 86400; // 24 hours
-export const dynamic = 'force-static'; // Pre-generate at build time
-
-/**
- * Generate static params for all content slugs
- *
- * Pre-generates raw content responses for all valid content at build time.
- * This ensures all /raw/{slug}.md and /raw/{slug}.txt URLs are statically
- * generated and cached for optimal performance.
- *
- * @returns Array of param objects containing slug values
- *
- * @example
- * ```typescript
- * // Returns: [{ slug: 'llms' }, { slug: 'patterns' }, ...]
- * ```
- */
-export async function generateStaticParams() {
-	const allContent = await getAllContent();
-
-	return allContent.map(({ frontmatter }) => ({
-		slug: frontmatter.slug,
-	}));
-}
 
 /**
  * GET handler for raw content responses in multiple formats
  *
- * Handles requests to /raw/{slug}.md and /raw/{slug}.txt URLs by retrieving
+ * Handles requests to /slug.md and /slug.txt URLs by retrieving
  * MDX content, transforming it to plain markdown, optionally injecting sitemap
  * (for llms content only), and returning it with appropriate HTTP headers
  * based on the requested format.
  *
  * Format detection:
- * - Checks URL pathname for .txt extension → text/plain
- * - Otherwise defaults to .md → text/markdown
+ * - Reads format from route segment (passed via rewrite)
+ * - format='txt' → text/plain
+ * - format='md' → text/markdown
+ * - Other values → 400 Bad Request
  *
  * Special handling:
  * - For slug === 'llms' (BOTH .md and .txt formats): appends sitemap XML
  * - For other slugs: returns content without modification
  *
  * @param request - Next.js request object for URL inspection
- * @param context - Route context containing dynamic params
+ * @param context - Route context containing dynamic params (format and slug)
  * @returns Response object with formatted content or error message
  *
  * @example
  * ```typescript
- * // GET /raw/llms.txt → Returns text format with sitemap injected
- * // GET /raw/llms.md → Returns markdown format with sitemap injected
- * // GET /raw/patterns.md → Returns markdown without sitemap
- * // GET /raw/invalid-slug.md → Returns 400 Bad Request
- * // GET /raw/nonexistent.txt → Returns 404 Not Found
+ * // GET /llms.txt → Rewrites to /api/raw/txt/llms → Returns text format with sitemap
+ * // GET /llms.md → Rewrites to /api/raw/md/llms → Returns markdown format with sitemap
+ * // GET /patterns.md → Rewrites to /api/raw/md/patterns → Returns markdown without sitemap
+ * // GET /invalid-slug.md → Returns 400 Bad Request
+ * // GET /nonexistent.txt → Returns 404 Not Found
  * ```
  */
-export async function GET(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
-	const { slug: rawSlug } = await params;
+export async function GET(
+	_request: NextRequest,
+	{ params }: { params: Promise<{ format: string; slug: string }> },
+) {
+	const { format: rawFormat, slug: rawSlug } = await params;
 
-	// Detect format from URL path
-	const url = new URL(request.url);
-	const format = url.pathname.endsWith('.txt') ? 'txt' : 'md';
+	// Validate format is either 'md' or 'txt'
+	if (rawFormat !== 'md' && rawFormat !== 'txt') {
+		return createErrorResponse(new ValidationError(`Invalid format: ${rawFormat}`), {
+			format: 'json',
+		});
+	}
+	const format = rawFormat as 'md' | 'txt';
 
 	// Remove extension from slug if present
 	const slugWithoutExt = rawSlug.replace(/\.(md|txt)$/, '');

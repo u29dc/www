@@ -27,19 +27,18 @@ const nextConfig: NextConfig = {
 	/**
 	 * URL rewrites for raw content endpoints
 	 *
-	 * Maps /:slug.md and /:slug.txt URLs to universal raw API endpoint
-	 * Enables serving MDX content as markdown (.md) or plain text (.txt)
+	 * Maps /:slug.md and /:slug.txt URLs to format-specific API routes
 	 */
 	async rewrites() {
 		return {
 			beforeFiles: [
 				{
 					source: '/:slug.md',
-					destination: '/api/raw/:slug',
+					destination: '/api/raw/md/:slug',
 				},
 				{
 					source: '/:slug.txt',
-					destination: '/api/raw/:slug',
+					destination: '/api/raw/txt/:slug',
 				},
 			],
 		};
