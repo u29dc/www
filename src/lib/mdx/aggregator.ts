@@ -46,28 +46,23 @@
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { unstable_cache } from 'next/cache';
+import { cache } from 'react';
 import { parseMDX } from '@/lib/mdx/processor';
 import type { ParsedContent } from '@/lib/types/content';
 import { logEvent } from '@/lib/utils/logger';
 
 /**
- * Retrieves all MDX content files sorted by date
+ * Internal implementation: Retrieves all MDX content files sorted by date
  *
  * Scans the content directory, parses all MDX files in parallel,
  * and returns them sorted chronologically (newest first).
  *
+ * @internal
  * @returns Promise resolving to array of ParsedContent sorted by date descending
  * @throws Error if content directory cannot be read (propagated from fs.readdir)
- *
- * @example
- * ```typescript
- * const content = await getAllContent();
- * content.forEach(item => {
- *   console.log(`${item.frontmatter.title} - ${item.frontmatter.date}`);
- * });
- * ```
  */
-export async function getAllContent(): Promise<ParsedContent[]> {
+async function getAllContentImpl(): Promise<ParsedContent[]> {
 	// Resolve content directory path
 	const contentDir = path.join(process.cwd(), 'src/content');
 
@@ -102,10 +97,56 @@ export async function getAllContent(): Promise<ParsedContent[]> {
 }
 
 /**
- * Get all feed-visible content sorted by date (newest first)
+ * Retrieves all MDX content files sorted by date (cached)
+ *
+ * Scans the content directory, parses all MDX files in parallel,
+ * and returns them sorted chronologically (newest first).
+ *
+ * Uses React cache() for request-level deduplication and Next.js
+ * unstable_cache() for persistent caching across requests.
+ * Tagged with 'content:all' for selective revalidation.
+ *
+ * @returns Promise resolving to array of ParsedContent sorted by date descending
+ * @throws Error if content directory cannot be read (propagated from fs.readdir)
+ *
+ * @example
+ * ```typescript
+ * const content = await getAllContent();
+ * content.forEach(item => {
+ *   console.log(`${item.frontmatter.title} - ${item.frontmatter.date}`);
+ * });
+ * ```
+ */
+export const getAllContent = cache(
+	unstable_cache(getAllContentImpl, ['content-all'], {
+		tags: ['content:all'],
+	}),
+);
+
+/**
+ * Internal implementation: Get all feed-visible content
  *
  * Filters content based on isFeedItem flag. Only returns content
  * where isFeedItem === true.
+ *
+ * @internal
+ * @returns Promise resolving to array of ParsedContent sorted by date descending
+ * @throws Error if content directory cannot be read (propagated from getAllContent)
+ */
+async function getFeedContentImpl(): Promise<ParsedContent[]> {
+	const allContent = await getAllContent();
+	return allContent.filter((item) => item.frontmatter.isFeedItem === true);
+}
+
+/**
+ * Get all feed-visible content sorted by date (newest first, cached)
+ *
+ * Filters content based on isFeedItem flag. Only returns content
+ * where isFeedItem === true.
+ *
+ * Uses React cache() for request-level deduplication and Next.js
+ * unstable_cache() for persistent caching across requests.
+ * Tagged with 'content:feed' for selective revalidation.
  *
  * @returns Promise resolving to array of ParsedContent sorted by date descending
  * @throws Error if content directory cannot be read (propagated from getAllContent)
@@ -118,31 +159,23 @@ export async function getAllContent(): Promise<ParsedContent[]> {
  * });
  * ```
  */
-export async function getFeedContent(): Promise<ParsedContent[]> {
-	const allContent = await getAllContent();
-	return allContent.filter((item) => item.frontmatter.isFeedItem === true);
-}
+export const getFeedContent = cache(
+	unstable_cache(getFeedContentImpl, ['content-feed'], {
+		tags: ['content:feed', 'content:all'],
+	}),
+);
 
 /**
- * Retrieves a single MDX content item by slug
+ * Internal implementation: Retrieves a single MDX content item by slug
  *
  * Constructs the file path from the slug and attempts to parse the MDX file.
  * Returns null if the file doesn't exist or parsing fails.
  *
+ * @internal
  * @param slug - Content slug matching the filename without extension
  * @returns Promise resolving to ParsedContent or null if not found
- *
- * @example
- * ```typescript
- * const content = await getContentBySlug('battersea');
- * if (content) {
- *   console.log(content.frontmatter.title);
- * } else {
- *   console.log('Content not found');
- * }
- * ```
  */
-export async function getContentBySlug(slug: string): Promise<ParsedContent | null> {
+async function getContentBySlugImpl(slug: string): Promise<ParsedContent | null> {
 	try {
 		// Resolve content directory and file path
 		const contentDir = path.join(process.cwd(), 'src/content');
@@ -163,3 +196,32 @@ export async function getContentBySlug(slug: string): Promise<ParsedContent | nu
 		return null;
 	}
 }
+
+/**
+ * Retrieves a single MDX content item by slug (cached)
+ *
+ * Constructs the file path from the slug and attempts to parse the MDX file.
+ * Returns null if the file doesn't exist or parsing fails.
+ *
+ * Uses React cache() for request-level deduplication and Next.js
+ * unstable_cache() for persistent caching across requests.
+ * Tagged with 'content:all' and 'content:{slug}' for selective revalidation.
+ *
+ * @param slug - Content slug matching the filename without extension
+ * @returns Promise resolving to ParsedContent or null if not found
+ *
+ * @example
+ * ```typescript
+ * const content = await getContentBySlug('battersea');
+ * if (content) {
+ *   console.log(content.frontmatter.title);
+ * } else {
+ *   console.log('Content not found');
+ * }
+ * ```
+ */
+export const getContentBySlug = cache((slug: string) => {
+	return unstable_cache(async () => getContentBySlugImpl(slug), [`content-slug-${slug}`], {
+		tags: ['content:all', `content:${slug}`],
+	})();
+});
