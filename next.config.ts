@@ -1,5 +1,5 @@
 import type { NextConfig } from 'next';
-import { CDN } from '@/lib/utils/metadata';
+import { CDN } from '@/lib/meta/config';
 
 const nextConfig: NextConfig = {
 	reactCompiler: true,
@@ -27,11 +27,12 @@ const nextConfig: NextConfig = {
 	/**
 	 * URL rewrites for raw content endpoints
 	 *
-	 * Maps /:slug.md and /:slug.txt URLs to format-specific API routes
+	 * Maps /:slug.md and /:slug.txt URLs to format-specific API routes.
+	 * Uses afterFiles to allow Next.js convention files (robots.txt, etc.) to be served first.
 	 */
 	async rewrites() {
 		return {
-			beforeFiles: [
+			afterFiles: [
 				{
 					source: '/:slug.md',
 					destination: '/api/raw/md/:slug',

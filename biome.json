@@ -116,6 +116,10 @@
 			"linter": { "rules": { "suspicious": { "noConsole": "off" } } }
 		},
 		{
+			"includes": ["src/lib/meta/images.tsx"],
+			"linter": { "rules": { "performance": { "noImgElement": "off" } } }
+		},
+		{
 			"includes": ["**/*.yml", "**/*.yaml"],
 			"formatter": {
 				"indentStyle": "space",
