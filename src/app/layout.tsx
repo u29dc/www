@@ -23,9 +23,9 @@ import { ThemeProvider } from '@/components/core/theme-provider';
 import { ViewportHeightFix } from '@/components/core/viewport-height-fix';
 import { BlurGradient } from '@/components/ui/blur-gradient';
 import { neueHaas } from '@/lib/fonts';
+import { metadata, viewport } from '@/lib/meta/config';
 import type { RootLayoutProps } from '@/lib/types/components';
 import type { ResolvedTheme, Theme } from '@/lib/types/utils';
-import { metadata, viewport } from '@/lib/utils/metadata';
 
 import { RESOLVED_COOKIE, THEME_COOKIE } from '@/lib/utils/theme';
 import '@/styles/globals.css';

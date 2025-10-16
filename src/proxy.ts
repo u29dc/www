@@ -19,8 +19,8 @@
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
+import { CDN } from '@/lib/meta/config';
 import type { CspDirective } from '@/lib/types/utils';
-import { CDN } from '@/lib/utils/metadata';
 import { isValidTheme, RESOLVED_COOKIE, THEME_COOKIE } from '@/lib/utils/theme';
 
 /**

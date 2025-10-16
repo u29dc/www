@@ -19,8 +19,8 @@
  */
 
 import Link from 'next/link';
+import { SITE } from '@/lib/meta/config';
 import type { HeaderProps } from '@/lib/types/components';
-import { SITE } from '@/lib/utils/metadata';
 
 export function Header({ type, frontmatter, title }: HeaderProps) {
 	const siteTitle = title ?? SITE.title;

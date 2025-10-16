@@ -3,13 +3,13 @@
  *
  * ## SUMMARY
  * Serves MDX content in both markdown (.md) and plain text (.txt) formats.
- * Special handling for llms requests: injects complete sitemap at end of content.
  * Provides format-agnostic access to content via URL rewrites.
+ * Adds sitemap reference footer to all raw content for discoverability.
  *
  * ## RESPONSIBILITIES
  * - Detect format from route segment (md or txt)
  * - Retrieve and transform content to markdown format
- * - Inject sitemap XML into llms.md and llms.txt (only)
+ * - Inject sitemap.xml reference footer to all raw content
  * - Set appropriate content-type headers based on format
  * - Handle errors with structured responses
  * - Log all requests for monitoring and analytics
@@ -27,7 +27,7 @@
  * 4. Validate and sanitize slug for security
  * 5. Retrieve content from aggregator via getContentBySlug()
  * 6. Transform content to markdown using toMarkdown()
- * 7. IF slug === 'llms': inject sitemap XML at end
+ * 7. Append sitemap.xml reference footer to output
  * 8. Set headers based on detected format
  * 9. Return response with appropriate content-type
  *
@@ -37,6 +37,7 @@
 import type { NextRequest } from 'next/server';
 import { getContentBySlug } from '@/lib/mdx/aggregator';
 import { toMarkdown } from '@/lib/mdx/processor';
+import { SITE } from '@/lib/meta/config';
 import {
 	createErrorResponse,
 	NotFoundError,
@@ -44,8 +45,6 @@ import {
 	ValidationError,
 } from '@/lib/utils/errors';
 import { logEvent } from '@/lib/utils/logger';
-import { SITE } from '@/lib/utils/metadata';
-import { generateSitemapEntries, generateSitemapXML } from '@/lib/utils/sitemap';
 import { validateSlug } from '@/lib/utils/validators';
 
 /**
@@ -71,8 +70,7 @@ import { validateSlug } from '@/lib/utils/validators';
  * - Other values → 400 Bad Request
  *
  * Special handling:
- * - For slug === 'llms' (BOTH .md and .txt formats): appends sitemap XML
- * - For other slugs: returns content without modification
+ * - All raw content includes sitemap.xml reference footer for discoverability
  *
  * @param request - Next.js request object for URL inspection
  * @param context - Route context containing dynamic params (format and slug)
@@ -80,9 +78,8 @@ import { validateSlug } from '@/lib/utils/validators';
  *
  * @example
  * ```typescript
- * // GET /llms.txt → Rewrites to /api/raw/txt/llms → Returns text format with sitemap
- * // GET /llms.md → Rewrites to /api/raw/md/llms → Returns markdown format with sitemap
- * // GET /patterns.md → Rewrites to /api/raw/md/patterns → Returns markdown without sitemap
+ * // GET /llms.txt → Rewrites to /api/raw/txt/llms → Returns text with sitemap reference
+ * // GET /patterns.md → Rewrites to /api/raw/md/patterns → Returns markdown with sitemap reference
  * // GET /invalid-slug.md → Returns 400 Bad Request
  * // GET /nonexistent.txt → Returns 404 Not Found
  * ```
@@ -126,21 +123,8 @@ export async function GET(
 		// Transform to markdown
 		let output = toMarkdown(content.frontmatter, content.content);
 
-		// CRITICAL: Inject sitemap into BOTH llms.md AND llms.txt
-		// Check slug === 'llms' regardless of format
-		if (slug === 'llms') {
-			const sitemapEntries = await generateSitemapEntries(SITE.url);
-			const sitemapXML = generateSitemapXML(sitemapEntries);
-
-			// Append sitemap to llms content (both formats)
-			output += `\n\n---\n\n## Sitemap\n\n\`\`\`xml\n${sitemapXML}\n\`\`\`\n`;
-
-			logEvent('RAW', 'SITEMAP', 'INJECTED', {
-				slug,
-				format,
-				sitemapEntries: sitemapEntries.length,
-			});
-		}
+		// Add sitemap reference footer to all raw content for discoverability
+		output += `\n\n---\n\nFull sitemap: ${SITE.url}/sitemap.xml\n`;
 
 		// Set content-type based on format
 		const contentType =

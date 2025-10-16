@@ -30,11 +30,11 @@
 import fs from 'node:fs/promises';
 import matter from 'gray-matter';
 import yaml from 'js-yaml';
+import { CDN } from '@/lib/meta/config';
 import type { ContentItem, ParsedContent } from '@/lib/types/content';
 import { ContentSchema } from '@/lib/types/content';
 import { NotFoundError } from '@/lib/utils/errors';
 import { logEvent } from '@/lib/utils/logger';
-import { CDN } from '@/lib/utils/metadata';
 
 /**
  * Allowed media file extensions for URL construction

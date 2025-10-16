@@ -36,8 +36,8 @@
 import type { SyntheticEvent } from 'react';
 import { useContext, useEffect, useId, useRef } from 'react';
 import { MediaLayoutContext } from '@/components/ui/mdx-media';
+import { CDN } from '@/lib/meta/config';
 import type { MdxMediaItemProps } from '@/lib/types/components';
-import { CDN } from '@/lib/utils/metadata';
 
 const VIDEO_EXTENSIONS = ['.webm'];
 
