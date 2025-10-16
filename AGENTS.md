@@ -13,7 +13,7 @@ Global CLAUDE.md rules inherited. Project-specific architecture and overrides on
 
 ## Documentation Strategy
 
-1. **Next.js 16 Beta**: Canary docs required. Fetch via `gitingest https://github.com/vercel/next.js/tree/canary/docs/01-app -o -` for App Router, `gitingest https://github.com/vercel/next.js/tree/canary/docs/02-api-reference -o -` for API. Focus subfolders `/tree/canary/docs/01-app/[subfolder]`, filter patterns `-i "**/[pattern]*.md"`. Stream to terminal `-o -`, never create files. Canary documentation > knowledge cutoff for beta features.
+1. **Next.js 16 Beta**: Nextjs 16 Beta docs required. Fetch via `gitingest https://github.com/vercel/next.js/blob/next-16-beta/docs/01-app/ -o -` for App Router. Focus subfolders `/blob/next-16-beta/docs/01-app/[subfolder]`, filter patterns `-i "**/[pattern]*.mdx"`. Stream to terminal `-o -`, never create files.
 2. **React 19**: New hooks (`use`, `useActionState`, `useFormStatus`, `useOptimistic`) over React 18 patterns. Avoid deprecated (string refs, legacy context). React Compiler auto-optimizes, minimize manual `useMemo`/`useCallback`/`memo`. Ref as prop instead of forwardRef. Action-oriented mutations.
 3. **Tailwind CSS 4**: PostCSS architecture (`@tailwindcss/postcss`), breaking changes from v3. CSS-first configuration. Fetch v4 docs for new patterns.
 
