@@ -120,6 +120,10 @@
 			"linter": { "rules": { "performance": { "noImgElement": "off" } } }
 		},
 		{
+			"includes": ["src/components/ui/logo-blur.tsx"],
+			"linter": { "rules": { "complexity": { "useLiteralKeys": "off" } } }
+		},
+		{
 			"includes": ["**/*.yml", "**/*.yaml"],
 			"formatter": {
 				"indentStyle": "space",
