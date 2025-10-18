@@ -90,7 +90,7 @@ export function generateRobots(): MetadataRoute.Robots {
 }
 
 /** Generate sitemap with all content in all formats (HTML, .md, .txt). Includes ALL items regardless of isFeedItem. */
-export async function generateSitemap(baseUrl: string): Promise<MetadataRoute.Sitemap> {
+export async function generateSitemap(): Promise<MetadataRoute.Sitemap> {
 	try {
 		// Fetch all content items
 		const allContent = await getAllContent();
@@ -98,7 +98,7 @@ export async function generateSitemap(baseUrl: string): Promise<MetadataRoute.Si
 		// Initialize with homepage entry
 		const entries: MetadataRoute.Sitemap = [
 			{
-				url: baseUrl,
+				url: SITE.url,
 				lastModified: new Date(),
 				changeFrequency: 'monthly',
 			},
@@ -111,21 +111,21 @@ export async function generateSitemap(baseUrl: string): Promise<MetadataRoute.Si
 
 			// HTML page entry
 			entries.push({
-				url: `${baseUrl}/${slug}`,
+				url: `${SITE.url}/${slug}`,
 				lastModified: lastMod,
 				changeFrequency: 'monthly',
 			});
 
 			// Raw markdown format entry
 			entries.push({
-				url: `${baseUrl}/${slug}.md`,
+				url: `${SITE.url}/${slug}.md`,
 				lastModified: lastMod,
 				changeFrequency: 'monthly',
 			});
 
 			// Raw text format entry
 			entries.push({
-				url: `${baseUrl}/${slug}.txt`,
+				url: `${SITE.url}/${slug}.txt`,
 				lastModified: lastMod,
 				changeFrequency: 'monthly',
 			});
@@ -142,7 +142,7 @@ export async function generateSitemap(baseUrl: string): Promise<MetadataRoute.Si
 		// Fallback to homepage-only sitemap to ensure sitemap.xml always exists
 		return [
 			{
-				url: baseUrl,
+				url: SITE.url,
 				lastModified: new Date(),
 				changeFrequency: 'monthly',
 			},

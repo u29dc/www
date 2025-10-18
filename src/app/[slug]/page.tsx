@@ -10,6 +10,7 @@
  * - Render content header with description
  * - Display type-specific metadata list
  * - Render MDX content with custom components
+ * - Provide timeline coordination via page-level wrapper
  *
  * ## USAGE
  * ```tsx
@@ -22,11 +23,18 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { MDXRemote } from 'next-mdx-remote/rsc';
+import { AnimatedMdxContent } from '@/components/base-animated-mdx-content';
+import { TimelinePageWrapper } from '@/components/base-timeline-page-wrapper';
 import { ComposedLayoutWrapper } from '@/components/composed-layout-wrapper';
+import { contentTimeline } from '@/lib/animation/configs';
 import { getContentBySlug, getFeedContent } from '@/lib/mdx/aggregator';
 import { useMDXComponents } from '@/lib/mdx/components';
-import type { ContentPageProps } from '@/lib/types/components';
 import { getContentDescription } from '@/lib/utils/formatters';
+
+/** Content page component props (dynamic route) */
+export interface ContentPageProps {
+	params: Promise<{ slug: string }>;
+}
 
 export default async function ContentPage({ params }: ContentPageProps) {
 	const { slug } = await params;
@@ -42,9 +50,13 @@ export default async function ContentPage({ params }: ContentPageProps) {
 	const { frontmatter, content: mdxContent } = content;
 
 	return (
-		<ComposedLayoutWrapper type="page-content" frontmatter={frontmatter}>
-			<MDXRemote source={mdxContent} components={useMDXComponents({})} />
-		</ComposedLayoutWrapper>
+		<TimelinePageWrapper config={contentTimeline}>
+			<ComposedLayoutWrapper type="page-content" frontmatter={frontmatter}>
+				<AnimatedMdxContent>
+					<MDXRemote source={mdxContent} components={useMDXComponents({})} />
+				</AnimatedMdxContent>
+			</ComposedLayoutWrapper>
+		</TimelinePageWrapper>
 	);
 }
 

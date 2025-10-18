@@ -37,8 +37,21 @@
 
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FeatureMdxMediaItem } from '@/components/feature-mdx-media-item';
-import type { FeatureMdxMediaProps, MediaLayoutContextValue } from '@/lib/types/components';
 import { cn } from '@/lib/utils/class';
+
+/** Feature MDX media container component props */
+export interface FeatureMdxMediaProps {
+	/** Array of media sources (always array, even for single item) */
+	src: string[];
+	/** Optional alt text applied to all media items */
+	alt?: string;
+}
+
+/** Media layout context value for aspect ratio-based flexbox layout */
+export interface MediaLayoutContextValue {
+	registerItem: (id: string, aspectRatio: number) => void;
+	getFlexBasis: (id: string) => string;
+}
 
 export const MediaLayoutContext = createContext<MediaLayoutContextValue | null>(null);
 

@@ -18,7 +18,12 @@
  * @module components/feature-mdx-content
  */
 
-import type { FeatureMdxContentProps } from '@/lib/types/components';
+import type { ReactNode } from 'react';
+
+/** Feature MDX content component props */
+export interface FeatureMdxContentProps {
+	children: ReactNode;
+}
 
 export function FeatureMdxContent({ children }: FeatureMdxContentProps) {
 	return <div className="content-column padding-standard font-lg">{children}</div>;

@@ -14,10 +14,18 @@
  * @module components/composed-layout-wrapper
  */
 
+import type { ReactNode } from 'react';
 import { BaseGradientBlur } from '@/components/base-gradient-blur';
 import { ComposedLayoutFooter } from '@/components/composed-layout-footer';
 import { ComposedLayoutHeader } from '@/components/composed-layout-header';
-import type { ComposedLayoutWrapperProps } from '@/lib/types/components';
+import type { ContentItem } from '@/lib/mdx/types';
+
+/** Composed layout wrapper component props */
+export interface ComposedLayoutWrapperProps {
+	type: 'page-home' | 'page-content';
+	children: ReactNode;
+	frontmatter?: ContentItem;
+}
 
 export function ComposedLayoutWrapper({ type, children, frontmatter }: ComposedLayoutWrapperProps) {
 	return (

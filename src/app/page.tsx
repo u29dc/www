@@ -8,6 +8,7 @@
  * - Render site header with intro animation
  * - Render content feed component
  * - Compose layout wrapper
+ * - Provide timeline coordination via page-level wrapper
  *
  * ## USAGE
  * ```tsx
@@ -17,15 +18,19 @@
  * @module app/page
  */
 
+import { TimelinePageWrapper } from '@/components/base-timeline-page-wrapper';
 import { ComposedLayoutWrapper } from '@/components/composed-layout-wrapper';
 import { FeatureContentFeed } from '@/components/feature-content-feed';
 import { FeatureContentHome } from '@/components/feature-content-home';
+import { homeTimeline } from '@/lib/animation/configs';
 
 export default function HomePage() {
 	return (
-		<ComposedLayoutWrapper type="page-home">
-			<FeatureContentHome />
-			<FeatureContentFeed />
-		</ComposedLayoutWrapper>
+		<TimelinePageWrapper config={homeTimeline}>
+			<ComposedLayoutWrapper type="page-home">
+				<FeatureContentHome />
+				<FeatureContentFeed />
+			</ComposedLayoutWrapper>
+		</TimelinePageWrapper>
 	);
 }

@@ -21,14 +21,17 @@
  * @module lib/utils/formatters
  */
 
-import type {
-	ContentItem,
-	FragmentContent,
-	SignalContent,
-	StudyContent,
-} from '@/lib/types/content';
-import { isFragment } from '@/lib/types/content';
-import type { MetadataItem } from '@/lib/types/utils';
+import type { ReactNode } from 'react';
+import type { ContentItem, FragmentContent, SignalContent, StudyContent } from '@/lib/mdx/types';
+import { isFragment } from '@/lib/mdx/types';
+
+/**
+ * Metadata item for display (used in metadata lists and formatters)
+ */
+export interface MetadataItem {
+	label: string;
+	value: ReactNode;
+}
 
 // Format ISO date string to human-readable format
 export function formatDate(dateString: string): string {

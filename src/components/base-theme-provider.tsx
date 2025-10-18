@@ -23,7 +23,7 @@
 
 'use client';
 
-import type { ThemeProviderProps } from '@/lib/types/utils';
+import type { ThemeProviderProps } from '@/lib/utils/theme';
 import { ThemeContext, useThemeProvider } from '@/lib/utils/theme';
 
 export function BaseThemeProvider({

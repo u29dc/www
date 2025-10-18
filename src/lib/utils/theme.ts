@@ -26,11 +26,38 @@
  */
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import type { ResolvedTheme, Theme, ThemeContextValue } from '@/lib/types/utils';
+
+/**
+ * Available theme options
+ */
+export type Theme = 'light' | 'dark' | 'system';
+
+/**
+ * Resolved theme value (system resolved to actual theme)
+ */
+export type ResolvedTheme = 'light' | 'dark';
+
+/**
+ * Theme context value for provider
+ */
+export interface ThemeContextValue {
+	theme: Theme;
+	resolvedTheme: ResolvedTheme;
+	setTheme: (theme: Theme) => void;
+}
+
+/**
+ * Props for theme provider component
+ */
+export interface ThemeProviderProps {
+	children: React.ReactNode;
+	initialTheme?: Theme;
+	initialResolved?: ResolvedTheme;
+}
 
 // Cookie configuration
-const THEME_COOKIE_NAME = 'www-theme';
-const RESOLVED_THEME_COOKIE_NAME = 'www-resolved-theme';
+const THEME_COOKIE_NAME = 'u29dc-theme';
+const RESOLVED_THEME_COOKIE_NAME = 'u29dc-theme-resolved';
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 year
 
 // Generic cookie reader with optional type validation (SSR-safe)

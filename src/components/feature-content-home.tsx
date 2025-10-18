@@ -2,17 +2,16 @@
  * Feature Content Home Component
  *
  * ## SUMMARY
- * Client-side animated content for homepage with sequential reveal animations.
+ * Client-side animated content for homepage with timeline-orchestrated word reveals.
  *
  * ## RESPONSIBILITIES
- * - Manage animation state (showDescription)
- * - Orchestrate sequential BaseAnimationReveal animations
- * - Render intro text with staggered element animation
- * - Trigger description reveal after titles complete
+ * - Render intro text with timeline-coordinated word reveals
+ * - Render description with timeline-coordinated word reveals
+ * - Sequential animation via timeline stage orchestration
  *
  * ## USAGE
  * ```tsx
- * // Called from page.tsx server component
+ * // Called from page.tsx server component, wrapped in TimelinePageWrapper
  * <FeatureContentHome />
  * ```
  *
@@ -21,29 +20,22 @@
 
 'use client';
 
-import { useState } from 'react';
-import { BaseAnimationReveal } from '@/components/base-animation-reveal';
+import { AnimatedReveal } from '@/components/base-animated-reveal';
 
 export function FeatureContentHome() {
-	const [animateDescription, setAnimateDescription] = useState(false);
-
 	return (
 		<div className="content-column padding-standard">
-			<BaseAnimationReveal
-				elementStagger={200}
-				onFinished={() => setAnimateDescription(true)}
-			>
+			<AnimatedReveal stageId="home-title" elementStagger={200}>
 				<h2>Incomplete Infinity is an evolving, enigmatic, multifaceted creative</h2>
 				<h2>practice, turning complex futures into today's narratives.</h2>
 				<h2>It inhabits the space between what is seen and what is felt.</h2>
 				<h2>It operates in the deliberate pause, dwells in the charged moment.</h2>
 				<h2>It expresses itself... in incomplete form.</h2>
 				<h2>After all, isn't true infinity always incomplete?</h2>
-			</BaseAnimationReveal>
-			<BaseAnimationReveal
+			</AnimatedReveal>
+			<AnimatedReveal
+				stageId="home-description"
 				className="mt-10"
-				trigger="manual"
-				shouldAnimate={animateDescription}
 				staggerDelay={5}
 				blurStrength={5}
 			>
@@ -55,7 +47,7 @@ export function FeatureContentHome() {
 				complexity). Research generates language; commerce deploys it. Each feeds the other,
 				operating in the productive tension between chaos and order, between the mapped and
 				the undiscovered.
-			</BaseAnimationReveal>
+			</AnimatedReveal>
 		</div>
 	);
 }

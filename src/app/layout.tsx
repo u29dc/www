@@ -19,18 +19,24 @@
 
 import { cookies, headers } from 'next/headers';
 import Script from 'next/script';
+import type { ReactNode } from 'react';
+import { AppShell } from '@/components/base-app-shell';
 import { BaseGradientBlur } from '@/components/base-gradient-blur';
 import { BaseThemeProvider } from '@/components/base-theme-provider';
 import { BaseViewportFix } from '@/components/base-viewport-fix';
 import { neueHaas } from '@/lib/fonts/local';
 import { metadata, viewport } from '@/lib/meta/config';
-import type { RootLayoutProps } from '@/lib/types/components';
-import type { ResolvedTheme, Theme } from '@/lib/types/utils';
+import type { ResolvedTheme, Theme } from '@/lib/utils/theme';
 
 import { RESOLVED_COOKIE, THEME_COOKIE } from '@/lib/utils/theme';
 import '@/styles/globals.css';
 
 export { metadata, viewport };
+
+/** Root layout component props */
+export interface RootLayoutProps {
+	children: ReactNode;
+}
 
 export default async function RootLayout({ children }: RootLayoutProps) {
 	// Extract nonce from proxy headers for CSP compliance
@@ -57,13 +63,15 @@ export default async function RootLayout({ children }: RootLayoutProps) {
 			<head>{nonce && <meta property="csp-nonce" content={nonce} />}</head>
 			<body className="min-h-screen font-sm">
 				<BaseViewportFix />
-				<BaseThemeProvider
-					initialTheme={cookieTheme || 'system'}
-					initialResolved={(themeClass as ResolvedTheme) || 'light'}
-				>
-					{children}
-					<BaseGradientBlur />
-				</BaseThemeProvider>
+				<AppShell>
+					<BaseThemeProvider
+						initialTheme={cookieTheme || 'system'}
+						initialResolved={(themeClass as ResolvedTheme) || 'light'}
+					>
+						{children}
+						<BaseGradientBlur />
+					</BaseThemeProvider>
+				</AppShell>
 
 				{nonce && <Script src="/empty.js" strategy="afterInteractive" nonce={nonce} />}
 			</body>

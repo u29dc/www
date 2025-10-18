@@ -28,8 +28,27 @@
  * @module lib/utils/errors
  */
 
-import type { ErrorResponseData, ErrorResponseOptions } from '@/lib/types/utils';
 import { logEvent } from '@/lib/utils/logger';
+
+/**
+ * Options for error response formatting
+ */
+export interface ErrorResponseOptions {
+	format?: 'json' | 'text'; // Default: 'json'
+	headers?: HeadersInit; // Additional headers to merge
+}
+
+/**
+ * Structured error response data
+ */
+export interface ErrorResponseData {
+	error: {
+		code: string;
+		message: string;
+		statusCode: number;
+		stack?: string;
+	};
+}
 
 // Error Classes
 

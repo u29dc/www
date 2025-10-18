@@ -20,8 +20,15 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
 import { CDN } from '@/lib/meta/config';
-import type { CspDirective } from '@/lib/types/utils';
 import { isValidTheme, RESOLVED_COOKIE, THEME_COOKIE } from '@/lib/utils/theme';
+
+/**
+ * Content Security Policy directive definition
+ */
+export type CspDirective = {
+	name: string;
+	values: string[];
+};
 
 /**
  * Build a nonce-scoped Content Security Policy header for the incoming request.

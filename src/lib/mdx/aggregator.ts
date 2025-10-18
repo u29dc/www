@@ -49,7 +49,7 @@ import path from 'node:path';
 import { unstable_cache } from 'next/cache';
 import { cache } from 'react';
 import { parseMDX } from '@/lib/mdx/processor';
-import type { ParsedContent } from '@/lib/types/content';
+import type { ParsedContent } from '@/lib/mdx/types';
 import { logEvent } from '@/lib/utils/logger';
 
 /**

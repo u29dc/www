@@ -29,7 +29,12 @@ import type { SyntheticEvent } from 'react';
 import { useContext, useEffect, useId, useRef } from 'react';
 import { MediaLayoutContext } from '@/components/feature-mdx-media';
 import { CDN } from '@/lib/meta/config';
-import type { FeatureMdxMediaItemProps } from '@/lib/types/components';
+
+/** Feature MDX media item component props */
+export interface FeatureMdxMediaItemProps {
+	src: string;
+	alt?: string;
+}
 
 const VIDEO_EXTENSIONS = ['.webm'];
 

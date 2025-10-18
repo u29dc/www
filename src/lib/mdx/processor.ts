@@ -30,9 +30,9 @@
 import fs from 'node:fs/promises';
 import matter from 'gray-matter';
 import yaml from 'js-yaml';
+import type { ContentItem, ParsedContent } from '@/lib/mdx/types';
+import { ContentSchema } from '@/lib/mdx/types';
 import { CDN } from '@/lib/meta/config';
-import type { ContentItem, ParsedContent } from '@/lib/types/content';
-import { ContentSchema } from '@/lib/types/content';
 import { NotFoundError } from '@/lib/utils/errors';
 import { logEvent } from '@/lib/utils/logger';
 

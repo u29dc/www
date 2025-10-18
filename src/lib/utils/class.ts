@@ -18,7 +18,17 @@
  * @module lib/utils/class
  */
 
-import type { ClassValue } from '@/lib/types/utils';
+/**
+ * ClassValue represents valid className input types for class manipulation utilities
+ */
+export type ClassValue =
+	| string
+	| number
+	| boolean
+	| undefined
+	| null
+	| ClassValue[]
+	| Record<string, boolean | undefined | null>;
 
 // Converts ClassValue input to flat className string
 function toClassString(value: ClassValue): string {

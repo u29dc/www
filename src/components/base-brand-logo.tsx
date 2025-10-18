@@ -36,9 +36,49 @@
  */
 
 import { useEffect, useRef } from 'react';
-import type { BaseBrandLogoProps, WebGLSetup } from '@/lib/types/components';
-import { logger } from '@/lib/utils/logger';
 import { useTheme } from '@/lib/utils/theme';
+
+/** Base brand logo component props */
+export interface BaseBrandLogoProps {
+	/** Overall width in pixels (height auto-calculated to maintain 4:1 ratio) */
+	width?: number;
+	/** Where default blur starts horizontally (0 = left edge, 1 = right edge) */
+	blurStart?: number;
+	/** Intensity of default horizontal blur gradient */
+	defaultBlurIntensity?: number;
+	/** Intensity of mouse hover blur effect */
+	mouseBlurIntensity?: number;
+	/** Size of mouse blur circle */
+	mouseBlurSize?: number;
+	/** Corner roundness of rectangle */
+	roundness?: number;
+	/** Additional CSS classes for container */
+	className?: string;
+}
+
+/** WebGL setup state for logo blur rendering */
+export interface WebGLSetup {
+	/** Compiled WebGL shader program */
+	program: WebGLProgram;
+	/** Buffer containing vertex position data */
+	positionBuffer: WebGLBuffer;
+	/** Uniform variable locations for shader parameters */
+	uniformLocations: {
+		mouse: WebGLUniformLocation | null;
+		resolution: WebGLUniformLocation | null;
+		pixelRatio: WebGLUniformLocation | null;
+		rectWidth: WebGLUniformLocation | null;
+		rectHeight: WebGLUniformLocation | null;
+		roundness: WebGLUniformLocation | null;
+		blurStart: WebGLUniformLocation | null;
+		defaultBlurIntensity: WebGLUniformLocation | null;
+		mouseBlurSize: WebGLUniformLocation | null;
+		mouseBlurIntensity: WebGLUniformLocation | null;
+		widthSpreadMultiplier: WebGLUniformLocation | null;
+		heightSpreadMultiplier: WebGLUniformLocation | null;
+		color: WebGLUniformLocation | null;
+	};
+}
 
 const VERTEX_SHADER = /* glsl */ `
 attribute vec2 a_position;
@@ -204,8 +244,7 @@ const initializeWebGLProgram = (gl: WebGLRenderingContext): WebGLSetup | null =>
 		};
 
 		return { program, positionBuffer, uniformLocations };
-	} catch (error) {
-		logger.error('Failed to initialise LogoBlurRaw WebGL program.', error);
+	} catch (_error) {
 		return null;
 	}
 };
@@ -275,16 +314,13 @@ export function BaseBrandLogo({
 			}) ?? canvas.getContext('experimental-webgl');
 
 		if (!(context instanceof WebGLRenderingContext)) {
-			logger.error('WebGL not supported in this browser.');
 			return;
 		}
 
 		const gl = context;
 
 		if (!gl.getExtension('OES_standard_derivatives')) {
-			logger.warn(
-				'OES_standard_derivatives extension unavailable; logo blur may render incorrectly.',
-			);
+			// log
 		}
 
 		const setup = initializeWebGLProgram(gl);
