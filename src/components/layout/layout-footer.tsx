@@ -1,23 +1,16 @@
 /**
- * Composed Layout Footer Component
+ * Layout Footer
  *
  * ## SUMMARY
- * Displays social media links and contact navigation.
+ * Footer with social media and contact navigation links.
  *
  * ## RESPONSIBILITIES
- * - Render social media navigation links
- * - Handle external link attributes (target, rel)
- * - Provide consistent footer styling
+ * - Render social media links with external link attributes
  *
- * ## USAGE
- * ```tsx
- * <ComposedLayoutFooter />
- * ```
- *
- * @module components/composed-layout-footer
+ * @module components/layout/layout-footer
  */
 
-export function ComposedLayoutFooter() {
+export function LayoutFooter() {
 	return (
 		<footer className="relative h-full padding-standard">
 			<nav className="flex flex-row gap-4">

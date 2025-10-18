@@ -1,68 +1,33 @@
 'use client';
 
 /**
- * Base Brand Logo Component
+ * Atomic Brand Logo
  *
  * ## SUMMARY
- * Interactive WebGL logo with 4:1 aspect ratio, default right-side blur, and mouse-based blur intensification.
+ * Interactive WebGL logo with 4:1 aspect ratio and mouse-based blur effects.
  *
  * ## RESPONSIBILITIES
- * - Compile raw WebGL shaders without helper libraries
- * - Match existing blur gradient and mouse interaction
- * - Handle high-DPR canvases and window resizes
- * - Clean up GPU resources on unmount
+ * - Compile WebGL shaders, handle high-DPR canvases, clean up GPU resources
  *
- * ## USAGE
- * ```tsx
- * // Basic usage with defaults
- * <BaseBrandLogo width={400} />
- *
- * // Customized blur behavior
- * <BaseBrandLogo
- *   width={600}
- *   blurStart={0.4}
- *   defaultBlurIntensity={0.4}
- *   mouseBlurIntensity={0.6}
- *   roundness={0.05}
- * />
- *
- * // In a container
- * <div className="flex justify-center">
- *   <BaseBrandLogo width={500} />
- * </div>
- * ```
- *
- * @module components/base-brand-logo
+ * @module components/atomic/atomic-brand-logo
  */
 
 import { useEffect, useRef } from 'react';
-import { useTheme } from '@/lib/utils/theme';
+import { useTheme } from '@/lib/theme';
 
-/** Base brand logo component props */
-export interface BaseBrandLogoProps {
-	/** Overall width in pixels (height auto-calculated to maintain 4:1 ratio) */
+export interface AtomicBrandLogoProps {
 	width?: number;
-	/** Where default blur starts horizontally (0 = left edge, 1 = right edge) */
 	blurStart?: number;
-	/** Intensity of default horizontal blur gradient */
 	defaultBlurIntensity?: number;
-	/** Intensity of mouse hover blur effect */
 	mouseBlurIntensity?: number;
-	/** Size of mouse blur circle */
 	mouseBlurSize?: number;
-	/** Corner roundness of rectangle */
 	roundness?: number;
-	/** Additional CSS classes for container */
 	className?: string;
 }
 
-/** WebGL setup state for logo blur rendering */
 export interface WebGLSetup {
-	/** Compiled WebGL shader program */
 	program: WebGLProgram;
-	/** Buffer containing vertex position data */
 	positionBuffer: WebGLBuffer;
-	/** Uniform variable locations for shader parameters */
 	uniformLocations: {
 		mouse: WebGLUniformLocation | null;
 		resolution: WebGLUniformLocation | null;
@@ -290,7 +255,7 @@ const createProgram = (gl: WebGLRenderingContext, vertexSource: string, fragment
 	return program;
 };
 
-export function BaseBrandLogo({
+export function AtomicBrandLogo({
 	width = 200,
 	blurStart = 1.0,
 	defaultBlurIntensity = 0.5,
@@ -298,7 +263,7 @@ export function BaseBrandLogo({
 	mouseBlurSize = 0.5,
 	roundness = 0.5,
 	className = '',
-}: BaseBrandLogoProps) {
+}: AtomicBrandLogoProps) {
 	const { resolvedTheme } = useTheme();
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
 

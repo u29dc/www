@@ -4,30 +4,20 @@
  * Animated Feed Wrapper
  *
  * ## SUMMARY
- * Timeline-coordinated wrapper for feed items with staggered entrance animations.
+ * Timeline-coordinated wrapper with staggered Motion animations for feed items.
  *
  * ## RESPONSIBILITIES
- * - Connect to timeline store for reactive stage state
- * - Wrap children in Motion containers with stagger effect
- * - Orchestrate overlapping item animations
- * - Notify timeline orchestrator on completion
+ * - Subscribe to timeline stage, orchestrate staggered item animations, notify on completion
  *
- * ## USAGE
- * ```tsx
- * <AnimatedFeedWrapper stageId="home-feed" staggerDelay={80}>
- *   {items.map(item => <FeedItem key={item.id} item={item} />)}
- * </AnimatedFeedWrapper>
- * ```
- *
- * @module components/base-animated-feed-wrapper
+ * @module components/animation/animated-feed-wrapper
  */
 
 import { motion } from 'motion/react';
 import type { ReactElement, ReactNode } from 'react';
 import { Children, isValidElement, useSyncExternalStore } from 'react';
-import type { StageState } from '@/lib/animation/timeline';
-import { useTimeline } from '@/lib/animation/timeline';
-import { logEvent } from '@/lib/utils/logger';
+import { logEvent } from '@/lib/logger';
+import type { StageState } from '@/lib/timeline';
+import { useTimeline } from '@/lib/timeline';
 
 export interface AnimatedFeedWrapperProps {
 	stageId: string;
@@ -36,12 +26,6 @@ export interface AnimatedFeedWrapperProps {
 	staggerDelay?: number;
 }
 
-/**
- * AnimatedFeedWrapper component
- *
- * Timeline-coordinated feed wrapper with staggered item animations.
- * Each child animates in with subtle overlap.
- */
 export function AnimatedFeedWrapper({
 	stageId,
 	children,
@@ -50,14 +34,12 @@ export function AnimatedFeedWrapper({
 }: AnimatedFeedWrapperProps) {
 	const { store, advanceStage } = useTimeline();
 
-	// Subscribe to stage state changes
 	const stage = useSyncExternalStore(
 		store.subscribe,
 		() => store.getState(stageId),
 		() => undefined,
 	);
 
-	// Determine animation variant based on stage state
 	const getVariant = (state: StageState | undefined): string => {
 		if (!state) return 'hidden';
 
@@ -69,13 +51,11 @@ export function AnimatedFeedWrapper({
 					: 'hidden';
 		}
 
-		// Exit direction - animate to and stay hidden
 		return 'hidden';
 	};
 
 	const variant = getVariant(stage);
 
-	// Container variants with stagger
 	const containerVariants = {
 		hidden: {},
 		visible: {
@@ -85,7 +65,6 @@ export function AnimatedFeedWrapper({
 		},
 	};
 
-	// Item variants
 	const itemVariants = {
 		hidden: {
 			opacity: 0,
@@ -103,11 +82,9 @@ export function AnimatedFeedWrapper({
 		},
 	};
 
-	// Convert children to array
 	const childArray = Children.toArray(children);
 	const lastIndex = childArray.length - 1;
 
-	// Completion handler
 	const handleComplete = () => {
 		if (stage?.status === 'animating') {
 			advanceStage(stageId);
@@ -127,7 +104,6 @@ export function AnimatedFeedWrapper({
 			variants={containerVariants}
 		>
 			{childArray.map((child, index) => {
-				// Extract key from child element
 				const childKey =
 					isValidElement(child) && (child as ReactElement).key
 						? (child as ReactElement).key

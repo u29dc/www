@@ -4,34 +4,20 @@
  * Animated Link
  *
  * ## SUMMARY
- * Navigation link with exit animation coordination and synchronous mode switching.
+ * Navigation link with exit animation coordination and concurrent navigation prevention.
  *
  * ## RESPONSIBILITIES
- * - Set navigation mode synchronously before navigation
- * - Trigger exit animations via timeline orchestrator
- * - Prevent concurrent navigation with global lock
- * - Navigate after exit animation completes
+ * - Set navigation mode synchronously, trigger exit animations, navigate after completion
  *
- * ## USAGE
- * ```tsx
- * import { AnimatedLink } from '@/components/base-animated-link';
- *
- * <AnimatedLink href="/about" className="nav-link">
- *   About
- * </AnimatedLink>
- * ```
- *
- * @module components/base-animated-link
+ * @module components/animation/animated-link
  */
 
 import { useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
-import { useNavigationMode, useTimeline } from '@/lib/animation/timeline';
-import { logEvent } from '@/lib/utils/logger';
+import { logEvent } from '@/lib/logger';
+import { useNavigationMode, useTimeline } from '@/lib/timeline';
 
-/**
- * Global navigation lock to prevent concurrent transitions
- */
+// Global navigation lock to prevent concurrent transitions
 let isNavigating = false;
 
 export interface AnimatedLinkProps {
@@ -40,12 +26,6 @@ export interface AnimatedLinkProps {
 	className?: string;
 }
 
-/**
- * AnimatedLink component
- *
- * Navigation link with exit animation coordination.
- * Sets navigation mode synchronously before triggering exit animations.
- */
 export function AnimatedLink({ href, children, className }: AnimatedLinkProps) {
 	const router = useRouter();
 	const { setMode } = useNavigationMode();

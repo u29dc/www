@@ -1,64 +1,34 @@
 'use client';
 
 /**
- * Base Gradient Blur Component
+ * Atomic Gradient Blur
  *
  * ## SUMMARY
- * Creates a layered blur effect at container edges using backdrop-filter and CSS masks.
+ * Layered blur effect at container edges using backdrop-filter and CSS gradient masks.
  *
  * ## RESPONSIBILITIES
- * - Generate stacked blur layers with progressive intensity
- * - Apply directional gradient masks for smooth transitions
- * - Support configurable curves for blur distribution
- * - Handle scroll-triggered animations via intersection observer
+ * - Generate stacked blur layers with progressive intensity and configurable curves
  *
- * ## USAGE
- * ```tsx
- * // Parent-relative blur (requires positioned parent)
- * <section className="relative h-[500px] overflow-hidden">
- *   <div className="h-full overflow-y-auto p-24">{content}</div>
- *   <BaseGradientBlur position="bottom" strength={2} />
- * </section>
- *
- * // Viewport-level blur (fixed to viewport)
- * <BaseGradientBlur position="bottom" strength={2} fixed />
- * ```
- *
- * @module components/base-gradient-blur
+ * @module components/atomic/atomic-gradient-blur
  */
 
 import type { CSSProperties, ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 
-/** Position for blur gradient effect */
 export type BlurPosition = 'top' | 'bottom' | 'left' | 'right';
-
-/** Distribution curve for blur progression */
 export type BlurCurve = 'linear' | 'ease-in' | 'ease-out' | 'bezier';
 
-/** Base gradient blur component props */
-export interface BaseGradientBlurProps {
-	/** Position of the blur effect */
+export interface AtomicGradientBlurProps {
 	position?: BlurPosition;
-	/** Blur intensity multiplier (0-5 recommended) */
 	strength?: number;
-	/** Size of the blur area (CSS unit) */
 	size?: string;
-	/** Number of blur layers to generate */
 	layers?: number;
-	/** Distribution curve for blur progression */
 	curve?: BlurCurve;
-	/** Use exponential blur progression for more dramatic ramp-up */
 	exponential?: boolean;
-	/** Enable scroll-triggered fade-in animation */
 	animated?: boolean;
-	/** Overall opacity of the effect */
 	opacity?: number;
-	/** Use fixed positioning (viewport-level) instead of absolute (parent-relative) */
 	fixed?: boolean;
-	/** Additional CSS classes */
 	className?: string;
-	/** Optional children to render above blur layers */
 	children?: ReactNode;
 }
 
@@ -75,7 +45,6 @@ const DEFAULT_CONFIG = {
 	className: '',
 } as const;
 
-// Apply easing curve to progress value
 function applyCurve(progress: number, curve: BlurCurve): number {
 	switch (curve) {
 		case 'linear':
@@ -91,7 +60,6 @@ function applyCurve(progress: number, curve: BlurCurve): number {
 	}
 }
 
-// Calculate blur value for a given layer
 function calculateBlur(
 	layerIndex: number,
 	totalLayers: number,
@@ -109,7 +77,6 @@ function calculateBlur(
 	return 0.0625 * (curvedProgress * totalLayers + 1) * strength;
 }
 
-// Get CSS gradient direction from position
 function getGradientDirection(position: BlurPosition): string {
 	const directions: Record<BlurPosition, string> = {
 		top: 'to top',
@@ -120,7 +87,6 @@ function getGradientDirection(position: BlurPosition): string {
 	return directions[position];
 }
 
-// Generate gradient mask stops for a layer
 function generateMaskGradient(layerIndex: number, totalLayers: number): string {
 	const increment = 100 / totalLayers;
 	const start = Math.round(increment * layerIndex * 10) / 10;
@@ -135,7 +101,6 @@ function generateMaskGradient(layerIndex: number, totalLayers: number): string {
 	return gradient;
 }
 
-// Intersection observer hook for scroll animations
 function useScrollVisible(ref: React.RefObject<HTMLDivElement | null>, enabled: boolean): boolean {
 	const [isVisible, setIsVisible] = useState(!enabled);
 
@@ -158,12 +123,11 @@ function useScrollVisible(ref: React.RefObject<HTMLDivElement | null>, enabled: 
 	return isVisible;
 }
 
-export function BaseGradientBlur(props: BaseGradientBlurProps) {
+export function AtomicGradientBlur(props: AtomicGradientBlurProps) {
 	const config = { ...DEFAULT_CONFIG, ...props };
 	const containerRef = useRef<HTMLDivElement>(null);
 	const isVisible = useScrollVisible(containerRef, config.animated);
 
-	// Generate blur layers
 	const layers: ReactNode[] = [];
 	for (let i = 0; i < config.layers; i++) {
 		const blurValue = calculateBlur(
@@ -188,7 +152,6 @@ export function BaseGradientBlur(props: BaseGradientBlurProps) {
 		layers.push(<div key={i} className="absolute inset-0" style={layerStyle} />);
 	}
 
-	// Determine container positioning and dimensions
 	const isVertical = config.position === 'top' || config.position === 'bottom';
 	const containerStyle: CSSProperties = {
 		position: config.fixed ? 'fixed' : 'absolute',

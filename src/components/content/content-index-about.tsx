@@ -1,31 +1,23 @@
-/**
- * Feature Content Home Component
- *
- * ## SUMMARY
- * Client-side animated content for homepage with timeline-orchestrated word reveals.
- *
- * ## RESPONSIBILITIES
- * - Render intro text with timeline-coordinated word reveals
- * - Render description with timeline-coordinated word reveals
- * - Sequential animation via timeline stage orchestration
- *
- * ## USAGE
- * ```tsx
- * // Called from page.tsx server component, wrapped in TimelinePageWrapper
- * <FeatureContentHome />
- * ```
- *
- * @module components/feature-content-home
- */
-
 'use client';
 
-import { AnimatedReveal } from '@/components/base-animated-reveal';
+/**
+ * Content Index
+ *
+ * ## SUMMARY
+ * Homepage content with timeline-coordinated AnimatedReveal word animations.
+ *
+ * ## RESPONSIBILITIES
+ * - Render intro and description with sequential AnimatedReveal stages
+ *
+ * @module components/content/content-index
+ */
 
-export function FeatureContentHome() {
+import { AnimatedReveal } from '@/components/animation/animated-reveal';
+
+export function ContentIndexAbout() {
 	return (
 		<div className="content-column padding-standard">
-			<AnimatedReveal stageId="home-title" elementStagger={200}>
+			<AnimatedReveal stageId="index-title" elementStagger={200}>
 				<h2>Incomplete Infinity is an evolving, enigmatic, multifaceted creative</h2>
 				<h2>practice, turning complex futures into today's narratives.</h2>
 				<h2>It inhabits the space between what is seen and what is felt.</h2>
@@ -34,7 +26,7 @@ export function FeatureContentHome() {
 				<h2>After all, isn't true infinity always incomplete?</h2>
 			</AnimatedReveal>
 			<AnimatedReveal
-				stageId="home-description"
+				stageId="index-description"
 				className="mt-10"
 				staggerDelay={5}
 				blurStrength={5}

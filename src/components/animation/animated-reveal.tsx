@@ -1,32 +1,15 @@
 'use client';
 
 /**
- * Animated Reveal (Timeline-Aware)
+ * Animated Reveal
  *
  * ## SUMMARY
- * Timeline-coordinated word-by-word reveal animation component.
- * Extends AnimatedSection pattern with word-splitting logic.
+ * Timeline-coordinated word-by-word reveal with staggered Motion animations.
  *
  * ## RESPONSIBILITIES
- * - Connect to timeline store for reactive stage state
- * - Split text into animatable word spans
- * - Orchestrate staggered word animations via Motion
- * - Notify timeline orchestrator on completion
- * - Support both single text and multiple element children
+ * - Subscribe to timeline stage, split text into words, orchestrate staggered animations
  *
- * ## USAGE
- * ```tsx
- * import { AnimatedReveal } from '@/components/base-animated-reveal';
- *
- * <TimelineProvider config={homeTimeline}>
- *   <AnimatedReveal stageId="hero-text" staggerDelay={10}>
- *     <h2>This text will split into words</h2>
- *     <p>Each element animates with word reveals</p>
- *   </AnimatedReveal>
- * </TimelineProvider>
- * ```
- *
- * @module components/base-animated-reveal
+ * @module components/animation/animated-reveal
  */
 
 import { motion } from 'motion/react';
@@ -39,9 +22,9 @@ import {
 	useMemo,
 	useSyncExternalStore,
 } from 'react';
-import type { StageState } from '@/lib/animation/timeline';
-import { useTimeline } from '@/lib/animation/timeline';
-import { logEvent } from '@/lib/utils/logger';
+import { logEvent } from '@/lib/logger';
+import type { StageState } from '@/lib/timeline';
+import { useTimeline } from '@/lib/timeline';
 
 export interface AnimatedRevealProps {
 	stageId: string;
@@ -53,12 +36,6 @@ export interface AnimatedRevealProps {
 	yOffset?: number;
 }
 
-/**
- * AnimatedReveal component
- *
- * Timeline-coordinated word-by-word reveal with stagger animations.
- * Splits text into words and animates each sequentially.
- */
 export function AnimatedReveal({
 	stageId,
 	children,
@@ -70,28 +47,24 @@ export function AnimatedReveal({
 }: AnimatedRevealProps) {
 	const { store, advanceStage } = useTimeline();
 
-	// Subscribe to stage state changes
 	const stage = useSyncExternalStore(
 		store.subscribe,
 		() => store.getState(stageId),
 		() => undefined,
 	);
 
-	// Detect if children contain React elements
 	const childArray = useMemo(() => Children.toArray(children), [children]);
 	const hasElements = useMemo(
 		() => childArray.some((child) => isValidElement(child)),
 		[childArray],
 	);
 
-	// Cache plain text for word mode
 	const childrenText = useMemo(() => String(children), [children]);
 	const cachedWords = useMemo(() => {
 		if (hasElements) return [];
 		return childrenText.split(/(\s+)/);
 	}, [hasElements, childrenText]);
 
-	// Helper to extract text from React nodes
 	const extractTextContent = useCallback((node: ReactNode): string => {
 		if (typeof node === 'string' || typeof node === 'number') {
 			return String(node);
@@ -107,7 +80,6 @@ export function AnimatedReveal({
 		return '';
 	}, []);
 
-	// Cache element text extraction for element mode
 	const elementTextCache = useMemo(() => {
 		if (!hasElements) return new Map();
 		const cache = new Map<number, { text: string; words: string[] }>();
@@ -126,7 +98,6 @@ export function AnimatedReveal({
 		return cache;
 	}, [hasElements, childArray, extractTextContent]);
 
-	// Determine animation variant based on stage state
 	const getVariant = (state: StageState | undefined): string => {
 		if (!state) return 'hidden';
 
@@ -138,13 +109,11 @@ export function AnimatedReveal({
 					: 'hidden';
 		}
 
-		// Exit direction - animate to and stay hidden
 		return 'hidden';
 	};
 
 	const variant = getVariant(stage);
 
-	// Word-level animation variants
 	const wordVariants = {
 		hidden: {
 			opacity: 0,
@@ -162,7 +131,6 @@ export function AnimatedReveal({
 		},
 	};
 
-	// Completion handler
 	const handleComplete = () => {
 		if (stage?.status === 'animating') {
 			advanceStage(stageId);
@@ -173,7 +141,6 @@ export function AnimatedReveal({
 		}
 	};
 
-	// Helper function to render words as Motion spans
 	const renderWords = (
 		text: string,
 		keyPrefix: string,
@@ -182,7 +149,6 @@ export function AnimatedReveal({
 	) => {
 		const words = preSplitWords || text.split(/(\s+)/);
 
-		// Find last non-whitespace word for callback
 		let lastWordIndex = -1;
 		for (let i = words.length - 1; i >= 0; i--) {
 			const word = words[i];
@@ -193,7 +159,6 @@ export function AnimatedReveal({
 		}
 
 		return words.map((word, index) => {
-			// Preserve whitespace
 			if (/^\s+$/.test(word)) {
 				return (
 					<span
@@ -228,7 +193,6 @@ export function AnimatedReveal({
 		});
 	};
 
-	// WORD MODE: Simple text children
 	if (!hasElements) {
 		const containerVariants = {
 			hidden: {},
@@ -251,7 +215,6 @@ export function AnimatedReveal({
 		);
 	}
 
-	// ELEMENT MODE: React element children
 	const topContainerVariants = {
 		hidden: {},
 		visible: {
