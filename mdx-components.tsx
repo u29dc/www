@@ -1,7 +1,6 @@
 import type { MDXComponents } from 'mdx/types';
-import { MdxContent } from '@/components/ui/mdx-content';
-import { MdxMedia } from '@/components/ui/mdx-media';
-import { MdxMediaItem } from '@/components/ui/mdx-media-item';
+import { FeatureMdxContent } from '@/components/feature-mdx-content';
+import { FeatureMdxMedia } from '@/components/feature-mdx-media';
 
 /**
  * MDX Components Configuration
@@ -23,9 +22,8 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
 		ol: ({ children }) => <ol>{children}</ol>,
 		li: ({ children }) => <li>{children}</li>,
 		a: ({ href, children }) => <a href={href}>{children}</a>,
-		MdxContent,
-		MdxMedia,
-		MdxMediaItem,
+		MdxContent: FeatureMdxContent,
+		MdxMedia: FeatureMdxMedia,
 		...components,
 	};
 }

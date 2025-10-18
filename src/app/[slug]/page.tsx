@@ -22,7 +22,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { MDXRemote } from 'next-mdx-remote/rsc';
-import { Wrapper } from '@/components/ui/wrapper';
+import { ComposedLayoutWrapper } from '@/components/composed-layout-wrapper';
 import { getContentBySlug, getFeedContent } from '@/lib/mdx/aggregator';
 import { useMDXComponents } from '@/lib/mdx/components';
 import type { ContentPageProps } from '@/lib/types/components';
@@ -42,10 +42,9 @@ export default async function ContentPage({ params }: ContentPageProps) {
 	const { frontmatter, content: mdxContent } = content;
 
 	return (
-		<Wrapper type="page-content" frontmatter={frontmatter}>
-			<div></div>
+		<ComposedLayoutWrapper type="page-content" frontmatter={frontmatter}>
 			<MDXRemote source={mdxContent} components={useMDXComponents({})} />
-		</Wrapper>
+		</ComposedLayoutWrapper>
 	);
 }
 

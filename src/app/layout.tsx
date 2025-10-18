@@ -19,10 +19,10 @@
 
 import { cookies, headers } from 'next/headers';
 import Script from 'next/script';
-import { ThemeProvider } from '@/components/core/theme-provider';
-import { ViewportHeightFix } from '@/components/core/viewport-height-fix';
-import { BlurGradient } from '@/components/ui/blur-gradient';
-import { neueHaas } from '@/lib/fonts';
+import { BaseGradientBlur } from '@/components/base-gradient-blur';
+import { BaseThemeProvider } from '@/components/base-theme-provider';
+import { BaseViewportFix } from '@/components/base-viewport-fix';
+import { neueHaas } from '@/lib/fonts/local';
 import { metadata, viewport } from '@/lib/meta/config';
 import type { RootLayoutProps } from '@/lib/types/components';
 import type { ResolvedTheme, Theme } from '@/lib/types/utils';
@@ -56,14 +56,14 @@ export default async function RootLayout({ children }: RootLayoutProps) {
 		<html lang="en" className={`${themeClass} ${neueHaas.variable}`} suppressHydrationWarning>
 			<head>{nonce && <meta property="csp-nonce" content={nonce} />}</head>
 			<body className="min-h-screen font-sm">
-				<ViewportHeightFix />
-				<ThemeProvider
+				<BaseViewportFix />
+				<BaseThemeProvider
 					initialTheme={cookieTheme || 'system'}
 					initialResolved={(themeClass as ResolvedTheme) || 'light'}
 				>
 					{children}
-					<BlurGradient />
-				</ThemeProvider>
+					<BaseGradientBlur />
+				</BaseThemeProvider>
 
 				{nonce && <Script src="/empty.js" strategy="afterInteractive" nonce={nonce} />}
 			</body>
