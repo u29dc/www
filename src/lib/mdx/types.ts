@@ -13,8 +13,8 @@
  *
  * ## USAGE
  * ```tsx
- * import { ContentSchema, isStudy } from '@/lib/types/content';
- * import type { ContentItem, StudyContent } from '@/lib/types/content';
+ * import { ContentSchema, isStudy } from '@/lib/mdx/types';
+ * import type { ContentItem, StudyContent } from '@/lib/mdx/types';
  *
  * // Runtime validation
  * const validated = ContentSchema.parse(unknownData);

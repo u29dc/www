@@ -124,6 +124,10 @@
 			"linter": { "rules": { "complexity": { "useLiteralKeys": "off" } } }
 		},
 		{
+			"includes": ["src/lib/animation/timeline.tsx"],
+			"linter": { "rules": { "complexity": { "noExcessiveCognitiveComplexity": "off" } } }
+		},
+		{
 			"includes": ["**/*.yml", "**/*.yaml"],
 			"formatter": {
 				"indentStyle": "space",
