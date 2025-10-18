@@ -1,17 +1,10 @@
-/**
- * Generate favicons at multiple sizes using generateImageMetadata.
- * Generates 16x16, 32x32, 96x96, 192x192, and 512x512 variants.
- */
+/** Generate favicons at multiple sizes (16, 32, 96, 192, 512). */
 
 import type { ImageResponse } from 'next/og';
-import { Icon, iconContentType } from '@/lib/meta/images';
+import { Icon, iconContentType } from '@/lib/metadata';
 
 export const contentType = iconContentType;
 
-/**
- * Generate metadata for multiple icon sizes.
- * Each size is generated statically at build time.
- */
 export function generateImageMetadata() {
 	return [
 		{ id: '16', size: { width: 16, height: 16 }, contentType: 'image/png' },
@@ -22,20 +15,14 @@ export function generateImageMetadata() {
 	];
 }
 
-/**
- * Generate icon image for the given size.
- * The id prop is provided by Next.js based on generateImageMetadata.
- */
 export default async function IconRoute({ id }: { id: Promise<string> }): Promise<ImageResponse> {
 	const iconId = await id;
 	const size = Number.parseInt(iconId, 10);
 
-	// Validate parsed size
 	if (Number.isNaN(size)) {
 		throw new Error(`Invalid icon ID: ${iconId}. Must be a valid integer.`);
 	}
 
-	// Icon() function will validate if size is in allowed list
 	return Icon(size);
 }
 

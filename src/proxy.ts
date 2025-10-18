@@ -19,8 +19,8 @@
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
-import { CDN } from '@/lib/meta/config';
-import { isValidTheme, RESOLVED_COOKIE, THEME_COOKIE } from '@/lib/utils/theme';
+import { CDN } from '@/lib/constants';
+import { isValidTheme, RESOLVED_COOKIE, THEME_COOKIE } from '@/lib/theme';
 
 /**
  * Content Security Policy directive definition

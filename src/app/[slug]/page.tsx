@@ -2,20 +2,10 @@
  * Individual Content Page
  *
  * ## SUMMARY
- * Renders individual content item with metadata and MDX content.
+ * Renders individual content item with metadata, timeline-animated MDX content, and SEO.
  *
  * ## RESPONSIBILITIES
- * - Parse and validate content by slug
- * - Generate metadata for SEO
- * - Render content header with description
- * - Display type-specific metadata list
- * - Render MDX content with custom components
- * - Provide timeline coordination via page-level wrapper
- *
- * ## USAGE
- * ```tsx
- * // Automatic Next.js dynamic route at /[slug]
- * ```
+ * - Validate content by slug, generate static params and metadata for SEO
  *
  * @module app/[slug]/page
  */
@@ -23,17 +13,20 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { MDXRemote } from 'next-mdx-remote/rsc';
-import { AnimatedMdxContent } from '@/components/base-animated-mdx-content';
-import { TimelinePageWrapper } from '@/components/base-timeline-page-wrapper';
-import { ComposedLayoutWrapper } from '@/components/composed-layout-wrapper';
-import { contentTimeline } from '@/lib/animation/configs';
-import { getContentBySlug, getFeedContent } from '@/lib/mdx/aggregator';
-import { useMDXComponents } from '@/lib/mdx/components';
-import { getContentDescription } from '@/lib/utils/formatters';
+import { AnimatedMdxContent } from '@/components/animation/animated-mdx-content';
+import { CoreTimelineProvider } from '@/components/core/core-timeline-provider';
+import { LayoutWrapper } from '@/components/layout/layout-wrapper';
+import { articleTimeline } from '@/lib/constants';
+import type { ContentItem } from '@/lib/mdx';
+import { getContentBySlug, getFeedContent } from '@/lib/mdx';
+import { useMDXComponents } from '@/mdx-components';
 
-/** Content page component props (dynamic route) */
 export interface ContentPageProps {
 	params: Promise<{ slug: string }>;
+}
+
+function getContentDescription(frontmatter: ContentItem): string {
+	return frontmatter.description;
 }
 
 export default async function ContentPage({ params }: ContentPageProps) {
@@ -42,7 +35,6 @@ export default async function ContentPage({ params }: ContentPageProps) {
 
 	if (!content) notFound();
 
-	// Block non-feed items from HTML rendering (they should only be accessible via .md/.txt)
 	if (content.frontmatter.isFeedItem === false) {
 		notFound();
 	}
@@ -50,13 +42,13 @@ export default async function ContentPage({ params }: ContentPageProps) {
 	const { frontmatter, content: mdxContent } = content;
 
 	return (
-		<TimelinePageWrapper config={contentTimeline}>
-			<ComposedLayoutWrapper type="page-content" frontmatter={frontmatter}>
+		<CoreTimelineProvider config={articleTimeline}>
+			<LayoutWrapper type="article" frontmatter={frontmatter}>
 				<AnimatedMdxContent>
 					<MDXRemote source={mdxContent} components={useMDXComponents({})} />
 				</AnimatedMdxContent>
-			</ComposedLayoutWrapper>
-		</TimelinePageWrapper>
+			</LayoutWrapper>
+		</CoreTimelineProvider>
 	);
 }
 

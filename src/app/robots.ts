@@ -1,6 +1,6 @@
 /** Generate robots.txt at /robots.txt. */
 
-export { generateRobots as default } from '@/lib/meta/generators';
+export { generateRobots as default } from '@/lib/metadata';
 
 // Force static generation at build time
 export const dynamic = 'force-static';

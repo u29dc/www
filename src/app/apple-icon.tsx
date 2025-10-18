@@ -4,7 +4,7 @@ export {
 	AppleIcon as default,
 	appleIconContentType as contentType,
 	appleIconSize as size,
-} from '@/lib/meta/images';
+} from '@/lib/metadata';
 
 // Force static generation at build time
 export const dynamic = 'force-static';

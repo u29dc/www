@@ -1,5 +1,5 @@
 import type { NextConfig } from 'next';
-import { CDN } from '@/lib/meta/config';
+import { CDN } from '@/lib/constants';
 
 const nextConfig: NextConfig = {
 	reactCompiler: true,

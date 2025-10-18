@@ -1,9 +1,8 @@
-/** Generate sitemap.xml at /sitemap.xml. */
+/** Generate sitemap.xml at /sitemap.xml with 24-hour ISR revalidation. */
 
 import type { MetadataRoute } from 'next';
-import { generateSitemap } from '@/lib/meta/generators';
+import { generateSitemap } from '@/lib/metadata';
 
-// ISR configuration: revalidate every 24 hours
 export const revalidate = 86400;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
