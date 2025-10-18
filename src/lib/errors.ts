@@ -2,45 +2,22 @@
  * Error Handling System
  *
  * ## SUMMARY
- * Typed error class hierarchy with HTTP status codes and response utilities.
- * Centralized error-to-HTTP-response conversion with format awareness,
- * security headers, automatic logging, and environment-aware sanitization.
+ * Typed error classes with HTTP status codes and response utilities.
  *
  * ## RESPONSIBILITIES
  * - Provide domain-specific error classes with HTTP status codes
- * - Enable type-safe error handling throughout the application
- * - Convert errors to HTTP responses with consistent formatting
- * - Apply security headers and environment-aware sanitization
+ * - Convert errors to HTTP responses with environment-aware sanitization
  *
- * ## USAGE
- * ```typescript
- * import { NotFoundError, createErrorResponse } from '@/lib/errors';
- *
- * // Throw typed errors
- * if (!user) throw new NotFoundError('User');
- *
- * // Convert to HTTP responses
- * return createErrorResponse(new NotFoundError('User'));
- * return createErrorResponse(error, { format: 'text' });
- * return createErrorResponse(error, { headers: { 'X-Custom': 'value' } });
- * ```
- *
- * @module lib/utils/errors
+ * @module lib/errors
  */
 
-import { logEvent } from '@/lib/utils/logger';
+import { logEvent } from '@/lib/logger';
 
-/**
- * Options for error response formatting
- */
 export interface ErrorResponseOptions {
-	format?: 'json' | 'text'; // Default: 'json'
-	headers?: HeadersInit; // Additional headers to merge
+	format?: 'json' | 'text';
+	headers?: HeadersInit;
 }
 
-/**
- * Structured error response data
- */
 export interface ErrorResponseData {
 	error: {
 		code: string;
@@ -52,7 +29,6 @@ export interface ErrorResponseData {
 
 // Error Classes
 
-/** Base operational error class with HTTP status code */
 export class AppError extends Error {
 	public readonly isOperational: boolean = true;
 
@@ -67,21 +43,18 @@ export class AppError extends Error {
 	}
 }
 
-/** 404 Not Found - Resource not found */
 export class NotFoundError extends AppError {
 	constructor(resource: string) {
 		super(404, `${resource} not found`, 'NOT_FOUND');
 	}
 }
 
-/** 400 Bad Request - Validation failure */
 export class ValidationError extends AppError {
 	constructor(message: string) {
 		super(400, message, 'VALIDATION_ERROR');
 	}
 }
 
-/** 500 Internal Server Error - Processing failure */
 export class ProcessingError extends AppError {
 	constructor(
 		message: string,
@@ -93,7 +66,6 @@ export class ProcessingError extends AppError {
 
 // Response Utilities
 
-/** Converts error to structured data with environment-aware sanitization */
 function errorToData(error: AppError | Error): ErrorResponseData {
 	const isDevelopment = process.env.NODE_ENV === 'development';
 
@@ -108,7 +80,6 @@ function errorToData(error: AppError | Error): ErrorResponseData {
 		};
 	}
 
-	// Generic Error handling
 	return {
 		error: {
 			code: 'INTERNAL_SERVER_ERROR',
@@ -120,14 +91,10 @@ function errorToData(error: AppError | Error): ErrorResponseData {
 }
 
 /**
- * Creates HTTP Response from error with consistent formatting and headers
- *
- * @example
- * ```typescript
- * return createErrorResponse(new NotFoundError('User'));
- * return createErrorResponse(error, { format: 'text' });
- * return createErrorResponse(error, { headers: { 'X-Custom': 'value' } });
- * ```
+ * Creates HTTP Response from error with consistent formatting.
+ * @param error - Error to convert
+ * @param options - Response options
+ * @returns HTTP Response
  */
 export function createErrorResponse(
 	error: AppError | Error,
@@ -135,12 +102,10 @@ export function createErrorResponse(
 ): Response {
 	const { format = 'json', headers: customHeaders = {} } = options;
 
-	// Extract error details
 	const errorData = errorToData(error);
 	const statusCode = error instanceof AppError ? error.statusCode : 500;
 	const errorCode = errorData.error.code;
 
-	// Log error before returning
 	logEvent('ERROR', 'RESPONSE', 'CREATE', {
 		code: errorCode,
 		status: statusCode,
@@ -148,7 +113,6 @@ export function createErrorResponse(
 		...(error instanceof AppError && error.code ? { errorCode: error.code } : {}),
 	});
 
-	// Build response based on format
 	const baseHeaders: HeadersInit = {
 		'Cache-Control': 'no-store, no-cache, must-revalidate',
 		'X-Content-Type-Options': 'nosniff',
@@ -165,7 +129,6 @@ export function createErrorResponse(
 		});
 	}
 
-	// Default to JSON
 	return new Response(JSON.stringify(errorData, null, 2), {
 		status: statusCode,
 		headers: {

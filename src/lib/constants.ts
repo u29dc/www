@@ -1,28 +1,25 @@
 /**
- * Metadata Configuration
+ * Site and Animation Constants
  *
  * ## SUMMARY
- * Centralizes Next.js metadata configuration (SEO, PWA, social sharing) and exports site constants, Metadata, and Viewport for app/layout.tsx.
+ * Next.js metadata configuration and animation timeline configurations.
  *
  * ## RESPONSIBILITIES
- * - Define site constants (title, description, URL) and export Metadata/Viewport objects for app/layout.tsx
- * - Configure SEO metadata (Open Graph, Twitter cards, robots directives, verification tokens)
- * - Reference dynamic routes for icons, manifest, and OG images (not static files)
- *
- * ## USAGE
- * ```typescript
- * // In app/layout.tsx
- * import { metadata, viewport } from '@/lib/meta/config';
- * export { metadata, viewport };
- * ```
+ * - Define site metadata for SEO, PWA, and social sharing
+ * - Define animation timeline configurations for page transitions
  *
  * ## KEY FLOWS
- * All metadata assets (icons, OG images, manifest) use dynamic routes generated at build time, not static files.
+ * All metadata assets use dynamic routes generated at build time.
  *
- * @module lib/meta/config
+ * @module lib/constants
  */
 
 import type { Metadata, Viewport } from 'next';
+import type { TimelineConfig } from '@/lib/timeline';
+
+// ============================================================================
+// SITE CONFIGURATION
+// ============================================================================
 
 export const SITE = {
 	title: 'Incomplete Infinity',
@@ -54,7 +51,7 @@ export const viewport: Viewport = {
 	viewportFit: 'cover',
 };
 
-/** Base metadata for all routes. Dynamic icon/manifest routes referenced. */
+// Base metadata for all routes
 export const metadata: Metadata = {
 	metadataBase: new URL(SITE.url),
 	title: {
@@ -72,9 +69,7 @@ export const metadata: Metadata = {
 	manifest: '/manifest.json',
 	icons: {
 		icon: [
-			// SVG preferred by modern browsers (resolution-independent)
 			{ url: '/favicon.svg', type: 'image/svg+xml' },
-			// PNG fallbacks for different contexts
 			{ url: '/icon', sizes: '16x16', type: 'image/png' },
 			{ url: '/icon', sizes: '32x32', type: 'image/png' },
 			{ url: '/icon', sizes: '96x96', type: 'image/png' },
@@ -139,4 +134,90 @@ export const metadata: Metadata = {
 	other: {
 		'color-scheme': 'light dark',
 	},
+};
+
+// ============================================================================
+// ANIMATION TIMELINE CONFIGURATIONS
+// ============================================================================
+
+// Index page timeline configuration
+export const indexTimeline: TimelineConfig = {
+	id: 'index',
+	enterStages: [
+		{
+			id: 'index-title',
+			duration: 2000,
+			delay: 0,
+		},
+		{
+			id: 'index-description',
+			duration: 500,
+			delay: 0,
+		},
+		{
+			id: 'index-header',
+			duration: 500,
+			delay: -250,
+		},
+		{
+			id: 'index-feed',
+			duration: 1000,
+			delay: -500,
+		},
+	],
+	exitStages: [
+		{
+			id: 'index-feed',
+			duration: 200,
+			delay: 0,
+		},
+		{
+			id: 'index-description',
+			duration: 200,
+			delay: -200,
+		},
+		{
+			id: 'index-header',
+			duration: 200,
+			delay: -200,
+		},
+		{
+			id: 'index-title',
+			duration: 200,
+			delay: 0,
+		},
+	],
+	enterSpeedMultiplier: 1,
+	exitSpeedMultiplier: 2.0,
+};
+
+// Article/content page timeline configuration
+export const articleTimeline: TimelineConfig = {
+	id: 'article',
+	enterStages: [
+		{
+			id: 'article-header',
+			duration: 500,
+			delay: 0,
+		},
+		{
+			id: 'article-body',
+			duration: 500,
+			delay: -200,
+		},
+	],
+	exitStages: [
+		{
+			id: 'article-body',
+			duration: 500,
+			delay: 0,
+		},
+		{
+			id: 'article-header',
+			duration: 500,
+			delay: -200,
+		},
+	],
+	enterSpeedMultiplier: 1,
+	exitSpeedMultiplier: 2.0,
 };

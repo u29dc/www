@@ -2,34 +2,19 @@
  * Structured Logger
  *
  * ## SUMMARY
- * Environment-aware structured logging with domain-tagged format for observability.
+ * Environment-aware structured logging with domain-tagged [DOMAIN|ACTION|RESULT] format.
  *
  * ## RESPONSIBILITIES
- * - Provide structured [DOMAIN|ACTION|RESULT] log format
- * - Enable environment-aware logging (dev vs prod)
+ * - Provide structured logging with environment awareness (dev vs prod)
  * - Support request-scoped context propagation
- * - Create searchable, parseable log streams
  *
- * ## USAGE
- * ```typescript
- * import { logger, logEvent } from '@/lib/utils/logger';
- * logger.info('User logged in', { userId: '123' });
- * logEvent('AUTH', 'LOGIN', 'SUCCESS', { userId: '123' });
- * ```
- *
- * @module lib/utils/logger
+ * @module lib/logger
  */
 
 import pino from 'pino';
 
-/**
- * Log metadata type (record of arbitrary key-value pairs)
- */
 export type LogMeta = Record<string, unknown>;
 
-/**
- * Logger instance interface for structured logging
- */
 export interface LoggerInstance {
 	info(message: string, meta?: LogMeta): void;
 	warn(message: string, meta?: LogMeta): void;
@@ -37,9 +22,6 @@ export interface LoggerInstance {
 	child(bindings: LogMeta): LoggerInstance;
 }
 
-/**
- * Pino logger wrapper with environment awareness
- */
 class PinoLoggerWrapper implements LoggerInstance {
 	private pinoLogger: pino.Logger;
 	private isDevelopment: boolean;
@@ -51,14 +33,8 @@ class PinoLoggerWrapper implements LoggerInstance {
 		this.isBrowser = typeof window !== 'undefined';
 	}
 
-	/**
-	 * Determines if logging should occur based on environment
-	 */
 	private shouldLog(): boolean {
-		// Development: Always log (server + browser)
 		if (this.isDevelopment) return true;
-
-		// Production: Only server-side logs
 		return !this.isBrowser;
 	}
 
@@ -75,7 +51,6 @@ class PinoLoggerWrapper implements LoggerInstance {
 	error(message: string, error?: unknown, meta?: LogMeta): void {
 		if (!this.shouldLog()) return;
 
-		// Normalize error for structured logging
 		const errorData =
 			error instanceof Error
 				? {
@@ -93,9 +68,6 @@ class PinoLoggerWrapper implements LoggerInstance {
 	}
 }
 
-/**
- * Creates environment-aware logger instance
- */
 function createLogger(): LoggerInstance {
 	const isDevelopment = process.env.NODE_ENV === 'development';
 	const isBrowser = typeof window !== 'undefined';
@@ -116,23 +88,18 @@ function createLogger(): LoggerInstance {
 	);
 }
 
-/**
- * Global logger instance
- */
 export const logger = createLogger();
 
 /**
- * Logs structured event with domain tagging
- *
- * @param domain - Event domain (AUTH, API, DB, etc.)
- * @param action - Event action (LOGIN, QUERY, CREATE, etc.)
- * @param result - Event result (SUCCESS, FAIL, START, etc.)
- * @param data - Additional event metadata
+ * Logs structured event with domain tagging.
+ * @param domain - Event domain
+ * @param action - Event action
+ * @param result - Event result
+ * @param data - Additional metadata
  */
 export function logEvent(domain: string, action: string, result: string, data?: LogMeta): void {
 	const message = `[${domain}|${action}|${result}]`;
 
-	// Choose level based on result
 	if (result === 'FAIL' || result === 'ERROR') {
 		logger.error(message, undefined, data);
 	} else if (result === 'SLOW' || result === 'TIMEOUT') {
@@ -143,11 +110,10 @@ export function logEvent(domain: string, action: string, result: string, data?: 
 }
 
 /**
- * Creates request-scoped logger with unique ID
- *
+ * Creates request-scoped logger.
  * @param requestId - Unique request identifier
- * @param context - Initial request context
- * @returns Logger instance bound to request context
+ * @param context - Initial context
+ * @returns Request-scoped logger
  */
 export function createRequestLogger(requestId: string, context?: LogMeta): LoggerInstance {
 	return logger.child({

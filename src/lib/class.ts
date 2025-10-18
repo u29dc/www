@@ -5,22 +5,11 @@
  * Utility functions for className manipulation and merging with type safety.
  *
  * ## RESPONSIBILITIES
- * - Merge multiple className strings efficiently
- * - Handle conditional className application
- * - Remove duplicate className values
+ * - Merge className strings with conditional support and deduplication
  *
- * ## USAGE
- * ```typescript
- * import { cn } from '@/lib/utils/class';
- * const className = cn('base-class', isActive && 'active', 'another-class');
- * ```
- *
- * @module lib/utils/class
+ * @module lib/class
  */
 
-/**
- * ClassValue represents valid className input types for class manipulation utilities
- */
 export type ClassValue =
 	| string
 	| number
@@ -30,7 +19,6 @@ export type ClassValue =
 	| ClassValue[]
 	| Record<string, boolean | undefined | null>;
 
-// Converts ClassValue input to flat className string
 function toClassString(value: ClassValue): string {
 	if (!value) return '';
 
@@ -55,17 +43,15 @@ function toClassString(value: ClassValue): string {
 }
 
 /**
- * Merges className strings with deduplication
- *
- * @param inputs - Variable number of className inputs
- * @returns Merged className string without duplicates
+ * Merges className strings with deduplication.
+ * @param inputs - Variable className inputs
+ * @returns Merged className string
  */
 export function cn(...inputs: ClassValue[]): string {
 	const classNames = inputs.map((input) => toClassString(input)).filter(Boolean);
 
 	if (classNames.length === 0) return '';
 
-	// Remove duplicates while preserving order
 	const seen = new Set<string>();
 	const result: string[] = [];
 
