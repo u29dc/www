@@ -34,14 +34,16 @@ export function LayoutHeader({ type, frontmatter, title }: LayoutHeaderProps) {
 						<div className="absolute bottom-0 w-full left-1/2 -translate-x-1/2 text-center">
 							<AnimatedReveal
 								stageId="index-header"
-								staggerDelay={10}
+								staggerDelay={50}
 								blurStrength={5}
 							>
 								{siteTitle}
 							</AnimatedReveal>
 						</div>
 						<nav className="absolute bottom-0 left-0">
-							<span>U29DC™</span>
+							<AnimatedReveal stageId="index-header">
+								<span>U29DC™</span>
+							</AnimatedReveal>
 						</nav>
 					</>
 				)}
@@ -51,14 +53,16 @@ export function LayoutHeader({ type, frontmatter, title }: LayoutHeaderProps) {
 						<div className="absolute bottom-0 w-full left-1/2 -translate-x-1/2 text-center">
 							<AnimatedReveal
 								stageId="article-header"
-								staggerDelay={10}
+								staggerDelay={50}
 								blurStrength={5}
 							>
 								{frontmatter.title}
 							</AnimatedReveal>
 						</div>
 						<nav className="absolute bottom-0 left-0">
-							<AnimatedLink href="/">Back</AnimatedLink>
+							<AnimatedReveal stageId="article-header">
+								<AnimatedLink href="/">Back</AnimatedLink>
+							</AnimatedReveal>
 						</nav>
 					</>
 				)}
