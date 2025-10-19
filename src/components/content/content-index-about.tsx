@@ -16,8 +16,8 @@ import { AnimatedReveal } from '@/components/animation/animated-reveal';
 
 export function ContentIndexAbout() {
 	return (
-		<div className="content-column padding-standard">
-			<AnimatedReveal stageId="index-title" elementStagger={200}>
+		<div className="padding-standard content-column">
+			<AnimatedReveal stageId="index-title">
 				<h2>Incomplete Infinity is an evolving, enigmatic, multifaceted creative</h2>
 				<h2>practice, turning complex futures into today's narratives.</h2>
 				<h2>It inhabits the space between what is seen and what is felt.</h2>
@@ -25,12 +25,7 @@ export function ContentIndexAbout() {
 				<h2>It expresses itself... in incomplete form.</h2>
 				<h2>After all, isn't true infinity always incomplete?</h2>
 			</AnimatedReveal>
-			<AnimatedReveal
-				stageId="index-description"
-				className="mt-10"
-				staggerDelay={5}
-				blurStrength={5}
-			>
+			<AnimatedReveal stageId="index-description" className="mt-10" blurStrength={5}>
 				The practice questions premises before refining execution. Asks "why not
 				differently?" because the most interesting possibilities emerge not from
 				optimization, but from questioning the premise entirely. The work moves between LAB

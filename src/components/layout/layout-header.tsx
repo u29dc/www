@@ -15,7 +15,7 @@
 import { AnimatedLink } from '@/components/animation/animated-link';
 import { AnimatedReveal } from '@/components/animation/animated-reveal';
 import { SITE } from '@/lib/constants';
-import type { ContentItem } from '@/lib/mdx';
+import type { ContentItem } from '@/lib/mdx-server';
 
 export interface LayoutHeaderProps {
 	type: 'index' | 'article';
@@ -34,8 +34,8 @@ export function LayoutHeader({ type, frontmatter, title }: LayoutHeaderProps) {
 						<div className="absolute bottom-0 w-full left-1/2 -translate-x-1/2 text-center">
 							<AnimatedReveal
 								stageId="index-header"
-								staggerDelay={15}
-								blurStrength={8}
+								staggerDelay={10}
+								blurStrength={5}
 							>
 								{siteTitle}
 							</AnimatedReveal>
@@ -51,8 +51,8 @@ export function LayoutHeader({ type, frontmatter, title }: LayoutHeaderProps) {
 						<div className="absolute bottom-0 w-full left-1/2 -translate-x-1/2 text-center">
 							<AnimatedReveal
 								stageId="article-header"
-								staggerDelay={15}
-								blurStrength={8}
+								staggerDelay={10}
+								blurStrength={5}
 							>
 								{frontmatter.title}
 							</AnimatedReveal>

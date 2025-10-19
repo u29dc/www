@@ -12,18 +12,16 @@
 
 import { AnimatedFeedWrapper } from '@/components/animation/animated-feed-wrapper';
 import { ContentIndexFeedItem } from '@/components/content/content-index-feed-item';
-import { getFeedContent } from '@/lib/mdx';
+import { getFeedContent } from '@/lib/mdx-server';
 
 export async function ContentIndexFeed() {
 	const content = await getFeedContent();
 
 	return (
-		<div className="content-column padding-standard">
-			<AnimatedFeedWrapper stageId="index-feed" className="flex flex-col space-y-5">
-				{content.map((item) => (
-					<ContentIndexFeedItem key={item.frontmatter.slug} item={item} />
-				))}
-			</AnimatedFeedWrapper>
-		</div>
+		<AnimatedFeedWrapper stageId="index-feed" className="padding-standard content-column">
+			{content.map((item) => (
+				<ContentIndexFeedItem key={item.frontmatter.slug} item={item} />
+			))}
+		</AnimatedFeedWrapper>
 	);
 }

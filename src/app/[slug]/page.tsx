@@ -16,9 +16,9 @@ import { MDXRemote } from 'next-mdx-remote/rsc';
 import { AnimatedMdxContent } from '@/components/animation/animated-mdx-content';
 import { CoreTimelineProvider } from '@/components/core/core-timeline-provider';
 import { LayoutWrapper } from '@/components/layout/layout-wrapper';
-import { articleTimeline } from '@/lib/constants';
-import type { ContentItem } from '@/lib/mdx';
-import { getContentBySlug, getFeedContent } from '@/lib/mdx';
+import { TIMELINE_ARTICLE } from '@/lib/constants';
+import type { ContentItem } from '@/lib/mdx-server';
+import { getContentBySlug, getFeedContent } from '@/lib/mdx-server';
 import { useMDXComponents } from '@/mdx-components';
 
 export interface ContentPageProps {
@@ -42,7 +42,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
 	const { frontmatter, content: mdxContent } = content;
 
 	return (
-		<CoreTimelineProvider config={articleTimeline}>
+		<CoreTimelineProvider config={TIMELINE_ARTICLE}>
 			<LayoutWrapper type="article" frontmatter={frontmatter}>
 				<AnimatedMdxContent>
 					<MDXRemote source={mdxContent} components={useMDXComponents({})} />

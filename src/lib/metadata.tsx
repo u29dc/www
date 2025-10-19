@@ -20,11 +20,11 @@ import type { MetadataRoute } from 'next';
 import { ImageResponse } from 'next/og';
 import { SITE } from '@/lib/constants';
 import { logEvent } from '@/lib/logger';
-import { getAllContent } from '@/lib/mdx';
+import { getAllContent } from '@/lib/mdx-server';
 
-// ============================================================================
+// ==================================================
 // METADATA ROUTE GENERATORS
-// ============================================================================
+// ==================================================
 
 export function generateManifest(): MetadataRoute.Manifest {
 	return {
@@ -133,9 +133,9 @@ export async function generateSitemap(): Promise<MetadataRoute.Sitemap> {
 	}
 }
 
-// ============================================================================
+// ==================================================
 // IMAGE GENERATION
-// ============================================================================
+// ==================================================
 
 let logoBufferCache: ArrayBuffer | null = null;
 

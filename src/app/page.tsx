@@ -14,11 +14,11 @@ import { ContentIndexAbout } from '@/components/content/content-index-about';
 import { ContentIndexFeed } from '@/components/content/content-index-feed';
 import { CoreTimelineProvider } from '@/components/core/core-timeline-provider';
 import { LayoutWrapper } from '@/components/layout/layout-wrapper';
-import { indexTimeline } from '@/lib/constants';
+import { TIMELINE_INDEX } from '@/lib/constants';
 
 export default function HomePage() {
 	return (
-		<CoreTimelineProvider config={indexTimeline}>
+		<CoreTimelineProvider config={TIMELINE_INDEX}>
 			<LayoutWrapper type="index">
 				<ContentIndexAbout />
 				<ContentIndexFeed />

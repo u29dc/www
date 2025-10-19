@@ -1,15 +1,15 @@
 /**
- * MDX Processing and Content Management
+ * MDX Processing and Content Management (Server-Only)
  *
  * ## SUMMARY
- * Unified MDX module for content types, aggregation, and transformation.
+ * Server-only MDX module for content types, aggregation, and transformation.
  *
  * ## RESPONSIBILITIES
  * - Define Zod schemas and TypeScript types for content
  * - Aggregate and parse MDX content files with validation
  * - Transform MDX to plain markdown for .md endpoints
  *
- * @module lib/mdx
+ * @module lib/mdx-server
  */
 
 import fs from 'node:fs/promises';
@@ -19,13 +19,13 @@ import yaml from 'js-yaml';
 import { unstable_cache } from 'next/cache';
 import { cache } from 'react';
 import { z } from 'zod';
-import { CDN } from '@/lib/constants';
 import { NotFoundError } from '@/lib/errors';
 import { logEvent } from '@/lib/logger';
+import { CDN, sanitizeMediaFilename } from '@/lib/mdx-client';
 
-// ============================================================================
+// ==================================================
 // TYPE DEFINITIONS AND SCHEMAS
-// ============================================================================
+// ==================================================
 
 export const StudySchema = z.object({
 	type: z.literal('study'),
@@ -93,9 +93,12 @@ export interface ParsedContent {
 	content: string;
 }
 
-// ============================================================================
+// Re-export client types for convenience
+export type { MediaItem } from '@/lib/mdx-client';
+
+// ==================================================
 // TYPE GUARDS
-// ============================================================================
+// ==================================================
 
 export function isStudy(item: ContentItem): item is StudyContent {
 	return item.type === 'study';
@@ -113,9 +116,9 @@ export function isMeta(item: ContentItem): item is Meta {
 	return item.type === 'meta';
 }
 
-// ============================================================================
+// ==================================================
 // CONTENT AGGREGATION
-// ============================================================================
+// ==================================================
 
 async function getAllContentImpl(): Promise<ParsedContent[]> {
 	const contentDir = path.join(process.cwd(), 'src/content');
@@ -198,9 +201,9 @@ export const getContentBySlug = cache((slug: string) => {
 	})();
 });
 
-// ============================================================================
+// ==================================================
 // MDX PARSING
-// ============================================================================
+// ==================================================
 
 /**
  * Parses an MDX file and validates its frontmatter.
@@ -239,42 +242,9 @@ export async function parseMDX(filePath: string): Promise<ParsedContent> {
 	}
 }
 
-// ============================================================================
+// ==================================================
 // MARKDOWN TRANSFORMATION
-// ============================================================================
-
-// Allowed media extensions for CDN URL construction
-const ALLOWED_MEDIA_EXTENSIONS = ['.webp', '.webm', '.jpg', '.jpeg', '.png', '.gif', '.mp4'];
-
-// Safe filename pattern (prevents path traversal)
-const SAFE_FILENAME_PATTERN = /^[a-zA-Z0-9_-]+\.[a-z0-9]+$/;
-
-function sanitizeMediaFilename(filename: string): string | null {
-	if (!SAFE_FILENAME_PATTERN.test(filename)) {
-		logEvent('MDX', 'SANITIZE_MEDIA', 'INVALID_PATTERN', {
-			filename: filename.substring(0, 50),
-		});
-		return null;
-	}
-
-	const lastDot = filename.lastIndexOf('.');
-	if (lastDot === -1) {
-		logEvent('MDX', 'SANITIZE_MEDIA', 'NO_EXTENSION', { filename });
-		return null;
-	}
-
-	const ext = filename.substring(lastDot).toLowerCase();
-	if (!ALLOWED_MEDIA_EXTENSIONS.includes(ext)) {
-		logEvent('MDX', 'SANITIZE_MEDIA', 'INVALID_EXTENSION', {
-			filename,
-			extension: ext,
-			allowed: ALLOWED_MEDIA_EXTENSIONS,
-		});
-		return null;
-	}
-
-	return filename;
-}
+// ==================================================
 
 /**
  * Transforms MDX content to plain markdown.
@@ -287,8 +257,8 @@ export function toMarkdown(frontmatter: ContentItem, content: string): string {
 
 	let markdown = content;
 
-	markdown = markdown.replace(/<MdxContent>\s*/g, '');
-	markdown = markdown.replace(/\s*<\/MdxContent>/g, '');
+	markdown = markdown.replace(/<MdxParagraph>\s*/g, '');
+	markdown = markdown.replace(/\s*<\/MdxParagraph>/g, '');
 
 	markdown = markdown.replace(/<MdxMedia\s+src=\{(\[[^\]]*\])\}\s*\/>/g, (match, srcArray) => {
 		try {

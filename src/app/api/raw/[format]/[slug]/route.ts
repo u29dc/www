@@ -20,7 +20,7 @@ import type { NextRequest } from 'next/server';
 import { SITE } from '@/lib/constants';
 import { createErrorResponse, NotFoundError, ProcessingError, ValidationError } from '@/lib/errors';
 import { logEvent } from '@/lib/logger';
-import { getContentBySlug, toMarkdown } from '@/lib/mdx';
+import { getContentBySlug, toMarkdown } from '@/lib/mdx-server';
 import { validateSlug } from '@/lib/validators';
 
 /**

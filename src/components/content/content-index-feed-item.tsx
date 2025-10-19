@@ -21,7 +21,7 @@ import type {
 	ParsedContent,
 	SignalContent,
 	StudyContent,
-} from '@/lib/mdx';
+} from '@/lib/mdx-server';
 
 interface MetadataItem {
 	label: string;
@@ -85,8 +85,8 @@ export function ContentIndexFeedItem({ item }: ContentIndexFeedItemProps) {
 	}
 
 	return (
-		<div className="col-span-full">
-			<AnimatedLink href={`/${slug}`} className="group">
+		<AnimatedLink href={`/${slug}`}>
+			<div className="padding-standard px-0">
 				<h2>{title}</h2>
 				<p>{description}</p>
 				{metadataItems.length > 0 && (
@@ -99,7 +99,7 @@ export function ContentIndexFeedItem({ item }: ContentIndexFeedItemProps) {
 						))}
 					</div>
 				)}
-			</AnimatedLink>
-		</div>
+			</div>
+		</AnimatedLink>
 	);
 }
