@@ -27,7 +27,9 @@ export interface ErrorResponseData {
 	};
 }
 
-// Error Classes
+// ==================================================
+// ERROR CLASSES
+// ==================================================
 
 export class AppError extends Error {
 	public readonly isOperational: boolean = true;
@@ -64,7 +66,9 @@ export class ProcessingError extends AppError {
 	}
 }
 
-// Response Utilities
+// ==================================================
+// RESPONSE UTILITIES
+// ==================================================
 
 function errorToData(error: AppError | Error): ErrorResponseData {
 	const isDevelopment = process.env.NODE_ENV === 'development';

@@ -15,6 +15,10 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 
+// ==================================================
+// TYPE DEFINITIONS
+// ==================================================
+
 export type Theme = 'light' | 'dark' | 'system';
 
 export type ResolvedTheme = 'light' | 'dark';
@@ -30,6 +34,10 @@ export interface ThemeProviderProps {
 	initialTheme?: Theme;
 	initialResolved?: ResolvedTheme;
 }
+
+// ==================================================
+// COOKIE UTILITIES
+// ==================================================
 
 const THEME_COOKIE_NAME = 'u29dc-theme';
 const RESOLVED_THEME_COOKIE_NAME = 'u29dc-theme-resolved';
@@ -71,6 +79,10 @@ export const getResolvedCookie = () => getCookie<ResolvedTheme>(RESOLVED_THEME_C
 export const setThemeCookie = (t: Theme) => setCookie(THEME_COOKIE_NAME, t);
 export const setResolvedCookie = (t: ResolvedTheme) => setCookie(RESOLVED_THEME_COOKIE_NAME, t);
 
+// ==================================================
+// THEME UTILITIES
+// ==================================================
+
 export const getSystemTheme = (): ResolvedTheme =>
 	typeof window === 'undefined'
 		? 'light'
@@ -88,6 +100,10 @@ export function applyThemeClass(theme: ResolvedTheme): void {
 }
 
 export { isValidTheme };
+
+// ==================================================
+// CONTEXT AND HOOKS
+// ==================================================
 
 export const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 

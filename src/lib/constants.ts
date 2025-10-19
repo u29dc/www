@@ -17,9 +17,9 @@
 import type { Metadata, Viewport } from 'next';
 import type { TimelineConfig } from '@/lib/timeline';
 
-// ============================================================================
+// ==================================================
 // SITE CONFIGURATION
-// ============================================================================
+// ==================================================
 
 export const SITE = {
 	title: 'Incomplete Infinity',
@@ -136,17 +136,17 @@ export const metadata: Metadata = {
 	},
 };
 
-// ============================================================================
+// ==================================================
 // ANIMATION TIMELINE CONFIGURATIONS
-// ============================================================================
+// ==================================================
 
 // Index page timeline configuration
-export const indexTimeline: TimelineConfig = {
+export const TIMELINE_INDEX: TimelineConfig = {
 	id: 'index',
 	enterStages: [
 		{
 			id: 'index-title',
-			duration: 2000,
+			duration: 1000,
 			delay: 0,
 		},
 		{
@@ -192,7 +192,7 @@ export const indexTimeline: TimelineConfig = {
 };
 
 // Article/content page timeline configuration
-export const articleTimeline: TimelineConfig = {
+export const TIMELINE_ARTICLE: TimelineConfig = {
 	id: 'article',
 	enterStages: [
 		{
