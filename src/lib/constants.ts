@@ -149,8 +149,10 @@ export const TIMELINE_INDEX: TimelineConfig = {
 		{ id: 'index-header-nav', duration: 200, delay: -100 },
 		{ id: 'index-header', duration: 200, delay: -50 },
 		{ id: 'index-feed', duration: 1000, delay: -200 },
+		{ id: 'layout-footer-nav', duration: 500, delay: -500 },
 	],
 	exitStages: [
+		{ id: 'layout-footer-nav', duration: 200, delay: 0 },
 		{ id: 'index-feed', duration: 200, delay: -100 },
 		{ id: 'index-header', duration: 200, delay: -100 },
 		{ id: 'index-header-nav', duration: 200, delay: -100 },
@@ -168,8 +170,10 @@ export const TIMELINE_ARTICLE: TimelineConfig = {
 		{ id: 'article-header-nav', duration: 200, delay: 0 },
 		{ id: 'article-header', duration: 200, delay: -50 },
 		{ id: 'article-body', duration: 500, delay: -250 },
+		{ id: 'layout-footer-nav', duration: 500, delay: -250 },
 	],
 	exitStages: [
+		{ id: 'layout-footer-nav', duration: 200, delay: 0 },
 		{ id: 'article-body', duration: 200, delay: -100 },
 		{ id: 'article-header', duration: 200, delay: -100 },
 		{ id: 'article-header-nav', duration: 200, delay: -100 },

@@ -136,6 +136,37 @@
 	@apply h-full w-full;
 }
 
+/* Show hover effects only on devices with hover capability (mouse/trackpad, not touch) */
+@media (hover: hover) and (pointer: fine) {
+	.hover-device\:block {
+		display: block;
+	}
+}
+
 @utility media-fill {
 	@apply h-full w-full object-cover;
+}
+
+@utility marker-all {
+	position: relative;
+	background-image:
+		linear-gradient(to bottom, var(--color-white), var(--color-white)),
+		linear-gradient(to right, var(--color-white), var(--color-white)),
+		linear-gradient(to bottom, var(--color-white), var(--color-white)),
+		linear-gradient(to left, var(--color-white), var(--color-white)),
+		linear-gradient(to top, var(--color-white), var(--color-white)),
+		linear-gradient(to right, var(--color-white), var(--color-white)),
+		linear-gradient(to top, var(--color-white), var(--color-white)),
+		linear-gradient(to left, var(--color-white), var(--color-white));
+	background-size:
+		1px 4px, 4px 1px,
+		1px 4px, 4px 1px,
+		1px 4px, 4px 1px,
+		1px 4px, 4px 1px;
+	background-position:
+		top left, top left,
+		top right, top right,
+		bottom left, bottom left,
+		bottom right, bottom right;
+	background-repeat: no-repeat;
 }

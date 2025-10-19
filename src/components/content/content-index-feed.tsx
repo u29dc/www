@@ -16,9 +16,10 @@ import { getFeedContent } from '@/lib/mdx-server';
 
 export async function ContentIndexFeed() {
 	const content = await getFeedContent();
+	const thumbnails = content.map((item) => item.frontmatter.thumbnailMedia ?? null);
 
 	return (
-		<AnimatedFeedWrapper stageId="index-feed" className="padding-standard content-column">
+		<AnimatedFeedWrapper stageId="index-feed" className="col-span-full" thumbnails={thumbnails}>
 			{content.map((item) => (
 				<ContentIndexFeedItem key={item.frontmatter.slug} item={item} />
 			))}
