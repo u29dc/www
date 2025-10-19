@@ -93,15 +93,20 @@ export async function proxy(request: NextRequest) {
 
 	// Pass theme to layout via headers for server-side rendering
 	// Validate theme value to prevent header injection
-	if (theme && isValidTheme(theme)) {
-		requestHeaders.set('u29dc-theme', theme);
-	} else {
-		requestHeaders.set('u29dc-theme', 'system');
-	}
+	const resolvedThemeHeaderValue = () => {
+		if (resolvedTheme === 'dark' || resolvedTheme === 'light') {
+			return resolvedTheme;
+		}
+		return undefined;
+	};
 
-	// Pass resolved theme as well
-	if (resolvedTheme === 'dark' || resolvedTheme === 'light') {
-		requestHeaders.set('u29dc-resolved-theme', resolvedTheme);
+	const themeHeaderValue = theme && isValidTheme(theme) ? theme : 'system';
+
+	requestHeaders.set('u29dc-theme', themeHeaderValue);
+
+	const resolvedThemeValue = resolvedThemeHeaderValue();
+	if (resolvedThemeValue) {
+		requestHeaders.set('u29dc-resolved-theme', resolvedThemeValue);
 	}
 
 	const response = NextResponse.next({

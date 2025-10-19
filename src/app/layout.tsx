@@ -35,8 +35,8 @@ export default async function RootLayout({ children }: RootLayoutProps) {
 	const headersList = await headers();
 	const nonce = headersList.get('x-nonce') || undefined;
 
-	const headerTheme = headersList.get('x-theme') as Theme | null;
-	const headerResolvedTheme = headersList.get('x-resolved-theme') as ResolvedTheme | null;
+	const headerTheme = headersList.get('u29dc-theme') as Theme | null;
+	const headerResolvedTheme = headersList.get('u29dc-resolved-theme') as ResolvedTheme | null;
 
 	// Defensive fallback: validate cookies only if headers absent
 	const cookieStore = await cookies();
