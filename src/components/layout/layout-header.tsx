@@ -41,7 +41,7 @@ export function LayoutHeader({ type, frontmatter, title }: LayoutHeaderProps) {
 							</AnimatedReveal>
 						</div>
 						<nav className="absolute bottom-0 left-0">
-							<AnimatedReveal stageId="index-header">
+							<AnimatedReveal stageId="index-header-nav">
 								<span>U29DC™</span>
 							</AnimatedReveal>
 						</nav>
@@ -60,7 +60,7 @@ export function LayoutHeader({ type, frontmatter, title }: LayoutHeaderProps) {
 							</AnimatedReveal>
 						</div>
 						<nav className="absolute bottom-0 left-0">
-							<AnimatedReveal stageId="article-header">
+							<AnimatedReveal stageId="article-header-nav">
 								<AnimatedLink href="/">Back</AnimatedLink>
 							</AnimatedReveal>
 						</nav>

@@ -108,7 +108,7 @@ export function MdxMedia({ src, alt }: MdxMediaProps) {
 	);
 
 	return (
-		<div className="grid grid-cols-10 col-span-full">
+		<div className="grid grid-cols-10 col-span-full my-2 md:my-5">
 			<MediaLayoutContext.Provider value={contextValue}>
 				<div
 					ref={containerRef}
