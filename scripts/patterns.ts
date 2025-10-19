@@ -46,7 +46,6 @@ const IGNORE_SEGMENTS = [
 	'/.cache/',
 ];
 const IGNORE_FILE_NAMES = new Set(['bun.lockb', 'patterns.ts']);
-const TYPES_LIBRARY_SEGMENT = '/src/lib/types/';
 
 const EMOJI_REGEX =
 	/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F7E0}-\u{1F7EB}\u{1F900}-\u{1F9FF}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]|\u{1F3FB}[\u{1F3FB}-\u{1F3FF}]?|\u{200D}|\u{FE0F}/gu;
@@ -172,39 +171,6 @@ const RULES: PatternRule[] = [
 			return violations;
 		},
 	},
-	{
-		id: 'no-inline-types',
-		name: 'No Inline Types',
-		description: 'All types and interfaces must be defined in src/lib/types/',
-		appliesTo: (file) =>
-			!!file.ast &&
-			(file.ext === '.ts' || file.ext === '.tsx') &&
-			file.pathPosix.includes('/src/') &&
-			!isTypesLibrary(file),
-		check: (file) => {
-			if (!file.ast) return [];
-			const violations: Violation[] = [];
-			for (const declaration of findTypeDeclarations(file.ast)) {
-				if (hasPatternIgnore(declaration, file.ast, 'no-inline-types')) continue;
-				const typeName = declaration.name?.text ?? 'Unknown';
-				const location = positionToLocation(
-					file.ast,
-					declaration.name?.getStart() ?? declaration.getStart(),
-				);
-				const declarationType = ts.isInterfaceDeclaration(declaration)
-					? 'interface'
-					: 'type';
-				violations.push({
-					line: location.line,
-					column: location.column,
-					message: `${declarationType} "${typeName}" must be defined in src/lib/types/ - use centralized type library`,
-					context: file.lines[location.line - 1]?.trim() ?? '',
-					ruleId: 'no-inline-types',
-				});
-			}
-			return violations;
-		},
-	},
 ];
 
 // ==================================================
@@ -238,10 +204,6 @@ interface PatternRule {
 
 function toPosixPath(path: string): string {
 	return path.replace(/\\/g, '/');
-}
-
-function isTypesLibrary(file: FileContext): boolean {
-	return file.pathPosix.includes(TYPES_LIBRARY_SEGMENT);
 }
 
 function parseAst(context: FileContext): ts.SourceFile | undefined {
@@ -333,20 +295,6 @@ function findRelativeImports(
 	}
 	visit(ast);
 	return relativeImports;
-}
-
-function findTypeDeclarations(
-	ast: ts.SourceFile,
-): Array<ts.InterfaceDeclaration | ts.TypeAliasDeclaration> {
-	const typeDeclarations: Array<ts.InterfaceDeclaration | ts.TypeAliasDeclaration> = [];
-	function visit(node: ts.Node): void {
-		if (ts.isInterfaceDeclaration(node) || ts.isTypeAliasDeclaration(node)) {
-			typeDeclarations.push(node);
-		}
-		ts.forEachChild(node, visit);
-	}
-	visit(ast);
-	return typeDeclarations;
 }
 
 async function listGitTrackedFiles(): Promise<string[]> {

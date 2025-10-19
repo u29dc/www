@@ -2,26 +2,17 @@
  * 404 Not Found Handler
  *
  * ## SUMMARY
- * Client-side 404 page that automatically redirects to home page.
+ * Server-side 404 page that instantly redirects to home page.
  *
  * ## RESPONSIBILITIES
  * - Detect 404 navigation events
- * - Redirect user to home page via router
+ * - Redirect user to home page via server-side redirect
  *
  * @module app/not-found
  */
 
-'use client';
-
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { redirect } from 'next/navigation';
 
 export default function NotFound() {
-	const router = useRouter();
-
-	useEffect(() => {
-		router.push('/');
-	}, [router]);
-
-	return null;
+	redirect('/');
 }

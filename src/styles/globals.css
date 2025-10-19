@@ -4,6 +4,8 @@
 	--font-sans: var(--font-neue-haas), sans-serif;
 	--color-white: oklch(97% 0 0);
 	--color-black: oklch(15% 0 0);
+	--breakpoint-3xl: 1920px;
+	--breakpoint-4xl: 2560px;
 }
 
 @layer base {
@@ -116,19 +118,22 @@
 }
 
 @utility content-column {
-	@apply col-start-1 col-span-10 md:col-start-6 md:col-span-5 lg:col-start-6 lg:col-span-4;
+	@apply col-start-1 col-span-10
+	       sm:col-start-1 sm:col-span-10
+	       md:col-start-3 md:col-span-7
+	       lg:col-start-5 lg:col-span-6
+	       xl:col-start-6 xl:col-span-5
+	       2xl:col-start-7 2xl:col-span-3
+	       3xl:col-start-8 3xl:col-span-2
+	       4xl:col-start-8 4xl:col-span-2;
+}
+
+@utility padding-standard {
+	@apply p-2 md:p-5;
 }
 
 @utility full-container {
 	@apply h-full w-full;
-}
-
-@utility header-title-centered {
-	@apply absolute bottom-0 w-full left-1/2 -translate-x-1/2 text-center;
-}
-
-@utility header-nav-corner {
-	@apply absolute bottom-0 left-0;
 }
 
 @utility media-fill {

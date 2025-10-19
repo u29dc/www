@@ -116,6 +116,14 @@
 			"linter": { "rules": { "suspicious": { "noConsole": "off" } } }
 		},
 		{
+			"includes": ["src/lib/metadata.tsx"],
+			"linter": { "rules": { "performance": { "noImgElement": "off" } } }
+		},
+		{
+			"includes": ["src/lib/timeline.tsx"],
+			"linter": { "rules": { "complexity": { "noExcessiveCognitiveComplexity": "off" } } }
+		},
+		{
 			"includes": ["**/*.yml", "**/*.yaml"],
 			"formatter": {
 				"indentStyle": "space",

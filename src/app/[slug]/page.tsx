@@ -2,19 +2,10 @@
  * Individual Content Page
  *
  * ## SUMMARY
- * Renders individual content item with metadata and MDX content.
+ * Renders individual content item with metadata, timeline-animated MDX content, and SEO.
  *
  * ## RESPONSIBILITIES
- * - Parse and validate content by slug
- * - Generate metadata for SEO
- * - Render content header with description
- * - Display type-specific metadata list
- * - Render MDX content with custom components
- *
- * ## USAGE
- * ```tsx
- * // Automatic Next.js dynamic route at /[slug]
- * ```
+ * - Validate content by slug, generate static params and metadata for SEO
  *
  * @module app/[slug]/page
  */
@@ -22,11 +13,21 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { MDXRemote } from 'next-mdx-remote/rsc';
-import { Wrapper } from '@/components/ui/wrapper';
-import { getContentBySlug, getFeedContent } from '@/lib/mdx/aggregator';
-import { useMDXComponents } from '@/lib/mdx/components';
-import type { ContentPageProps } from '@/lib/types/components';
-import { getContentDescription } from '@/lib/utils/formatters';
+import { AnimatedMdxContent } from '@/components/animation/animated-mdx-content';
+import { CoreTimelineProvider } from '@/components/core/core-timeline-provider';
+import { LayoutWrapper } from '@/components/layout/layout-wrapper';
+import { TIMELINE_ARTICLE } from '@/lib/constants';
+import type { ContentItem } from '@/lib/mdx-server';
+import { getContentBySlug, getFeedContent } from '@/lib/mdx-server';
+import { useMDXComponents } from '@/mdx-components';
+
+export interface ContentPageProps {
+	params: Promise<{ slug: string }>;
+}
+
+function getContentDescription(frontmatter: ContentItem): string {
+	return frontmatter.description;
+}
 
 export default async function ContentPage({ params }: ContentPageProps) {
 	const { slug } = await params;
@@ -34,7 +35,6 @@ export default async function ContentPage({ params }: ContentPageProps) {
 
 	if (!content) notFound();
 
-	// Block non-feed items from HTML rendering (they should only be accessible via .md/.txt)
 	if (content.frontmatter.isFeedItem === false) {
 		notFound();
 	}
@@ -42,10 +42,13 @@ export default async function ContentPage({ params }: ContentPageProps) {
 	const { frontmatter, content: mdxContent } = content;
 
 	return (
-		<Wrapper type="page-content" frontmatter={frontmatter}>
-			<div></div>
-			<MDXRemote source={mdxContent} components={useMDXComponents({})} />
-		</Wrapper>
+		<CoreTimelineProvider config={TIMELINE_ARTICLE}>
+			<LayoutWrapper type="article" frontmatter={frontmatter}>
+				<AnimatedMdxContent>
+					<MDXRemote source={mdxContent} components={useMDXComponents({})} />
+				</AnimatedMdxContent>
+			</LayoutWrapper>
+		</CoreTimelineProvider>
 	);
 }
 

@@ -1,18 +1,6 @@
 import localFont from 'next/font/local';
 
-/**
- * Neue Haas Grotesk Display - Self-hosted font configuration
- *
- * Previously loaded from Adobe Typekit, now self-hosted for optimal performance.
- * Eliminates FOUC
- *
- * Font weights:
- * - 500: Book (normal + italic)
- * - 600: Medium (normal)
- *
- * Source: Adobe Typekit (kit iui4tie)
- * Downloaded: 2025-10-12
- */
+// Neue Haas Grotesk Display - Weights: 500 (Book), 600 (Medium)
 export const neueHaas = localFont({
 	src: [
 		{

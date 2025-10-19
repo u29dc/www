@@ -1,5 +1,5 @@
 import type { NextConfig } from 'next';
-import { CDN } from '@/lib/utils/metadata';
+import { CDN } from '@/lib/constants';
 
 const nextConfig: NextConfig = {
 	reactCompiler: true,
@@ -27,19 +27,19 @@ const nextConfig: NextConfig = {
 	/**
 	 * URL rewrites for raw content endpoints
 	 *
-	 * Maps /:slug.md and /:slug.txt URLs to universal raw API endpoint
-	 * Enables serving MDX content as markdown (.md) or plain text (.txt)
+	 * Maps /:slug.md and /:slug.txt URLs to format-specific API routes.
+	 * Uses afterFiles to allow Next.js convention files (robots.txt, etc.) to be served first.
 	 */
 	async rewrites() {
 		return {
-			beforeFiles: [
+			afterFiles: [
 				{
 					source: '/:slug.md',
-					destination: '/api/raw/:slug',
+					destination: '/api/raw/md/:slug',
 				},
 				{
 					source: '/:slug.txt',
-					destination: '/api/raw/:slug',
+					destination: '/api/raw/txt/:slug',
 				},
 			],
 		};

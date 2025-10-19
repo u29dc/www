@@ -5,6 +5,7 @@
  */
 
 import { rm, stat } from 'node:fs/promises';
+import { createServer } from 'node:net';
 import { isAbsolute, join, relative } from 'node:path';
 import { Glob, spawn } from 'bun';
 import { colors, parseFlags, runScript, Timer } from './utils';
@@ -22,8 +23,9 @@ type RemovalResult = {
 const CLEAN_PATHS = ['.next', 'out', 'dist', 'build'] as const;
 const CLEAN_PATTERNS = ['*.tsbuildinfo'] as const;
 const CLEAN_PORTS = [3000, 3001, 3002, 3003] as const;
-// Delay to ensure SIGTERM is processed before continuing
-const PROCESS_KILL_GRACE_PERIOD_MS = 100;
+const PORT_PROBE_HOST = '127.0.0.1';
+const PORT_RELEASE_TIMEOUT_MS = 1000;
+const PORT_RELEASE_INTERVAL_MS = 25;
 
 // ==================================================
 // UTILITIES
@@ -48,38 +50,86 @@ async function removePath(path: string): Promise<RemovalResult> {
 	}
 }
 
-async function killPortProcess(port: number): Promise<boolean> {
-	try {
-		const proc = spawn(['lsof', `-i:${port}`, '-t'], {
-			stdout: 'pipe',
-			stderr: 'pipe',
+function createPortProbe(port: number): Promise<boolean> {
+	return new Promise((resolve) => {
+		const server = createServer();
+		const complete = (result: boolean) => {
+			server.removeAllListeners();
+			resolve(result);
+		};
+
+		server.once('error', (error: NodeJS.ErrnoException) => {
+			if (error.code === 'EADDRINUSE') {
+				complete(false);
+				return;
+			}
+			complete(false);
 		});
 
-		const output = await new Response(proc.stdout).text();
-		await proc.exited;
+		server.listen({ port, host: PORT_PROBE_HOST, exclusive: true }, () =>
+			server.close(() => complete(true)),
+		);
+	});
+}
 
-		if (proc.exitCode !== 0 || !output.trim()) {
-			return false;
-		}
-
-		const pid = Number.parseInt(output.trim(), 10);
-		if (!Number.isNaN(pid)) {
-			try {
-				process.kill(pid, 'SIGTERM');
-				await Bun.sleep(PROCESS_KILL_GRACE_PERIOD_MS);
-				return true;
-			} catch {
-				return false;
-			}
-		}
-
-		return false;
+async function isPortAvailable(port: number): Promise<boolean> {
+	try {
+		return await createPortProbe(port);
 	} catch {
 		return false;
 	}
 }
 
-function queueRemoval(targetPath: string, label?: string): Promise<RemovalResult> {
+async function detectBusyPorts(ports: readonly number[]): Promise<number[]> {
+	const results = await Promise.all(
+		ports.map(async (port) => ({ port, available: await isPortAvailable(port) })),
+	);
+	return results.filter((result) => !result.available).map((result) => result.port);
+}
+
+async function collectBusyPids(ports: number[]): Promise<Set<number>> {
+	if (ports.length === 0) return new Set();
+	const args = ['lsof', '-nP', '-t', ...ports.map((port) => `-i:${port}`)];
+	const proc = spawn(args, { stdout: 'pipe', stderr: 'pipe' });
+	const output = await proc.stdout?.text();
+	await proc.exited;
+	if (proc.exitCode !== 0 || !output) return new Set();
+	const pids = new Set<number>();
+	const trimmed = output.trim();
+	if (!trimmed) return pids;
+	for (const line of trimmed.split('\n')) {
+		const pid = Number.parseInt(line.trim(), 10);
+		if (!Number.isNaN(pid)) {
+			pids.add(pid);
+		}
+	}
+	return pids;
+}
+
+function signalProcesses(pids: Set<number>): void {
+	for (const pid of pids) {
+		try {
+			process.kill(pid, 'SIGTERM');
+		} catch {
+			// Process already exited; ignore
+		}
+	}
+}
+
+async function waitForPortRelease(port: number): Promise<boolean> {
+	const deadline = performance.now() + PORT_RELEASE_TIMEOUT_MS;
+	while (performance.now() < deadline) {
+		if (await isPortAvailable(port)) return true;
+		await Bun.sleep(PORT_RELEASE_INTERVAL_MS);
+	}
+	return false;
+}
+
+async function waitForPorts(ports: number[]): Promise<void> {
+	await Promise.all(ports.map((port) => waitForPortRelease(port)));
+}
+
+function queueRemoval(targetPath: string, label: string | undefined): Promise<RemovalResult> {
 	const absolutePath = isAbsolute(targetPath) ? targetPath : join(process.cwd(), targetPath);
 	return removePath(absolutePath).then((result) => ({
 		...result,
@@ -105,7 +155,7 @@ function queueArtifactRemovals(): Promise<RemovalResult>[] {
 		const glob = new Glob(pattern);
 		const files = Array.from(glob.scanSync());
 		for (const file of files) {
-			removalTasks.push(queueRemoval(file));
+			removalTasks.push(queueRemoval(file, undefined));
 		}
 	}
 
@@ -113,21 +163,16 @@ function queueArtifactRemovals(): Promise<RemovalResult>[] {
 }
 
 async function cleanPorts(): Promise<number> {
-	const killResults = await Promise.all(
-		CLEAN_PORTS.map(async (port) => {
-			const killed = await killPortProcess(port);
-			return { killed };
-		}),
-	);
+	const busyPorts = await detectBusyPorts(CLEAN_PORTS);
+	if (busyPorts.length === 0) return 0;
 
-	let portsKilled = 0;
-	for (const { killed } of killResults) {
-		if (killed) {
-			portsKilled++;
-		}
-	}
+	const pids = await collectBusyPids(busyPorts);
+	if (pids.size === 0) return 0;
 
-	return portsKilled;
+	signalProcesses(pids);
+	await waitForPorts(busyPorts);
+	const availability = await Promise.all(busyPorts.map((port) => isPortAvailable(port)));
+	return availability.filter(Boolean).length;
 }
 
 // ==================================================
