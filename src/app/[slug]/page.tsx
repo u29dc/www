@@ -17,8 +17,10 @@ import { AnimatedMdxContent } from '@/components/animation/animated-mdx-content'
 import { CoreTimelineProvider } from '@/components/core/core-timeline-provider';
 import { LayoutWrapper } from '@/components/layout/layout-wrapper';
 import { TIMELINE_ARTICLE } from '@/lib/constants';
+import { ValidationError } from '@/lib/errors';
 import type { ContentItem } from '@/lib/mdx-server';
 import { getContentBySlug, getFeedContent } from '@/lib/mdx-server';
+import { validateSlug } from '@/lib/validators';
 import { useMDXComponents } from '@/mdx-components';
 
 export interface ContentPageProps {
@@ -30,7 +32,20 @@ function getContentDescription(frontmatter: ContentItem): string {
 }
 
 export default async function ContentPage({ params }: ContentPageProps) {
-	const { slug } = await params;
+	const { slug: rawSlug } = await params;
+
+	// Security: Validate slug format and prevent path traversal attacks
+	let slug: string;
+	try {
+		slug = validateSlug(rawSlug);
+	} catch (error) {
+		// Treat validation errors as 404 to avoid exposing attack attempts
+		if (error instanceof ValidationError) {
+			notFound();
+		}
+		throw error;
+	}
+
 	const content = await getContentBySlug(slug);
 
 	if (!content) notFound();
@@ -60,7 +75,20 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: ContentPageProps): Promise<Metadata> {
-	const { slug } = await params;
+	const { slug: rawSlug } = await params;
+
+	// Security: Validate slug format and prevent path traversal attacks
+	let slug: string;
+	try {
+		slug = validateSlug(rawSlug);
+	} catch (error) {
+		// Return 404 metadata for validation errors
+		if (error instanceof ValidationError) {
+			return { title: 'Not Found' };
+		}
+		return { title: 'Not Found' };
+	}
+
 	const content = await getContentBySlug(slug);
 
 	if (!content) return { title: 'Not Found' };
