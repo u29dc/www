@@ -14,46 +14,55 @@
 
 import { motion } from 'motion/react';
 import type { ReactNode } from 'react';
-import { useSyncExternalStore } from 'react';
+import { useMemo } from 'react';
 import { logEvent } from '@/lib/logger';
-import type { StageState } from '@/lib/timeline';
-import { useTimeline } from '@/lib/timeline';
+import { useTimelineStage } from '@/lib/timeline';
 
 export interface AnimatedSectionProps {
 	stageId: string;
 	children: ReactNode;
 	className?: string;
+	duration?: number;
 }
 
-export function AnimatedSection({ stageId, children, className }: AnimatedSectionProps) {
-	const { store, advanceStage } = useTimeline();
+export function AnimatedSection({
+	stageId,
+	children,
+	className,
+	duration = 0,
+}: AnimatedSectionProps) {
+	const { stage, variant, advanceStage, stageConfig, isExit } = useTimelineStage(stageId);
 
-	const stage = useSyncExternalStore(
-		store.subscribe,
-		() => store.getState(stageId),
-		() => undefined,
-	);
-
-	const getVariant = (state: StageState | undefined): string => {
-		if (!state) return 'hidden';
-
-		if (state.direction === 'enter') {
-			return state.status === 'complete'
-				? 'visible'
-				: state.status === 'animating'
-					? 'visible'
-					: 'hidden';
+	// Auto-calculate duration from timeline config
+	const actualDuration = useMemo(() => {
+		// Use manual override if provided (non-zero)
+		if (duration !== 0) {
+			return duration;
 		}
 
-		return 'hidden';
-	};
+		const configDuration = stageConfig?.duration ?? 600;
 
-	const variant = getVariant(stage);
+		// Apply sensible constraints for fade animations
+		const MIN_DURATION = 100;
+		const MAX_DURATION = 2000;
+
+		const constrainedDuration = Math.max(MIN_DURATION, Math.min(MAX_DURATION, configDuration));
+
+		if (Math.abs(constrainedDuration - configDuration) > 1) {
+			logEvent('TIMELINE', 'DURATION_CONSTRAINED', 'WARN', {
+				stageId,
+				calculated: configDuration,
+				constrained: constrainedDuration,
+			});
+		}
+
+		return constrainedDuration;
+	}, [duration, stageConfig, stageId]);
 
 	const variants = {
 		hidden: {
 			opacity: 0,
-			y: stage?.direction === 'exit' ? 10 : -10, // Exit fades down, enter fades up
+			y: isExit ? 10 : -10, // Exit fades down, enter fades up
 			filter: 'blur(10px)',
 		},
 		visible: {
@@ -70,12 +79,12 @@ export function AnimatedSection({ stageId, children, className }: AnimatedSectio
 			animate={variant}
 			variants={variants}
 			transition={{
-				duration: 0.6,
+				duration: actualDuration / 1000,
 				ease: [0.22, 1, 0.36, 1],
 			}}
 			onAnimationComplete={() => {
 				if (stage?.status === 'animating') {
-					advanceStage(stageId);
+					advanceStage();
 					logEvent('TIMELINE', 'SECTION_ANIMATE', 'COMPLETE', {
 						stageId,
 						direction: stage.direction,

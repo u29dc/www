@@ -14,7 +14,15 @@
  */
 
 import type { ReactNode } from 'react';
-import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import {
+	createContext,
+	useContext,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+	useSyncExternalStore,
+} from 'react';
 import { logEvent } from '@/lib/logger';
 
 export type NavigationMode = 'direct' | 'in-app';
@@ -39,6 +47,8 @@ export interface TimelineConfig {
 	id: string;
 	enterStages: StageConfig[];
 	exitStages: StageConfig[];
+	enterStagesMap?: Map<string, StageConfig>;
+	exitStagesMap?: Map<string, StageConfig>;
 	enterSpeedMultiplier?: number;
 	exitSpeedMultiplier?: number;
 }
@@ -238,6 +248,10 @@ function useTimelineOrchestrator(store: TimelineStore, config: TimelineConfig) {
 					stageId: stage.id,
 					reason: 'predicate',
 				});
+
+				// Mark stage as complete and add resolved promise to prevent blocking
+				store.setState(stage.id, { status: 'complete', direction });
+				stagePromises.push(Promise.resolve());
 				continue;
 			}
 
@@ -282,7 +296,21 @@ export function TimelineProvider({
 	const [store] = useState(() => createTimelineStore());
 	const autoPlayExecutedRef = useRef(false);
 
-	const { playDirection } = useTimelineOrchestrator(store, config);
+	// Build stage maps for O(1) lookups if not provided
+	const configWithMaps = useMemo<TimelineConfig>(() => {
+		const enterStagesMap =
+			config.enterStagesMap || new Map(config.enterStages.map((stage) => [stage.id, stage]));
+		const exitStagesMap =
+			config.exitStagesMap || new Map(config.exitStages.map((stage) => [stage.id, stage]));
+
+		return {
+			...config,
+			enterStagesMap,
+			exitStagesMap,
+		};
+	}, [config]);
+
+	const { playDirection } = useTimelineOrchestrator(store, configWithMaps);
 
 	useEffect(() => {
 		if (autoPlay && !autoPlayExecutedRef.current) {
@@ -306,7 +334,7 @@ export function TimelineProvider({
 
 	const value: TimelineContextValue = {
 		store,
-		config,
+		config: configWithMaps,
 		getStage,
 		advanceStage,
 		playDirection,
@@ -323,9 +351,67 @@ export function useTimeline(): TimelineContextValue {
 	return context;
 }
 
-// ============================================================================
+export function useTimelineStage(stageId: string) {
+	const { store, advanceStage: contextAdvanceStage, config } = useTimeline();
+
+	const stage = useSyncExternalStore(
+		store.subscribe,
+		() => store.getState(stageId),
+		() => undefined,
+	);
+
+	// O(1) Map lookup for stage config
+	const stageConfig = useMemo(() => {
+		if (config.enterStagesMap) {
+			const enterConfig = config.enterStagesMap.get(stageId);
+			if (enterConfig) return { config: enterConfig, type: 'enter' as const };
+		}
+
+		if (config.exitStagesMap) {
+			const exitConfig = config.exitStagesMap.get(stageId);
+			if (exitConfig) return { config: exitConfig, type: 'exit' as const };
+		}
+
+		return null;
+	}, [config.enterStagesMap, config.exitStagesMap, stageId]);
+
+	// Calculate variant based on stage state and direction
+	const variant = useMemo(() => {
+		if (!stage) return 'hidden';
+
+		if (stage.direction === 'enter') {
+			return stage.status === 'complete' || stage.status === 'animating'
+				? 'visible'
+				: 'hidden';
+		}
+
+		if (stage.direction === 'exit') {
+			return stage.status === 'complete' || stage.status === 'animating'
+				? 'hidden'
+				: 'visible';
+		}
+
+		return 'hidden';
+	}, [stage]);
+
+	// Create stable advance function
+	const advanceStage = () => {
+		contextAdvanceStage(stageId);
+	};
+
+	return {
+		stage,
+		variant,
+		advanceStage,
+		stageConfig: stageConfig?.config,
+		isEnter: stage?.direction === 'enter',
+		isExit: stage?.direction === 'exit',
+	};
+}
+
+// ==================================================
 // NAVIGATION MODE DETECTION
-// ============================================================================
+// ==================================================
 
 export interface NavigationModeContextValue {
 	mode: NavigationMode;
