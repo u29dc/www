@@ -1,3 +1,14 @@
+# [1.5.0](https://github.com/u29dc/www/compare/v1.4.0...v1.5.0) (2025-10-19)
+
+
+### Features
+
+* **core:** add dual-layer caching for mdx content retrieval ([4826ade](https://github.com/u29dc/www/commit/4826adeaf8ccba9ef1549df08ca6ebfdd0140f2e))
+* **core:** implement dynamic metadata generation system ([d7edfce](https://github.com/u29dc/www/commit/d7edfce95cf0fbbc6b29c6021301f46c3e162fb4))
+* **types:** add type definitions for new component architecture ([e4fb21c](https://github.com/u29dc/www/commit/e4fb21c26f4bc7fff4949ada158c707819e54ce1))
+* **ui:** add animation system with timeline orchestration ([0b21f19](https://github.com/u29dc/www/commit/0b21f19e7dc918864b57fc1a94c86213cac8fbc8))
+* **ui:** add feature and composed components ([b93836d](https://github.com/u29dc/www/commit/b93836da6b08e190ac40e1cfd6fe67f20a454397))
+
 # [1.4.0](https://github.com/u29dc/www/compare/v1.3.0...v1.4.0) (2025-10-13)
 
 
