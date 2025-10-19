@@ -18,8 +18,8 @@ import { CoreTimelineProvider } from '@/components/core/core-timeline-provider';
 import { LayoutWrapper } from '@/components/layout/layout-wrapper';
 import { TIMELINE_ARTICLE } from '@/lib/constants';
 import { ValidationError } from '@/lib/errors';
-import type { ContentItem } from '@/lib/mdx-server';
 import { getContentBySlug, getFeedContent } from '@/lib/mdx-server';
+import type { ContentItem } from '@/lib/mdx-types';
 import { validateSlug } from '@/lib/validators';
 import { useMDXComponents } from '@/mdx-components';
 

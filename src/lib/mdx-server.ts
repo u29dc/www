@@ -5,9 +5,9 @@
  * Server-only MDX module for content types, aggregation, and transformation.
  *
  * ## RESPONSIBILITIES
- * - Define Zod schemas and TypeScript types for content
  * - Aggregate and parse MDX content files with validation
  * - Transform MDX to plain markdown for .md endpoints
+ * - Re-export shared types from mdx-types module
  *
  * @module lib/mdx-server
  */
@@ -18,103 +18,19 @@ import matter from 'gray-matter';
 import yaml from 'js-yaml';
 import { unstable_cache } from 'next/cache';
 import { cache } from 'react';
-import { z } from 'zod';
 import { NotFoundError } from '@/lib/errors';
 import { logEvent } from '@/lib/logger';
 import { CDN, sanitizeMediaFilename } from '@/lib/mdx-client';
+import { type ContentItem, ContentSchema, type ParsedContent } from '@/lib/mdx-types';
 
 // ==================================================
-// TYPE DEFINITIONS AND SCHEMAS
+// RE-EXPORTS (Client/Server Shared Types)
 // ==================================================
-
-export const StudySchema = z.object({
-	type: z.literal('study'),
-	date: z.iso.datetime(),
-	title: z.string().min(1),
-	description: z.string().min(1),
-	slug: z.string().min(1),
-	client: z.string().min(1),
-	role: z.string().min(1),
-	year: z.number().int().min(2000).max(2100),
-	mode: z.enum(['LAB', 'COM']),
-	image: z.string().optional(),
-	featured: z.boolean().optional(),
-	isFeedItem: z.boolean(),
-});
-
-export const FragmentSchema = z.object({
-	type: z.literal('fragment'),
-	date: z.iso.datetime(),
-	title: z.string().min(1),
-	description: z.string().min(1),
-	slug: z.string().min(1),
-	excerpt: z.string().optional(),
-	image: z.string().optional(),
-	isFeedItem: z.boolean(),
-});
-
-export const SignalSchema = z.object({
-	type: z.literal('signal'),
-	date: z.iso.datetime(),
-	title: z.string().min(1),
-	description: z.string().min(1),
-	slug: z.string().min(1),
-	source: z.string().optional(),
-	link: z.url().optional(),
-	image: z.string().optional(),
-	isFeedItem: z.boolean(),
-});
-
-export const MetaSchema = z.object({
-	type: z.literal('meta'),
-	date: z.iso.datetime(),
-	title: z.string().min(1),
-	description: z.string().min(1),
-	slug: z.string().min(1),
-	isFeedItem: z.boolean(),
-	image: z.string().optional(),
-});
-
-export const ContentSchema = z.discriminatedUnion('type', [
-	StudySchema,
-	FragmentSchema,
-	SignalSchema,
-	MetaSchema,
-]);
-
-export type StudyContent = z.infer<typeof StudySchema>;
-export type FragmentContent = z.infer<typeof FragmentSchema>;
-export type SignalContent = z.infer<typeof SignalSchema>;
-export type Meta = z.infer<typeof MetaSchema>;
-export type ContentItem = z.infer<typeof ContentSchema>;
-
-export interface ParsedContent {
-	frontmatter: ContentItem;
-	content: string;
-}
 
 // Re-export client types for convenience
 export type { MediaItem } from '@/lib/mdx-client';
-
-// ==================================================
-// TYPE GUARDS
-// ==================================================
-
-export function isStudy(item: ContentItem): item is StudyContent {
-	return item.type === 'study';
-}
-
-export function isFragment(item: ContentItem): item is FragmentContent {
-	return item.type === 'fragment';
-}
-
-export function isSignal(item: ContentItem): item is SignalContent {
-	return item.type === 'signal';
-}
-
-export function isMeta(item: ContentItem): item is Meta {
-	return item.type === 'meta';
-}
+// Re-export all types and schemas from mdx-types for backward compatibility
+export * from '@/lib/mdx-types';
 
 // ==================================================
 // CONTENT AGGREGATION

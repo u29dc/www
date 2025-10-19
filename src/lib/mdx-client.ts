@@ -33,6 +33,21 @@ const IMAGE_EXTENSIONS = ['.webp', '.jpg', '.jpeg', '.png', '.gif'];
 const ALLOWED_MEDIA_EXTENSIONS = ['.webp', '.webm', '.jpg', '.jpeg', '.png', '.gif', '.mp4'];
 const SAFE_FILENAME_PATTERN = /^[a-zA-Z0-9_-]+\.[a-z0-9]+$/;
 
+/**
+ * Determines media type (image or video) from filename extension
+ * @param filename - Media filename with extension
+ * @returns 'image' | 'video' | null if invalid
+ */
+export function getMediaType(filename: string): 'image' | 'video' | null {
+	const lastDot = filename.lastIndexOf('.');
+	if (lastDot === -1) return null;
+
+	const extension = filename.substring(lastDot).toLowerCase();
+	if (!ALLOWED_MEDIA_EXTENSIONS.includes(extension)) return null;
+
+	return IMAGE_EXTENSIONS.includes(extension) ? 'image' : 'video';
+}
+
 export function sanitizeMediaFilename(filename: string): string | null {
 	if (!SAFE_FILENAME_PATTERN.test(filename)) {
 		logEvent('MDX', 'SANITIZE_MEDIA', 'INVALID_PATTERN', {
