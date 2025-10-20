@@ -1,3 +1,16 @@
+# [1.6.0](https://github.com/u29dc/www/compare/v1.5.0...v1.6.0) (2025-10-20)
+
+
+### Bug Fixes
+
+* **core:** enhance theme resolution with validation and defensive fallbacks ([597c384](https://github.com/u29dc/www/commit/597c384ac2de8f7162668237c67cd31a15923bc5))
+
+
+### Features
+
+* **core:** add slug validation to prevent path traversal attacks ([aaa8eef](https://github.com/u29dc/www/commit/aaa8eefc32a49c66dae676dc199f40a89aef66e1))
+* **ui:** add animated thumbnail preview to feed items ([a772d13](https://github.com/u29dc/www/commit/a772d131d2ae23fb158a692a49b527b72a73cc1d))
+
 # [1.5.0](https://github.com/u29dc/www/compare/v1.4.0...v1.5.0) (2025-10-19)
 
 
