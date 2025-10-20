@@ -21,7 +21,7 @@ import { CoreViewportFix } from '@/components/core/core-viewport-fix';
 import { metadata, viewport } from '@/lib/constants';
 import { neueHaas } from '@/lib/fonts';
 import type { ResolvedTheme, Theme } from '@/lib/theme';
-import { RESOLVED_COOKIE, THEME_COOKIE } from '@/lib/theme';
+import { isValidTheme, RESOLVED_COOKIE, THEME_COOKIE } from '@/lib/theme';
 import '@/styles/globals.css';
 
 export { metadata, viewport };
@@ -31,19 +31,36 @@ export interface RootLayoutProps {
 }
 
 export default async function RootLayout({ children }: RootLayoutProps) {
+	// Theme resolution: proxy headers (validated) → cookies (validated fallback) → 'system' (default) → SSR class on <html>
 	const headersList = await headers();
 	const nonce = headersList.get('x-nonce') || undefined;
 
+	const headerTheme = headersList.get('u29dc-theme') as Theme | null;
+	const headerResolvedTheme = headersList.get('u29dc-resolved-theme') as ResolvedTheme | null;
+
+	// Defensive fallback: validate cookies only if headers absent
 	const cookieStore = await cookies();
 	const themeCookie = cookieStore.get(THEME_COOKIE);
 	const resolvedThemeCookie = cookieStore.get(RESOLVED_COOKIE);
-	const cookieTheme = themeCookie?.value as Theme | undefined;
-	const resolvedTheme = resolvedThemeCookie?.value as ResolvedTheme | undefined;
 
+	const cookieTheme =
+		themeCookie?.value && isValidTheme(themeCookie.value)
+			? (themeCookie.value as Theme)
+			: undefined;
+	const cookieResolvedTheme =
+		resolvedThemeCookie?.value === 'light' || resolvedThemeCookie?.value === 'dark'
+			? (resolvedThemeCookie.value as ResolvedTheme)
+			: undefined;
+
+	// Priority: proxy headers (validated) → cookies (validated fallback) → 'system' (default)
+	const theme = headerTheme || cookieTheme || 'system';
+	const resolvedTheme = headerResolvedTheme || cookieResolvedTheme;
+
+	// Compute SSR theme class
 	let themeClass = '';
-	if (cookieTheme === 'light' || cookieTheme === 'dark') {
-		themeClass = cookieTheme;
-	} else if (cookieTheme === 'system' && resolvedTheme) {
+	if (theme === 'light' || theme === 'dark') {
+		themeClass = theme;
+	} else if (theme === 'system' && resolvedTheme) {
 		themeClass = resolvedTheme;
 	}
 
@@ -54,7 +71,7 @@ export default async function RootLayout({ children }: RootLayoutProps) {
 				<CoreViewportFix />
 				<CoreAppShell>
 					<CoreThemeProvider
-						initialTheme={cookieTheme || 'system'}
+						initialTheme={theme}
 						initialResolved={(themeClass as ResolvedTheme) || 'light'}
 					>
 						{children}

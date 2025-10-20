@@ -22,6 +22,9 @@ export interface AtomicBrandLogoProps {
 	mouseBlurIntensity?: number;
 	mouseBlurSize?: number;
 	roundness?: number;
+	noiseIntensity?: number;
+	noiseScale?: number;
+	animateNoise?: boolean;
 	className?: string;
 }
 
@@ -42,6 +45,9 @@ export interface WebGLSetup {
 		widthSpreadMultiplier: WebGLUniformLocation | null;
 		heightSpreadMultiplier: WebGLUniformLocation | null;
 		color: WebGLUniformLocation | null;
+		noiseIntensity: WebGLUniformLocation | null;
+		noiseScale: WebGLUniformLocation | null;
+		time: WebGLUniformLocation | null;
 	};
 }
 
@@ -71,6 +77,29 @@ uniform float u_mouseBlurIntensity;
 uniform float u_widthSpreadMultiplier;
 uniform float u_heightSpreadMultiplier;
 uniform vec3 u_color;
+
+uniform float u_noiseIntensity;
+uniform float u_noiseScale;
+uniform float u_time;
+
+float hash(vec2 p) {
+	vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+	p3 += dot(p3, p3.yzx + 33.33);
+	return fract((p3.x + p3.y) * p3.z);
+}
+
+float noise(vec2 p) {
+	vec2 i = floor(p);
+	vec2 f = fract(p);
+	vec2 u = f * f * (3.0 - 2.0 * f);
+
+	float a = hash(i);
+	float b = hash(i + vec2(1.0, 0.0));
+	float c = hash(i + vec2(0.0, 1.0));
+	float d = hash(i + vec2(1.0, 1.0));
+
+	return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
+}
 
 vec2 coord(in vec2 p) {
 	p = p / u_resolution.xy;
@@ -150,7 +179,14 @@ void main() {
 	float alphaCombined = max(baseAlpha, haloAlpha);
 	float alpha = mix(baseAlpha, alphaCombined, clamp(rightGradient, 0.0, 1.0));
 
-	gl_FragColor = vec4(u_color, alpha);
+	vec2 noiseCoord = gl_FragCoord.xy / u_noiseScale;
+	float grainValue = noise(noiseCoord);
+	grainValue = (grainValue - 0.5) * 2.0;
+	float grain = grainValue * u_noiseIntensity;
+
+	vec3 noisyColor = clamp(u_color + vec3(grain), 0.0, 1.0);
+
+	gl_FragColor = vec4(noisyColor, alpha);
 }
 `;
 
@@ -206,6 +242,9 @@ const initializeWebGLProgram = (gl: WebGLRenderingContext): WebGLSetup | null =>
 			widthSpreadMultiplier: gl.getUniformLocation(program, 'u_widthSpreadMultiplier'),
 			heightSpreadMultiplier: gl.getUniformLocation(program, 'u_heightSpreadMultiplier'),
 			color: gl.getUniformLocation(program, 'u_color'),
+			noiseIntensity: gl.getUniformLocation(program, 'u_noiseIntensity'),
+			noiseScale: gl.getUniformLocation(program, 'u_noiseScale'),
+			time: gl.getUniformLocation(program, 'u_time'),
 		};
 
 		return { program, positionBuffer, uniformLocations };
@@ -262,6 +301,9 @@ export function AtomicBrandLogo({
 	mouseBlurIntensity = 0.75,
 	mouseBlurSize = 0.5,
 	roundness = 0.5,
+	noiseIntensity = 0.15,
+	noiseScale = 150.0,
+	animateNoise = false,
 	className = '',
 }: AtomicBrandLogoProps) {
 	const { resolvedTheme } = useTheme();
@@ -315,6 +357,8 @@ export function AtomicBrandLogo({
 			setUniform1f(uniformLocations.defaultBlurIntensity, defaultBlurIntensity);
 			setUniform1f(uniformLocations.mouseBlurSize, mouseBlurSize);
 			setUniform1f(uniformLocations.mouseBlurIntensity, mouseBlurIntensity);
+			setUniform1f(uniformLocations.noiseIntensity, noiseIntensity);
+			setUniform1f(uniformLocations.noiseScale, noiseScale);
 		};
 
 		const resize = () => {
@@ -361,6 +405,10 @@ export function AtomicBrandLogo({
 				gl.uniform2f(uniformLocations.mouse, mouseDamped.x, mouseDamped.y);
 			}
 
+			if (animateNoise && uniformLocations.time) {
+				gl.uniform1f(uniformLocations.time, now * 0.0001);
+			}
+
 			// Theme-based spread adjustment
 			const widthMultiplier = resolvedTheme === 'dark' ? 0.75 : 0.75;
 			const heightMultiplier = resolvedTheme === 'dark' ? 0.1 : 0.5;
@@ -401,6 +449,9 @@ export function AtomicBrandLogo({
 		mouseBlurIntensity,
 		mouseBlurSize,
 		roundness,
+		noiseIntensity,
+		noiseScale,
+		animateNoise,
 		resolvedTheme,
 	]);
 

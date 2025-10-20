@@ -144,48 +144,20 @@ export const metadata: Metadata = {
 export const TIMELINE_INDEX: TimelineConfig = {
 	id: 'index',
 	enterStages: [
-		{
-			id: 'index-title',
-			duration: 1000,
-			delay: 0,
-		},
-		{
-			id: 'index-description',
-			duration: 500,
-			delay: 0,
-		},
-		{
-			id: 'index-header',
-			duration: 500,
-			delay: -250,
-		},
-		{
-			id: 'index-feed',
-			duration: 1000,
-			delay: -500,
-		},
+		{ id: 'index-title', duration: 1000, delay: 0 },
+		{ id: 'index-description', duration: 500, delay: 0 },
+		{ id: 'index-header-nav', duration: 200, delay: -100 },
+		{ id: 'index-header', duration: 200, delay: -50 },
+		{ id: 'index-feed', duration: 1000, delay: -200 },
+		{ id: 'layout-footer-nav', duration: 500, delay: -500 },
 	],
 	exitStages: [
-		{
-			id: 'index-feed',
-			duration: 200,
-			delay: 0,
-		},
-		{
-			id: 'index-description',
-			duration: 200,
-			delay: -200,
-		},
-		{
-			id: 'index-header',
-			duration: 200,
-			delay: -200,
-		},
-		{
-			id: 'index-title',
-			duration: 200,
-			delay: 0,
-		},
+		{ id: 'layout-footer-nav', duration: 200, delay: 0 },
+		{ id: 'index-feed', duration: 200, delay: -100 },
+		{ id: 'index-header', duration: 200, delay: -100 },
+		{ id: 'index-header-nav', duration: 200, delay: -100 },
+		{ id: 'index-description', duration: 200, delay: -100 },
+		{ id: 'index-title', duration: 200, delay: -100 },
 	],
 	enterSpeedMultiplier: 1,
 	exitSpeedMultiplier: 2.0,
@@ -195,28 +167,16 @@ export const TIMELINE_INDEX: TimelineConfig = {
 export const TIMELINE_ARTICLE: TimelineConfig = {
 	id: 'article',
 	enterStages: [
-		{
-			id: 'article-header',
-			duration: 500,
-			delay: 0,
-		},
-		{
-			id: 'article-body',
-			duration: 500,
-			delay: -200,
-		},
+		{ id: 'article-header-nav', duration: 200, delay: 0 },
+		{ id: 'article-header', duration: 200, delay: -50 },
+		{ id: 'article-body', duration: 500, delay: -250 },
+		{ id: 'layout-footer-nav', duration: 500, delay: -250 },
 	],
 	exitStages: [
-		{
-			id: 'article-body',
-			duration: 500,
-			delay: 0,
-		},
-		{
-			id: 'article-header',
-			duration: 500,
-			delay: -200,
-		},
+		{ id: 'layout-footer-nav', duration: 200, delay: 0 },
+		{ id: 'article-body', duration: 200, delay: -100 },
+		{ id: 'article-header', duration: 200, delay: -100 },
+		{ id: 'article-header-nav', duration: 200, delay: -100 },
 	],
 	enterSpeedMultiplier: 1,
 	exitSpeedMultiplier: 2.0,

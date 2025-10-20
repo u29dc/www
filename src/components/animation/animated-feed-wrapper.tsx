@@ -17,6 +17,7 @@
 import { motion } from 'motion/react';
 import type { ReactElement, ReactNode } from 'react';
 import { Children, isValidElement, useMemo, useState } from 'react';
+import { AnimatedFeedThumbnail } from '@/components/animation/animated-feed-thumbnail';
 import { logEvent } from '@/lib/logger';
 import { useTimelineStage } from '@/lib/timeline';
 
@@ -25,6 +26,7 @@ export interface AnimatedFeedWrapperProps {
 	children: ReactNode;
 	className?: string;
 	staggerDelay?: number;
+	thumbnails?: (string | null)[];
 }
 
 export function AnimatedFeedWrapper({
@@ -32,6 +34,7 @@ export function AnimatedFeedWrapper({
 	children,
 	className,
 	staggerDelay = 0,
+	thumbnails,
 }: AnimatedFeedWrapperProps) {
 	const { stage, variant, advanceStage, stageConfig } = useTimelineStage(stageId);
 
@@ -115,7 +118,7 @@ export function AnimatedFeedWrapper({
 
 	return (
 		<motion.div
-			className={className}
+			className={`${className} overflow-visible`}
 			initial={false}
 			animate={variant}
 			variants={containerVariants}
@@ -132,18 +135,28 @@ export function AnimatedFeedWrapper({
 						key={childKey}
 						variants={itemVariants}
 						onMouseEnter={() => setHoveredIndex(index)}
-						className="relative"
+						className="relative overflow-visible"
 						{...(index === lastIndex && { onAnimationComplete: handleComplete })}
 					>
-						{/* Hover indicator positioned within hovered item */}
+						{/* Hover indicators and thumbnail positioned within hovered item */}
 						{hoveredIndex === index && (
-							<motion.div
-								layoutId="feed-hover-indicator"
-								className="pointer-events-none absolute -left-8 top-1/2 translate-y-[-50%] h-[5px] w-[5px] rounded-full bg-current"
-								transition={{
-									layout: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
-								}}
-							/>
+							<div className="hidden hover-device:block">
+								<motion.div
+									layoutId="feed-hover-indicator-left"
+									className="pointer-events-none absolute left-2 md:left-5 top-1/2 translate-y-[-50%] h-[1px] w-[1px] bg-current"
+									transition={{
+										layout: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
+									}}
+								/>
+								<motion.div
+									layoutId="feed-hover-indicator-right"
+									className="pointer-events-none absolute right-2 md:right-5 top-1/2 translate-y-[-50%] h-[1px] w-[10px] bg-current"
+									transition={{
+										layout: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
+									}}
+								/>
+								<AnimatedFeedThumbnail thumbnailUrl={thumbnails?.[index] ?? null} />
+							</div>
 						)}
 						{child}
 					</motion.div>

@@ -14,8 +14,9 @@
 
 import { AnimatedLink } from '@/components/animation/animated-link';
 import { AnimatedReveal } from '@/components/animation/animated-reveal';
+import { AtomicBrandLogo } from '@/components/atomic/atomic-brand-logo';
 import { SITE } from '@/lib/constants';
-import type { ContentItem } from '@/lib/mdx-server';
+import type { ContentItem } from '@/lib/mdx-types';
 
 export interface LayoutHeaderProps {
 	type: 'index' | 'article';
@@ -41,8 +42,8 @@ export function LayoutHeader({ type, frontmatter, title }: LayoutHeaderProps) {
 							</AnimatedReveal>
 						</div>
 						<nav className="absolute bottom-0 left-0">
-							<AnimatedReveal stageId="index-header">
-								<span>U29DC™</span>
+							<AnimatedReveal stageId="index-header-nav">
+								<AtomicBrandLogo className="translate-y-[1.5rem] -translate-x-[7.5rem]" />
 							</AnimatedReveal>
 						</nav>
 					</>
@@ -60,7 +61,7 @@ export function LayoutHeader({ type, frontmatter, title }: LayoutHeaderProps) {
 							</AnimatedReveal>
 						</div>
 						<nav className="absolute bottom-0 left-0">
-							<AnimatedReveal stageId="article-header">
+							<AnimatedReveal stageId="article-header-nav">
 								<AnimatedLink href="/">Back</AnimatedLink>
 							</AnimatedReveal>
 						</nav>

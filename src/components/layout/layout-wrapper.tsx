@@ -14,7 +14,7 @@ import type { ReactNode } from 'react';
 import { AtomicGradientBlur } from '@/components/atomic/atomic-gradient-blur';
 import { LayoutFooter } from '@/components/layout/layout-footer';
 import { LayoutHeader } from '@/components/layout/layout-header';
-import type { ContentItem } from '@/lib/mdx-server';
+import type { ContentItem } from '@/lib/mdx-types';
 
 export interface LayoutWrapperProps {
 	type: 'index' | 'article';
@@ -31,8 +31,11 @@ export function LayoutWrapper({ type, children, frontmatter }: LayoutWrapperProp
 			<section className="content-column row-start-1 sticky top-0 z-[1001]">
 				<LayoutHeader type={type} frontmatter={frontmatter} />
 			</section>
+
 			<section className="col-span-full grid grid-cols-10">{children}</section>
+
 			<section className="col-span-full"></section>
+
 			<section className="content-column -row-start-2 relative z-[1001]">
 				<LayoutFooter />
 			</section>
