@@ -1,3 +1,10 @@
+## [1.6.1](https://github.com/u29dc/www/compare/v1.6.0...v1.6.1) (2025-10-26)
+
+
+### Bug Fixes
+
+* **ci:** add node.js 24 for semantic-release compatibility ([3073901](https://github.com/u29dc/www/commit/3073901872b753463bbb4a90a134b2fb00f665af))
+
 # [1.6.0](https://github.com/u29dc/www/compare/v1.5.0...v1.6.0) (2025-10-20)
 
 
