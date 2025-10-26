@@ -4,6 +4,10 @@ import { CDN } from '@/lib/constants';
 const nextConfig: NextConfig = {
 	reactCompiler: true,
 	devIndicators: false,
+	experimental: {
+		mcpServer: true,
+	},
+	cacheComponents: false,
 
 	/**
 	 * Security headers applied to all routes

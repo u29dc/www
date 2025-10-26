@@ -3,7 +3,7 @@
  *
  * ## SUMMARY
  * Centralized security headers and Content Security Policy for all routes.
- * Renamed from middleware.ts to proxy.ts to clarify network boundary.
+ * Renamed from middleware.ts to clarify network boundary.
  *
  * ## RESPONSIBILITIES
  * - Generate nonce-backed Content Security Policy per request
@@ -20,7 +20,6 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
 import { CDN } from '@/lib/constants';
-import { isValidTheme, RESOLVED_COOKIE, THEME_COOKIE } from '@/lib/theme';
 
 /**
  * Content Security Policy directive definition
@@ -84,30 +83,6 @@ export async function proxy(request: NextRequest) {
 
 	const requestHeaders = new Headers(request.headers);
 	requestHeaders.set('x-nonce', nonce);
-
-	// Handle theme preferences from cookies
-	const themeCookie = request.cookies.get(THEME_COOKIE);
-	const resolvedThemeCookie = request.cookies.get(RESOLVED_COOKIE);
-	const theme = themeCookie?.value;
-	const resolvedTheme = resolvedThemeCookie?.value;
-
-	// Pass theme to layout via headers for server-side rendering
-	// Validate theme value to prevent header injection
-	const resolvedThemeHeaderValue = () => {
-		if (resolvedTheme === 'dark' || resolvedTheme === 'light') {
-			return resolvedTheme;
-		}
-		return undefined;
-	};
-
-	const themeHeaderValue = theme && isValidTheme(theme) ? theme : 'system';
-
-	requestHeaders.set('u29dc-theme', themeHeaderValue);
-
-	const resolvedThemeValue = resolvedThemeHeaderValue();
-	if (resolvedThemeValue) {
-		requestHeaders.set('u29dc-resolved-theme', resolvedThemeValue);
-	}
 
 	const response = NextResponse.next({
 		request: {
