@@ -12,8 +12,8 @@
  * @module components/atomic/atomic-brand-logo
  */
 
+import { useTheme } from 'next-themes';
 import { useEffect, useRef } from 'react';
-import { useTheme } from '@/lib/theme';
 
 export interface AtomicBrandLogoProps {
 	width?: number;
@@ -390,6 +390,29 @@ export function AtomicBrandLogo({
 			mouse.y = event.clientY - rect.top;
 		};
 
+		const applyThemeUniforms = () => {
+			const widthMultiplier = resolvedTheme === 'dark' ? 0.75 : 0.75;
+			const heightMultiplier = resolvedTheme === 'dark' ? 0.1 : 0.5;
+			setUniform1f(uniformLocations.widthSpreadMultiplier, widthMultiplier);
+			setUniform1f(uniformLocations.heightSpreadMultiplier, heightMultiplier);
+
+			const colorHex = resolvedTheme === 'dark' ? '#ffffff' : '#000000';
+			const [r, g, b] = hexToRgb(colorHex);
+			if (uniformLocations.color) {
+				gl.uniform3f(uniformLocations.color, r, g, b);
+			}
+		};
+
+		const applyDynamicUniforms = (mousePos: { x: number; y: number }, currentTime: number) => {
+			if (uniformLocations.mouse) {
+				gl.uniform2f(uniformLocations.mouse, mousePos.x, mousePos.y);
+			}
+
+			if (animateNoise && uniformLocations.time) {
+				gl.uniform1f(uniformLocations.time, currentTime * 0.0001);
+			}
+		};
+
 		const render = () => {
 			const now = performance.now();
 			const dt = (now - lastTime) / 1000;
@@ -401,25 +424,8 @@ export function AtomicBrandLogo({
 			gl.clearColor(0, 0, 0, 0);
 			gl.clear(gl.COLOR_BUFFER_BIT);
 
-			if (uniformLocations.mouse) {
-				gl.uniform2f(uniformLocations.mouse, mouseDamped.x, mouseDamped.y);
-			}
-
-			if (animateNoise && uniformLocations.time) {
-				gl.uniform1f(uniformLocations.time, now * 0.0001);
-			}
-
-			// Theme-based spread adjustment
-			const widthMultiplier = resolvedTheme === 'dark' ? 0.75 : 0.75;
-			const heightMultiplier = resolvedTheme === 'dark' ? 0.1 : 0.5;
-			setUniform1f(uniformLocations.widthSpreadMultiplier, widthMultiplier);
-			setUniform1f(uniformLocations.heightSpreadMultiplier, heightMultiplier);
-
-			const colorHex = resolvedTheme === 'dark' ? '#ffffff' : '#000000';
-			const [r, g, b] = hexToRgb(colorHex);
-			if (uniformLocations.color) {
-				gl.uniform3f(uniformLocations.color, r, g, b);
-			}
+			applyDynamicUniforms(mouseDamped, now);
+			applyThemeUniforms();
 
 			gl.drawArrays(gl.TRIANGLES, 0, 6);
 			animationFrame = requestAnimationFrame(render);
