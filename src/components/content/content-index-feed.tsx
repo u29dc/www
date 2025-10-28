@@ -10,8 +10,8 @@
  * @module components/content/content-feed
  */
 
-import { AnimatedFeedWrapper } from '@/components/animation/animated-feed-wrapper';
-import { ContentIndexFeedItem } from '@/components/content/content-index-feed-item';
+import { AnimatedContentFeed } from '@/components/animation/animated-content-feed';
+import { ContentIndexFeedItem } from '@/components/content/content-index-feed_item';
 import { getFeedContent } from '@/lib/mdx-server';
 
 export async function ContentIndexFeed() {
@@ -19,10 +19,10 @@ export async function ContentIndexFeed() {
 	const thumbnails = content.map((item) => item.frontmatter.thumbnailMedia ?? null);
 
 	return (
-		<AnimatedFeedWrapper stageId="index-feed" className="col-span-full" thumbnails={thumbnails}>
+		<AnimatedContentFeed stageId="index-feed" className="col-span-full" thumbnails={thumbnails}>
 			{content.map((item) => (
 				<ContentIndexFeedItem key={item.frontmatter.slug} item={item} />
 			))}
-		</AnimatedFeedWrapper>
+		</AnimatedContentFeed>
 	);
 }

@@ -1,15 +1,15 @@
 'use client';
 
 /**
- * Animated Reveal
+ * Animated Stagger
  *
  * ## SUMMARY
- * Timeline-coordinated word-by-word reveal with staggered Motion animations.
+ * Timeline-coordinated word-by-word stagger with staggered Motion animations.
  *
  * ## RESPONSIBILITIES
  * - Subscribe to timeline stage, split text into words, orchestrate staggered animations
  *
- * @module components/animation/animated-reveal
+ * @module components/animation/animated-stagger
  */
 
 import { motion } from 'motion/react';
@@ -18,7 +18,7 @@ import { Children, cloneElement, isValidElement, useCallback, useMemo } from 're
 import { logEvent } from '@/lib/logger';
 import { useTimelineStage } from '@/lib/timeline';
 
-export interface AnimatedRevealProps {
+export interface AnimatedStaggerProps {
 	stageId: string;
 	children: ReactNode;
 	className?: string;
@@ -108,7 +108,7 @@ function calculateElementAndWordStagger(
 	};
 }
 
-export function AnimatedReveal({
+export function AnimatedStagger({
 	stageId,
 	children,
 	className,
@@ -116,7 +116,7 @@ export function AnimatedReveal({
 	elementStagger = 0,
 	blurStrength = 10,
 	yOffset = 5,
-}: AnimatedRevealProps) {
+}: AnimatedStaggerProps) {
 	const { stage, variant, advanceStage, stageConfig } = useTimelineStage(stageId);
 
 	const childArray = useMemo(() => Children.toArray(children), [children]);

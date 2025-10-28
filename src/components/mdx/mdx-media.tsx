@@ -19,7 +19,7 @@
 'use client';
 
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { MdxMediaItem } from '@/components/mdx/mdx-media-item';
+import { MdxMediaItem } from '@/components/mdx/mdx-media_item';
 import { cn } from '@/lib/class';
 
 export interface MdxMediaProps {

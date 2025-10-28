@@ -1,15 +1,15 @@
 'use client';
 
 /**
- * Animated Section
+ * Animated Block
  *
  * ## SUMMARY
- * Timeline-coordinated section with direction-aware Motion animations.
+ * Timeline-coordinated block with direction-aware Motion animations.
  *
  * ## RESPONSIBILITIES
  * - Subscribe to timeline stage, play direction-aware animations, notify on completion
  *
- * @module components/animation/animated-section
+ * @module components/animation/animated-block
  */
 
 import { motion } from 'motion/react';
@@ -18,19 +18,14 @@ import { useMemo } from 'react';
 import { logEvent } from '@/lib/logger';
 import { useTimelineStage } from '@/lib/timeline';
 
-export interface AnimatedSectionProps {
+export interface AnimatedBlockProps {
 	stageId: string;
 	children: ReactNode;
 	className?: string;
 	duration?: number;
 }
 
-export function AnimatedSection({
-	stageId,
-	children,
-	className,
-	duration = 0,
-}: AnimatedSectionProps) {
+export function AnimatedBlock({ stageId, children, className, duration = 0 }: AnimatedBlockProps) {
 	const { stage, variant, advanceStage, stageConfig, isExit } = useTimelineStage(stageId);
 
 	// Auto-calculate duration from timeline config

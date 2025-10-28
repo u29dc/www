@@ -9,7 +9,7 @@
  * ## RESPONSIBILITIES
  * - Render title, description, and type-specific metadata with AnimatedLink wrapper
  *
- * @module components/content/content-feed-item
+ * @module components/content/content-index-feed_item
  */
 
 import { AnimatedLink } from '@/components/animation/animated-link';

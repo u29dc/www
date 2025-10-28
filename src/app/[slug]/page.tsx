@@ -13,9 +13,10 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { MDXRemote } from 'next-mdx-remote/rsc';
-import { AnimatedMdxContent } from '@/components/animation/animated-mdx-content';
+import { AnimatedContentMdx } from '@/components/animation/animated-content-mdx';
 import { CoreTimelineProvider } from '@/components/core/core-timeline-provider';
-import { LayoutWrapper } from '@/components/layout/layout-wrapper';
+import { LayoutContentBlock } from '@/components/layout/layout-content-block';
+import { LayoutSharedWrapper } from '@/components/layout/layout-shared-wrapper';
 import { TIMELINE_ARTICLE } from '@/lib/constants';
 import { ValidationError } from '@/lib/errors';
 import { getContentBySlug, getFeedContent } from '@/lib/mdx-server';
@@ -58,11 +59,13 @@ export default async function ContentPage({ params }: ContentPageProps) {
 
 	return (
 		<CoreTimelineProvider config={TIMELINE_ARTICLE}>
-			<LayoutWrapper type="article" frontmatter={frontmatter}>
-				<AnimatedMdxContent>
-					<MDXRemote source={mdxContent} components={useMDXComponents({})} />
-				</AnimatedMdxContent>
-			</LayoutWrapper>
+			<LayoutSharedWrapper type="article" frontmatter={frontmatter}>
+				<AnimatedContentMdx>
+					<LayoutContentBlock id={0} title="content">
+						<MDXRemote source={mdxContent} components={useMDXComponents({})} />
+					</LayoutContentBlock>
+				</AnimatedContentMdx>
+			</LayoutSharedWrapper>
 		</CoreTimelineProvider>
 	);
 }

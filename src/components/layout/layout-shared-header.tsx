@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Layout Header
+ * Layout Shared Header
  *
  * ## SUMMARY
  * Header with timeline-aware AnimatedReveal title and optional back button.
@@ -9,42 +9,51 @@
  * ## RESPONSIBILITIES
  * - Render site or article header with animated title and navigation
  *
- * @module components/layout/layout-header
+ * @module components/layout/layout-shared-header
  */
 
 import { AnimatedLink } from '@/components/animation/animated-link';
-import { AnimatedReveal } from '@/components/animation/animated-reveal';
+import { AnimatedStagger } from '@/components/animation/animated-stagger';
 import { AtomicBrandLogo } from '@/components/atomic/atomic-brand-logo';
+import { AtomicGradientBlur } from '@/components/atomic/atomic-gradient-blur';
 import { SITE } from '@/lib/constants';
 import type { ContentItem } from '@/lib/mdx-types';
 
-export interface LayoutHeaderProps {
+export interface LayoutSharedHeaderProps {
 	type: 'index' | 'article';
 	frontmatter?: ContentItem | undefined;
 	title?: string | undefined;
 }
 
-export function LayoutHeader({ type, frontmatter, title }: LayoutHeaderProps) {
+export function LayoutSharedHeader({ type, frontmatter, title }: LayoutSharedHeaderProps) {
 	const siteTitle = title ?? SITE.title;
 
 	return (
 		<header className="relative h-full padding-standard">
-			<div className="relative full-container font-md">
+			<AtomicGradientBlur
+				position="top"
+				size="15rem"
+				fixed={false}
+				layers={10}
+				className="z-1000"
+			/>
+
+			<div className="relative full-container font-md z-1001">
 				{type === 'index' && (
 					<>
 						<div className="absolute bottom-0 w-full left-1/2 -translate-x-1/2 text-center">
-							<AnimatedReveal
+							<AnimatedStagger
 								stageId="index-header"
 								staggerDelay={50}
 								blurStrength={5}
 							>
 								{siteTitle}
-							</AnimatedReveal>
+							</AnimatedStagger>
 						</div>
 						<nav className="absolute bottom-0 left-0">
-							<AnimatedReveal stageId="index-header-nav">
-								<AtomicBrandLogo className="translate-y-[1.5rem] -translate-x-[7.5rem]" />
-							</AnimatedReveal>
+							<AnimatedStagger stageId="index-header-nav">
+								<AtomicBrandLogo className="translate-y-6 -translate-x-30" />
+							</AnimatedStagger>
 						</nav>
 					</>
 				)}
@@ -52,18 +61,18 @@ export function LayoutHeader({ type, frontmatter, title }: LayoutHeaderProps) {
 				{type === 'article' && frontmatter && (
 					<>
 						<div className="absolute bottom-0 w-full left-1/2 -translate-x-1/2 text-center">
-							<AnimatedReveal
+							<AnimatedStagger
 								stageId="article-header"
 								staggerDelay={50}
 								blurStrength={5}
 							>
 								{frontmatter.title}
-							</AnimatedReveal>
+							</AnimatedStagger>
 						</div>
 						<nav className="absolute bottom-0 left-0">
-							<AnimatedReveal stageId="article-header-nav">
+							<AnimatedStagger stageId="article-header-nav">
 								<AnimatedLink href="/">Back</AnimatedLink>
-							</AnimatedReveal>
+							</AnimatedStagger>
 						</nav>
 					</>
 				)}

@@ -13,7 +13,7 @@
  * 3. Calculate aspect ratio, register with parent
  * 4. Receive flex-basis from parent and apply to container
  *
- * @module components/mdx/mdx-media-item
+ * @module components/mdx/mdx-media_item
  */
 
 'use client';

@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Animated Feed Thumbnail
+ * Animated Content Feed Thumbnail
  *
  * ## SUMMARY
  * Motion-animated thumbnail preview for feed items with layoutId sliding transitions.
@@ -11,18 +11,18 @@
  * - Apply Motion layoutId for smooth sliding between items
  * - Handle media type detection and validation
  *
- * @module components/animation/animated-feed-thumbnail
+ * @module components/animation/animated-content-feed_thumbnail
  */
 
 import { motion } from 'motion/react';
 import { CDN } from '@/lib/constants';
 import { getMediaType, sanitizeMediaFilename } from '@/lib/mdx-client';
 
-export interface AnimatedFeedThumbnailProps {
+export interface AnimatedContentFeedThumbnailProps {
 	thumbnailUrl: string | null;
 }
 
-export function AnimatedFeedThumbnail({ thumbnailUrl }: AnimatedFeedThumbnailProps) {
+export function AnimatedContentFeedThumbnail({ thumbnailUrl }: AnimatedContentFeedThumbnailProps) {
 	if (!thumbnailUrl) return null;
 
 	const sanitized = sanitizeMediaFilename(thumbnailUrl);

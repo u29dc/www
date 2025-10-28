@@ -13,16 +13,21 @@
 import { ContentIndexAbout } from '@/components/content/content-index-about';
 import { ContentIndexFeed } from '@/components/content/content-index-feed';
 import { CoreTimelineProvider } from '@/components/core/core-timeline-provider';
-import { LayoutWrapper } from '@/components/layout/layout-wrapper';
+import { LayoutContentBlock } from '@/components/layout/layout-content-block';
+import { LayoutSharedWrapper } from '@/components/layout/layout-shared-wrapper';
 import { TIMELINE_INDEX } from '@/lib/constants';
 
 export default function HomePage() {
 	return (
 		<CoreTimelineProvider config={TIMELINE_INDEX}>
-			<LayoutWrapper type="index">
-				<ContentIndexAbout />
-				<ContentIndexFeed />
-			</LayoutWrapper>
+			<LayoutSharedWrapper type="index">
+				<LayoutContentBlock id={0} title="about">
+					<ContentIndexAbout />
+				</LayoutContentBlock>
+				<LayoutContentBlock id={1} title="feed">
+					<ContentIndexFeed />
+				</LayoutContentBlock>
+			</LayoutSharedWrapper>
 		</CoreTimelineProvider>
 	);
 }

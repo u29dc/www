@@ -15,7 +15,6 @@ import { headers } from 'next/headers';
 import Script from 'next/script';
 import { ThemeProvider } from 'next-themes';
 import type { ReactNode } from 'react';
-import { AtomicGradientBlur } from '@/components/atomic/atomic-gradient-blur';
 import { CoreAppShell } from '@/components/core/core-app-shell';
 import { CoreViewportFix } from '@/components/core/core-viewport-fix';
 import { metadata, viewport } from '@/lib/constants';
@@ -45,7 +44,6 @@ export default async function RootLayout({ children }: RootLayoutProps) {
 						disableTransitionOnChange
 					>
 						{children}
-						<AtomicGradientBlur />
 					</ThemeProvider>
 				</CoreAppShell>
 

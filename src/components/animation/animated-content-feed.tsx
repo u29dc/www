@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Animated Feed Wrapper
+ * Animated Content Feed
  *
  * ## SUMMARY
  * Timeline-coordinated wrapper with staggered Motion animations for feed items.
@@ -11,17 +11,17 @@
  * - Subscribe to timeline stage, orchestrate staggered item animations, notify on completion
  * - Manage hover state and render sliding indicator element
  *
- * @module components/animation/animated-feed-wrapper
+ * @module components/animation/animated-content-feed
  */
 
 import { motion } from 'motion/react';
 import type { ReactElement, ReactNode } from 'react';
 import { Children, isValidElement, useMemo, useState } from 'react';
-import { AnimatedFeedThumbnail } from '@/components/animation/animated-feed-thumbnail';
+import { AnimatedContentFeedThumbnail } from '@/components/animation/animated-content-feed_thumbnail';
 import { logEvent } from '@/lib/logger';
 import { useTimelineStage } from '@/lib/timeline';
 
-export interface AnimatedFeedWrapperProps {
+export interface AnimatedContentFeedProps {
 	stageId: string;
 	children: ReactNode;
 	className?: string;
@@ -29,13 +29,13 @@ export interface AnimatedFeedWrapperProps {
 	thumbnails?: (string | null)[];
 }
 
-export function AnimatedFeedWrapper({
+export function AnimatedContentFeed({
 	stageId,
 	children,
 	className,
 	staggerDelay = 0,
 	thumbnails,
-}: AnimatedFeedWrapperProps) {
+}: AnimatedContentFeedProps) {
 	const { stage, variant, advanceStage, stageConfig } = useTimelineStage(stageId);
 
 	// Hover indicator state
@@ -155,7 +155,9 @@ export function AnimatedFeedWrapper({
 										layout: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
 									}}
 								/>
-								<AnimatedFeedThumbnail thumbnailUrl={thumbnails?.[index] ?? null} />
+								<AnimatedContentFeedThumbnail
+									thumbnailUrl={thumbnails?.[index] ?? null}
+								/>
 							</div>
 						)}
 						{child}
