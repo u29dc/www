@@ -1,10 +1,10 @@
 'use client';
 
 /**
- * Content Index
+ * Content Index Statement
  *
  * ## SUMMARY
- * Homepage content with timeline-coordinated AnimatedReveal word animations.
+ * Homepage statement content with timeline-coordinated AnimatedReveal word animations.
  *
  * ## RESPONSIBILITIES
  * - Render intro and description with sequential AnimatedReveal stages
@@ -14,7 +14,7 @@
 
 import { AnimatedStagger } from '@/components/animation/animated-stagger';
 
-export function ContentIndexAbout() {
+export function ContentIndexStatement() {
 	return (
 		<div className="padding-standard content-column">
 			<AnimatedStagger stageId="index-title">

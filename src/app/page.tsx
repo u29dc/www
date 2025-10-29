@@ -2,7 +2,7 @@
  * Home Page
  *
  * ## SUMMARY
- * Displays intro content and animated chronological feed of all content items.
+ * Displays intro statement and animated artifacts of all content items.
  *
  * ## RESPONSIBILITIES
  * - Compose layout wrapper with timeline-coordinated animations
@@ -10,8 +10,8 @@
  * @module app/page
  */
 
-import { ContentIndexAbout } from '@/components/content/content-index-about';
-import { ContentIndexFeed } from '@/components/content/content-index-feed';
+import { ContentIndexArtifacts } from '@/components/content/content-index-artifacts';
+import { ContentIndexStatement } from '@/components/content/content-index-statement';
 import { CoreTimelineProvider } from '@/components/core/core-timeline-provider';
 import { LayoutContentBlock } from '@/components/layout/layout-content-block';
 import { LayoutSharedWrapper } from '@/components/layout/layout-shared-wrapper';
@@ -21,12 +21,15 @@ export default function HomePage() {
 	return (
 		<CoreTimelineProvider config={TIMELINE_INDEX}>
 			<LayoutSharedWrapper type="index">
-				<LayoutContentBlock id={0} title="about">
-					<ContentIndexAbout />
+				<LayoutContentBlock id={0} title="statement">
+					<ContentIndexStatement />
 				</LayoutContentBlock>
-				<LayoutContentBlock id={1} title="feed">
-					<ContentIndexFeed />
+				<LayoutContentBlock id={1} title="artifacts">
+					<ContentIndexArtifacts />
 				</LayoutContentBlock>
+				{/*<LayoutContentBlock id={2} title="axioms"></LayoutContentBlock>*/}
+				{/*<LayoutContentBlock id={3} title="protocols"></LayoutContentBlock>*/}
+				{/*<LayoutContentBlock id={4} title="invitation"></LayoutContentBlock>*/}
 			</LayoutSharedWrapper>
 		</CoreTimelineProvider>
 	);

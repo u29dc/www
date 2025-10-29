@@ -1,15 +1,15 @@
 'use client';
 
 /**
- * Content Feed Item
+ * Content Artifacts Item
  *
  * ## SUMMARY
- * Single feed item with AnimatedLink for timeline-aware navigation.
+ * Single artifacts item with AnimatedLink for timeline-aware navigation.
  *
  * ## RESPONSIBILITIES
  * - Render title, description, and type-specific metadata with AnimatedLink wrapper
  *
- * @module components/content/content-index-feed_item
+ * @module components/content/content-index-artifacts_item
  */
 
 import { AnimatedLink } from '@/components/animation/animated-link';
@@ -20,11 +20,11 @@ function formatDate(dateString: string): string {
 	return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
-export interface ContentIndexFeedItemProps {
+export interface ContentIndexArtifactsItemProps {
 	item: ParsedContent;
 }
 
-export function ContentIndexFeedItem({ item }: ContentIndexFeedItemProps) {
+export function ContentIndexArtifactsItem({ item }: ContentIndexArtifactsItemProps) {
 	const { frontmatter } = item;
 	const { title, slug, description, date } = frontmatter;
 

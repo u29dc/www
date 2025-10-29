@@ -1,28 +1,30 @@
 'use client';
 
 /**
- * Animated Content Feed Thumbnail
+ * Animated Content Artifacts Thumbnail
  *
  * ## SUMMARY
- * Motion-animated thumbnail preview for feed items with layoutId sliding transitions.
+ * Motion-animated thumbnail preview for artifacts items with layoutId sliding transitions.
  *
  * ## RESPONSIBILITIES
  * - Render image or video thumbnails with CDN URLs
  * - Apply Motion layoutId for smooth sliding between items
  * - Handle media type detection and validation
  *
- * @module components/animation/animated-content-feed_thumbnail
+ * @module components/animation/animated-content-artifacts_thumbnail
  */
 
 import { motion } from 'motion/react';
 import { CDN } from '@/lib/constants';
 import { getMediaType, sanitizeMediaFilename } from '@/lib/mdx-client';
 
-export interface AnimatedContentFeedThumbnailProps {
+export interface AnimatedContentArtifactsThumbnailProps {
 	thumbnailUrl: string | null;
 }
 
-export function AnimatedContentFeedThumbnail({ thumbnailUrl }: AnimatedContentFeedThumbnailProps) {
+export function AnimatedContentArtifactsThumbnail({
+	thumbnailUrl,
+}: AnimatedContentArtifactsThumbnailProps) {
 	if (!thumbnailUrl) return null;
 
 	const sanitized = sanitizeMediaFilename(thumbnailUrl);
@@ -35,7 +37,7 @@ export function AnimatedContentFeedThumbnail({ thumbnailUrl }: AnimatedContentFe
 
 	return (
 		<motion.div
-			layoutId="feed-thumbnail-preview"
+			layoutId="artifacts-thumbnail-preview"
 			className="pointer-events-none absolute left-40 top-1/2 translate-y-[-50%] h-[10rem] w-[20rem] overflow-hidden"
 			transition={{
 				layout: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },

@@ -1,27 +1,27 @@
 'use client';
 
 /**
- * Animated Content Feed
+ * Animated Content Artifacts
  *
  * ## SUMMARY
- * Timeline-coordinated wrapper with staggered Motion animations for feed items.
+ * Timeline-coordinated wrapper with staggered Motion animations for artifacts items.
  * Includes sliding hover indicator for visual feedback.
  *
  * ## RESPONSIBILITIES
  * - Subscribe to timeline stage, orchestrate staggered item animations, notify on completion
  * - Manage hover state and render sliding indicator element
  *
- * @module components/animation/animated-content-feed
+ * @module components/animation/animated-content-artifacts
  */
 
 import { motion } from 'motion/react';
 import type { ReactElement, ReactNode } from 'react';
 import { Children, isValidElement, useMemo, useState } from 'react';
-import { AnimatedContentFeedThumbnail } from '@/components/animation/animated-content-feed_thumbnail';
+import { AnimatedContentArtifactsThumbnail } from '@/components/animation/animated-content-artifacts_thumbnail';
 import { logEvent } from '@/lib/logger';
 import { useTimelineStage } from '@/lib/timeline';
 
-export interface AnimatedContentFeedProps {
+export interface AnimatedContentArtifactsProps {
 	stageId: string;
 	children: ReactNode;
 	className?: string;
@@ -29,13 +29,13 @@ export interface AnimatedContentFeedProps {
 	thumbnails?: (string | null)[];
 }
 
-export function AnimatedContentFeed({
+export function AnimatedContentArtifacts({
 	stageId,
 	children,
 	className,
 	staggerDelay = 0,
 	thumbnails,
-}: AnimatedContentFeedProps) {
+}: AnimatedContentArtifactsProps) {
 	const { stage, variant, advanceStage, stageConfig } = useTimelineStage(stageId);
 
 	// Hover indicator state
@@ -108,7 +108,7 @@ export function AnimatedContentFeed({
 	const handleComplete = () => {
 		if (stage?.status === 'animating') {
 			advanceStage();
-			logEvent('TIMELINE', 'FEED_ANIMATE', 'COMPLETE', {
+			logEvent('TIMELINE', 'ARTIFACTS_ANIMATE', 'COMPLETE', {
 				stageId,
 				direction: stage.direction,
 				itemCount: childArray.length,
@@ -142,20 +142,20 @@ export function AnimatedContentFeed({
 						{hoveredIndex === index && (
 							<div className="hidden hover-device:block">
 								<motion.div
-									layoutId="feed-hover-indicator-left"
+									layoutId="artifacts-hover-indicator-left"
 									className="pointer-events-none absolute left-2 md:left-5 top-1/2 translate-y-[-50%] h-[1px] w-[1px] bg-current"
 									transition={{
 										layout: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
 									}}
 								/>
 								<motion.div
-									layoutId="feed-hover-indicator-right"
+									layoutId="artifacts-hover-indicator-right"
 									className="pointer-events-none absolute right-2 md:right-5 top-1/2 translate-y-[-50%] h-[1px] w-[10px] bg-current"
 									transition={{
 										layout: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
 									}}
 								/>
-								<AnimatedContentFeedThumbnail
+								<AnimatedContentArtifactsThumbnail
 									thumbnailUrl={thumbnails?.[index] ?? null}
 								/>
 							</div>
