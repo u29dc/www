@@ -57,6 +57,15 @@ export class ValidationError extends AppError {
 	}
 }
 
+export class ForbiddenError extends AppError {
+	constructor(resource: string, reason?: string) {
+		const message = reason
+			? `Access to ${resource} forbidden: ${reason}`
+			: `Access to ${resource} forbidden`;
+		super(403, message, 'FORBIDDEN');
+	}
+}
+
 export class ProcessingError extends AppError {
 	constructor(
 		message: string,

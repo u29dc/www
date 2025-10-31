@@ -89,7 +89,7 @@ export function AnimatedContentArtifacts({
 	const itemVariants = {
 		hidden: {
 			opacity: 0,
-			y: 10,
+			y: -10,
 			filter: 'blur(5px)',
 		},
 		visible: {
@@ -142,15 +142,8 @@ export function AnimatedContentArtifacts({
 						{hoveredIndex === index && (
 							<div className="hidden hover-device:block">
 								<motion.div
-									layoutId="artifacts-hover-indicator-left"
-									className="pointer-events-none absolute left-2 md:left-5 top-1/2 translate-y-[-50%] h-[1px] w-[1px] bg-current"
-									transition={{
-										layout: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
-									}}
-								/>
-								<motion.div
 									layoutId="artifacts-hover-indicator-right"
-									className="pointer-events-none absolute right-2 md:right-5 top-1/2 translate-y-[-50%] h-[1px] w-[10px] bg-current"
+									className="pointer-events-none absolute -right-2 md:-right-5 top-1/2 translate-y-[-50%] h-[1px] w-[4px] bg-current"
 									transition={{
 										layout: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
 									}}

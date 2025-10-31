@@ -1,5 +1,3 @@
-'use client';
-
 /**
  * Content Index Statement
  *
@@ -12,28 +10,47 @@
  * @module components/content/content-index
  */
 
+import { AnimatedBlock } from '@/components/animation/animated-block';
 import { AnimatedStagger } from '@/components/animation/animated-stagger';
 
 export function ContentIndexStatement() {
 	return (
-		<div className="padding-standard content-column">
-			<AnimatedStagger stageId="index-title">
-				<h2>Incomplete Infinity is an evolving, enigmatic, multifaceted creative</h2>
-				<h2>practice, turning complex futures into today's narratives.</h2>
-				<h2>It inhabits the space between what is seen and what is felt.</h2>
-				<h2>It operates in the deliberate pause, dwells in the charged moment.</h2>
-				<h2>It expresses itself... in incomplete form.</h2>
-				<h2>After all, isn't true infinity always incomplete?</h2>
+		<div className="h-[50vh] flex flex-col gap-10">
+			<AnimatedBlock stageId="index-statement-title" className="mb-10">
+				<h1>
+					<span className="w-full flex justify-between">
+						<span>An evolving, enigmatic,</span>
+						<span>multifaceted</span>
+					</span>
+					<span className="w-full flex justify-between">
+						<span>creative practice</span>
+						<span>—</span>
+						<span>turning</span>
+						<span>complex futures into</span>
+					</span>
+					<span className="w-full flex justify-between">
+						<span>decision grade narratives.</span>
+					</span>
+				</h1>
+			</AnimatedBlock>
+			<AnimatedStagger stageId="index-statement-description" className="mb-0">
+				<div>It inhabits the space between what is seen and what is felt.</div>
+				<div>It operates in the deliberate pause, dwells in the charged moment.</div>
+				<div>It expresses itself... in incomplete form.</div>
+				<div>After all, isn't true infinity always incomplete?</div>
 			</AnimatedStagger>
-			<AnimatedStagger stageId="index-description" className="mt-10" blurStrength={5}>
-				The practice questions premises before refining execution. Asks "why not
-				differently?" because the most interesting possibilities emerge not from
-				optimization, but from questioning the premise entirely. The work moves between LAB
-				(speculative research, public prototypes, new frames for understanding) and COM
-				(strategic narrative, decision-grade artifacts for organizations navigating
-				complexity). Research generates language; commerce deploys it. Each feeds the other,
-				operating in the productive tension between chaos and order, between the mapped and
-				the undiscovered.
+
+			<AnimatedStagger stageId="index-statement-description" className="mb-0">
+				<div>
+					The practice questions premises before refining execution. Asks "why not
+					differently?" because the most interesting possibilities emerge not from
+					optimization, but from questioning the premise entirely. The work moves between
+					LAB (speculative research, public prototypes, new frames for understanding) and
+					COM (strategic narrative, decision-grade artifacts for organizations navigating
+					complexity). Research generates language; commerce deploys it. Each feeds the
+					other, operating in the productive tension between chaos and order, between the
+					mapped and the undiscovered.
+				</div>
 			</AnimatedStagger>
 		</div>
 	);

@@ -11,6 +11,8 @@
  */
 
 import { ContentIndexArtifacts } from '@/components/content/content-index-artifacts';
+import { ContentIndexAxioms } from '@/components/content/content-index-axioms';
+// import { ContentIndexProtocols } from '@/components/content/content-index-protocols';
 import { ContentIndexStatement } from '@/components/content/content-index-statement';
 import { CoreTimelineProvider } from '@/components/core/core-timeline-provider';
 import { LayoutContentBlock } from '@/components/layout/layout-content-block';
@@ -24,12 +26,15 @@ export default function HomePage() {
 				<LayoutContentBlock id={0} title="statement">
 					<ContentIndexStatement />
 				</LayoutContentBlock>
-				<LayoutContentBlock id={1} title="artifacts">
+				<LayoutContentBlock id={1} title="artifacts" colSpanFull={true}>
 					<ContentIndexArtifacts />
 				</LayoutContentBlock>
-				{/*<LayoutContentBlock id={2} title="axioms"></LayoutContentBlock>*/}
-				{/*<LayoutContentBlock id={3} title="protocols"></LayoutContentBlock>*/}
-				{/*<LayoutContentBlock id={4} title="invitation"></LayoutContentBlock>*/}
+				<LayoutContentBlock id={2} title="axioms">
+					<ContentIndexAxioms />
+				</LayoutContentBlock>
+				{/*<LayoutContentBlock id={3} title="protocols">
+					<ContentIndexProtocols />
+				</LayoutContentBlock>*/}
 			</LayoutSharedWrapper>
 		</CoreTimelineProvider>
 	);

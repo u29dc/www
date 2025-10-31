@@ -38,9 +38,9 @@ export function AnimatedContentArtifactsThumbnail({
 	return (
 		<motion.div
 			layoutId="artifacts-thumbnail-preview"
-			className="pointer-events-none absolute left-40 top-1/2 translate-y-[-50%] h-[10rem] w-[20rem] overflow-hidden"
+			className="pointer-events-none absolute left-[20vw] top-1/2 translate-y-[-50%] h-[10rem] w-[10vw] overflow-hidden"
 			transition={{
-				layout: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
+				layout: { duration: 0.25, ease: [0.22, 1, 0.36, 1] },
 			}}
 		>
 			{mediaType === 'image' ? (

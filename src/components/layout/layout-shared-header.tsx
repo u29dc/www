@@ -1,5 +1,3 @@
-'use client';
-
 /**
  * Layout Shared Header
  *
@@ -29,54 +27,56 @@ export function LayoutSharedHeader({ type, frontmatter, title }: LayoutSharedHea
 	const siteTitle = title ?? SITE.title;
 
 	return (
-		<header className="relative h-full padding-standard">
-			<AtomicGradientBlur
-				position="top"
-				size="15rem"
-				fixed={false}
-				layers={10}
-				className="z-1000"
-			/>
+		<div className="grid grid-cols-10 h-60">
+			<header className="col-span-base padding-standard">
+				<AtomicGradientBlur
+					position="top"
+					size="15rem"
+					fixed={false}
+					layers={10}
+					className="z-1000"
+				/>
 
-			<div className="relative full-container font-md z-1001">
-				{type === 'index' && (
-					<>
-						<div className="absolute bottom-0 w-full left-1/2 -translate-x-1/2 text-center">
-							<AnimatedStagger
-								stageId="index-header"
-								staggerDelay={50}
-								blurStrength={5}
-							>
-								{siteTitle}
-							</AnimatedStagger>
-						</div>
-						<nav className="absolute bottom-0 left-0">
-							<AnimatedStagger stageId="index-header-nav">
-								<AtomicBrandLogo className="translate-y-6 -translate-x-30" />
-							</AnimatedStagger>
-						</nav>
-					</>
-				)}
+				<div className="relative full-container uppercase z-1001">
+					{type === 'index' && (
+						<>
+							<div className="absolute bottom-0 w-full left-1/2 -translate-x-1/2 text-center">
+								<AnimatedStagger
+									stageId="index-header"
+									staggerDelay={50}
+									blurStrength={5}
+								>
+									{siteTitle}
+								</AnimatedStagger>
+							</div>
+							<nav className="absolute bottom-0 left-0">
+								<AnimatedStagger stageId="index-header-nav">
+									<AtomicBrandLogo className="translate-y-6 -translate-x-30" />
+								</AnimatedStagger>
+							</nav>
+						</>
+					)}
 
-				{type === 'article' && frontmatter && (
-					<>
-						<div className="absolute bottom-0 w-full left-1/2 -translate-x-1/2 text-center">
-							<AnimatedStagger
-								stageId="article-header"
-								staggerDelay={50}
-								blurStrength={5}
-							>
-								{frontmatter.title}
-							</AnimatedStagger>
-						</div>
-						<nav className="absolute bottom-0 left-0">
-							<AnimatedStagger stageId="article-header-nav">
-								<AnimatedLink href="/">Back</AnimatedLink>
-							</AnimatedStagger>
-						</nav>
-					</>
-				)}
-			</div>
-		</header>
+					{type === 'article' && frontmatter && (
+						<>
+							<div className="absolute bottom-0 w-full left-1/2 -translate-x-1/2 text-center">
+								<AnimatedStagger
+									stageId="article-header"
+									staggerDelay={50}
+									blurStrength={5}
+								>
+									{frontmatter.title}
+								</AnimatedStagger>
+							</div>
+							<nav className="absolute bottom-0 left-0">
+								<AnimatedStagger stageId="article-header-nav">
+									<AnimatedLink href="/">Back</AnimatedLink>
+								</AnimatedStagger>
+							</nav>
+						</>
+					)}
+				</div>
+			</header>
+		</div>
 	);
 }

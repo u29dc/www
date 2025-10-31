@@ -69,7 +69,8 @@
 			"complexity": {
 				"noForEach": "off",
 				"useOptionalChain": "warn",
-				"noExcessiveCognitiveComplexity": "warn"
+				"noExcessiveCognitiveComplexity": "warn",
+				"useLiteralKeys": "off"
 			},
 			"correctness": {
 				"noUnusedVariables": "error",

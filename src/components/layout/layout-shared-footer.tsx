@@ -10,31 +10,77 @@
  * @module components/layout/layout-shared-footer
  */
 
+import { ArrowUpRight } from 'lucide-react';
 import { AnimatedBlock } from '@/components/animation/animated-block';
 import { AtomicGradientBlur } from '@/components/atomic/atomic-gradient-blur';
+import { BUILD } from '@/lib/constants';
+
+interface LayoutSharedFooterLinkProps {
+	title: string;
+	description: string;
+	link: string;
+}
+
+export function LayoutSharedFooterLink({ title, description, link }: LayoutSharedFooterLinkProps) {
+	return (
+		<a
+			href={link}
+			target="_blank"
+			rel="noopener noreferrer"
+			className="mb-20 flex flex-row gap-2 justify-between"
+		>
+			<div className="">
+				<div className="uppercase">{title}</div>
+				<div className="">{description}</div>
+			</div>
+			<div className="">
+				<ArrowUpRight size={12} />
+			</div>
+		</a>
+	);
+}
 
 export function LayoutSharedFooter() {
 	return (
-		<footer className="relative h-full padding-standard">
-			<AnimatedBlock stageId="layout-footer-nav">
-				<nav className="flex flex-row gap-4">
-					<a href="https://instagram.com/u29dc" target="_blank" rel="noopener noreferrer">
-						Instagram
-					</a>
-					<a
-						href="https://linkedin.com/in/u29dc"
-						target="_blank"
-						rel="noopener noreferrer"
-					>
-						LinkedIn
-					</a>
-					<a href="https://cal.com/u29dc" target="_blank" rel="noopener noreferrer">
-						Calendar
-					</a>
-				</nav>
-			</AnimatedBlock>
+		<footer className="grid grid-cols-10 w-full bg-black text-white">
+			<AtomicGradientBlur position="bottom" size="10rem" fixed={true} className="z-1000" />
 
-			<AtomicGradientBlur />
+			<AnimatedBlock
+				stageId="layout-footer-nav"
+				className="col-span-base h-[100rem] max-h-[100vh] z-1002"
+			>
+				<div className="padding-standard flex flex-col gap-4 justify-between h-full">
+					<div className="w-full grid grid-cols-2 gap-4">
+						<LayoutSharedFooterLink
+							title="Instagram"
+							description="@u29dc"
+							link="https://instagram.com/u29dc"
+						/>
+						<LayoutSharedFooterLink
+							title="LinkedIn"
+							description="u29dc"
+							link="https://linkedin.com/in/u29dc"
+						/>
+						<LayoutSharedFooterLink
+							title="Calendar"
+							description="Let's meet"
+							link="https://cal.com/u29dc/hey"
+						/>
+						<LayoutSharedFooterLink
+							title="GitHub"
+							description={BUILD.commitSha}
+							link="https://github.com/u29dc/www"
+						/>
+					</div>
+					<div className="w-full grid grid-cols-2 gap-4">
+						<LayoutSharedFooterLink
+							title="EMAIL"
+							description="hey@u29dc.com"
+							link="mailto:hey@u29dc.com"
+						/>
+					</div>
+				</div>
+			</AnimatedBlock>
 		</footer>
 	);
 }

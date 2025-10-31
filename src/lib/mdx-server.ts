@@ -133,9 +133,7 @@ export async function parseMDX(filePath: string): Promise<ParsedContent> {
 
 		const { data, content } = matter(source);
 
-		// biome-ignore lint/complexity/useLiteralKeys: Bracket notation required by TypeScript strict mode (noPropertyAccessFromIndexSignature)
 		if (data['date'] instanceof Date) {
-			// biome-ignore lint/complexity/useLiteralKeys: Bracket notation required by TypeScript strict mode
 			data['date'] = data['date'].toISOString();
 		}
 

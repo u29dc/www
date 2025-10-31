@@ -1,58 +1,37 @@
+/* ==================================================*/
+/* CONFIGURATION */
+/* ================================================== */
+
 @import "tailwindcss";
 
 @theme {
 	--font-sans: var(--font-neue-haas), sans-serif;
-	--color-white: oklch(97% 0 0);
+	--font-mono: monospace;
+	--color-white: oklch(99% 0 0);
+	--color-white-faded: oklch(99% 0 0 / 0.25);
 	--color-black: oklch(15% 0 0);
-	--breakpoint-3xl: 1920px;
-	--breakpoint-4xl: 2560px;
+	--color-black-faded: oklch(15% 0 0 / 0.25);
+	--breakpoint-3xl: 120rem;
+	--breakpoint-4xl: 160rem;
 }
+
+/* ================================================== */
+/* BASE LAYER */
+/* ================================================== */
 
 @layer base {
 	:root {
-		color-scheme: light;
 		font-size: 10px;
 	}
 
-	html.dark {
-		color-scheme: dark;
-	}
-
-	@media (prefers-color-scheme: dark) {
-		html:not(.light) {
-			background: var(--color-black);
-			color: var(--color-white);
-		}
-
-		html:not(.light) body {
-			background: var(--color-black);
-			color: var(--color-white);
-		}
-	}
-
-	@media (prefers-color-scheme: light) {
-		html:not(.dark) {
-			background: var(--color-white);
-			color: var(--color-black);
-		}
-
-		html:not(.dark) body {
-			background: var(--color-white);
-			color: var(--color-black);
-		}
-	}
-
-	html.dark,
-	html.dark body {
-		background: var(--color-black);
-		color: var(--color-white);
+	html {
+		@apply theme-light;
 	}
 
 	body {
 		@apply antialiased;
-		@apply select-none;
 		@apply font-sm;
-		font-family: var(--font-neue-haas), sans-serif;
+		font-family: var(--font-sans);
 		font-weight: 600;
 		font-style: normal;
 		text-rendering: optimizeLegibility;
@@ -80,11 +59,46 @@
 	a {
 		@apply transition-opacity duration-200;
 	}
-	
+
 	a:hover {
 		@apply opacity-50;
 	}
 }
+
+/* ================================================== */
+/* TYPOGRAPHY */
+/* ================================================== */
+
+@utility font-xl {
+	font-size: 2.5rem;
+	line-height: 1.2;
+}
+
+@utility font-lg {
+	font-size: 1.5rem;
+}
+
+@utility font-md {
+	font-size: 1.3rem;
+}
+
+@utility font-sm {
+	font-size: 1.1rem;
+}
+
+@utility font-xs {
+	font-size: 0.8rem;
+}
+
+@utility font-mono {
+	font-family: var(--font-mono);
+	font-weight: normal;
+	@apply text-left font-xs;
+}
+
+/* ================================================== */
+/* LAYOUT */
+/* ================================================== */
 
 @utility min-h-screen-safe {
 	min-height: calc(var(--vh, 1vh) * 100);
@@ -94,38 +108,15 @@
 	height: calc(var(--vh, 1vh) * 100);
 }
 
-@utility font-xl {
-	font-size: 2.5rem;
-}
-
-@utility font-lg {
-	font-size: 1.8rem;
-}
-
-@utility font-md {
-	font-size: 1.5rem;
-}
-
-@utility font-sm {
-	font-size: 1.3rem;
-}
-
-@utility scrollbar-hidden {
-	scrollbar-width: none;
-	&::-webkit-scrollbar {
-		display: none;
-	}
-}
-
-@utility content-column {
+@utility col-span-base {
 	@apply col-start-1 col-span-10
 	       sm:col-start-1 sm:col-span-10
-	       md:col-start-3 md:col-span-7
-	       lg:col-start-5 lg:col-span-6
-	       xl:col-start-6 xl:col-span-5
-	       2xl:col-start-7 2xl:col-span-3
-	       3xl:col-start-8 3xl:col-span-2
-	       4xl:col-start-8 4xl:col-span-2;
+	       md:col-start-3 md:col-span-8
+	       lg:col-start-4 lg:col-span-7
+	       xl:col-start-5 xl:col-span-6
+	       2xl:col-start-6 2xl:col-span-5
+	       3xl:col-start-7 3xl:col-span-3
+	       4xl:col-start-7 4xl:col-span-3;
 }
 
 @utility padding-standard {
@@ -136,10 +127,109 @@
 	@apply h-full w-full;
 }
 
-/* Show hover effects only on devices with hover capability (mouse/trackpad, not touch) */
-@media (hover: hover) and (pointer: fine) {
-	.hover-device\:block {
-		display: block;
+/* ================================================== */
+/* THEME SYSTEM */
+/* ================================================== */
+
+@utility theme-system {
+	color-scheme: light;
+
+	& ::selection {
+		background: var(--color-black);
+		color: var(--color-white);
+	}
+
+	@media (prefers-color-scheme: dark) {
+		&:not(.light) {
+			color-scheme: dark;
+			background: var(--color-black);
+			color: var(--color-white);
+		}
+
+		&:not(.light) body {
+			background: var(--color-black);
+			color: var(--color-white);
+		}
+
+		&:not(.light) ::selection {
+			background: var(--color-white);
+			color: var(--color-black);
+		}
+	}
+
+	@media (prefers-color-scheme: light) {
+		&:not(.dark) {
+			background: var(--color-white);
+			color: var(--color-black);
+		}
+
+		&:not(.dark) body {
+			background: var(--color-white);
+			color: var(--color-black);
+		}
+
+		&:not(.dark) ::selection {
+			background: var(--color-black);
+			color: var(--color-white);
+		}
+	}
+
+	&.dark {
+		color-scheme: dark;
+	}
+
+	&.dark,
+	&.dark body {
+		background: var(--color-black);
+		color: var(--color-white);
+	}
+
+	&.dark ::selection {
+		background: var(--color-white);
+		color: var(--color-black);
+	}
+}
+
+@utility theme-dark {
+	color-scheme: dark;
+	background: var(--color-black);
+	color: var(--color-white);
+
+	& body {
+		background: var(--color-black);
+		color: var(--color-white);
+	}
+
+	& ::selection {
+		background: var(--color-white);
+		color: var(--color-black);
+	}
+}
+
+@utility theme-light {
+	color-scheme: light;
+	background: var(--color-white);
+	color: var(--color-black);
+
+	& body {
+		background: var(--color-white);
+		color: var(--color-black);
+	}
+
+	& ::selection {
+		background: var(--color-black);
+		color: var(--color-white);
+	}
+}
+
+/* ================================================== */
+/* VISUAL EFFECTS */
+/* ================================================== */
+
+@utility scrollbar-hidden {
+	scrollbar-width: none;
+	&::-webkit-scrollbar {
+		display: none;
 	}
 }
 
@@ -150,14 +240,14 @@
 @utility marker-all {
 	position: relative;
 	background-image:
-		linear-gradient(to bottom, var(--color-white), var(--color-white)),
-		linear-gradient(to right, var(--color-white), var(--color-white)),
-		linear-gradient(to bottom, var(--color-white), var(--color-white)),
-		linear-gradient(to left, var(--color-white), var(--color-white)),
-		linear-gradient(to top, var(--color-white), var(--color-white)),
-		linear-gradient(to right, var(--color-white), var(--color-white)),
-		linear-gradient(to top, var(--color-white), var(--color-white)),
-		linear-gradient(to left, var(--color-white), var(--color-white));
+		linear-gradient(to bottom, var(--color-black-faded), var(--color-black-faded)),
+		linear-gradient(to right, var(--color-black-faded), var(--color-black-faded)),
+		linear-gradient(to bottom, var(--color-black-faded), var(--color-black-faded)),
+		linear-gradient(to left, var(--color-black-faded), var(--color-black-faded)),
+		linear-gradient(to top, var(--color-black-faded), var(--color-black-faded)),
+		linear-gradient(to right, var(--color-black-faded), var(--color-black-faded)),
+		linear-gradient(to top, var(--color-black-faded), var(--color-black-faded)),
+		linear-gradient(to left, var(--color-black-faded), var(--color-black-faded));
 	background-size:
 		1px 4px, 4px 1px,
 		1px 4px, 4px 1px,
@@ -169,4 +259,22 @@
 		bottom left, bottom left,
 		bottom right, bottom right;
 	background-repeat: no-repeat;
+}
+
+html.dark .marker-all {
+	background-image:
+		linear-gradient(to bottom, var(--color-white-faded), var(--color-white-faded)),
+		linear-gradient(to right, var(--color-white-faded), var(--color-white-faded)),
+		linear-gradient(to bottom, var(--color-white-faded), var(--color-white-faded)),
+		linear-gradient(to left, var(--color-white-faded), var(--color-white-faded)),
+		linear-gradient(to top, var(--color-white-faded), var(--color-white-faded)),
+		linear-gradient(to right, var(--color-white-faded), var(--color-white-faded)),
+		linear-gradient(to top, var(--color-white-faded), var(--color-white-faded)),
+		linear-gradient(to left, var(--color-white-faded), var(--color-white-faded));
+}
+
+@media (hover: hover) and (pointer: fine) {
+	.hover-device\:block {
+		display: block;
+	}
 }

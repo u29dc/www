@@ -11,16 +11,16 @@
  */
 
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { MDXRemote } from 'next-mdx-remote/rsc';
-import { AnimatedContentMdx } from '@/components/animation/animated-content-mdx';
+import { AnimatedBlock } from '@/components/animation/animated-block';
 import { CoreTimelineProvider } from '@/components/core/core-timeline-provider';
-import { LayoutContentBlock } from '@/components/layout/layout-content-block';
 import { LayoutSharedWrapper } from '@/components/layout/layout-shared-wrapper';
 import { TIMELINE_ARTICLE } from '@/lib/constants';
 import { ValidationError } from '@/lib/errors';
 import { getContentBySlug, getFeedContent } from '@/lib/mdx-server';
 import type { ContentItem } from '@/lib/mdx-types';
+import { isStudy } from '@/lib/mdx-types';
 import { validateSlug } from '@/lib/validators';
 import { useMDXComponents } from '@/mdx-components';
 
@@ -51,6 +51,10 @@ export default async function ContentPage({ params }: ContentPageProps) {
 
 	if (!content) notFound();
 
+	if (isStudy(content.frontmatter) && (content.frontmatter.isConfidential ?? false)) {
+		redirect('/');
+	}
+
 	if (content.frontmatter.isFeedItem === false) {
 		notFound();
 	}
@@ -60,11 +64,9 @@ export default async function ContentPage({ params }: ContentPageProps) {
 	return (
 		<CoreTimelineProvider config={TIMELINE_ARTICLE}>
 			<LayoutSharedWrapper type="article" frontmatter={frontmatter}>
-				<AnimatedContentMdx>
-					<LayoutContentBlock id={0} title="content">
-						<MDXRemote source={mdxContent} components={useMDXComponents({})} />
-					</LayoutContentBlock>
-				</AnimatedContentMdx>
+				<AnimatedBlock stageId="article-body">
+					<MDXRemote source={mdxContent} components={useMDXComponents({})} />
+				</AnimatedBlock>
 			</LayoutSharedWrapper>
 		</CoreTimelineProvider>
 	);

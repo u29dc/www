@@ -18,9 +18,16 @@
 
 import type { NextRequest } from 'next/server';
 import { SITE } from '@/lib/constants';
-import { createErrorResponse, NotFoundError, ProcessingError, ValidationError } from '@/lib/errors';
+import {
+	createErrorResponse,
+	ForbiddenError,
+	NotFoundError,
+	ProcessingError,
+	ValidationError,
+} from '@/lib/errors';
 import { logEvent } from '@/lib/logger';
 import { getContentBySlug, toMarkdown } from '@/lib/mdx-server';
+import { isStudy } from '@/lib/mdx-types';
 import { validateSlug } from '@/lib/validators';
 
 /**
@@ -60,6 +67,17 @@ export async function GET(
 		return createErrorResponse(new NotFoundError(`Content with slug '${slug}'`), {
 			format: 'json',
 		});
+	}
+
+	if (isStudy(content.frontmatter) && (content.frontmatter.isConfidential ?? false)) {
+		logEvent('RAW', 'SERVE', 'FORBIDDEN', { slug, format, reason: 'confidential' });
+		return createErrorResponse(
+			new ForbiddenError(
+				`Content with slug '${slug}'`,
+				'confidential content not accessible via API',
+			),
+			{ format: 'json' },
+		);
 	}
 
 	try {

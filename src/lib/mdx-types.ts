@@ -28,9 +28,9 @@ export const StudySchema = z.object({
 
 	client: z.string().min(1),
 	role: z.string().min(1),
-	year: z.number().int().min(2000).max(2100),
-	mode: z.enum(['LAB', 'COM']),
+	mode: z.enum(['MAP', 'LAB', 'COM']),
 	thumbnailMedia: z.string().optional(),
+	isConfidential: z.boolean().optional().default(false),
 });
 
 export const FragmentSchema = z.object({

@@ -39,9 +39,9 @@ export default async function RootLayout({ children }: RootLayoutProps) {
 				<CoreAppShell>
 					<ThemeProvider
 						attribute="class"
-						defaultTheme="system"
-						enableSystem
-						disableTransitionOnChange
+						defaultTheme="light"
+						enableSystem={false}
+						disableTransitionOnChange={true}
 					>
 						{children}
 					</ThemeProvider>
