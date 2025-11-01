@@ -15,10 +15,12 @@
 export function ContentIndexProtocols() {
 	return (
 		<div className="">
-			{/*<AnimatedBlock stageId="index-protocols-intro"></AnimatedBlock>*/}
-			{/*<AnimatedBlock stageId="index-protocols-map"></AnimatedBlock>*/}
-			{/*<AnimatedBlock stageId="index-protocols-lab"></AnimatedBlock>*/}
-			{/*<AnimatedBlock stageId="index-protocols-com"></AnimatedBlock>*/}
+			{/*
+			<AnimatedBlock stageId="index-protocols-intro"></AnimatedBlock>
+			<AnimatedBlock stageId="index-protocols-map"></AnimatedBlock>
+			<AnimatedBlock stageId="index-protocols-lab"></AnimatedBlock>
+			<AnimatedBlock stageId="index-protocols-com"></AnimatedBlock>
+			*/}
 		</div>
 	);
 }

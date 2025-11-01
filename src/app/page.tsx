@@ -23,18 +23,20 @@ export default function HomePage() {
 	return (
 		<CoreTimelineProvider config={TIMELINE_INDEX}>
 			<LayoutSharedWrapper type="index">
-				<LayoutContentBlock id={0} title="statement">
+				<LayoutContentBlock id={0} title="statement" colSpanFull={false} className="">
 					<ContentIndexStatement />
 				</LayoutContentBlock>
-				<LayoutContentBlock id={1} title="artifacts" colSpanFull={true}>
+				<LayoutContentBlock id={1} title="artifacts" colSpanFull={true} className="">
 					<ContentIndexArtifacts />
 				</LayoutContentBlock>
-				<LayoutContentBlock id={2} title="axioms">
+				<LayoutContentBlock id={2} title="axioms" colSpanFull={false} className="">
 					<ContentIndexAxioms />
 				</LayoutContentBlock>
-				{/*<LayoutContentBlock id={3} title="protocols">
+				{/*
+				<LayoutContentBlock id={3} title="protocols" colSpanFull={false} className="">
 					<ContentIndexProtocols />
-				</LayoutContentBlock>*/}
+				</LayoutContentBlock>
+				*/}
 			</LayoutSharedWrapper>
 		</CoreTimelineProvider>
 	);

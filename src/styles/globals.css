@@ -26,6 +26,7 @@
 
 	html {
 		@apply theme-light;
+		@apply select-none;
 	}
 
 	body {
@@ -89,7 +90,7 @@
 }
 
 @utility font-xs {
-	font-size: 0.8rem;
+	font-size: 0.7rem;
 }
 
 @utility font-mono {

@@ -24,13 +24,13 @@ export interface LayoutSharedWrapperProps {
 export function LayoutSharedWrapper({ type, children, frontmatter }: LayoutSharedWrapperProps) {
 	return (
 		<main className="full-container min-h-screen">
-			<section data-section="header" className="w-full sticky top-0 z-10">
+			<section data-section="header" className="w-full sticky top-0 z-1000">
 				<LayoutSharedHeader type={type} frontmatter={frontmatter} />
 			</section>
 			<section data-section="content" className="w-full">
 				{children}
 			</section>
-			<section data-section="footer" className="w-full sticky">
+			<section data-section="footer" className="w-full z-1100">
 				<LayoutSharedFooter />
 			</section>
 		</main>
