@@ -11,6 +11,7 @@
  * @module app/layout
  */
 
+import { ReactLenis } from 'lenis/react';
 import { headers } from 'next/headers';
 import Script from 'next/script';
 import { ThemeProvider } from 'next-themes';
@@ -35,17 +36,23 @@ export default async function RootLayout({ children }: RootLayoutProps) {
 		<html lang="en" className={neueHaas.variable} suppressHydrationWarning>
 			<head>{nonce && <meta property="csp-nonce" content={nonce} />}</head>
 			<body className="min-h-screen font-sm">
-				<CoreViewportFix />
-				<CoreAppShell>
-					<ThemeProvider
-						attribute="class"
-						defaultTheme="light"
-						enableSystem={false}
-						disableTransitionOnChange={true}
-					>
-						{children}
-					</ThemeProvider>
-				</CoreAppShell>
+				<ReactLenis root options={{ lerp: 0.05 }}>
+					<CoreViewportFix />
+					<CoreAppShell>
+						<ThemeProvider
+							attribute="class"
+							defaultTheme="light"
+							enableSystem={false}
+							disableTransitionOnChange={true}
+						>
+							{children}
+						</ThemeProvider>
+					</CoreAppShell>
+				</ReactLenis>
+
+				<div className="dev-grid-overlay" aria-hidden="true">
+					<div className="dev-grid-overlay_inner"></div>
+				</div>
 
 				{nonce && <Script src="/empty.js" strategy="afterInteractive" nonce={nonce} />}
 			</body>

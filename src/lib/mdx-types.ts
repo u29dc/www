@@ -24,7 +24,7 @@ export const StudySchema = z.object({
 	title: z.string().min(1),
 	description: z.string().min(1),
 	slug: z.string().min(1),
-	isFeedItem: z.boolean(),
+	isArtifactItem: z.boolean(),
 
 	client: z.string().min(1),
 	role: z.string().min(1),
@@ -39,7 +39,7 @@ export const FragmentSchema = z.object({
 	title: z.string().min(1),
 	description: z.string().min(1),
 	slug: z.string().min(1),
-	isFeedItem: z.boolean(),
+	isArtifactItem: z.boolean(),
 
 	excerpt: z.string().optional(),
 	thumbnailMedia: z.string().optional(),
@@ -51,7 +51,7 @@ export const SignalSchema = z.object({
 	title: z.string().min(1),
 	description: z.string().min(1),
 	slug: z.string().min(1),
-	isFeedItem: z.boolean(),
+	isArtifactItem: z.boolean(),
 
 	link: z.url().optional(),
 	thumbnailMedia: z.string().optional(),
@@ -63,7 +63,7 @@ export const MetaSchema = z.object({
 	title: z.string().min(1),
 	description: z.string().min(1),
 	slug: z.string().min(1),
-	isFeedItem: z.boolean(),
+	isArtifactItem: z.boolean(),
 
 	thumbnailMedia: z.string().optional(),
 });

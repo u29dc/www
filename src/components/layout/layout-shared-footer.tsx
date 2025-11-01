@@ -42,14 +42,14 @@ export function LayoutSharedFooterLink({ title, description, link }: LayoutShare
 
 export function LayoutSharedFooter() {
 	return (
-		<footer className="grid grid-cols-10 w-full bg-black text-white">
-			<AtomicGradientBlur position="bottom" size="10rem" fixed={true} className="z-1000" />
+		<footer className="padding-standard grid grid-cols-10 w-full bg-black text-white">
+			<AtomicGradientBlur position="bottom" size="10rem" fixed={true} />
 
 			<AnimatedBlock
 				stageId="layout-footer-nav"
-				className="col-span-base h-[100rem] max-h-[100vh] z-1002"
+				className="col-span-base h-[100rem] max-h-[100vh] z-1001"
 			>
-				<div className="padding-standard flex flex-col gap-4 justify-between h-full">
+				<div className="padding-standard px-0 flex flex-col gap-4 justify-between h-full">
 					<div className="w-full grid grid-cols-2 gap-4">
 						<LayoutSharedFooterLink
 							title="Instagram"

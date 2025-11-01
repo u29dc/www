@@ -33,13 +33,15 @@ export function LayoutContentBlock({
 		<div
 			data-id={id}
 			data-title={title}
-			className={`grid grid-cols-10 mb-30 marker-all ${className || ''}`}
+			className={`padding-standard py-0 grid grid-cols-10 mb-30 marker-all ${className || ''}`}
 		>
-			<div className="padding-standard py-0 col-span-base row-start-1 col-start-1 lg:col-start-1 col-span-2 font-mono">
-				<div className="">[ {title.toUpperCase()} ]</div>
+			<div className="col-span-base row-start-1 col-start-1 lg:col-start-1 col-span-full font-mono">
+				<div className="text-right md:text-left">
+					<div className="">[ {title.toUpperCase()} ]</div>
+				</div>
 			</div>
 			<div
-				className={`${colSpanFull ? 'col-span-full' : 'col-span-base'} padding-standard row-start-2 md:row-start-1`}
+				className={`${colSpanFull ? 'col-span-full' : 'col-span-base'} row-start-2 md:row-start-1`}
 			>
 				{children}
 			</div>

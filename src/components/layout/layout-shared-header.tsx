@@ -27,8 +27,8 @@ export function LayoutSharedHeader({ type, frontmatter, title }: LayoutSharedHea
 	const siteTitle = title ?? SITE.title;
 
 	return (
-		<div className="grid grid-cols-10 h-60">
-			<header className="col-span-base padding-standard">
+		<div className="padding-standard grid grid-cols-10 h-60">
+			<header className="col-span-base">
 				<AtomicGradientBlur
 					position="top"
 					size="15rem"
@@ -51,7 +51,10 @@ export function LayoutSharedHeader({ type, frontmatter, title }: LayoutSharedHea
 							</div>
 							<nav className="absolute bottom-0 left-0">
 								<AnimatedStagger stageId="index-header-nav">
-									<AtomicBrandLogo className="translate-y-6 -translate-x-30" />
+									<AtomicBrandLogo
+										className="translate-y-6 -translate-x-30"
+										theme="light"
+									/>
 								</AnimatedStagger>
 							</nav>
 						</>

@@ -18,7 +18,7 @@ import { CoreTimelineProvider } from '@/components/core/core-timeline-provider';
 import { LayoutSharedWrapper } from '@/components/layout/layout-shared-wrapper';
 import { TIMELINE_ARTICLE } from '@/lib/constants';
 import { ValidationError } from '@/lib/errors';
-import { getContentBySlug, getFeedContent } from '@/lib/mdx-server';
+import { getArtifactsContent, getContentBySlug } from '@/lib/mdx-server';
 import type { ContentItem } from '@/lib/mdx-types';
 import { isStudy } from '@/lib/mdx-types';
 import { validateSlug } from '@/lib/validators';
@@ -55,7 +55,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
 		redirect('/');
 	}
 
-	if (content.frontmatter.isFeedItem === false) {
+	if (content.frontmatter.isArtifactItem === false) {
 		notFound();
 	}
 
@@ -73,8 +73,8 @@ export default async function ContentPage({ params }: ContentPageProps) {
 }
 
 export async function generateStaticParams() {
-	const feedContent = await getFeedContent();
-	return feedContent.map(({ frontmatter }) => ({
+	const artifactsContent = await getArtifactsContent();
+	return artifactsContent.map(({ frontmatter }) => ({
 		slug: frontmatter.slug,
 	}));
 }

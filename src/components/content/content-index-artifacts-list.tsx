@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Animated Content Artifacts
+ * Content Index Artifacts List
  *
  * ## SUMMARY
  * Timeline-coordinated wrapper with staggered Motion animations for artifacts items.
@@ -11,31 +11,28 @@
  * - Subscribe to timeline stage, orchestrate staggered item animations, notify on completion
  * - Manage hover state and render sliding indicator element
  *
- * @module components/animation/animated-content-artifacts
+ * @module components/content/content-index-artifacts-list
  */
 
 import { motion } from 'motion/react';
 import type { ReactElement, ReactNode } from 'react';
-import { Children, isValidElement, useMemo, useState } from 'react';
-import { AnimatedContentArtifactsThumbnail } from '@/components/animation/animated-content-artifacts_thumbnail';
+import { Children, cloneElement, isValidElement, useMemo, useState } from 'react';
 import { logEvent } from '@/lib/logger';
 import { useTimelineStage } from '@/lib/timeline';
 
-export interface AnimatedContentArtifactsProps {
+export interface ContentIndexArtifactsListProps {
 	stageId: string;
 	children: ReactNode;
 	className?: string;
 	staggerDelay?: number;
-	thumbnails?: (string | null)[];
 }
 
-export function AnimatedContentArtifacts({
+export function ContentIndexArtifactsList({
 	stageId,
 	children,
 	className,
 	staggerDelay = 0,
-	thumbnails,
-}: AnimatedContentArtifactsProps) {
+}: ContentIndexArtifactsListProps) {
 	const { stage, variant, advanceStage, stageConfig } = useTimelineStage(stageId);
 
 	// Hover indicator state
@@ -135,10 +132,12 @@ export function AnimatedContentArtifacts({
 						key={childKey}
 						variants={itemVariants}
 						onMouseEnter={() => setHoveredIndex(index)}
-						className="relative overflow-visible"
+						className={
+							'relative overflow-visible py-1 -my-1 transition-opacity duration-200 cursor-pointer'
+						}
 						{...(index === lastIndex && { onAnimationComplete: handleComplete })}
 					>
-						{/* Hover indicators and thumbnail positioned within hovered item */}
+						{/* Hover indicator positioned within hovered item */}
 						{hoveredIndex === index && (
 							<div className="hidden hover-device:block">
 								<motion.div
@@ -148,12 +147,20 @@ export function AnimatedContentArtifacts({
 										layout: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
 									}}
 								/>
-								<AnimatedContentArtifactsThumbnail
-									thumbnailUrl={thumbnails?.[index] ?? null}
-								/>
 							</div>
 						)}
-						{child}
+						{isValidElement(child)
+							? cloneElement(
+									child as ReactElement<{
+										hoveredIndex?: number | null;
+										itemIndex?: number;
+									}>,
+									{
+										hoveredIndex,
+										itemIndex: index,
+									},
+								)
+							: child}
 					</motion.div>
 				);
 			})}

@@ -26,6 +26,7 @@ export interface AtomicBrandLogoProps {
 	noiseScale?: number;
 	animateNoise?: boolean;
 	className?: string;
+	theme?: 'light' | 'dark' | 'system';
 }
 
 export interface WebGLSetup {
@@ -305,6 +306,7 @@ export function AtomicBrandLogo({
 	noiseScale = 150.0,
 	animateNoise = false,
 	className = '',
+	theme,
 }: AtomicBrandLogoProps) {
 	const { resolvedTheme } = useTheme();
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -390,13 +392,15 @@ export function AtomicBrandLogo({
 			mouse.y = event.clientY - rect.top;
 		};
 
+		const effectiveTheme = theme && theme !== 'system' ? theme : resolvedTheme;
+
 		const applyThemeUniforms = () => {
-			const widthMultiplier = resolvedTheme === 'dark' ? 0.75 : 0.75;
-			const heightMultiplier = resolvedTheme === 'dark' ? 0.1 : 0.5;
+			const widthMultiplier = effectiveTheme === 'dark' ? 0.75 : 0.75;
+			const heightMultiplier = effectiveTheme === 'dark' ? 0.1 : 0.5;
 			setUniform1f(uniformLocations.widthSpreadMultiplier, widthMultiplier);
 			setUniform1f(uniformLocations.heightSpreadMultiplier, heightMultiplier);
 
-			const colorHex = resolvedTheme === 'dark' ? '#ffffff' : '#000000';
+			const colorHex = effectiveTheme === 'dark' ? '#ffffff' : '#000000';
 			const [r, g, b] = hexToRgb(colorHex);
 			if (uniformLocations.color) {
 				gl.uniform3f(uniformLocations.color, r, g, b);
@@ -459,6 +463,7 @@ export function AtomicBrandLogo({
 		noiseScale,
 		animateNoise,
 		resolvedTheme,
+		theme,
 	]);
 
 	const containerWidth = width;

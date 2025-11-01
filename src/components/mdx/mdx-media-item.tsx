@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * MDX Media Item
  *
@@ -15,8 +17,6 @@
  *
  * @module components/mdx/mdx-media_item
  */
-
-'use client';
 
 import type { SyntheticEvent } from 'react';
 import { useContext, useEffect, useId, useRef } from 'react';

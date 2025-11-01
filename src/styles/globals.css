@@ -56,6 +56,7 @@
 		@apply pointer-events-none select-none;
 	}
 
+	/*
 	a {
 		@apply transition-opacity duration-200;
 	}
@@ -63,6 +64,7 @@
 	a:hover {
 		@apply opacity-50;
 	}
+	*/
 }
 
 /* ================================================== */
@@ -226,6 +228,12 @@
 /* VISUAL EFFECTS */
 /* ================================================== */
 
+@media (hover: hover) and (pointer: fine) {
+	.hover-device\:block {
+		display: block;
+	}
+}
+
 @utility scrollbar-hidden {
 	scrollbar-width: none;
 	&::-webkit-scrollbar {
@@ -273,8 +281,59 @@ html.dark .marker-all {
 		linear-gradient(to left, var(--color-white-faded), var(--color-white-faded));
 }
 
-@media (hover: hover) and (pointer: fine) {
-	.hover-device\:block {
-		display: block;
+@utility dev-grid-overlay {
+	@apply fixed inset-0 z-15 pointer-events-none;
+	@apply px-2 md:px-5;
+
+	& .dev-grid-overlay_inner {
+		content: '';
+		@apply w-full h-full grid grid-cols-5 md:grid-cols-10 pointer-events-none;
+		background-size: 1px 100%;
+		background-repeat: no-repeat;
+		opacity: 0.1;
+
+		/* Mobile: 5 columns */
+		background-image:
+			repeating-linear-gradient(to bottom, currentColor 0, currentColor 4px, transparent 4px, transparent 8px),
+			repeating-linear-gradient(to bottom, currentColor 0, currentColor 4px, transparent 4px, transparent 8px),
+			repeating-linear-gradient(to bottom, currentColor 0, currentColor 4px, transparent 4px, transparent 8px),
+			repeating-linear-gradient(to bottom, currentColor 0, currentColor 4px, transparent 4px, transparent 8px),
+			repeating-linear-gradient(to bottom, currentColor 0, currentColor 4px, transparent 4px, transparent 8px),
+			repeating-linear-gradient(to bottom, currentColor 0, currentColor 4px, transparent 4px, transparent 8px);
+		background-position:
+			0% 0,
+			20% 0,
+			40% 0,
+			60% 0,
+			80% 0,
+			100% 0;
+
+		/* Medium and above: 10 columns */
+		@media (min-width: 768px) {
+			background-image:
+				repeating-linear-gradient(to bottom, currentColor 0, currentColor 4px, transparent 4px, transparent 8px),
+				repeating-linear-gradient(to bottom, currentColor 0, currentColor 4px, transparent 4px, transparent 8px),
+				repeating-linear-gradient(to bottom, currentColor 0, currentColor 4px, transparent 4px, transparent 8px),
+				repeating-linear-gradient(to bottom, currentColor 0, currentColor 4px, transparent 4px, transparent 8px),
+				repeating-linear-gradient(to bottom, currentColor 0, currentColor 4px, transparent 4px, transparent 8px),
+				repeating-linear-gradient(to bottom, currentColor 0, currentColor 4px, transparent 4px, transparent 8px),
+				repeating-linear-gradient(to bottom, currentColor 0, currentColor 4px, transparent 4px, transparent 8px),
+				repeating-linear-gradient(to bottom, currentColor 0, currentColor 4px, transparent 4px, transparent 8px),
+				repeating-linear-gradient(to bottom, currentColor 0, currentColor 4px, transparent 4px, transparent 8px),
+				repeating-linear-gradient(to bottom, currentColor 0, currentColor 4px, transparent 4px, transparent 8px),
+				repeating-linear-gradient(to bottom, currentColor 0, currentColor 4px, transparent 4px, transparent 8px);
+			background-position:
+				0% 0,
+				10% 0,
+				20% 0,
+				30% 0,
+				40% 0,
+				50% 0,
+				60% 0,
+				70% 0,
+				80% 0,
+				90% 0,
+				100% 0;
+		}
 	}
 }

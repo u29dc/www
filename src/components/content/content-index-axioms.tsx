@@ -32,10 +32,10 @@ export function ContentIndexAxiomsItem({
 			stageId={stageId}
 			className="border border-current/10 rounded-sm p-4 h-[20rem] flex flex-col justify-between relative"
 		>
-			<div className=" z-10">
+			<div className=" z-2">
 				<div className="uppercase">{title}</div>
 			</div>
-			<div className="z-10 max-w-full w-2/3">
+			<div className="z-2 max-w-full w-2/3">
 				<div>{quote}</div>
 				<div>{description}</div>
 				<div className="font-mono absolute right-2 bottom-2 md:right-4 md:bottom-4">
