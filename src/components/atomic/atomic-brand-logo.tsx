@@ -15,6 +15,7 @@
 
 import { useTheme } from 'next-themes';
 import { useEffect, useMemo, useRef } from 'react';
+import { logEvent } from '@/lib/logger';
 import {
 	type CanvasDimensions,
 	createFullscreenQuad,
@@ -78,30 +79,18 @@ const UNIFORM_NAMES = [
 	'u_time',
 ] as const;
 
-const VERTEX_SHADER = /* glsl */ `
-attribute vec2 a_position;
+const VERTEX_SHADER = /* glsl */ `#version 300 es
+layout(location = 0) in vec2 a_position;
 
 void main() {
-    gl_Position = vec4(a_position, 0.0, 1.0);
+	gl_Position = vec4(a_position, 0.0, 1.0);
 }
 `;
 
-const FRAGMENT_SHADER = /* glsl */ `
+const FRAGMENT_SHADER = /* glsl */ `#version 300 es
 precision highp float;
 
-#if __VERSION__ >= 300
-	#define HAS_STANDARD_DERIVATIVES 1
-#else
-	#ifdef GL_OES_standard_derivatives
-		#extension GL_OES_standard_derivatives : enable
-		#define HAS_STANDARD_DERIVATIVES 1
-	#else
-		#define HAS_STANDARD_DERIVATIVES 0
-	#endif
-#endif
-#ifndef HAS_STANDARD_DERIVATIVES
-	#define HAS_STANDARD_DERIVATIVES 0
-#endif
+out vec4 fragColor;
 
 uniform vec2 u_mouse;
 uniform vec2 u_resolution;
@@ -172,13 +161,8 @@ float sdCircle(in vec2 st, in vec2 center) {
 }
 
 float aastep(float threshold, float value) {
-	#if HAS_STANDARD_DERIVATIVES
-		float afwidth = length(vec2(dFdx(value), dFdy(value))) * 0.70710678118654757;
-		return smoothstep(threshold - afwidth, threshold + afwidth, value);
-	#else
-		float epsilon = 0.01;
-		return smoothstep(threshold - epsilon, threshold + epsilon, value);
-	#endif
+	float afwidth = length(vec2(dFdx(value), dFdy(value))) * 0.70710678118654757;
+	return smoothstep(threshold - afwidth, threshold + afwidth, value);
 }
 
 float fill(in float x) {
@@ -230,7 +214,7 @@ void main() {
 
 	vec3 noisyColor = clamp(u_color + vec3(grain), 0.0, 1.0);
 
-	gl_FragColor = vec4(noisyColor, alpha);
+	fragColor = vec4(noisyColor, alpha);
 }
 `;
 
@@ -278,7 +262,7 @@ function buildRendererState(
 function createAtomicBrandLogoModule(): RendererModule<AtomicBrandLogoState> {
 	return {
 		id: 'atomic-brand-logo',
-		onInit({ context, dimensions, state, registerDisposer, logger }) {
+		onInit({ context, dimensions, state, registerDisposer, logger: _logger }) {
 			const { gl, canvas } = context;
 			const program = createProgram(context, {
 				vertex: VERTEX_SHADER,
@@ -292,12 +276,17 @@ function createAtomicBrandLogoModule(): RendererModule<AtomicBrandLogoState> {
 			const fullscreenQuad = createFullscreenQuad(gl);
 			const positionLocation = gl.getAttribLocation(program, 'a_position');
 			if (positionLocation === -1) {
-				logger.error('[webgl|atomic-logo|attrib-missing]', undefined, {
+				logEvent('WEBGL', 'ATOMIC-LOGO', 'ATTRIB-MISSING', {
 					attribute: 'a_position',
 				});
 			}
+			const vao = gl.createVertexArray();
+			if (!vao) {
+				logEvent('WEBGL', 'ATOMIC-LOGO', 'VAO-MISSING');
+				throw new Error('Failed to allocate vertex array.');
+			}
+			gl.bindVertexArray(vao);
 			gl.bindBuffer(gl.ARRAY_BUFFER, fullscreenQuad.buffer);
-			gl.enableVertexAttribArray(positionLocation);
 			gl.vertexAttribPointer(
 				positionLocation,
 				fullscreenQuad.itemSize,
@@ -306,6 +295,9 @@ function createAtomicBrandLogoModule(): RendererModule<AtomicBrandLogoState> {
 				0,
 				0,
 			);
+			gl.enableVertexAttribArray(positionLocation);
+			gl.bindVertexArray(null);
+			gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
 			const uniforms = resolveUniforms(gl, program, UNIFORM_NAMES);
 			const initialWidth = dimensions.width || state.width;
@@ -331,7 +323,7 @@ function createAtomicBrandLogoModule(): RendererModule<AtomicBrandLogoState> {
 			const checkGlError = (phase: string) => {
 				const error = gl.getError();
 				if (error !== gl.NO_ERROR) {
-					logger.error('[webgl|atomic-logo|gl-error]', undefined, {
+					logEvent('WEBGL', 'ATOMIC-LOGO', 'GL-ERROR', {
 						phase,
 						error,
 					});
@@ -393,7 +385,8 @@ function createAtomicBrandLogoModule(): RendererModule<AtomicBrandLogoState> {
 			});
 
 			registerDisposer(() => {
-				gl.disableVertexAttribArray(positionLocation);
+				gl.bindVertexArray(null);
+				gl.deleteVertexArray(vao);
 				disposeBuffer(gl, fullscreenQuad);
 				gl.deleteProgram(program);
 			});
@@ -418,7 +411,7 @@ function createAtomicBrandLogoModule(): RendererModule<AtomicBrandLogoState> {
 					const dt = delta / 1000;
 					if (!hasLoggedFirstFrame) {
 						hasLoggedFirstFrame = true;
-						logger.info('[webgl|atomic-logo|frame-start]', {
+						logEvent('WEBGL', 'ATOMIC-LOGO', 'FRAME-START', {
 							delta,
 							now,
 						});
@@ -427,18 +420,7 @@ function createAtomicBrandLogoModule(): RendererModule<AtomicBrandLogoState> {
 					dampedMouse.y = damp(dampedMouse.y, mousePosition.y, 8, dt);
 
 					gl.useProgram(program);
-					gl.bindBuffer(gl.ARRAY_BUFFER, fullscreenQuad.buffer);
-					gl.enableVertexAttribArray(positionLocation);
-					gl.vertexAttribPointer(
-						positionLocation,
-						fullscreenQuad.itemSize,
-						gl.FLOAT,
-						false,
-						0,
-						0,
-					);
-					applyStaticUniforms(currentState);
-					applyThemeUniforms(currentState.theme);
+					gl.bindVertexArray(vao);
 					gl.clearColor(0, 0, 0, 0);
 					gl.clear(gl.COLOR_BUFFER_BIT);
 
@@ -450,6 +432,7 @@ function createAtomicBrandLogoModule(): RendererModule<AtomicBrandLogoState> {
 					checkGlError('beforeDraw');
 
 					gl.drawArrays(gl.TRIANGLES, 0, fullscreenQuad.itemCount);
+					gl.bindVertexArray(null);
 					checkGlError('afterDraw');
 				},
 				onResize(nextDimensions) {
@@ -473,7 +456,7 @@ function createAtomicBrandLogoModule(): RendererModule<AtomicBrandLogoState> {
 					}
 				},
 				onDispose() {
-					logger.info('[webgl|renderer|disposed]');
+					logEvent('WEBGL', 'RENDERER', 'DISPOSED');
 				},
 			};
 		},

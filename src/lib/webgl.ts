@@ -13,7 +13,7 @@
  */
 
 import type { LoggerInstance } from '@/lib/logger';
-import { logger as rootLogger } from '@/lib/logger';
+import { logEvent, logger as rootLogger } from '@/lib/logger';
 
 export interface GraphicsContext {
 	gl: WebGL2RenderingContext;
@@ -82,10 +82,8 @@ export class FrameMonitor {
 	private durations: number[] = [];
 	private pointer = 0;
 	private options: Required<FrameMonitorOptions>;
-	private logger: LoggerInstance;
 
-	constructor(logger: LoggerInstance, options: FrameMonitorOptions = {}) {
-		this.logger = logger;
+	constructor(_logger: LoggerInstance, options: FrameMonitorOptions = {}) {
 		this.options = {
 			windowSize: options.windowSize ?? FRAME_MONITOR_DEFAULTS.windowSize,
 			warningThresholdMs:
@@ -104,7 +102,7 @@ export class FrameMonitor {
 
 		const average = samples.reduce((sum, value) => sum + value, 0) / samples.length;
 		if (average > this.options.warningThresholdMs) {
-			this.logger.warn('[webgl|frame|slow]', {
+			logEvent('WEBGL', 'FRAME', 'SLOW', {
 				averageDurationMs: Math.round(average * 100) / 100,
 				samples,
 			});
@@ -212,7 +210,11 @@ export function createGraphicsContext(
 	const gl = canvas.getContext('webgl2', attributes);
 
 	if (!gl) {
-		rootLogger.error('[webgl|context|fail]', new Error('WebGL2 context unavailable'));
+		const errorInstance = new Error('WebGL2 context unavailable');
+		logEvent('WEBGL', 'CONTEXT', 'FAIL', {
+			errorMessage: errorInstance.message,
+			errorStack: errorInstance.stack,
+		});
 		throw new Error('WebGL2 is not supported on this device.');
 	}
 
@@ -223,7 +225,7 @@ export function createGraphicsContext(
 	};
 }
 
-const DEFAULT_DPR_CAP = 2;
+const DEFAULT_DPR_CAP = 3;
 
 export function measureCanvas(
 	canvas: HTMLCanvasElement,
@@ -364,15 +366,53 @@ export type UniformMap<TKeys extends readonly string[]> = {
 	[Key in TKeys[number]]: WebGLUniformLocation | null;
 };
 
+export interface ResolveUniformsOptions {
+	/**
+	 * Validation mode for missing uniforms
+	 * - 'warn': Log warnings for missing uniforms (default in development)
+	 * - 'error': Throw errors for missing uniforms (strict mode)
+	 * - 'silent': No validation (default in production)
+	 */
+	validation?: 'warn' | 'error' | 'silent';
+}
+
 export function resolveUniforms<const TKeys extends readonly string[]>(
 	gl: WebGL2RenderingContext,
 	program: WebGLProgram,
 	names: TKeys,
+	options?: ResolveUniformsOptions,
 ): UniformMap<TKeys> {
+	const isDevelopment = process.env.NODE_ENV === 'development';
+	const validation = options?.validation ?? (isDevelopment ? 'warn' : 'silent');
+
 	const uniforms = {} as UniformMap<TKeys>;
+	const missingUniforms: string[] = [];
+
 	names.forEach((name) => {
-		uniforms[name as TKeys[number]] = gl.getUniformLocation(program, name);
+		const location = gl.getUniformLocation(program, name);
+		uniforms[name as TKeys[number]] = location;
+
+		if (location === null && validation !== 'silent') {
+			missingUniforms.push(name);
+		}
 	});
+
+	if (missingUniforms.length > 0 && validation !== 'silent') {
+		const meta = {
+			missingUniforms,
+			totalRequested: names.length,
+		};
+
+		if (validation === 'error') {
+			logEvent('WEBGL', 'UNIFORM', 'MISSING', meta);
+			throw new Error(
+				`Missing uniforms in shader program: ${missingUniforms.join(', ')}. ` +
+					`Check that these uniforms are declared and used in your shader code.`,
+			);
+		}
+		logEvent('WEBGL', 'UNIFORM', 'WARN', meta);
+	}
+
 	return uniforms;
 }
 
@@ -520,7 +560,7 @@ export function createRenderer<TState>(options: RendererOptions<TState>): Render
 	const start = () => {
 		if (isDisposed || isRunning) return;
 		if (typeof window === 'undefined') {
-			scopedLogger.warn('[webgl|renderer|noop]', { reason: 'window-unavailable' });
+			logEvent('WEBGL', 'RENDERER', 'NOOP', { reason: 'window-unavailable' });
 			return;
 		}
 
@@ -572,7 +612,10 @@ export function createRenderer<TState>(options: RendererOptions<TState>): Render
 			try {
 				disposer();
 			} catch (error) {
-				scopedLogger.error('[webgl|dispose|error]', error);
+				logEvent('WEBGL', 'DISPOSE', 'ERROR', {
+					errorMessage: error instanceof Error ? error.message : String(error),
+					errorStack: error instanceof Error ? error.stack : undefined,
+				});
 			}
 		});
 		disposers.clear();
@@ -585,7 +628,7 @@ export function createRenderer<TState>(options: RendererOptions<TState>): Render
 		}
 
 		if (context.gl.isContextLost()) {
-			scopedLogger.warn('[webgl|context|lost]');
+			logEvent('WEBGL', 'CONTEXT', 'LOST');
 		}
 	};
 
