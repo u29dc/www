@@ -24,7 +24,7 @@ import type { TimelineConfig } from '@/lib/timeline';
 export const SITE = {
 	title: 'Incomplete Infinity',
 	name: 'Incomplete Infinity',
-	description: 'We turn complex futures into decision-grade narratives and public prototypes',
+	description: 'We turn complex futures into decision-grade narratives',
 	url: 'https://u29dc.com',
 	locale: 'en-GB',
 	themeColor: '#000000',
@@ -42,12 +42,16 @@ export const CDN = {
 	},
 } as const;
 
+export const BUILD = {
+	commitSha: process.env['NEXT_PUBLIC_COMMIT_SHA']?.slice(0, 7) || 'f5eb94f',
+} as const;
+
 export const viewport: Viewport = {
 	themeColor: SITE.themeColor,
 	width: 'device-width',
 	initialScale: 1,
 	maximumScale: 5,
-	userScalable: true,
+	userScalable: false,
 	viewportFit: 'cover',
 };
 
@@ -144,20 +148,50 @@ export const metadata: Metadata = {
 export const TIMELINE_INDEX: TimelineConfig = {
 	id: 'index',
 	enterStages: [
-		{ id: 'index-title', duration: 1000, delay: 0 },
-		{ id: 'index-description', duration: 500, delay: 0 },
-		{ id: 'index-header-nav', duration: 200, delay: -100 },
-		{ id: 'index-header', duration: 200, delay: -50 },
-		{ id: 'index-feed', duration: 1000, delay: -200 },
-		{ id: 'layout-footer-nav', duration: 500, delay: -500 },
+		{ id: 'index-statement-title', duration: 2000, delay: 0 },
+		{ id: 'index-statement-description', duration: 1000, delay: -1500 },
+
+		{ id: 'index-header-nav', duration: 200, delay: -500 },
+		{ id: 'index-header', duration: 200, delay: -450 },
+
+		{ id: 'index-artifacts', duration: 1000, delay: -500 },
+
+		{ id: 'meta-annotation', duration: 0, delay: 0 },
+
+		{ id: 'index-axioms-intro', duration: 750, delay: -700 },
+		{ id: 'index-axioms-imperfect', duration: 750, delay: -700 },
+		{ id: 'index-axioms-inexplicable', duration: 750, delay: -700 },
+		{ id: 'index-axioms-incomplete', duration: 750, delay: -700 },
+
+		{ id: 'index-protocols-intro', duration: 750, delay: -700 },
+		{ id: 'index-protocols-map', duration: 750, delay: -700 },
+		{ id: 'index-protocols-lab', duration: 750, delay: -700 },
+		{ id: 'index-protocols-com', duration: 750, delay: -700 },
+
+		{ id: 'layout-footer-nav', duration: 500, delay: -1000 },
 	],
 	exitStages: [
 		{ id: 'layout-footer-nav', duration: 200, delay: 0 },
-		{ id: 'index-feed', duration: 200, delay: -100 },
-		{ id: 'index-header', duration: 200, delay: -100 },
-		{ id: 'index-header-nav', duration: 200, delay: -100 },
-		{ id: 'index-description', duration: 200, delay: -100 },
-		{ id: 'index-title', duration: 200, delay: -100 },
+
+		{ id: 'index-protocols-com', duration: 100, delay: -90 },
+		{ id: 'index-protocols-lab', duration: 100, delay: -90 },
+		{ id: 'index-protocols-map', duration: 100, delay: -90 },
+		{ id: 'index-protocols-intro', duration: 100, delay: -90 },
+
+		{ id: 'index-axioms-incomplete', duration: 100, delay: -90 },
+		{ id: 'index-axioms-inexplicable', duration: 100, delay: -90 },
+		{ id: 'index-axioms-imperfect', duration: 100, delay: -90 },
+		{ id: 'index-axioms-intro', duration: 100, delay: -90 },
+
+		{ id: 'meta-annotation', duration: 0, delay: 0 },
+
+		{ id: 'index-artifacts', duration: 200, delay: -100 },
+
+		{ id: 'index-header', duration: 200, delay: -190 },
+		{ id: 'index-header-nav', duration: 200, delay: -190 },
+
+		{ id: 'index-statement-description', duration: 200, delay: -190 },
+		{ id: 'index-statement-title', duration: 200, delay: -190 },
 	],
 	enterSpeedMultiplier: 1,
 	exitSpeedMultiplier: 2.0,

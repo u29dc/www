@@ -4,16 +4,30 @@
  * Atomic Brand Logo
  *
  * ## SUMMARY
- * Interactive WebGL logo with 4:1 aspect ratio and mouse-based blur effects.
+ * Interactive WebGL logo with 4:1 aspect ratio and mouse-based blur effects driven by reusable runtime.
  *
  * ## RESPONSIBILITIES
- * - Compile WebGL shaders, handle high-DPR canvases, clean up GPU resources
+ * - Configure renderer state and provide logo-specific module logic
+ * - Maintain parity with legacy visuals while relying on shared WebGL utilities
  *
  * @module components/atomic/atomic-brand-logo
  */
 
 import { useTheme } from 'next-themes';
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
+import {
+	type CanvasDimensions,
+	createFullscreenQuad,
+	createProgram,
+	createRenderer,
+	disposeBuffer,
+	type RendererHandle,
+	type RendererModule,
+	resolveUniforms,
+	setUniform1f,
+	setUniform2f,
+	setUniform3f,
+} from '@/lib/webgl';
 
 export interface AtomicBrandLogoProps {
 	width?: number;
@@ -26,42 +40,68 @@ export interface AtomicBrandLogoProps {
 	noiseScale?: number;
 	animateNoise?: boolean;
 	className?: string;
+	theme?: 'light' | 'dark' | 'system';
 }
 
-export interface WebGLSetup {
-	program: WebGLProgram;
-	positionBuffer: WebGLBuffer;
-	uniformLocations: {
-		mouse: WebGLUniformLocation | null;
-		resolution: WebGLUniformLocation | null;
-		pixelRatio: WebGLUniformLocation | null;
-		rectWidth: WebGLUniformLocation | null;
-		rectHeight: WebGLUniformLocation | null;
-		roundness: WebGLUniformLocation | null;
-		blurStart: WebGLUniformLocation | null;
-		defaultBlurIntensity: WebGLUniformLocation | null;
-		mouseBlurSize: WebGLUniformLocation | null;
-		mouseBlurIntensity: WebGLUniformLocation | null;
-		widthSpreadMultiplier: WebGLUniformLocation | null;
-		heightSpreadMultiplier: WebGLUniformLocation | null;
-		color: WebGLUniformLocation | null;
-		noiseIntensity: WebGLUniformLocation | null;
-		noiseScale: WebGLUniformLocation | null;
-		time: WebGLUniformLocation | null;
-	};
+type ThemeVariant = 'light' | 'dark';
+
+interface AtomicBrandLogoState {
+	width: number;
+	height: number;
+	blurStart: number;
+	defaultBlurIntensity: number;
+	mouseBlurIntensity: number;
+	mouseBlurSize: number;
+	roundness: number;
+	noiseIntensity: number;
+	noiseScale: number;
+	animateNoise: boolean;
+	theme: ThemeVariant;
 }
+
+const UNIFORM_NAMES = [
+	'u_mouse',
+	'u_resolution',
+	'u_pixelRatio',
+	'u_rectWidth',
+	'u_rectHeight',
+	'u_roundness',
+	'u_blurStart',
+	'u_defaultBlurIntensity',
+	'u_mouseBlurSize',
+	'u_mouseBlurIntensity',
+	'u_widthSpreadMultiplier',
+	'u_heightSpreadMultiplier',
+	'u_color',
+	'u_noiseIntensity',
+	'u_noiseScale',
+	'u_time',
+] as const;
 
 const VERTEX_SHADER = /* glsl */ `
 attribute vec2 a_position;
 
 void main() {
-	gl_Position = vec4(a_position, 0.0, 1.0);
+    gl_Position = vec4(a_position, 0.0, 1.0);
 }
 `;
 
 const FRAGMENT_SHADER = /* glsl */ `
-#extension GL_OES_standard_derivatives : enable
 precision highp float;
+
+#if __VERSION__ >= 300
+	#define HAS_STANDARD_DERIVATIVES 1
+#else
+	#ifdef GL_OES_standard_derivatives
+		#extension GL_OES_standard_derivatives : enable
+		#define HAS_STANDARD_DERIVATIVES 1
+	#else
+		#define HAS_STANDARD_DERIVATIVES 0
+	#endif
+#endif
+#ifndef HAS_STANDARD_DERIVATIVES
+	#define HAS_STANDARD_DERIVATIVES 0
+#endif
 
 uniform vec2 u_mouse;
 uniform vec2 u_resolution;
@@ -132,8 +172,13 @@ float sdCircle(in vec2 st, in vec2 center) {
 }
 
 float aastep(float threshold, float value) {
-	float afwidth = length(vec2(dFdx(value), dFdy(value))) * 0.70710678118654757;
-	return smoothstep(threshold - afwidth, threshold + afwidth, value);
+	#if HAS_STANDARD_DERIVATIVES
+		float afwidth = length(vec2(dFdx(value), dFdy(value))) * 0.70710678118654757;
+		return smoothstep(threshold - afwidth, threshold + afwidth, value);
+	#else
+		float epsilon = 0.01;
+		return smoothstep(threshold - epsilon, threshold + epsilon, value);
+	#endif
 }
 
 float fill(in float x) {
@@ -143,7 +188,6 @@ float fill(in float x) {
 float fill(float x, float size, float edge) {
 	return 1.0 - smoothstep(size - edge, size + edge, x);
 }
-
 
 void main() {
 	vec2 st = coord(gl_FragCoord.xy) + 0.5;
@@ -190,276 +234,333 @@ void main() {
 }
 `;
 
-const TRIANGLE_VERTICES = new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]);
-
-const damp = (current: number, target: number, lambda: number, dt: number) => {
-	const t = Math.exp(-lambda * dt);
-	return current * t + target * (1 - t);
-};
-
-const hexToRgb = (hex: string) => {
-	const value = hex.startsWith('#') ? hex.slice(1) : hex;
-	const bigint = parseInt(value.length === 3 ? value.replace(/(.)/g, '$1$1') : value, 16);
-	const r = (bigint >> 16) & 255;
-	const g = (bigint >> 8) & 255;
-	const b = bigint & 255;
-	return [r / 255, g / 255, b / 255] as const;
-};
-
-const initializeWebGLProgram = (gl: WebGLRenderingContext): WebGLSetup | null => {
-	try {
-		const program = createProgram(gl, VERTEX_SHADER, FRAGMENT_SHADER);
-		// biome-ignore lint/correctness/useHookAtTopLevel: gl.useProgram is WebGL API, not React hook
-		gl.useProgram(program);
-
-		const positionBuffer = gl.createBuffer();
-		if (!positionBuffer) {
-			throw new Error('Failed to create position buffer');
-		}
-
-		gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-		gl.bufferData(gl.ARRAY_BUFFER, TRIANGLE_VERTICES, gl.STATIC_DRAW);
-
-		const positionLocation = gl.getAttribLocation(program, 'a_position');
-		gl.enableVertexAttribArray(positionLocation);
-		gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
-
-		gl.enable(gl.BLEND);
-		gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-		gl.disable(gl.DEPTH_TEST);
-
-		const uniformLocations = {
-			mouse: gl.getUniformLocation(program, 'u_mouse'),
-			resolution: gl.getUniformLocation(program, 'u_resolution'),
-			pixelRatio: gl.getUniformLocation(program, 'u_pixelRatio'),
-			rectWidth: gl.getUniformLocation(program, 'u_rectWidth'),
-			rectHeight: gl.getUniformLocation(program, 'u_rectHeight'),
-			roundness: gl.getUniformLocation(program, 'u_roundness'),
-			blurStart: gl.getUniformLocation(program, 'u_blurStart'),
-			defaultBlurIntensity: gl.getUniformLocation(program, 'u_defaultBlurIntensity'),
-			mouseBlurSize: gl.getUniformLocation(program, 'u_mouseBlurSize'),
-			mouseBlurIntensity: gl.getUniformLocation(program, 'u_mouseBlurIntensity'),
-			widthSpreadMultiplier: gl.getUniformLocation(program, 'u_widthSpreadMultiplier'),
-			heightSpreadMultiplier: gl.getUniformLocation(program, 'u_heightSpreadMultiplier'),
-			color: gl.getUniformLocation(program, 'u_color'),
-			noiseIntensity: gl.getUniformLocation(program, 'u_noiseIntensity'),
-			noiseScale: gl.getUniformLocation(program, 'u_noiseScale'),
-			time: gl.getUniformLocation(program, 'u_time'),
-		};
-
-		return { program, positionBuffer, uniformLocations };
-	} catch (_error) {
-		return null;
+function damp(current: number, target: number, smoothing: number, deltaTime: number): number {
+	const clampSmoothing = smoothing ?? 10;
+	const clampDeltaTime = deltaTime ?? 0.1;
+	const exponent = -clampSmoothing * clampDeltaTime;
+	const weight = 1 - Math.exp(exponent);
+	const value = current * (1 - weight) + target * weight;
+	if (Math.abs(value - target) < 0.001) {
+		return target;
 	}
-};
+	return value;
+}
 
-const createShader = (gl: WebGLRenderingContext, type: number, source: string) => {
-	const shader = gl.createShader(type);
-	if (!shader) {
-		throw new Error('Failed to create shader');
-	}
-	gl.shaderSource(shader, source);
-	gl.compileShader(shader);
-	if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-		const info = gl.getShaderInfoLog(shader) ?? 'Unknown shader error';
-		gl.deleteShader(shader);
-		throw new Error(info);
-	}
-	return shader;
-};
+function hexToRgb(hex: string): [number, number, number] {
+	const sanitized = hex.replace('#', '');
+	const bigint = parseInt(sanitized, 16);
+	const r = ((bigint >> 16) & 255) / 255;
+	const g = ((bigint >> 8) & 255) / 255;
+	const b = (bigint & 255) / 255;
+	return [r, g, b];
+}
 
-const createProgram = (gl: WebGLRenderingContext, vertexSource: string, fragmentSource: string) => {
-	const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexSource);
-	const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentSource);
-	const program = gl.createProgram();
-	if (!program) {
-		gl.deleteShader(vertexShader);
-		gl.deleteShader(fragmentShader);
-		throw new Error('Failed to create program');
+function resolveTheme(
+	theme: AtomicBrandLogoProps['theme'],
+	resolved: string | undefined,
+): ThemeVariant {
+	if (theme && theme !== 'system') {
+		return theme;
 	}
-	gl.attachShader(program, vertexShader);
-	gl.attachShader(program, fragmentShader);
-	gl.linkProgram(program);
-	if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-		const info = gl.getProgramInfoLog(program) ?? 'Unknown program error';
-		gl.deleteProgram(program);
-		gl.deleteShader(vertexShader);
-		gl.deleteShader(fragmentShader);
-		throw new Error(info);
-	}
-	gl.detachShader(program, vertexShader);
-	gl.detachShader(program, fragmentShader);
-	gl.deleteShader(vertexShader);
-	gl.deleteShader(fragmentShader);
-	return program;
-};
+	return resolved === 'dark' ? 'dark' : 'light';
+}
+
+function buildRendererState(
+	props: Omit<AtomicBrandLogoState, 'theme'>,
+	theme: ThemeVariant,
+): AtomicBrandLogoState {
+	return {
+		...props,
+		theme,
+	};
+}
+
+function createAtomicBrandLogoModule(): RendererModule<AtomicBrandLogoState> {
+	return {
+		id: 'atomic-brand-logo',
+		onInit({ context, dimensions, state, registerDisposer, logger }) {
+			const { gl, canvas } = context;
+			const program = createProgram(context, {
+				vertex: VERTEX_SHADER,
+				fragment: FRAGMENT_SHADER,
+			});
+			gl.useProgram(program);
+			gl.enable(gl.BLEND);
+			gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+			gl.disable(gl.DEPTH_TEST);
+
+			const fullscreenQuad = createFullscreenQuad(gl);
+			const positionLocation = gl.getAttribLocation(program, 'a_position');
+			if (positionLocation === -1) {
+				logger.error('[webgl|atomic-logo|attrib-missing]', undefined, {
+					attribute: 'a_position',
+				});
+			}
+			gl.bindBuffer(gl.ARRAY_BUFFER, fullscreenQuad.buffer);
+			gl.enableVertexAttribArray(positionLocation);
+			gl.vertexAttribPointer(
+				positionLocation,
+				fullscreenQuad.itemSize,
+				gl.FLOAT,
+				false,
+				0,
+				0,
+			);
+
+			const uniforms = resolveUniforms(gl, program, UNIFORM_NAMES);
+			const initialWidth = dimensions.width || state.width;
+			const initialHeight = dimensions.height || state.height;
+			const initialDpr =
+				dimensions.dpr ||
+				(typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1);
+			const applyCanvasSizing = (incoming: CanvasDimensions) => {
+				canvas.width = incoming.pixelWidth;
+				canvas.height = incoming.pixelHeight;
+				canvas.style.width = `${incoming.width}px`;
+				canvas.style.height = `${incoming.height}px`;
+				gl.viewport(0, 0, incoming.pixelWidth, incoming.pixelHeight);
+			};
+			const mousePosition = {
+				x: initialWidth / 2,
+				y: state.height / 2,
+			};
+			const dampedMouse = { ...mousePosition };
+			let hasPointerInteraction = false;
+			const colorCache = new Map<string, [number, number, number]>();
+			let hasLoggedFirstFrame = false;
+			const checkGlError = (phase: string) => {
+				const error = gl.getError();
+				if (error !== gl.NO_ERROR) {
+					logger.error('[webgl|atomic-logo|gl-error]', undefined, {
+						phase,
+						error,
+					});
+				}
+			};
+
+			const updateResolutionUniforms = (incoming: CanvasDimensions) => {
+				applyCanvasSizing(incoming);
+				setUniform2f(uniforms.u_resolution, incoming.pixelWidth, incoming.pixelHeight, gl);
+				setUniform1f(uniforms.u_pixelRatio, incoming.dpr, gl);
+				checkGlError('updateResolutionUniforms');
+			};
+
+			const applyStaticUniforms = (current: AtomicBrandLogoState) => {
+				setUniform1f(uniforms.u_rectWidth, 2.0, gl);
+				setUniform1f(uniforms.u_rectHeight, 0.5, gl);
+				setUniform1f(uniforms.u_roundness, current.roundness, gl);
+				setUniform1f(uniforms.u_blurStart, current.blurStart, gl);
+				setUniform1f(uniforms.u_defaultBlurIntensity, current.defaultBlurIntensity, gl);
+				setUniform1f(uniforms.u_mouseBlurSize, current.mouseBlurSize, gl);
+				setUniform1f(uniforms.u_mouseBlurIntensity, current.mouseBlurIntensity, gl);
+				setUniform1f(uniforms.u_noiseIntensity, current.noiseIntensity, gl);
+				setUniform1f(uniforms.u_noiseScale, current.noiseScale, gl);
+				checkGlError('applyStaticUniforms');
+			};
+
+			const applyThemeUniforms = (variant: ThemeVariant) => {
+				const widthMultiplier = 0.75;
+				const heightMultiplier = variant === 'dark' ? 0.1 : 0.5;
+				setUniform1f(uniforms.u_widthSpreadMultiplier, widthMultiplier, gl);
+				setUniform1f(uniforms.u_heightSpreadMultiplier, heightMultiplier, gl);
+
+				const colorHex = variant === 'dark' ? '#ffffff' : '#000000';
+				const cached = colorCache.get(colorHex) ?? hexToRgb(colorHex);
+				if (!colorCache.has(colorHex)) {
+					colorCache.set(colorHex, cached);
+				}
+				setUniform3f(uniforms.u_color, cached[0], cached[1], cached[2], gl);
+				checkGlError('applyThemeUniforms');
+			};
+
+			const updatePointer = (event: PointerEvent | MouseEvent) => {
+				const rect = canvas.getBoundingClientRect();
+				mousePosition.x = event.clientX - rect.left;
+				mousePosition.y = event.clientY - rect.top;
+				hasPointerInteraction = true;
+			};
+
+			const handlePointerMove = (event: PointerEvent | MouseEvent) => {
+				updatePointer(event);
+				checkGlError('pointerMove');
+			};
+
+			document.addEventListener('pointermove', handlePointerMove);
+			document.addEventListener('mousemove', handlePointerMove);
+			registerDisposer(() => {
+				document.removeEventListener('pointermove', handlePointerMove);
+				document.removeEventListener('mousemove', handlePointerMove);
+			});
+
+			registerDisposer(() => {
+				gl.disableVertexAttribArray(positionLocation);
+				disposeBuffer(gl, fullscreenQuad);
+				gl.deleteProgram(program);
+			});
+
+			applyStaticUniforms(state);
+			applyThemeUniforms(state.theme);
+			const initialDimensions: CanvasDimensions =
+				dimensions.width > 0 && dimensions.height > 0
+					? dimensions
+					: {
+							...dimensions,
+							width: initialWidth,
+							height: initialHeight,
+							dpr: initialDpr,
+							pixelWidth: Math.floor(initialWidth * initialDpr),
+							pixelHeight: Math.floor(initialHeight * initialDpr),
+						};
+			updateResolutionUniforms(initialDimensions);
+
+			return {
+				onFrame({ delta, now }, currentState) {
+					const dt = delta / 1000;
+					if (!hasLoggedFirstFrame) {
+						hasLoggedFirstFrame = true;
+						logger.info('[webgl|atomic-logo|frame-start]', {
+							delta,
+							now,
+						});
+					}
+					dampedMouse.x = damp(dampedMouse.x, mousePosition.x, 8, dt);
+					dampedMouse.y = damp(dampedMouse.y, mousePosition.y, 8, dt);
+
+					gl.useProgram(program);
+					gl.bindBuffer(gl.ARRAY_BUFFER, fullscreenQuad.buffer);
+					gl.enableVertexAttribArray(positionLocation);
+					gl.vertexAttribPointer(
+						positionLocation,
+						fullscreenQuad.itemSize,
+						gl.FLOAT,
+						false,
+						0,
+						0,
+					);
+					applyStaticUniforms(currentState);
+					applyThemeUniforms(currentState.theme);
+					gl.clearColor(0, 0, 0, 0);
+					gl.clear(gl.COLOR_BUFFER_BIT);
+
+					setUniform2f(uniforms.u_mouse, dampedMouse.x, dampedMouse.y, gl);
+
+					if (currentState.animateNoise) {
+						setUniform1f(uniforms.u_time, now * 0.0001, gl);
+					}
+					checkGlError('beforeDraw');
+
+					gl.drawArrays(gl.TRIANGLES, 0, fullscreenQuad.itemCount);
+					checkGlError('afterDraw');
+				},
+				onResize(nextDimensions) {
+					gl.useProgram(program);
+					updateResolutionUniforms(nextDimensions);
+					if (!hasPointerInteraction) {
+						mousePosition.x = nextDimensions.width / 2;
+						mousePosition.y = nextDimensions.height / 2;
+						dampedMouse.x = mousePosition.x;
+						dampedMouse.y = mousePosition.y;
+						return;
+					}
+					mousePosition.x = Math.min(Math.max(mousePosition.x, 0), nextDimensions.width);
+					mousePosition.y = Math.min(Math.max(mousePosition.y, 0), nextDimensions.height);
+				},
+				onStateChange(nextState, previousState) {
+					gl.useProgram(program);
+					applyStaticUniforms(nextState);
+					if (nextState.theme !== previousState.theme) {
+						applyThemeUniforms(nextState.theme);
+					}
+				},
+				onDispose() {
+					logger.info('[webgl|renderer|disposed]');
+				},
+			};
+		},
+	};
+}
 
 export function AtomicBrandLogo({
 	width = 200,
 	blurStart = 1.0,
 	defaultBlurIntensity = 0.5,
-	mouseBlurIntensity = 0.75,
+	mouseBlurIntensity = 1.0,
 	mouseBlurSize = 0.5,
 	roundness = 0.5,
 	noiseIntensity = 0.15,
-	noiseScale = 150.0,
+	noiseScale = 150,
 	animateNoise = false,
-	className = '',
+	className,
+	theme,
 }: AtomicBrandLogoProps) {
-	const { resolvedTheme } = useTheme();
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
+	const rendererRef = useRef<RendererHandle<AtomicBrandLogoState> | null>(null);
+	const { resolvedTheme } = useTheme();
+
+	const effectiveTheme = resolveTheme(theme, resolvedTheme);
+
+	const baseState = useMemo(
+		() =>
+			buildRendererState(
+				{
+					width,
+					height: width / 4,
+					blurStart,
+					defaultBlurIntensity,
+					mouseBlurIntensity,
+					mouseBlurSize,
+					roundness,
+					noiseIntensity,
+					noiseScale,
+					animateNoise,
+				},
+				effectiveTheme,
+			),
+		[
+			width,
+			blurStart,
+			defaultBlurIntensity,
+			mouseBlurIntensity,
+			mouseBlurSize,
+			roundness,
+			noiseIntensity,
+			noiseScale,
+			animateNoise,
+			effectiveTheme,
+		],
+	);
 
 	useEffect(() => {
 		const canvas = canvasRef.current;
 		if (!canvas) return;
+		if (rendererRef.current) return;
 
-		const context =
-			canvas.getContext('webgl', {
-				alpha: true,
-				antialias: true,
-				preserveDrawingBuffer: false,
-			}) ?? canvas.getContext('experimental-webgl');
+		const renderer = createRenderer<AtomicBrandLogoState>({
+			canvas,
+			modules: [createAtomicBrandLogoModule()],
+			initialState: baseState,
+			label: 'atomic-brand-logo',
+		});
 
-		if (!(context instanceof WebGLRenderingContext)) {
-			return;
-		}
-
-		const gl = context;
-
-		if (!gl.getExtension('OES_standard_derivatives')) {
-			// log
-		}
-
-		const setup = initializeWebGLProgram(gl);
-		if (!setup) return;
-
-		const { program, positionBuffer, uniformLocations } = setup;
-
-		let animationFrame = 0;
-		let lastTime = performance.now();
-		let dpr = Math.min(window.devicePixelRatio || 1, 2);
-
-		const containerWidth = width;
-		const containerHeight = width / 4;
-
-		const mouse = { x: containerWidth / 2, y: containerHeight / 2 };
-		const mouseDamped = { x: mouse.x, y: mouse.y };
-
-		const setUniform1f = (location: WebGLUniformLocation | null, value: number) => {
-			if (location) gl.uniform1f(location, value);
-		};
-
-		const applyStaticUniforms = () => {
-			setUniform1f(uniformLocations.rectWidth, 2.0);
-			setUniform1f(uniformLocations.rectHeight, 0.5);
-			setUniform1f(uniformLocations.roundness, roundness);
-			setUniform1f(uniformLocations.blurStart, blurStart);
-			setUniform1f(uniformLocations.defaultBlurIntensity, defaultBlurIntensity);
-			setUniform1f(uniformLocations.mouseBlurSize, mouseBlurSize);
-			setUniform1f(uniformLocations.mouseBlurIntensity, mouseBlurIntensity);
-			setUniform1f(uniformLocations.noiseIntensity, noiseIntensity);
-			setUniform1f(uniformLocations.noiseScale, noiseScale);
-		};
-
-		const resize = () => {
-			dpr = Math.min(window.devicePixelRatio || 1, 2);
-			const displayWidth = Math.floor(containerWidth * dpr);
-			const displayHeight = Math.floor(containerHeight * dpr);
-
-			if (canvas.width !== displayWidth || canvas.height !== displayHeight) {
-				canvas.width = displayWidth;
-				canvas.height = displayHeight;
-			}
-
-			canvas.style.width = `${containerWidth}px`;
-			canvas.style.height = `${containerHeight}px`;
-
-			gl.viewport(0, 0, displayWidth, displayHeight);
-
-			if (uniformLocations.resolution) {
-				gl.uniform2f(uniformLocations.resolution, displayWidth, displayHeight);
-			}
-			if (uniformLocations.pixelRatio) {
-				gl.uniform1f(uniformLocations.pixelRatio, dpr);
-			}
-		};
-
-		const handlePointerMove = (event: PointerEvent | MouseEvent) => {
-			const rect = canvas.getBoundingClientRect();
-			mouse.x = event.clientX - rect.left;
-			mouse.y = event.clientY - rect.top;
-		};
-
-		const applyThemeUniforms = () => {
-			const widthMultiplier = resolvedTheme === 'dark' ? 0.75 : 0.75;
-			const heightMultiplier = resolvedTheme === 'dark' ? 0.1 : 0.5;
-			setUniform1f(uniformLocations.widthSpreadMultiplier, widthMultiplier);
-			setUniform1f(uniformLocations.heightSpreadMultiplier, heightMultiplier);
-
-			const colorHex = resolvedTheme === 'dark' ? '#ffffff' : '#000000';
-			const [r, g, b] = hexToRgb(colorHex);
-			if (uniformLocations.color) {
-				gl.uniform3f(uniformLocations.color, r, g, b);
-			}
-		};
-
-		const applyDynamicUniforms = (mousePos: { x: number; y: number }, currentTime: number) => {
-			if (uniformLocations.mouse) {
-				gl.uniform2f(uniformLocations.mouse, mousePos.x, mousePos.y);
-			}
-
-			if (animateNoise && uniformLocations.time) {
-				gl.uniform1f(uniformLocations.time, currentTime * 0.0001);
-			}
-		};
-
-		const render = () => {
-			const now = performance.now();
-			const dt = (now - lastTime) / 1000;
-			lastTime = now;
-
-			mouseDamped.x = damp(mouseDamped.x, mouse.x, 8, dt);
-			mouseDamped.y = damp(mouseDamped.y, mouse.y, 8, dt);
-
-			gl.clearColor(0, 0, 0, 0);
-			gl.clear(gl.COLOR_BUFFER_BIT);
-
-			applyDynamicUniforms(mouseDamped, now);
-			applyThemeUniforms();
-
-			gl.drawArrays(gl.TRIANGLES, 0, 6);
-			animationFrame = requestAnimationFrame(render);
-		};
-
-		resize();
-		applyStaticUniforms();
-
-		window.addEventListener('resize', resize);
-		document.addEventListener('mousemove', handlePointerMove);
-		document.addEventListener('pointermove', handlePointerMove);
-
-		render();
+		rendererRef.current = renderer;
 
 		return () => {
-			cancelAnimationFrame(animationFrame);
-			window.removeEventListener('resize', resize);
-			document.removeEventListener('mousemove', handlePointerMove);
-			document.removeEventListener('pointermove', handlePointerMove);
-			gl.deleteProgram(program);
-			gl.deleteBuffer(positionBuffer);
+			rendererRef.current?.dispose();
+			rendererRef.current = null;
 		};
-	}, [
-		width,
-		blurStart,
-		defaultBlurIntensity,
-		mouseBlurIntensity,
-		mouseBlurSize,
-		roundness,
-		noiseIntensity,
-		noiseScale,
-		animateNoise,
-		resolvedTheme,
-	]);
+	}, [baseState]);
+
+	useEffect(() => {
+		const renderer = rendererRef.current;
+		if (!renderer) return;
+		renderer.setState(baseState);
+	}, [baseState]);
+
+	useEffect(() => {
+		const renderer = rendererRef.current;
+		if (!renderer) return;
+		renderer.resize({ width: baseState.width, height: baseState.height });
+	}, [baseState.height, baseState.width]);
 
 	const containerWidth = width;
 	const containerHeight = width / 4;

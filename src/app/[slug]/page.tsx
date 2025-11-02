@@ -11,15 +11,16 @@
  */
 
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { MDXRemote } from 'next-mdx-remote/rsc';
-import { AnimatedMdxContent } from '@/components/animation/animated-mdx-content';
+import { AnimatedBlock } from '@/components/animation/animated-block';
 import { CoreTimelineProvider } from '@/components/core/core-timeline-provider';
-import { LayoutWrapper } from '@/components/layout/layout-wrapper';
+import { LayoutSharedWrapper } from '@/components/layout/layout-shared-wrapper';
 import { TIMELINE_ARTICLE } from '@/lib/constants';
 import { ValidationError } from '@/lib/errors';
-import { getContentBySlug, getFeedContent } from '@/lib/mdx-server';
+import { getArtifactsContent, getContentBySlug } from '@/lib/mdx-server';
 import type { ContentItem } from '@/lib/mdx-types';
+import { isStudy } from '@/lib/mdx-types';
 import { validateSlug } from '@/lib/validators';
 import { useMDXComponents } from '@/mdx-components';
 
@@ -50,7 +51,11 @@ export default async function ContentPage({ params }: ContentPageProps) {
 
 	if (!content) notFound();
 
-	if (content.frontmatter.isFeedItem === false) {
+	if (isStudy(content.frontmatter) && (content.frontmatter.isConfidential ?? false)) {
+		redirect('/');
+	}
+
+	if (content.frontmatter.isArtifactItem === false) {
 		notFound();
 	}
 
@@ -58,18 +63,18 @@ export default async function ContentPage({ params }: ContentPageProps) {
 
 	return (
 		<CoreTimelineProvider config={TIMELINE_ARTICLE}>
-			<LayoutWrapper type="article" frontmatter={frontmatter}>
-				<AnimatedMdxContent>
+			<LayoutSharedWrapper type="article" frontmatter={frontmatter}>
+				<AnimatedBlock stageId="article-body">
 					<MDXRemote source={mdxContent} components={useMDXComponents({})} />
-				</AnimatedMdxContent>
-			</LayoutWrapper>
+				</AnimatedBlock>
+			</LayoutSharedWrapper>
 		</CoreTimelineProvider>
 	);
 }
 
 export async function generateStaticParams() {
-	const feedContent = await getFeedContent();
-	return feedContent.map(({ frontmatter }) => ({
+	const artifactsContent = await getArtifactsContent();
+	return artifactsContent.map(({ frontmatter }) => ({
 		slug: frontmatter.slug,
 	}));
 }

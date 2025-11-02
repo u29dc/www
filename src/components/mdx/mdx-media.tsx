@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * MDX Media
  *
@@ -15,8 +17,6 @@
  *
  * @module components/mdx/mdx-media
  */
-
-'use client';
 
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MdxMediaItem } from '@/components/mdx/mdx-media-item';
@@ -108,12 +108,12 @@ export function MdxMedia({ src, alt }: MdxMediaProps) {
 	);
 
 	return (
-		<div className="grid grid-cols-10 col-span-full my-2 md:my-5">
+		<div className="grid grid-cols-10 padding-standard">
 			<MediaLayoutContext.Provider value={contextValue}>
 				<div
 					ref={containerRef}
 					className={cn(
-						'flex col-start-1 col-span-full px-[5px] transition-opacity duration-300',
+						'flex col-start-1 col-span-full transition-opacity duration-300',
 						isLayoutReady ? 'opacity-100' : 'opacity-0',
 					)}
 					style={calculatedHeight > 0 ? { height: `${calculatedHeight}px` } : {}}

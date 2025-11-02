@@ -1,41 +1,38 @@
 'use client';
 
 /**
- * Animated Feed Wrapper
+ * Content Index Artifacts List
  *
  * ## SUMMARY
- * Timeline-coordinated wrapper with staggered Motion animations for feed items.
+ * Timeline-coordinated wrapper with staggered Motion animations for artifacts items.
  * Includes sliding hover indicator for visual feedback.
  *
  * ## RESPONSIBILITIES
  * - Subscribe to timeline stage, orchestrate staggered item animations, notify on completion
  * - Manage hover state and render sliding indicator element
  *
- * @module components/animation/animated-feed-wrapper
+ * @module components/content/content-index-artifacts-list
  */
 
 import { motion } from 'motion/react';
 import type { ReactElement, ReactNode } from 'react';
-import { Children, isValidElement, useMemo, useState } from 'react';
-import { AnimatedFeedThumbnail } from '@/components/animation/animated-feed-thumbnail';
+import { Children, cloneElement, isValidElement, useMemo, useState } from 'react';
 import { logEvent } from '@/lib/logger';
 import { useTimelineStage } from '@/lib/timeline';
 
-export interface AnimatedFeedWrapperProps {
+export interface ContentIndexArtifactsListProps {
 	stageId: string;
 	children: ReactNode;
 	className?: string;
 	staggerDelay?: number;
-	thumbnails?: (string | null)[];
 }
 
-export function AnimatedFeedWrapper({
+export function ContentIndexArtifactsList({
 	stageId,
 	children,
 	className,
 	staggerDelay = 0,
-	thumbnails,
-}: AnimatedFeedWrapperProps) {
+}: ContentIndexArtifactsListProps) {
 	const { stage, variant, advanceStage, stageConfig } = useTimelineStage(stageId);
 
 	// Hover indicator state
@@ -89,7 +86,7 @@ export function AnimatedFeedWrapper({
 	const itemVariants = {
 		hidden: {
 			opacity: 0,
-			y: 10,
+			y: -10,
 			filter: 'blur(5px)',
 		},
 		visible: {
@@ -108,7 +105,7 @@ export function AnimatedFeedWrapper({
 	const handleComplete = () => {
 		if (stage?.status === 'animating') {
 			advanceStage();
-			logEvent('TIMELINE', 'FEED_ANIMATE', 'COMPLETE', {
+			logEvent('TIMELINE', 'ARTIFACTS_ANIMATE', 'COMPLETE', {
 				stageId,
 				direction: stage.direction,
 				itemCount: childArray.length,
@@ -135,30 +132,35 @@ export function AnimatedFeedWrapper({
 						key={childKey}
 						variants={itemVariants}
 						onMouseEnter={() => setHoveredIndex(index)}
-						className="relative overflow-visible"
+						className={
+							'relative overflow-visible py-1 -my-1 transition-opacity duration-200 cursor-pointer'
+						}
 						{...(index === lastIndex && { onAnimationComplete: handleComplete })}
 					>
-						{/* Hover indicators and thumbnail positioned within hovered item */}
+						{/* Hover indicator positioned within hovered item */}
 						{hoveredIndex === index && (
 							<div className="hidden hover-device:block">
 								<motion.div
-									layoutId="feed-hover-indicator-left"
-									className="pointer-events-none absolute left-2 md:left-5 top-1/2 translate-y-[-50%] h-[1px] w-[1px] bg-current"
+									layoutId="artifacts-hover-indicator-right"
+									className="pointer-events-none absolute -right-2 md:-right-5 top-1/2 translate-y-[-50%] h-[1px] w-[4px] bg-current"
 									transition={{
 										layout: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
 									}}
 								/>
-								<motion.div
-									layoutId="feed-hover-indicator-right"
-									className="pointer-events-none absolute right-2 md:right-5 top-1/2 translate-y-[-50%] h-[1px] w-[10px] bg-current"
-									transition={{
-										layout: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
-									}}
-								/>
-								<AnimatedFeedThumbnail thumbnailUrl={thumbnails?.[index] ?? null} />
 							</div>
 						)}
-						{child}
+						{isValidElement(child)
+							? cloneElement(
+									child as ReactElement<{
+										hoveredIndex?: number | null;
+										itemIndex?: number;
+									}>,
+									{
+										hoveredIndex,
+										itemIndex: index,
+									},
+								)
+							: child}
 					</motion.div>
 				);
 			})}
