@@ -11,6 +11,7 @@
  */
 
 import { AnimatedBlock } from '@/components/animation/animated-block';
+import { AnimatedStaggerRedacted } from '@/components/animation/animated-stagger-redacted';
 
 interface ContentIndexAxiomsItemProps {
 	stageId: string;
@@ -49,7 +50,7 @@ export function ContentIndexAxiomsItem({
 export function ContentIndexAxioms() {
 	return (
 		<div className="grid grid-row-4 gap-y-4">
-			<AnimatedBlock stageId="index-axioms-intro" className="my-10 w-full md:w-1/3">
+			<AnimatedStaggerRedacted stageId="meta-annotation" className="my-10 w-full md:w-1/3">
 				<div className="annotation">
 					█▓▒ Three axioms form the architecture of our thinking. They shaped the studio
 					from its inception—informing our name, visual language, and protocols. More
@@ -57,11 +58,11 @@ export function ContentIndexAxioms() {
 					what frameworks we build, what narratives we create. These are not principles we
 					aspire to. They are the ground we build from. [³]
 				</div>
-			</AnimatedBlock>
+			</AnimatedStaggerRedacted>
 
-			<AnimatedBlock stageId="meta-annotation" className="w-full flex justify-end">
+			<AnimatedStaggerRedacted stageId="meta-annotation" className="w-full flex justify-end">
 				<div className="annotation w-2/5 md:w-1/10 text-right mb-10">[*]</div>
-			</AnimatedBlock>
+			</AnimatedStaggerRedacted>
 
 			<ContentIndexAxiomsItem
 				stageId="index-axioms-imperfect"

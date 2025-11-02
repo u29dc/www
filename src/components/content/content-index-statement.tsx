@@ -11,7 +11,8 @@
  */
 
 import { AnimatedBlock } from '@/components/animation/animated-block';
-import { AnimatedStagger } from '@/components/animation/animated-stagger';
+import { AnimatedStaggerBlur } from '@/components/animation/animated-stagger-blur';
+import { AnimatedStaggerRedacted } from '@/components/animation/animated-stagger-redacted';
 
 export function ContentIndexStatement() {
 	return (
@@ -33,14 +34,14 @@ export function ContentIndexStatement() {
 					</span>
 				</h1>
 			</AnimatedBlock>
-			<AnimatedStagger stageId="index-statement-description" className="mb-0">
+			<AnimatedStaggerBlur stageId="index-statement-description" className="mb-0">
 				<div>It inhabits the space between what is seen and what is felt.</div>
 				<div>It operates in the deliberate pause, dwells in the charged moment.</div>
 				<div>It expresses itself... in incomplete form.</div>
 				<div>After all, isn't true infinity always incomplete?</div>
-			</AnimatedStagger>
+			</AnimatedStaggerBlur>
 
-			<AnimatedStagger stageId="index-statement-description" className="mb-0">
+			<AnimatedStaggerBlur stageId="index-statement-description" className="mb-0">
 				<div>
 					The practice questions premises before refining execution. Asks "why not
 					differently?" because the most interesting possibilities emerge not from
@@ -51,18 +52,18 @@ export function ContentIndexStatement() {
 					other, operating in the productive tension between chaos and order, between the
 					mapped and the undiscovered.
 				</div>
-			</AnimatedStagger>
+			</AnimatedStaggerBlur>
 
-			<AnimatedBlock stageId="meta-annotation">
+			<AnimatedStaggerRedacted stageId="meta-annotation">
 				<div className="annotation w-full md:w-[10vw]">
 					* these positions emerged from questioning what strategic narrative could be
 					beyond marketing ⊞⊞⊞
 				</div>
-			</AnimatedBlock>
+			</AnimatedStaggerRedacted>
 
-			<AnimatedBlock stageId="meta-annotation" className="self-end line-through">
+			<AnimatedStaggerRedacted stageId="meta-annotation" className="self-end line-through">
 				<div className="annotation w-[35vw] md:w-[10vw]">[ thinking in intersections ]</div>
-			</AnimatedBlock>
+			</AnimatedStaggerRedacted>
 		</div>
 	);
 }

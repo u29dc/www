@@ -10,7 +10,7 @@
  * @module components/content/content-artifacts
  */
 
-import { AnimatedBlock } from '@/components/animation/animated-block';
+import { AnimatedStaggerRedacted } from '@/components/animation/animated-stagger-redacted';
 import { ContentIndexArtifactsItem } from '@/components/content/content-index-artifacts-item';
 import { ContentIndexArtifactsList } from '@/components/content/content-index-artifacts-list';
 import { getArtifactsContent } from '@/lib/mdx-server';
@@ -21,11 +21,11 @@ export async function ContentIndexArtifacts() {
 
 	return (
 		<div>
-			<AnimatedBlock stageId="meta-annotation" className="w-full flex justify-end">
+			<AnimatedStaggerRedacted stageId="meta-annotation" className="w-full flex justify-end">
 				<div className="annotation w-2/5 md:w-1/10 text-right mb-10">
 					work shown represents intersections explored, not expertise claimed
 				</div>
-			</AnimatedBlock>
+			</AnimatedStaggerRedacted>
 
 			<ContentIndexArtifactsList stageId="index-artifacts" className="">
 				{content.map((item) => {

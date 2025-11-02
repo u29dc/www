@@ -11,7 +11,7 @@
  */
 
 import { AnimatedLink } from '@/components/animation/animated-link';
-import { AnimatedStagger } from '@/components/animation/animated-stagger';
+import { AnimatedStaggerBlur } from '@/components/animation/animated-stagger-blur';
 import { AtomicBrandLogo } from '@/components/atomic/atomic-brand-logo';
 import { AtomicGradientBlur } from '@/components/atomic/atomic-gradient-blur';
 import { SITE } from '@/lib/constants';
@@ -41,21 +41,21 @@ export function LayoutSharedHeader({ type, frontmatter, title }: LayoutSharedHea
 					{type === 'index' && (
 						<>
 							<div className="absolute bottom-0 w-full left-1/2 -translate-x-1/2 text-center">
-								<AnimatedStagger
+								<AnimatedStaggerBlur
 									stageId="index-header"
 									staggerDelay={50}
 									blurStrength={5}
 								>
 									{siteTitle}
-								</AnimatedStagger>
+								</AnimatedStaggerBlur>
 							</div>
 							<nav className="absolute bottom-0 left-0">
-								<AnimatedStagger stageId="index-header-nav">
+								<AnimatedStaggerBlur stageId="index-header-nav">
 									<AtomicBrandLogo
 										className="translate-y-6 -translate-x-30"
 										theme="light"
 									/>
-								</AnimatedStagger>
+								</AnimatedStaggerBlur>
 							</nav>
 						</>
 					)}
@@ -63,18 +63,18 @@ export function LayoutSharedHeader({ type, frontmatter, title }: LayoutSharedHea
 					{type === 'article' && frontmatter && (
 						<>
 							<div className="absolute bottom-0 w-full left-1/2 -translate-x-1/2 text-center">
-								<AnimatedStagger
+								<AnimatedStaggerBlur
 									stageId="article-header"
 									staggerDelay={50}
 									blurStrength={5}
 								>
 									{frontmatter.title}
-								</AnimatedStagger>
+								</AnimatedStaggerBlur>
 							</div>
 							<nav className="absolute bottom-0 left-0">
-								<AnimatedStagger stageId="article-header-nav">
+								<AnimatedStaggerBlur stageId="article-header-nav">
 									<AnimatedLink href="/">Back</AnimatedLink>
-								</AnimatedStagger>
+								</AnimatedStaggerBlur>
 							</nav>
 						</>
 					)}

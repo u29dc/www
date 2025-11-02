@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Animated Stagger
+ * Animated Stagger Blur
  *
  * ## SUMMARY
  * Timeline-coordinated word-by-word stagger with staggered Motion animations.
@@ -9,16 +9,17 @@
  * ## RESPONSIBILITIES
  * - Subscribe to timeline stage, split text into words, orchestrate staggered animations
  *
- * @module components/animation/animated-stagger
+ * @module components/animation/animated-stagger-blur
  */
 
 import { motion } from 'motion/react';
 import type { ReactElement, ReactNode } from 'react';
-import { Children, cloneElement, isValidElement, useCallback, useMemo } from 'react';
+import { Children, cloneElement, isValidElement, useMemo } from 'react';
+import { extractTextContent, findLastWordIndex, isWhitespace, splitTextIntoWords } from '@/lib/dom';
 import { logEvent } from '@/lib/logger';
 import { useTimelineStage } from '@/lib/timeline';
 
-export interface AnimatedStaggerProps {
+export interface AnimatedStaggerBlurProps {
 	stageId: string;
 	children: ReactNode;
 	className?: string;
@@ -38,7 +39,7 @@ function calculateWordOnlyStagger(
 	stageId: string,
 	configDuration: number,
 ): number {
-	const wordCount = cachedWords.filter((w) => !/^\s+$/.test(w)).length;
+	const wordCount = cachedWords.filter((w) => !isWhitespace(w)).length;
 	const calculatedStagger = wordCount > 1 ? availableTime / (wordCount - 1) : 0;
 	const constrainedStagger = Math.max(MIN_STAGGER, Math.min(MAX_STAGGER, calculatedStagger));
 
@@ -64,7 +65,7 @@ function calculateElementAndWordStagger(
 	const elementCount = childArray.length;
 	const avgWordsPerElement =
 		Array.from(elementTextCache.values()).reduce(
-			(sum, { words }) => sum + words.filter((w: string) => !/^\s+$/.test(w)).length,
+			(sum, { words }) => sum + words.filter((w: string) => !isWhitespace(w)).length,
 			0,
 		) / Math.max(1, elementTextCache.size);
 
@@ -108,7 +109,7 @@ function calculateElementAndWordStagger(
 	};
 }
 
-export function AnimatedStagger({
+export function AnimatedStaggerBlur({
 	stageId,
 	children,
 	className,
@@ -116,7 +117,7 @@ export function AnimatedStagger({
 	elementStagger = 0,
 	blurStrength = 10,
 	yOffset = 5,
-}: AnimatedStaggerProps) {
+}: AnimatedStaggerBlurProps) {
 	const { stage, variant, advanceStage, stageConfig } = useTimelineStage(stageId);
 
 	const childArray = useMemo(() => Children.toArray(children), [children]);
@@ -128,23 +129,8 @@ export function AnimatedStagger({
 	const childrenText = useMemo(() => String(children), [children]);
 	const cachedWords = useMemo(() => {
 		if (hasElements) return [];
-		return childrenText.split(/(\s+)/);
+		return splitTextIntoWords(childrenText);
 	}, [hasElements, childrenText]);
-
-	const extractTextContent = useCallback((node: ReactNode): string => {
-		if (typeof node === 'string' || typeof node === 'number') {
-			return String(node);
-		}
-		if (Array.isArray(node)) {
-			return node.map(extractTextContent).join('');
-		}
-		if (isValidElement(node)) {
-			return extractTextContent(
-				(node as ReactElement<{ children?: ReactNode }>).props.children,
-			);
-		}
-		return '';
-	}, []);
 
 	const elementTextCache = useMemo(() => {
 		if (!hasElements) return new Map();
@@ -155,17 +141,10 @@ export function AnimatedStagger({
 					extractTextContent(
 						(child as ReactElement<{ children?: ReactNode }>).props.children,
 					) || '';
-				const words = text.split(/(\s+)/);
+				const words = splitTextIntoWords(text);
 
 				// Pre-calculate last word index to avoid per-render backward scan
-				let lastWordIndex = -1;
-				for (let i = words.length - 1; i >= 0; i--) {
-					const word = words[i];
-					if (word && !/^\s+$/.test(word)) {
-						lastWordIndex = i;
-						break;
-					}
-				}
+				const lastWordIndex = findLastWordIndex(words);
 
 				cache.set(idx, {
 					text,
@@ -175,7 +154,7 @@ export function AnimatedStagger({
 			}
 		});
 		return cache;
-	}, [hasElements, childArray, extractTextContent]);
+	}, [hasElements, childArray]);
 
 	// Auto-calculate stagger timing from timeline config
 	const { actualStaggerDelay, actualElementStagger } = useMemo(() => {
@@ -259,22 +238,13 @@ export function AnimatedStagger({
 		preSplitWords?: string[],
 		cachedLastWordIndex?: number,
 	) => {
-		const words = preSplitWords || text.split(/(\s+)/);
+		const words = preSplitWords || splitTextIntoWords(text);
 
 		// Use pre-cached lastWordIndex if available, otherwise scan backward
-		let lastWordIndex = cachedLastWordIndex ?? -1;
-		if (cachedLastWordIndex === undefined) {
-			for (let i = words.length - 1; i >= 0; i--) {
-				const word = words[i];
-				if (word && !/^\s+$/.test(word)) {
-					lastWordIndex = i;
-					break;
-				}
-			}
-		}
+		const lastWordIndex = cachedLastWordIndex ?? findLastWordIndex(words);
 
 		return words.map((word, index) => {
-			if (/^\s+$/.test(word)) {
+			if (isWhitespace(word)) {
 				return (
 					<span
 						key={`${keyPrefix}-space-${
