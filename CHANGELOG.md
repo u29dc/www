@@ -1,3 +1,12 @@
+# [1.8.0](https://github.com/u29dc/www/compare/v1.7.0...v1.8.0) (2025-11-02)
+
+
+### Features
+
+* **core:** add responsive grid overlay component for layout debugging ([4dd320a](https://github.com/u29dc/www/commit/4dd320a89784820dbeb0dab62c492e25a7f41b73))
+* **core:** add thumbnail media and update artifact configuration ([1ff4112](https://github.com/u29dc/www/commit/1ff4112afa20f79af8fc162d076e9102f2389bd4))
+* **ui:** add fira code monospace font for annotations and code ([ab46abf](https://github.com/u29dc/www/commit/ab46abf62fd092249917ac90f5d7e28aafd43907))
+
 # [1.7.0](https://github.com/u29dc/www/compare/v1.6.1...v1.7.0) (2025-11-02)
 
 
