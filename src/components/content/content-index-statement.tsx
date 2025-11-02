@@ -52,6 +52,17 @@ export function ContentIndexStatement() {
 					mapped and the undiscovered.
 				</div>
 			</AnimatedStagger>
+
+			<AnimatedBlock stageId="meta-annotation">
+				<div className="annotation w-full md:w-[10vw]">
+					* these positions emerged from questioning what strategic narrative could be
+					beyond marketing ⊞⊞⊞
+				</div>
+			</AnimatedBlock>
+
+			<AnimatedBlock stageId="meta-annotation" className="self-end line-through">
+				<div className="annotation w-[35vw] md:w-[10vw]">[ thinking in intersections ]</div>
+			</AnimatedBlock>
 		</div>
 	);
 }

@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Content Artifacts Item
  *
@@ -11,8 +13,6 @@
  *
  * @module components/content/content-artifacts-item
  */
-
-'use client';
 
 import { motion } from 'motion/react';
 import { AnimatedLink } from '@/components/animation/animated-link';
@@ -52,7 +52,7 @@ export function ContentIndexArtifactsItem({
 						initial={{ opacity: 0, height: 0 }}
 						animate={{
 							opacity: hoveredIndex === itemIndex ? 1 : 0,
-							height: hoveredIndex === itemIndex ? '10rem' : 0,
+							height: hoveredIndex === itemIndex ? '2.5vw' : 0,
 						}}
 						transition={{
 							opacity: {
@@ -90,7 +90,7 @@ export function ContentIndexArtifactsItem({
 						initial={{ opacity: 0 }}
 						animate={{ opacity: hoveredIndex === itemIndex ? 1 : 0 }}
 						transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-						className="absolute left-0 top-1/2 -translate-y-[6rem]"
+						className="absolute left-0 top-1/2 -translate-y-[1.6vw]"
 					>
 						<div className="font-mono opacity-20">{cdnUrl}</div>
 					</motion.div>
@@ -106,7 +106,7 @@ export function ContentIndexArtifactsItem({
 					? new Date(date).getFullYear()
 					: new Date(date).toISOString().slice(0, 10).replace(/-/g, '/')}
 			</p>
-			<p className="col-span-4 row-start-1 md:col-span-1 md:row-start-2 col-start-1 md:col-start-1 md:pr-5 text-right font-mono opacity-20">
+			<p className="col-span-4 row-start-1 md:col-span-1 md:row-start-2 col-start-1 md:col-start-1 md:pr-5 h-full flex flex-col justify-center text-right font-mono">
 				{String(new Date(date).toISOString())}
 			</p>
 		</div>

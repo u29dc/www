@@ -49,15 +49,18 @@ export function ContentIndexAxiomsItem({
 export function ContentIndexAxioms() {
 	return (
 		<div className="grid grid-row-4 gap-y-4">
-			<AnimatedBlock
-				stageId="index-axioms-intro"
-				className="font-mono my-10 w-full md:w-1/2 text-right"
-			>
-				Three axioms form the architecture of our thinking. They shaped the studio from its
-				inception—informing our name, visual language, and protocols. More importantly, they
-				shape how we approach every engagement: what questions we ask, what frameworks we
-				build, what narratives we create. These are not principles we aspire to. They are
-				the ground we build from.
+			<AnimatedBlock stageId="index-axioms-intro" className="my-10 w-full md:w-1/3">
+				<div className="annotation">
+					█▓▒ Three axioms form the architecture of our thinking. They shaped the studio
+					from its inception—informing our name, visual language, and protocols. More
+					importantly, they shape how we approach every engagement: what questions we ask,
+					what frameworks we build, what narratives we create. These are not principles we
+					aspire to. They are the ground we build from. [³]
+				</div>
+			</AnimatedBlock>
+
+			<AnimatedBlock stageId="meta-annotation" className="w-full flex justify-end">
+				<div className="annotation w-2/5 md:w-1/10 text-right mb-10">[*]</div>
 			</AnimatedBlock>
 
 			<ContentIndexAxiomsItem

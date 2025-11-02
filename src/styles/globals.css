@@ -66,6 +66,10 @@
 		@apply opacity-50;
 	}
 	*/
+	
+	.annotation {
+		@apply font-mono;
+	}
 }
 
 /* ================================================== */
@@ -96,7 +100,7 @@
 @utility font-mono {
 	font-family: var(--font-mono);
 	font-weight: normal;
-	@apply text-left font-xs;
+	@apply text-left font-xs leading-none;
 }
 
 /* ================================================== */

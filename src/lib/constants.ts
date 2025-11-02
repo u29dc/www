@@ -150,32 +150,46 @@ export const TIMELINE_INDEX: TimelineConfig = {
 	enterStages: [
 		{ id: 'index-statement-title', duration: 2000, delay: 0 },
 		{ id: 'index-statement-description', duration: 1000, delay: -1500 },
+
 		{ id: 'index-header-nav', duration: 200, delay: -500 },
 		{ id: 'index-header', duration: 200, delay: -450 },
+
 		{ id: 'index-artifacts', duration: 1000, delay: -500 },
+
+		{ id: 'meta-annotation', duration: 250, delay: 0 },
+
 		{ id: 'index-axioms-intro', duration: 750, delay: -700 },
 		{ id: 'index-axioms-imperfect', duration: 750, delay: -700 },
 		{ id: 'index-axioms-inexplicable', duration: 750, delay: -700 },
 		{ id: 'index-axioms-incomplete', duration: 750, delay: -700 },
+
 		{ id: 'index-protocols-intro', duration: 750, delay: -700 },
 		{ id: 'index-protocols-map', duration: 750, delay: -700 },
 		{ id: 'index-protocols-lab', duration: 750, delay: -700 },
 		{ id: 'index-protocols-com', duration: 750, delay: -700 },
+
 		{ id: 'layout-footer-nav', duration: 500, delay: -1000 },
 	],
 	exitStages: [
 		{ id: 'layout-footer-nav', duration: 200, delay: 0 },
+
 		{ id: 'index-protocols-com', duration: 100, delay: -90 },
 		{ id: 'index-protocols-lab', duration: 100, delay: -90 },
 		{ id: 'index-protocols-map', duration: 100, delay: -90 },
 		{ id: 'index-protocols-intro', duration: 100, delay: -90 },
+
 		{ id: 'index-axioms-incomplete', duration: 100, delay: -90 },
 		{ id: 'index-axioms-inexplicable', duration: 100, delay: -90 },
 		{ id: 'index-axioms-imperfect', duration: 100, delay: -90 },
 		{ id: 'index-axioms-intro', duration: 100, delay: -90 },
+
+		{ id: 'meta-annotation', duration: 100, delay: -100 },
+
 		{ id: 'index-artifacts', duration: 200, delay: -100 },
+
 		{ id: 'index-header', duration: 200, delay: -190 },
 		{ id: 'index-header-nav', duration: 200, delay: -190 },
+
 		{ id: 'index-statement-description', duration: 200, delay: -190 },
 		{ id: 'index-statement-title', duration: 200, delay: -190 },
 	],
