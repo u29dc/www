@@ -1,6 +1,6 @@
 import localFont from 'next/font/local';
 
-// Neue Haas Grotesk Display - Weights: 500 (Book), 600 (Medium)
+// Neue Haas Grotesk Display
 export const neueHaas = localFont({
 	src: [
 		{
@@ -22,5 +22,33 @@ export const neueHaas = localFont({
 	variable: '--font-neue-haas',
 	display: 'swap',
 	preload: true,
-	fallback: ['system-ui', 'sans-serif'],
+	fallback: [
+		'system-ui',
+		'-apple-system',
+		'BlinkMacSystemFont',
+		'SF Pro',
+		'Segoe UI',
+		'Roboto',
+		'Helvetica Neue',
+		'Arial',
+		'sans-serif',
+	],
+});
+
+// Fira Code Variable
+export const firaCode = localFont({
+	src: './fonts/fira-code-variable-normal.woff2',
+	variable: '--font-fira-code',
+	display: 'swap',
+	preload: true,
+	fallback: [
+		'SF Mono',
+		'Cascadia Code',
+		'Menlo',
+		'Consolas',
+		'Liberation Mono',
+		'DejaVu Sans Mono',
+		'Courier New',
+		'monospace',
+	],
 });

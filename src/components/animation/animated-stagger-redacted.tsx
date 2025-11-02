@@ -29,7 +29,7 @@ export interface AnimatedStaggerRedactedProps {
 }
 
 // Animation timing configuration
-const OVERLAY_ANIMATION_DURATION = 20;
+const OVERLAY_ANIMATION_DURATION = 10;
 
 /**
  * Animated Stagger Redacted Component
@@ -42,7 +42,7 @@ export function AnimatedStaggerRedacted({
 	stageId,
 	children,
 	className,
-	msPerWord = 20,
+	msPerWord = 15,
 }: AnimatedStaggerRedactedProps) {
 	// Subscribe to timeline stage for animation coordination
 	const { variant, advanceStage } = useTimelineStage(stageId);
