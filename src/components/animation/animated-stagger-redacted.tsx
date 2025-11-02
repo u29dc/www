@@ -94,7 +94,7 @@ export function AnimatedStaggerRedacted({
 			transition: {
 				duration: overlayDurationSeconds,
 				delay: order * sweepDelaySeconds,
-				ease: 'linear',
+				ease: 'linear' as const,
 			},
 		}),
 	};
