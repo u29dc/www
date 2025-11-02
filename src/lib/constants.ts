@@ -154,9 +154,9 @@ export const TIMELINE_INDEX: TimelineConfig = {
 		{ id: 'index-header-nav', duration: 200, delay: -500 },
 		{ id: 'index-header', duration: 200, delay: -450 },
 
-		{ id: 'index-artifacts', duration: 1000, delay: -500 },
+		{ id: 'index-artifacts', duration: 750, delay: -1000 },
 
-		{ id: 'meta-annotation', duration: 0, delay: 0 },
+		{ id: 'meta-annotation', duration: 0, delay: -1200 },
 
 		{ id: 'index-axioms-intro', duration: 750, delay: -700 },
 		{ id: 'index-axioms-imperfect', duration: 750, delay: -700 },
@@ -183,7 +183,7 @@ export const TIMELINE_INDEX: TimelineConfig = {
 		{ id: 'index-axioms-imperfect', duration: 100, delay: -90 },
 		{ id: 'index-axioms-intro', duration: 100, delay: -90 },
 
-		{ id: 'meta-annotation', duration: 0, delay: 0 },
+		{ id: 'meta-annotation', duration: 0, delay: -100 },
 
 		{ id: 'index-artifacts', duration: 200, delay: -100 },
 
