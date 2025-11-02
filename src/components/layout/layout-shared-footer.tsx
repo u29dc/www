@@ -37,8 +37,8 @@ export function LayoutSharedFooterLink({
 			className="mb-20 flex flex-row gap-2 justify-between"
 		>
 			<div className="">
-				<div className="uppercase">{title}</div>
 				<div className="">{children}</div>
+				<div className="uppercase">{title}</div>
 				<div className="">{description}</div>
 			</div>
 			<div className="">
@@ -75,13 +75,7 @@ export function LayoutSharedFooter() {
 							title="Calendar"
 							description="Let's meet"
 							link="https://cal.com/u29dc/hey"
-						>
-							<AnimatedStaggerRedacted stageId="meta-annotation">
-								<div className="annotation w-full md:w-[10vw]">
-									We respond within 48 hours
-								</div>
-							</AnimatedStaggerRedacted>
-						</LayoutSharedFooterLink>
+						/>
 
 						<LayoutSharedFooterLink
 							title="GitHub"
@@ -113,7 +107,13 @@ export function LayoutSharedFooter() {
 							title="EMAIL"
 							description="hey@u29dc.com"
 							link="mailto:hey@u29dc.com"
-						/>
+						>
+							<AnimatedStaggerRedacted stageId="meta-annotation">
+								<div className="annotation w-full md:w-[10vw]">
+									[ Response time: 48 hours ]
+								</div>
+							</AnimatedStaggerRedacted>
+						</LayoutSharedFooterLink>
 					</div>
 				</div>
 			</AnimatedBlock>

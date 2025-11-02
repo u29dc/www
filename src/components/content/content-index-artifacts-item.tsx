@@ -97,7 +97,11 @@ export function ContentIndexArtifactsItem({
 				</div>
 			)}
 
-			<p className="col-span-base row-start-2">{title.toUpperCase()}</p>
+			<p
+				className={`col-span-base row-start-2 underline decoration-wavy transition-colors duration-250 ${hoveredIndex === itemIndex ? 'decoration-current' : 'decoration-transparent'}`}
+			>
+				{title.toUpperCase()}
+			</p>
 			<p className="col-span-full row-start-3 md:col-start-3 md:col-span-8 lg:col-start-4 lg:col-span-7 xl:col-start-2 xl:col-span-3 xl:row-start-2 xl:row-span-2 2xl:col-start-2 2xl:col-span-4">
 				{isConfidential ? 'CONFIDENTIAL' : description}
 			</p>
@@ -107,7 +111,7 @@ export function ContentIndexArtifactsItem({
 					: new Date(date).toISOString().slice(0, 10).replace(/-/g, '/')}
 			</p>
 			<p className="col-span-4 row-start-1 md:col-span-1 md:row-start-2 col-start-1 md:col-start-1 md:pr-5 h-full flex flex-col justify-center text-right font-mono">
-				{String(new Date(date).toISOString())}
+				<span>{String(new Date(date).toISOString())}</span>
 			</p>
 		</div>
 	);
