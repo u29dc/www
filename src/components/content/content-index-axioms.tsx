@@ -49,16 +49,27 @@ export function ContentIndexAxiomsItem({
 
 export function ContentIndexAxioms() {
 	return (
-		<div className="grid grid-row-4 gap-y-4">
-			<AnimatedStaggerRedacted stageId="meta-annotation" className="my-10 w-full md:w-1/3">
-				<div className="annotation">
-					█▓▒ Three axioms form the architecture of our thinking. They shaped the studio
-					from its inception—informing our name, visual language, and protocols. More
-					importantly, they shape how we approach every engagement: what questions we ask,
-					what frameworks we build, what narratives we create. These are not principles we
-					aspire to. They are the ground we build from. [³]
-				</div>
-			</AnimatedStaggerRedacted>
+		<div className="grid grid-row-4 gap-y-4 my-[20rem]">
+			<div className="flex flex-col gap-0 annotation w-full md:w-1/3">
+				<AnimatedStaggerRedacted stageId="meta-annotation" className="">
+					█▓▒ Three axioms form the architecture of our thinking.
+				</AnimatedStaggerRedacted>
+				<AnimatedStaggerRedacted stageId="meta-annotation" className="">
+					They shaped the studio from its inception—informing
+				</AnimatedStaggerRedacted>
+				<AnimatedStaggerRedacted stageId="meta-annotation" className="">
+					our name, visual language, and protocols. More importantly, they shape how
+				</AnimatedStaggerRedacted>
+				<AnimatedStaggerRedacted stageId="meta-annotation" className="">
+					we approach every engagement:
+				</AnimatedStaggerRedacted>
+				<AnimatedStaggerRedacted stageId="meta-annotation" className="">
+					what questions we ask, what frameworks we build, what narratives we create.
+				</AnimatedStaggerRedacted>
+				<AnimatedStaggerRedacted stageId="meta-annotation" className="">
+					These are not principles we aspire to. They are the ground we build from. [³]
+				</AnimatedStaggerRedacted>
+			</div>
 
 			<AnimatedStaggerRedacted stageId="meta-annotation" className="w-full flex justify-end">
 				<div className="annotation text-right mb-10">[*]</div>

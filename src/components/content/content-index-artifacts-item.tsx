@@ -52,7 +52,7 @@ export function ContentIndexArtifactsItem({
 						initial={{ opacity: 0, height: 0 }}
 						animate={{
 							opacity: hoveredIndex === itemIndex ? 1 : 0,
-							height: hoveredIndex === itemIndex ? '2.5vw' : 0,
+							height: hoveredIndex === itemIndex ? '10rem' : 0,
 						}}
 						transition={{
 							opacity: {
@@ -110,7 +110,7 @@ export function ContentIndexArtifactsItem({
 					? new Date(date).getFullYear()
 					: new Date(date).toISOString().slice(0, 10).replace(/-/g, '/')}
 			</p>
-			<p className="col-span-4 row-start-1 md:col-span-1 md:row-start-2 col-start-1 md:col-start-1 md:pr-5 h-full flex flex-col justify-center text-right font-mono">
+			<p className="col-span-4 row-start-1 md:col-span-1 md:row-start-3 col-start-1 md:col-start-1 md:pr-5 h-full flex flex-col justify-center text-right md:text-left font-mono">
 				<span>{String(new Date(date).toISOString())}</span>
 			</p>
 		</div>

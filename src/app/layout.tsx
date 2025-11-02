@@ -17,9 +17,10 @@ import Script from 'next/script';
 import { ThemeProvider } from 'next-themes';
 import type { ReactNode } from 'react';
 import { CoreAppShell } from '@/components/core/core-app-shell';
+import { CoreGridOverlay } from '@/components/core/core-grid-overlay';
 import { CoreViewportFix } from '@/components/core/core-viewport-fix';
 import { metadata, viewport } from '@/lib/constants';
-import { neueHaas } from '@/lib/fonts';
+import { firaCode, neueHaas } from '@/lib/fonts';
 import '@/styles/globals.css';
 
 export { metadata, viewport };
@@ -33,7 +34,11 @@ export default async function RootLayout({ children }: RootLayoutProps) {
 	const nonce = headersList.get('x-nonce') || undefined;
 
 	return (
-		<html lang="en" className={neueHaas.variable} suppressHydrationWarning>
+		<html
+			lang="en"
+			className={`${neueHaas.variable} ${firaCode.variable}`}
+			suppressHydrationWarning
+		>
 			<head>{nonce && <meta property="csp-nonce" content={nonce} />}</head>
 			<body className="min-h-screen font-sm">
 				<ReactLenis root options={{ lerp: 0.05 }}>
@@ -50,9 +55,7 @@ export default async function RootLayout({ children }: RootLayoutProps) {
 					</CoreAppShell>
 				</ReactLenis>
 
-				<div className="dev-grid-overlay" aria-hidden="true">
-					<div className="dev-grid-overlay_inner"></div>
-				</div>
+				<CoreGridOverlay />
 
 				{nonce && <Script src="/empty.js" strategy="afterInteractive" nonce={nonce} />}
 			</body>
