@@ -33,9 +33,9 @@ const DESKTOP_POSITIONS = [
 
 const ANIMATION_CONFIG = {
 	staggerDelay: 0.1,
-	duration: 0.25,
+	duration: 0.5,
 	easing: [0.55, 0, 1, 0.45] as const,
-	initialDelay: 0.1,
+	initialDelay: 0.5,
 };
 
 const columnVariants = {

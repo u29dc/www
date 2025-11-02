@@ -32,10 +32,12 @@
 	body {
 		@apply antialiased;
 		@apply font-sm;
+		@apply uppercase;
+		@apply leading-none;
+		@apply font-semibold;
+		@apply not-italic;
+		@apply [text-rendering:optimizeLegibility];
 		font-family: var(--font-sans);
-		font-weight: 600;
-		font-style: normal;
-		text-rendering: optimizeLegibility;
 	}
 
 	h1 {
@@ -54,7 +56,8 @@
 
 	img,
 	video {
-		@apply pointer-events-none select-none;
+		@apply pointer-events-none;
+		@apply select-none;
 	}
 
 	/*

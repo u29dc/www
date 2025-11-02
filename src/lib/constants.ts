@@ -148,8 +148,8 @@ export const metadata: Metadata = {
 export const TIMELINE_INDEX: TimelineConfig = {
 	id: 'index',
 	enterStages: [
-		{ id: 'index-statement-title', duration: 2000, delay: 0 },
-		{ id: 'index-statement-description', duration: 1000, delay: -1500 },
+		{ id: 'index-statement-title', duration: 1000, delay: 0 },
+		{ id: 'index-statement-description', duration: 1000, delay: 0 },
 
 		{ id: 'index-header-nav', duration: 200, delay: -500 },
 		{ id: 'index-header', duration: 200, delay: -450 },
