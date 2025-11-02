@@ -5,8 +5,8 @@
 @import "tailwindcss";
 
 @theme {
-	--font-sans: var(--font-neue-haas), sans-serif;
-	--font-mono: monospace;
+	--font-sans: var(--font-neue-haas), -apple-system, BlinkMacSystemFont, "SF Pro", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+	--font-mono: "SF Mono", "Cascadia Code", Menlo, Consolas, "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace;
 	--color-white: oklch(99% 0 0);
 	--color-white-faded: oklch(99% 0 0 / 0.25);
 	--color-black: oklch(15% 0 0);
@@ -101,6 +101,10 @@
 	font-family: var(--font-mono);
 	font-weight: normal;
 	@apply text-left font-xs leading-none;
+}
+
+@utility cover-hatch {
+	background: repeating-linear-gradient(135deg, black 0px, black 1px, transparent 1px, transparent 2px);
 }
 
 /* ================================================== */
@@ -287,7 +291,7 @@ html.dark .marker-all {
 }
 
 @utility dev-grid-overlay {
-	@apply fixed inset-0 z-15 pointer-events-none;
+	@apply fixed inset-0 z-1200 pointer-events-none;
 	@apply px-2 md:px-5;
 
 	& .dev-grid-overlay_inner {

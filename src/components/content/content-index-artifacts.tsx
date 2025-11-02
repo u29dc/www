@@ -22,7 +22,7 @@ export async function ContentIndexArtifacts() {
 	return (
 		<div>
 			<AnimatedStaggerRedacted stageId="meta-annotation" className="w-full flex justify-end">
-				<div className="annotation w-2/5 md:w-1/10 text-right mb-10">
+				<div className="annotation text-right mb-10">
 					work shown represents intersections explored, not expertise claimed
 				</div>
 			</AnimatedStaggerRedacted>
