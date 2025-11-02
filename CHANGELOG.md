@@ -1,3 +1,18 @@
+# [1.7.0](https://github.com/u29dc/www/compare/v1.6.1...v1.7.0) (2025-11-02)
+
+
+### Bug Fixes
+
+* **types:** resolve framer-motion variants type error in animated-stagger-redacted ([65ddff5](https://github.com/u29dc/www/commit/65ddff54047ff73fba99e28c1e8955aed5098051))
+
+
+### Features
+
+* **core:** add webgl runtime library with context and renderer factory ([3a26214](https://github.com/u29dc/www/commit/3a262146b88a9540d98524d9091843d7fd422c23))
+* **ui:** add homepage axioms section with content expansion ([4071fb8](https://github.com/u29dc/www/commit/4071fb82c7286d5b9eaf256783b89d790fb442cd))
+* **ui:** add smooth scroll with artifact thumbnail previews ([9a99ff7](https://github.com/u29dc/www/commit/9a99ff7597e108d5fe1fab0754ecbf890171e145))
+* **ui:** integrate webgl logo with interactive blur and refine animations ([fda9694](https://github.com/u29dc/www/commit/fda9694f31c1f6fdab42f6e7babb18005dd669f2))
+
 ## [1.6.1](https://github.com/u29dc/www/compare/v1.6.0...v1.6.1) (2025-10-26)
 
 
