@@ -49,7 +49,7 @@ export function ContentIndexAxiomsItem({
 
 export function ContentIndexAxioms() {
 	return (
-		<div className="grid grid-row-4 gap-y-4">
+		<div className="grid grid-row-4 gap-y-4 my-[20rem]">
 			<div className="flex flex-col gap-0 annotation w-full md:w-1/3">
 				<AnimatedStaggerRedacted stageId="meta-annotation" className="">
 					█▓▒ Three axioms form the architecture of our thinking.

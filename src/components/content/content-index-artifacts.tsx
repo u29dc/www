@@ -20,7 +20,7 @@ export async function ContentIndexArtifacts() {
 	const content = await getArtifactsContent();
 
 	return (
-		<div>
+		<div className="">
 			<AnimatedStaggerRedacted stageId="meta-annotation" className="w-full flex justify-end">
 				<div className="annotation text-right mb-10">
 					work shown represents intersections explored, not expertise claimed
