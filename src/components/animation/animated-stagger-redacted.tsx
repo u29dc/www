@@ -10,7 +10,7 @@
  * ## RESPONSIBILITIES
  * - Subscribe to timeline stage and split text into words
  * - Render positioned overlays that animate from full coverage (scaleX: 1) to revealed (scaleX: 0)
- * - Orchestrate staggered overlay animations with auto-calculated timing
+ * - Orchestrate staggered overlay animations with simple per-word timing (default: 5ms)
  * - Advance timeline stage when final word overlay completes animation
  *
  * @module components/animation/animated-stagger-redacted
@@ -25,12 +25,10 @@ export interface AnimatedStaggerRedactedProps {
 	stageId: string;
 	children: ReactNode;
 	className?: string;
-	staggerDelay?: number;
+	msPerWord?: number;
 }
 
-// Animation timing constraints
-const MIN_STAGGER = 1;
-const MAX_STAGGER = 10;
+// Animation timing configuration
 const OVERLAY_ANIMATION_DURATION = 20;
 
 /**
@@ -38,16 +36,16 @@ const OVERLAY_ANIMATION_DURATION = 20;
  *
  * Renders text with positioned overlays that animate via scaleX transform,
  * creating a rightward-shrinking reveal effect. Timeline-coordinated with
- * automatic stagger timing calculation based on stage duration.
+ * simple per-word timing control (default: 5ms between word reveals).
  */
 export function AnimatedStaggerRedacted({
 	stageId,
 	children,
 	className,
-	staggerDelay,
+	msPerWord = 20,
 }: AnimatedStaggerRedactedProps) {
 	// Subscribe to timeline stage for animation coordination
-	const { variant, advanceStage, stageConfig } = useTimelineStage(stageId);
+	const { variant, advanceStage } = useTimelineStage(stageId);
 
 	// Extract and split text content into words
 	const textContent = extractTextContent(children);
@@ -66,19 +64,9 @@ export function AnimatedStaggerRedacted({
 	}
 	const mergedClassName = className ? `${className} ${childClassName}`.trim() : childClassName;
 
-	// Auto-calculate stagger timing from stage duration if not provided
-	const wordCount = words.filter((w) => !isWhitespace(w)).length;
-	const availableTime = Math.max(0, (stageConfig?.duration ?? 1000) - OVERLAY_ANIMATION_DURATION);
-
-	// Distribute available time across word gaps (n-1 gaps for n words)
-	const autoStagger = wordCount > 1 ? availableTime / (wordCount - 1) : 0;
-
-	// Use provided stagger or calculated value, constrain to min/max bounds
-	const calculatedStagger = staggerDelay ?? autoStagger;
-	const boundedStaggerMs = Math.max(MIN_STAGGER, Math.min(MAX_STAGGER, calculatedStagger));
-	const boundedStaggerSeconds = boundedStaggerMs / 1000; // Convert to seconds for Motion
+	// Simple per-word timing calculation
+	const staggerSeconds = msPerWord / 1000; // Convert milliseconds to seconds for Motion
 	const overlayDurationSeconds = OVERLAY_ANIMATION_DURATION / 1000;
-	const sweepDelaySeconds = overlayDurationSeconds + boundedStaggerSeconds;
 
 	// Container variants propagate timeline variants; per-word delays handled via custom timing
 	const containerVariants = {
@@ -93,7 +81,7 @@ export function AnimatedStaggerRedacted({
 			scaleX: 0, // Shrinks to reveal text
 			transition: {
 				duration: overlayDurationSeconds,
-				delay: order * sweepDelaySeconds,
+				delay: order * staggerSeconds,
 				ease: 'linear' as const,
 			},
 		}),
@@ -133,7 +121,7 @@ export function AnimatedStaggerRedacted({
 							// biome-ignore lint/suspicious/noArrayIndexKey: stable within text
 							index
 						}`}
-						className="relative inline-block pr-1"
+						className="relative inline-block pr-1 contain-layout"
 						variants={{
 							hidden: {},
 							visible: {},
@@ -141,7 +129,7 @@ export function AnimatedStaggerRedacted({
 					>
 						{word}
 						<motion.span
-							className="bg-black absolute inset-0 origin-right"
+							className="absolute top-0 bottom-0 left-0 -right-1 origin-right will-change-transform transform-gpu cover-hatch"
 							variants={overlayVariants}
 							custom={wordRevealOrder}
 							{...(isLastWord && { onAnimationComplete: handleComplete })}
