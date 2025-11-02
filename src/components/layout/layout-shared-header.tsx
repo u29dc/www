@@ -50,12 +50,10 @@ export function LayoutSharedHeader({ type, frontmatter, title }: LayoutSharedHea
 								</AnimatedStaggerBlur>
 							</div>
 							<nav className="absolute bottom-0 left-0">
-								<AnimatedStaggerBlur stageId="index-header-nav">
-									<AtomicBrandLogo
-										className="translate-y-6 -translate-x-30"
-										theme="light"
-									/>
-								</AnimatedStaggerBlur>
+								<AtomicBrandLogo
+									className="translate-y-6 -translate-x-30"
+									theme="light"
+								/>
 							</nav>
 						</>
 					)}
