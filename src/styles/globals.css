@@ -7,8 +7,8 @@
 @theme {
 	--font-sans: var(--font-neue-haas);
 	--font-mono: var(--font-fira-code);
-	--color-white: oklch(99% 0 0);
-	--color-white-faded: oklch(99% 0 0 / 0.25);
+	--color-white: oklch(100% 0 0);
+	--color-white-faded: oklch(100% 0 0 / 0.25);
 	--color-black: oklch(15% 0 0);
 	--color-black-faded: oklch(15% 0 0 / 0.25);
 	--breakpoint-3xl: 120rem;
@@ -27,17 +27,21 @@
 	html {
 		@apply theme-light;
 		@apply select-none;
+		overflow-x: hidden;
+		max-width: 100vw;
 	}
 
 	body {
 		@apply antialiased;
 		@apply font-sm;
 		@apply uppercase;
-		@apply leading-none;
+		@apply leading-[1.15];
 		@apply font-semibold;
 		@apply not-italic;
 		@apply [text-rendering:optimizeLegibility];
 		font-family: var(--font-sans);
+		overflow-x: hidden;
+		max-width: 100vw;
 	}
 
 	h1 {
