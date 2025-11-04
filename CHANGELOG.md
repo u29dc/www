@@ -1,3 +1,10 @@
+# [1.9.0](https://github.com/u29dc/www/compare/v1.8.0...v1.9.0) (2025-11-04)
+
+
+### Features
+
+* **core:** add webgl grain overlay with configurable parameters ([f4a516b](https://github.com/u29dc/www/commit/f4a516b5b0b948ba3343601597d57ed7aebcd444))
+
 # [1.8.0](https://github.com/u29dc/www/compare/v1.7.0...v1.8.0) (2025-11-02)
 
 
