@@ -235,8 +235,34 @@ export function measureCanvas(
 	const deviceDpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
 	const dpr = Math.min(deviceDpr, dprCap);
 
-	const width = rect.width || canvas.width || canvas.clientWidth;
-	const height = rect.height || canvas.height || canvas.clientHeight;
+	let width = rect.width;
+	let height = rect.height;
+
+	if (typeof window !== 'undefined') {
+		const globalWindow = window as Window & typeof globalThis;
+		const computed = globalWindow.getComputedStyle(canvas);
+		const isFixedViewportOverlay =
+			computed.position === 'fixed' &&
+			computed.left === '0px' &&
+			computed.top === '0px' &&
+			computed.right === '0px' &&
+			computed.bottom === '0px';
+
+		if (isFixedViewportOverlay) {
+			width = globalWindow.innerWidth;
+			height = globalWindow.innerHeight;
+		} else if (!width || !height) {
+			width = width || globalWindow.innerWidth;
+			height = height || globalWindow.innerHeight;
+		}
+	}
+
+	if (!width) {
+		width = canvas.width || canvas.clientWidth;
+	}
+	if (!height) {
+		height = canvas.height || canvas.clientHeight;
+	}
 
 	const pixelWidth = Math.floor(width * dpr);
 	const pixelHeight = Math.floor(height * dpr);
@@ -637,21 +663,26 @@ export function createRenderer<TState>(options: RendererOptions<TState>): Render
 		const maybeResizeObserver = (globalWindow as { ResizeObserver?: typeof ResizeObserver })
 			.ResizeObserver;
 
+		// Fixed-position canvases rely on viewport changes, so always listen for window resizes
+		// while keeping ResizeObserver for DOM-driven dimension changes.
+		const resizeHandler = () => resize();
+		globalWindow.addEventListener('resize', resizeHandler);
+		windowResizeListener = resizeHandler;
+		disposers.add(() => {
+			globalWindow.removeEventListener('resize', resizeHandler);
+			windowResizeListener = null;
+		});
+
 		if (typeof maybeResizeObserver === 'function') {
 			resizeObserver = new maybeResizeObserver(() => resize());
 			resizeObserver.observe(canvas);
-			disposers.add(() => resizeObserver?.disconnect());
-		} else {
-			const resizeHandler = () => resize();
-			globalWindow.addEventListener('resize', resizeHandler);
-			windowResizeListener = resizeHandler;
 			disposers.add(() => {
-				if (windowResizeListener) {
-					globalWindow.removeEventListener('resize', windowResizeListener);
-					windowResizeListener = null;
-				}
+				resizeObserver?.disconnect();
+				resizeObserver = null;
 			});
 		}
+
+		resize();
 	}
 
 	const handle: RendererHandle<TState> = {
