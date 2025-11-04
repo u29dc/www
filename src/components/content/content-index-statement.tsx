@@ -16,8 +16,8 @@ import { AnimatedStaggerRedacted } from '@/components/animation/animated-stagger
 
 export function ContentIndexStatement() {
 	return (
-		<div className="h-[50vh] flex flex-col gap-10">
-			<AnimatedBlock stageId="index-statement-title" className="mb-10">
+		<div className="flex flex-col gap-10 my-10">
+			<AnimatedBlock stageId="index-statement-title" className="">
 				<h1>
 					<span className="w-full flex justify-between">
 						<span>An evolving, enigmatic,</span>

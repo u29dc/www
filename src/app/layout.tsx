@@ -17,6 +17,7 @@ import Script from 'next/script';
 import { ThemeProvider } from 'next-themes';
 import type { ReactNode } from 'react';
 import { CoreAppShell } from '@/components/core/core-app-shell';
+import { CoreGrainOverlay } from '@/components/core/core-grain-overlay';
 import { CoreGridOverlay } from '@/components/core/core-grid-overlay';
 import { CoreViewportFix } from '@/components/core/core-viewport-fix';
 import { metadata, viewport } from '@/lib/constants';
@@ -51,11 +52,17 @@ export default async function RootLayout({ children }: RootLayoutProps) {
 							disableTransitionOnChange={true}
 						>
 							{children}
+
+							<CoreGrainOverlay
+								intensity={0.5}
+								grainScale={5.0}
+								animationSpeed={0.1}
+								exposure={0.1}
+							/>
+							<CoreGridOverlay />
 						</ThemeProvider>
 					</CoreAppShell>
 				</ReactLenis>
-
-				<CoreGridOverlay />
 
 				{nonce && <Script src="/empty.js" strategy="afterInteractive" nonce={nonce} />}
 			</body>

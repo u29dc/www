@@ -26,17 +26,28 @@ export default function HomePage() {
 				<LayoutContentBlock id={0} title="statement" colSpanFull={false} className="">
 					<ContentIndexStatement />
 				</LayoutContentBlock>
+
+				<div className="h-[25vh]"></div>
+
 				<LayoutContentBlock id={1} title="artifacts" colSpanFull={true} className="">
 					<ContentIndexArtifacts />
 				</LayoutContentBlock>
+
+				<div className="h-60"></div>
+
 				<LayoutContentBlock id={2} title="axioms" colSpanFull={false} className="">
 					<ContentIndexAxioms />
 				</LayoutContentBlock>
+
+				<div className="h-60"></div>
+
 				{/*
 				<LayoutContentBlock id={3} title="protocols" colSpanFull={false} className="">
 					<ContentIndexProtocols />
 				</LayoutContentBlock>
 				*/}
+
+				{/*<div className="h-60"></div>*/}
 			</LayoutSharedWrapper>
 		</CoreTimelineProvider>
 	);

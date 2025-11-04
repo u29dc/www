@@ -35,14 +35,14 @@ export function LayoutSharedFooterLink({
 			href={link}
 			target="_blank"
 			rel="noopener noreferrer"
-			className="mb-20 flex flex-row gap-2 justify-between"
+			className="group mb-4 py-6 flex flex-row gap-2 justify-between transition duration-200 hover:bg-white hover:text-black"
 		>
 			<div className="">
 				<div className="uppercase">{title}</div>
 				<div className="">{description}</div>
 				<div className="">{children}</div>
 			</div>
-			<div className="">
+			<div className="group-hover:mr-2 transition-all duration-200">
 				<ArrowUpRight size={12} />
 			</div>
 		</a>
@@ -96,6 +96,12 @@ export function LayoutSharedFooter() {
 							</AnimatedStaggerRedacted>
 						</LayoutSharedFooterLink>
 
+						<LayoutSharedFooterLink
+							title="GitHub"
+							description={BUILD.commitSha}
+							link="https://github.com/u29dc/www"
+						/>
+
 						<div></div>
 
 						<AnimatedStaggerRedacted stageId="meta-annotation">
@@ -105,8 +111,6 @@ export function LayoutSharedFooter() {
 								real work; it is the work.
 							</div>
 						</AnimatedStaggerRedacted>
-
-						<div></div>
 
 						<AnimatedStaggerRedacted stageId="meta-annotation">
 							<div className="annotation flex flex-col gap-0 text-right">
@@ -126,23 +130,15 @@ export function LayoutSharedFooter() {
 					/>
 
 					<div className="w-full grid grid-cols-2 gap-4">
-						<LayoutSharedFooterLink
-							title="GitHub"
-							description={BUILD.commitSha}
-							link="https://github.com/u29dc/www"
-						/>
-
-						<div></div>
-
 						<AnimatedStaggerRedacted stageId="meta-annotation">
-							<div className="annotation w-full">
+							<div className="annotation">
 								[ "Man cannot endure his own littleness unless he can translate it
 								into meaningfulness on the largest possible level" — Ernest Becker ]
 							</div>
 						</AnimatedStaggerRedacted>
 
 						<AnimatedStaggerRedacted stageId="meta-annotation">
-							<div className="annotation w-full text-right">U29DC is the attempt</div>
+							<div className="annotation w-full text-right">__U29DC__</div>
 						</AnimatedStaggerRedacted>
 					</div>
 				</div>
