@@ -51,12 +51,12 @@ export function LayoutSharedFooterLink({
 
 export function LayoutSharedFooter() {
 	return (
-		<footer className="padding-standard grid grid-cols-10 w-full bg-black text-white">
+		<footer className="padding-standard grid grid-cols-10 w-full bg-black h-fit min-h-screen text-white">
 			<AtomicGradientBlur position="bottom" size="10rem" fixed={true} />
 
 			<AnimatedBlock
 				stageId="layout-footer-nav"
-				className="col-span-base row-start-2 xl:row-start-1 h-[100rem] max-h-[100vh] z-1001"
+				className="col-span-base row-start-1 z-1001 h-full"
 			>
 				<div className="padding-standard px-0 flex flex-col gap-4 justify-between h-full">
 					<div className="w-full grid grid-cols-2 gap-4">
@@ -96,13 +96,7 @@ export function LayoutSharedFooter() {
 							</AnimatedStaggerRedacted>
 						</LayoutSharedFooterLink>
 
-						<LayoutSharedFooterLink
-							title="GitHub"
-							description={BUILD.commitSha}
-							link="https://github.com/u29dc/www"
-						/>
-
-						<div></div>
+						<div className="h-20 col-span-2"></div>
 
 						<AnimatedStaggerRedacted stageId="meta-annotation">
 							<div className="annotation w-full md:w-[10vw]">
@@ -129,7 +123,15 @@ export function LayoutSharedFooter() {
 						noiseScale={1}
 					/>
 
-					<div className="w-full grid grid-cols-2 gap-4">
+					<div className="w-full grid grid-cols-2 gap-4 font-mono">
+						<LayoutSharedFooterLink
+							title="Source"
+							description={BUILD.commitSha}
+							link="https://github.com/u29dc/www"
+						/>
+
+						<div className="h-20 col-span-2"></div>
+
 						<AnimatedStaggerRedacted stageId="meta-annotation">
 							<div className="annotation">
 								[ "Man cannot endure his own littleness unless he can translate it

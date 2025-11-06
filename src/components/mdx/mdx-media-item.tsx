@@ -18,6 +18,7 @@
  * @module components/mdx/mdx-media_item
  */
 
+import { motion } from 'motion/react';
 import type { SyntheticEvent } from 'react';
 import { useContext, useEffect, useId, useRef } from 'react';
 import { MediaLayoutContext } from '@/components/mdx/mdx-media';
@@ -90,10 +91,48 @@ export function MdxMediaItem({ src, alt }: MdxMediaItemProps) {
 		}
 	}, [id, isVideoFile]);
 
+	const handleViewportEnter = () => {
+		if (!isVideoFile || !mediaRef.current) return;
+
+		const video = mediaRef.current as HTMLVideoElement;
+
+		// Only play if video is ready and not already playing
+		if (video.readyState >= 2 && video.paused) {
+			const playPromise = video.play();
+
+			if (playPromise !== undefined) {
+				playPromise.catch((error) => {
+					// Autoplay blocked or interrupted - silent fail
+					console.debug('Video play blocked:', src, error.name);
+				});
+			}
+		}
+	};
+
+	const handleViewportLeave = () => {
+		if (!isVideoFile || !mediaRef.current) return;
+
+		const video = mediaRef.current as HTMLVideoElement;
+
+		// Only pause if currently playing
+		if (!video.paused) {
+			video.pause();
+		}
+	};
+
 	const flexBasis = context?.getFlexBasis(id) ?? '1';
 
 	return (
-		<div style={{ flexBasis, flexShrink: 0 }} className="h-full">
+		<motion.div
+			style={{ flexBasis, flexShrink: 0 }}
+			className="h-full"
+			initial={{ opacity: 0 }}
+			whileInView={{ opacity: 1 }}
+			viewport={{ once: false, amount: 0.2 }}
+			transition={{ duration: 2.0, ease: [0.22, 1, 0.36, 1] }}
+			onViewportEnter={handleViewportEnter}
+			onViewportLeave={handleViewportLeave}
+		>
 			{isVideoFile ? (
 				<video
 					ref={mediaRef as React.RefObject<HTMLVideoElement>}
@@ -101,7 +140,6 @@ export function MdxMediaItem({ src, alt }: MdxMediaItemProps) {
 					muted
 					loop
 					playsInline
-					autoPlay
 					onLoadedMetadata={handleVideoMetadata}
 					className="media-fill"
 				/>
@@ -116,6 +154,6 @@ export function MdxMediaItem({ src, alt }: MdxMediaItemProps) {
 					className="media-fill"
 				/>
 			)}
-		</div>
+		</motion.div>
 	);
 }

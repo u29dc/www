@@ -12,7 +12,7 @@
 
 import { ContentIndexArtifacts } from '@/components/content/content-index-artifacts';
 import { ContentIndexAxioms } from '@/components/content/content-index-axioms';
-// import { ContentIndexProtocols } from '@/components/content/content-index-protocols';
+import { ContentIndexProtocols } from '@/components/content/content-index-protocols';
 import { ContentIndexStatement } from '@/components/content/content-index-statement';
 import { CoreTimelineProvider } from '@/components/core/core-timeline-provider';
 import { LayoutContentBlock } from '@/components/layout/layout-content-block';
@@ -41,13 +41,11 @@ export default function HomePage() {
 
 				<div className="h-60"></div>
 
-				{/*
 				<LayoutContentBlock id={3} title="protocols" colSpanFull={false} className="">
 					<ContentIndexProtocols />
 				</LayoutContentBlock>
-				*/}
 
-				{/*<div className="h-60"></div>*/}
+				<div className="h-60"></div>
 			</LayoutSharedWrapper>
 		</CoreTimelineProvider>
 	);

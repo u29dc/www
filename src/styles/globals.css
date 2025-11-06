@@ -26,7 +26,7 @@
 
 	html {
 		@apply theme-light;
-		@apply select-none;
+		/*@apply select-none;*/
 		overflow-x: hidden;
 		max-width: 100vw;
 	}
@@ -76,6 +76,8 @@
 	
 	.annotation {
 		@apply font-mono;
+		@apply select-none;
+		@apply pointer-events-none;
 	}
 }
 
@@ -258,7 +260,7 @@
 }
 
 @utility media-fill {
-	@apply h-full w-full object-cover;
+	@apply h-full w-full object-cover transform-gpu;
 }
 
 @utility marker-all {
