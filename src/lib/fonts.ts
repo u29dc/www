@@ -52,3 +52,12 @@ export const firaCode = localFont({
 		'monospace',
 	],
 });
+
+// Professor Handwritten
+export const professor = localFont({
+	src: './fonts/professor-400-normal.woff2',
+	variable: '--font-professor',
+	display: 'swap',
+	preload: true,
+	fallback: ['cursive', 'sans-serif'],
+});

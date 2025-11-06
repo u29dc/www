@@ -7,6 +7,7 @@
 @theme {
 	--font-sans: var(--font-neue-haas);
 	--font-mono: var(--font-fira-code);
+	--font-handwritten: var(--font-professor);
 	--color-white: oklch(100% 0 0);
 	--color-white-faded: oklch(100% 0 0 / 0.25);
 	--color-black: oklch(15% 0 0);
@@ -26,7 +27,7 @@
 
 	html {
 		@apply theme-light;
-		/*@apply select-none;*/
+		@apply select-none;
 		overflow-x: hidden;
 		max-width: 100vw;
 	}
@@ -63,21 +64,11 @@
 		@apply pointer-events-none;
 		@apply select-none;
 	}
+}
 
-	/*
-	a {
-		@apply transition-opacity duration-200;
-	}
-
-	a:hover {
-		@apply opacity-50;
-	}
-	*/
-	
-	.annotation {
-		@apply font-mono;
-		@apply select-none;
-		@apply pointer-events-none;
+@media (hover: hover) and (pointer: fine) {
+	.hover-device\:block {
+		display: block;
 	}
 }
 
@@ -112,8 +103,14 @@
 	@apply text-left font-xs leading-none;
 }
 
+@utility font-handwritten {
+	font-family: var(--font-handwritten);
+	font-weight: 400;
+	@apply text-left font-md normal-case;
+}
+
 @utility cover-hatch {
-	background: repeating-linear-gradient(135deg, black 0px, black 1px, transparent 1px, transparent 2px);
+	background: repeating-linear-gradient(135deg, var(--color-black) 0px, var(--color-black) 1px, transparent 1px, transparent 2px);
 }
 
 /* ================================================== */
@@ -145,6 +142,17 @@
 
 @utility full-container {
 	@apply h-full w-full;
+}
+
+@utility media-fill {
+	@apply h-full w-full object-cover transform-gpu;
+}
+
+@utility scrollbar-hidden {
+	scrollbar-width: none;
+	&::-webkit-scrollbar {
+		display: none;
+	}
 }
 
 /* ================================================== */
@@ -245,23 +253,6 @@
 /* ================================================== */
 /* VISUAL EFFECTS */
 /* ================================================== */
-
-@media (hover: hover) and (pointer: fine) {
-	.hover-device\:block {
-		display: block;
-	}
-}
-
-@utility scrollbar-hidden {
-	scrollbar-width: none;
-	&::-webkit-scrollbar {
-		display: none;
-	}
-}
-
-@utility media-fill {
-	@apply h-full w-full object-cover transform-gpu;
-}
 
 @utility marker-all {
 	position: relative;
