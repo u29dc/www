@@ -1,3 +1,11 @@
+# [1.10.0](https://github.com/u29dc/www/compare/v1.9.0...v1.10.0) (2025-11-06)
+
+
+### Features
+
+* **ui:** add viewport-aware video playback with animations ([a726701](https://github.com/u29dc/www/commit/a7267018e2904c39d224550c3964dc6a4bf1afc6))
+* **ui:** implement protocols section with map/lab/com cards ([ccf0b67](https://github.com/u29dc/www/commit/ccf0b67f6cff2c70d8554b498af4c7eef46de45e))
+
 # [1.9.0](https://github.com/u29dc/www/compare/v1.8.0...v1.9.0) (2025-11-04)
 
 
