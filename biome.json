@@ -1,5 +1,5 @@
 {
-	"$schema": "https://biomejs.dev/schemas/2.3.2/schema.json",
+	"$schema": "https://biomejs.dev/schemas/2.3.4/schema.json",
 	"vcs": {
 		"enabled": true,
 		"clientKind": "git",
@@ -92,6 +92,15 @@
 				"useNodejsImportProtocol": "error",
 				"noNonNullAssertion": "error",
 				"useTemplate": "warn"
+			},
+			"nursery": {
+				"useSortedClasses": {
+					"level": "warn",
+					"options": {
+						"attributes": ["className", "class", "classList"],
+						"functions": ["clsx", "cva", "tw", "cn"]
+					}
+				}
 			}
 		},
 		"domains": {

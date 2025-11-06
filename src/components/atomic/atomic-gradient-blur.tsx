@@ -181,7 +181,7 @@ export function AtomicGradientBlur(props: AtomicGradientBlurProps) {
 			className={`relative isolate hidden md:block ${config.className}`}
 			style={containerStyle}
 		>
-			<div className="relative full-container">{layers}</div>
+			<div className="full-container relative">{layers}</div>
 			{config.children && <div className="relative">{config.children}</div>}
 		</div>
 	);

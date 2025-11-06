@@ -133,7 +133,7 @@ export function ContentIndexArtifactsList({
 						variants={itemVariants}
 						onMouseEnter={() => setHoveredIndex(index)}
 						className={
-							'relative overflow-visible py-1 -my-1 transition-opacity duration-200 cursor-pointer'
+							'-my-1 relative cursor-pointer overflow-visible py-1 transition-opacity duration-200'
 						}
 						{...(index === lastIndex && { onAnimationComplete: handleComplete })}
 					>
@@ -142,7 +142,7 @@ export function ContentIndexArtifactsList({
 							<div className="hidden hover-device:block">
 								<motion.div
 									layoutId="artifacts-hover-indicator-right"
-									className="pointer-events-none absolute -right-2 md:-right-5 top-1/2 translate-y-[-50%] h-[1px] w-[4px] bg-current"
+									className="-right-2 md:-right-5 pointer-events-none absolute top-1/2 h-[1px] w-[4px] translate-y-[-50%] bg-current"
 									transition={{
 										layout: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
 									}}

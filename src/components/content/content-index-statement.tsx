@@ -16,20 +16,20 @@ import { AnimatedStaggerRedacted } from '@/components/animation/animated-stagger
 
 export function ContentIndexStatement() {
 	return (
-		<div className="flex flex-col gap-10 my-10">
+		<div className="my-10 flex flex-col gap-10">
 			<AnimatedBlock stageId="index-statement-title" className="">
 				<h1>
-					<span className="w-full flex justify-between">
+					<span className="flex w-full justify-between">
 						<span>An evolving, enigmatic,</span>
 						<span>multifaceted</span>
 					</span>
-					<span className="w-full flex justify-between">
+					<span className="flex w-full justify-between">
 						<span>creative practice</span>
 						<span>—</span>
 						<span>turning</span>
 						<span>complex futures into</span>
 					</span>
-					<span className="w-full flex justify-between">
+					<span className="flex w-full justify-between">
 						<span>decision grade narratives.</span>
 					</span>
 				</h1>
@@ -55,14 +55,14 @@ export function ContentIndexStatement() {
 			</AnimatedStaggerBlur>
 
 			<AnimatedStaggerRedacted stageId="meta-annotation">
-				<div className="annotation w-full md:w-[10vw]">
-					* these positions emerged from questioning what strategic narrative could be
-					beyond marketing ⊞⊞⊞
+				<div className="w-full font-mono md:w-[10vw]">
+					this practice emerged from asking whether narrative work could address
+					complexity rather than reduce it
 				</div>
 			</AnimatedStaggerRedacted>
 
 			<AnimatedStaggerRedacted stageId="meta-annotation" className="self-end line-through">
-				<div className="annotation w-[35vw] md:w-[10vw]">[ thinking in intersections ]</div>
+				<div className="w-[35vw] font-handwritten md:w-[10vw]">IncompleteInfinity</div>
 			</AnimatedStaggerRedacted>
 		</div>
 	);

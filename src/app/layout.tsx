@@ -21,7 +21,7 @@ import { CoreGrainOverlay } from '@/components/core/core-grain-overlay';
 import { CoreGridOverlay } from '@/components/core/core-grid-overlay';
 import { CoreViewportFix } from '@/components/core/core-viewport-fix';
 import { metadata, viewport } from '@/lib/constants';
-import { firaCode, neueHaas } from '@/lib/fonts';
+import { firaCode, neueHaas, professor } from '@/lib/fonts';
 import '@/styles/globals.css';
 
 export { metadata, viewport };
@@ -37,7 +37,7 @@ export default async function RootLayout({ children }: RootLayoutProps) {
 	return (
 		<html
 			lang="en"
-			className={`${neueHaas.variable} ${firaCode.variable}`}
+			className={`${neueHaas.variable} ${firaCode.variable} ${professor.variable}`}
 			suppressHydrationWarning
 		>
 			<head>{nonce && <meta property="csp-nonce" content={nonce} />}</head>

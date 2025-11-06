@@ -67,9 +67,9 @@ export function CoreGridOverlay() {
 	const desktopColumns = useMemo(() => DESKTOP_POSITIONS, []);
 
 	return (
-		<div className="fixed inset-0 z-1200 pointer-events-none px-2 md:px-5">
+		<div className="pointer-events-none fixed inset-0 z-1200 px-2 md:px-5">
 			{/* Mobile: 5 columns */}
-			<div className="block md:hidden h-full w-full relative">
+			<div className="relative block h-full w-full md:hidden">
 				{mobileColumns.map((position, index) => (
 					<motion.div
 						key={`grid-mobile-${position}`}
@@ -88,7 +88,7 @@ export function CoreGridOverlay() {
 			</div>
 
 			{/* Desktop: 10 columns */}
-			<div className="hidden md:block h-full w-full relative">
+			<div className="relative hidden h-full w-full md:block">
 				{desktopColumns.map((position, index) => (
 					<motion.div
 						key={`grid-desktop-${position}`}

@@ -13,6 +13,7 @@
 import { AnimatedStaggerRedacted } from '@/components/animation/animated-stagger-redacted';
 import { ContentIndexArtifactsItem } from '@/components/content/content-index-artifacts-item';
 import { ContentIndexArtifactsList } from '@/components/content/content-index-artifacts-list';
+import { extractMediaFromContent } from '@/lib/mdx-client';
 import { getArtifactsContent } from '@/lib/mdx-server';
 import { isStudy } from '@/lib/mdx-types';
 
@@ -21,9 +22,9 @@ export async function ContentIndexArtifacts() {
 
 	return (
 		<div className="my-10">
-			<AnimatedStaggerRedacted stageId="meta-annotation" className="w-full flex justify-end">
-				<div className="annotation text-right mb-10">
-					work shown represents intersections explored, not expertise claimed
+			<AnimatedStaggerRedacted stageId="meta-annotation" className="flex w-full justify-end">
+				<div className="mb-10 text-right font-mono">
+					the territory between disciplines holds questions specialists cannot ask alone
 				</div>
 			</AnimatedStaggerRedacted>
 
@@ -31,12 +32,14 @@ export async function ContentIndexArtifacts() {
 				{content.map((item) => {
 					const isConfidential =
 						isStudy(item.frontmatter) && (item.frontmatter.isConfidential ?? false);
+					const mediaItems = extractMediaFromContent(item.content);
 					return (
 						<ContentIndexArtifactsItem
 							key={item.frontmatter.slug}
 							item={item}
 							isConfidential={isConfidential}
 							thumbnailUrl={item.frontmatter.thumbnailMedia ?? null}
+							mediaItems={mediaItems}
 						/>
 					);
 				})}

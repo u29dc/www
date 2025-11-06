@@ -18,8 +18,8 @@ export interface MdxParagraphProps {
 
 export function MdxParagraph({ children }: MdxParagraphProps) {
 	return (
-		<div className="grid grid-cols-10 padding-standard">
-			<div className="col-span-base ">{children}</div>
+		<div className="padding-standard grid grid-cols-10">
+			<div className="col-span-base">{children}</div>
 		</div>
 	);
 }

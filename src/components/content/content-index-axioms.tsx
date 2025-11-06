@@ -31,15 +31,15 @@ export function ContentIndexAxiomsItem({
 	return (
 		<AnimatedBlock
 			stageId={stageId}
-			className="border border-current/10 rounded-sm p-4 h-[20rem] flex flex-col justify-between relative"
+			className="relative flex h-[20rem] flex-col justify-between rounded-sm border border-current/10 p-4"
 		>
-			<div className=" z-2">
+			<div className="z-2">
 				<div className="uppercase">{title}</div>
 			</div>
-			<div className="z-2 max-w-full w-2/3">
+			<div className="z-2 w-2/3 max-w-full">
 				<div>{quote}</div>
 				<div>{description}</div>
-				<div className="font-mono absolute right-2 bottom-2 md:right-4 md:bottom-4">
+				<div className="absolute right-2 bottom-2 font-mono md:right-4 md:bottom-4">
 					{id.toString().padStart(3, '0')}
 				</div>
 			</div>
@@ -49,8 +49,8 @@ export function ContentIndexAxiomsItem({
 
 export function ContentIndexAxioms() {
 	return (
-		<div className="grid grid-row-4 gap-y-4 my-10">
-			<div className="flex flex-col gap-0 annotation w-full md:w-1/3">
+		<div className="grid-row-4 my-10 grid gap-y-4">
+			<div className="flex w-full flex-col gap-0 font-mono md:w-1/3">
 				<AnimatedStaggerRedacted stageId="meta-annotation" className="">
 					█▓▒ Three axioms form the architecture of our thinking.
 				</AnimatedStaggerRedacted>
@@ -71,8 +71,8 @@ export function ContentIndexAxioms() {
 				</AnimatedStaggerRedacted>
 			</div>
 
-			<AnimatedStaggerRedacted stageId="meta-annotation" className="w-full flex justify-end">
-				<div className="annotation text-right mb-10">[*]</div>
+			<AnimatedStaggerRedacted stageId="meta-annotation" className="flex w-full justify-end">
+				<div className="mb-10 text-right font-mono">[*]</div>
 			</AnimatedStaggerRedacted>
 
 			<ContentIndexAxiomsItem

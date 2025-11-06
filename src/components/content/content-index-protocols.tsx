@@ -20,7 +20,6 @@ interface ContentIndexProtocolsItemProps {
 	description: string;
 	investment: string;
 	duration: string;
-	requirement?: string;
 }
 
 export function ContentIndexProtocolsItem({
@@ -30,24 +29,22 @@ export function ContentIndexProtocolsItem({
 	description,
 	investment,
 	duration,
-	requirement,
 }: ContentIndexProtocolsItemProps) {
 	return (
 		<AnimatedBlock
 			stageId={stageId}
-			className="border border-current/10 rounded-sm p-4 h-[20rem] flex flex-col justify-between relative"
+			className="relative flex h-[20rem] flex-col justify-between rounded-sm border border-current/10 p-4"
 		>
 			<div>
-				<div className="text-2xl font-bold uppercase mb-2">{title}</div>
+				<div className="mb-2 font-bold text-2xl uppercase">{title}</div>
 				<div className="text-sm opacity-80">{subtitle}</div>
 			</div>
 			<div>
-				{description && <div className="text-sm mb-3  max-w-full w-2/3">{description}</div>}
+				{description && <div className="mb-3 w-2/3 max-w-full text-sm">{description}</div>}
 
-				<div className="text-sm font-mono opacity-80">
+				<div className="font-mono text-sm opacity-80">
 					{investment} | {duration}
 				</div>
-				{requirement && <div className="text-xs opacity-60 italic mt-2">{requirement}</div>}
 			</div>
 		</AnimatedBlock>
 	);
@@ -55,9 +52,9 @@ export function ContentIndexProtocolsItem({
 
 export function ContentIndexProtocols() {
 	return (
-		<div className="flex flex-col gap-8 my-10">
+		<div className="my-10 flex flex-col gap-8">
 			{/* Introduction */}
-			<div className="flex flex-col gap-0 annotation w-full text-right">
+			<div className="flex w-full flex-col gap-0 text-right font-mono">
 				<AnimatedStaggerRedacted stageId="index-protocols-intro" className="">
 					Incomplete Infinity operates through three connected protocols.
 				</AnimatedStaggerRedacted>
@@ -76,16 +73,16 @@ export function ContentIndexProtocols() {
 			</div>
 
 			{/* Protocol Cards */}
-			<div className="grid grid-row-3 gap-y-6">
+			<div className="grid-row-3 grid gap-y-6">
 				<ContentIndexProtocolsItem
 					stageId="index-protocols-map"
 					title="MAP"
 					subtitle="Mapping the territory before choosing direction."
-					description="7-day focused engagement to uncover core questions and determine whether LAB or COM is the right path forward."
+					description="Strategic foundations that prevent building the wrong thing well. Discovery that challenges assumptions before committing resources. Required first step for LAB and COM."
 					investment="£2,000"
-					duration="7 days (credited toward LAB or COM within 60 days)"
-					requirement="Required first step for LAB and COM."
+					duration="7 days"
 				/>
+
 				<ContentIndexProtocolsItem
 					stageId="index-protocols-lab"
 					title="LAB"
@@ -93,8 +90,8 @@ export function ContentIndexProtocols() {
 					description="For organizations facing questions that lack existing vocabulary. Structure: inquiry framework + public prototype (format determined by research question) + briefing monograph + dissemination support."
 					investment="£15,000-35,000"
 					duration="4-8 weeks"
-					requirement="Requires MAP."
 				/>
+
 				<ContentIndexProtocolsItem
 					stageId="index-protocols-com"
 					title="COM"
@@ -102,8 +99,7 @@ export function ContentIndexProtocols() {
 					description="Translating complexity into clarity when choices matter—funding, partnerships, product direction. Narrative System: complete narrative architecture. Ongoing Partnership: sustained narrative stewardship."
 					investment="£20,000-50,000"
 					duration="2-4 weeks"
-					requirement="Requires MAP."
-				/>{' '}
+				/>
 			</div>
 		</div>
 	);
