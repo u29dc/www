@@ -22,8 +22,8 @@ export async function ContentIndexArtifacts() {
 
 	return (
 		<div className="my-10">
-			<AnimatedStaggerRedacted stageId="meta-annotation" className="w-full flex justify-end">
-				<div className="font-mono text-right mb-10">
+			<AnimatedStaggerRedacted stageId="meta-annotation" className="flex w-full justify-end">
+				<div className="mb-10 text-right font-mono">
 					the territory between disciplines holds questions specialists cannot ask alone
 				</div>
 			</AnimatedStaggerRedacted>

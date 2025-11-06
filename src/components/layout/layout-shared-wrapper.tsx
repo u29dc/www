@@ -24,13 +24,13 @@ export interface LayoutSharedWrapperProps {
 export function LayoutSharedWrapper({ type, children, frontmatter }: LayoutSharedWrapperProps) {
 	return (
 		<main className="full-container min-h-screen overflow-x-hidden">
-			<section data-section="header" className="w-full z-1000">
+			<section data-section="header" className="z-1000 w-full">
 				<LayoutSharedHeader type={type} frontmatter={frontmatter} />
 			</section>
 			<section data-section="content" className="w-full">
 				{children}
 			</section>
-			<section data-section="footer" className="w-full z-1100">
+			<section data-section="footer" className="z-1100 w-full">
 				<LayoutSharedFooter />
 			</section>
 		</main>

@@ -44,20 +44,20 @@ export function ContentIndexArtifactsItem({
 	const contentBlock = (
 		// biome-ignore lint/a11y/noStaticElementInteractions: Hover state used for video playback control in child components, not primary interaction
 		<div
-			className={`py-5 pt-2 grid grid-cols-10 relative border-t border-current/10 underline decoration-wavy transition-colors duration-250 ${hoveredIndex === itemIndex && !isConfidential ? 'decoration-current' : 'decoration-transparent'} ${isConfidential ? 'cursor-not-allowed' : ''}`}
+			className={`relative grid grid-cols-10 border-current/10 border-t py-5 pt-2 underline decoration-wavy transition-colors duration-250 ${hoveredIndex === itemIndex && !isConfidential ? 'decoration-current' : 'decoration-transparent'} ${isConfidential ? 'cursor-not-allowed' : ''}`}
 			onMouseEnter={() => setIsHovered(true)}
 			onMouseLeave={() => setIsHovered(false)}
 		>
 			<p className={`col-span-base row-start-1`}>{title.toUpperCase()}</p>
-			<p className="col-span-full row-start-2 md:col-start-3 md:col-span-8 lg:col-start-4 lg:col-span-7 lg:row-start-2 xl:col-start-5 xl:col-span-3 xl:row-start-2 xl:row-span-2 2xl:col-start-2 2xl:col-span-4 normal-case">
+			<p className="col-span-full row-start-2 normal-case md:col-span-8 md:col-start-3 lg:col-span-7 lg:col-start-4 lg:row-start-2 xl:col-span-3 xl:col-start-5 xl:row-span-2 xl:row-start-2 2xl:col-span-4 2xl:col-start-2">
 				{isConfidential ? 'Confidential' : description}
 			</p>
-			<p className="col-span-1 row-start-3 md:col-span-1 md:row-start-2 col-start-1 md:col-start-1">
+			<p className="col-span-1 col-start-1 row-start-3 md:col-span-1 md:col-start-1 md:row-start-2">
 				{isStudy(frontmatter)
 					? new Date(date).getFullYear()
 					: new Date(date).toISOString().slice(0, 10).replace(/-/g, '/')}
 			</p>
-			<p className="col-span-4 row-start-2 -col-start-1 md:col-span-1 md:row-start-1 md:col-start-1 md:pr-5 h-full flex flex-col justify-center text-right md:text-left font-mono">
+			<p className="-col-start-1 col-span-4 row-start-2 flex h-full flex-col justify-center text-right font-mono md:col-span-1 md:col-start-1 md:row-start-1 md:pr-5 md:text-left">
 				<span>{String(new Date(date).toISOString())}</span>
 			</p>
 

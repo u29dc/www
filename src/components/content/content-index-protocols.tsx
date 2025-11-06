@@ -33,16 +33,16 @@ export function ContentIndexProtocolsItem({
 	return (
 		<AnimatedBlock
 			stageId={stageId}
-			className="border border-current/10 rounded-sm p-4 h-[20rem] flex flex-col justify-between relative"
+			className="relative flex h-[20rem] flex-col justify-between rounded-sm border border-current/10 p-4"
 		>
 			<div>
-				<div className="text-2xl font-bold uppercase mb-2">{title}</div>
+				<div className="mb-2 font-bold text-2xl uppercase">{title}</div>
 				<div className="text-sm opacity-80">{subtitle}</div>
 			</div>
 			<div>
-				{description && <div className="text-sm mb-3 max-w-full w-2/3">{description}</div>}
+				{description && <div className="mb-3 w-2/3 max-w-full text-sm">{description}</div>}
 
-				<div className="text-sm font-mono opacity-80">
+				<div className="font-mono text-sm opacity-80">
 					{investment} | {duration}
 				</div>
 			</div>
@@ -52,9 +52,9 @@ export function ContentIndexProtocolsItem({
 
 export function ContentIndexProtocols() {
 	return (
-		<div className="flex flex-col gap-8 my-10">
+		<div className="my-10 flex flex-col gap-8">
 			{/* Introduction */}
-			<div className="flex flex-col gap-0 font-mono w-full text-right">
+			<div className="flex w-full flex-col gap-0 text-right font-mono">
 				<AnimatedStaggerRedacted stageId="index-protocols-intro" className="">
 					Incomplete Infinity operates through three connected protocols.
 				</AnimatedStaggerRedacted>
@@ -73,7 +73,7 @@ export function ContentIndexProtocols() {
 			</div>
 
 			{/* Protocol Cards */}
-			<div className="grid grid-row-3 gap-y-6">
+			<div className="grid-row-3 grid gap-y-6">
 				<ContentIndexProtocolsItem
 					stageId="index-protocols-map"
 					title="MAP"

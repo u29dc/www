@@ -547,7 +547,7 @@ export function CoreGrainOverlay({
 	return (
 		<canvas
 			ref={canvasRef}
-			className={`fixed inset-0 pointer-events-none z-1100 ${className}`}
+			className={`pointer-events-none fixed inset-0 z-1100 ${className}`}
 			style={{ width: '100%', height: '100%' }}
 		/>
 	);

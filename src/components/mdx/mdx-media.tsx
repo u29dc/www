@@ -108,12 +108,12 @@ export function MdxMedia({ src, alt }: MdxMediaProps) {
 	);
 
 	return (
-		<div className="grid grid-cols-10 padding-standard">
+		<div className="padding-standard grid grid-cols-10">
 			<MediaLayoutContext.Provider value={contextValue}>
 				<div
 					ref={containerRef}
 					className={cn(
-						'flex col-start-1 col-span-full transition-opacity duration-300',
+						'col-span-full col-start-1 flex transition-opacity duration-300',
 						isLayoutReady ? 'opacity-100' : 'opacity-0',
 					)}
 					style={calculatedHeight > 0 ? { height: `${calculatedHeight}px` } : {}}

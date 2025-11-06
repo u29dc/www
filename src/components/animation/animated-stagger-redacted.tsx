@@ -166,7 +166,7 @@ export function AnimatedStaggerRedacted({
 							{word}
 						</motion.span>
 						<motion.span
-							className="absolute top-0 bottom-0 left-0 -right-1 will-change-transform transform-gpu cover-hatch"
+							className="-right-1 cover-hatch absolute top-0 bottom-0 left-0 transform-gpu will-change-transform"
 							variants={overlayVariants}
 							custom={wordRevealOrder}
 							{...(isLastWord && { onAnimationComplete: handleComplete })}
