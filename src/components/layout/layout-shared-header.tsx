@@ -32,7 +32,7 @@ export function LayoutSharedHeader({ type, frontmatter, title }: LayoutSharedHea
 				<AtomicGradientBlur
 					position="top"
 					size="15rem"
-					fixed={false}
+					fixed={true}
 					layers={10}
 					className="z-1000"
 				/>

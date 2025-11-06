@@ -55,14 +55,14 @@ export function ContentIndexStatement() {
 			</AnimatedStaggerBlur>
 
 			<AnimatedStaggerRedacted stageId="meta-annotation">
-				<div className="annotation w-full md:w-[10vw]">
-					* these positions emerged from questioning what strategic narrative could be
-					beyond marketing ⊞⊞⊞
+				<div className="font-mono w-full md:w-[10vw]">
+					this practice emerged from asking whether narrative work could address
+					complexity rather than reduce it
 				</div>
 			</AnimatedStaggerRedacted>
 
 			<AnimatedStaggerRedacted stageId="meta-annotation" className="self-end line-through">
-				<div className="annotation w-[35vw] md:w-[10vw]">[ thinking in intersections ]</div>
+				<div className="font-handwritten w-[35vw] md:w-[10vw]">IncompleteInfinity</div>
 			</AnimatedStaggerRedacted>
 		</div>
 	);

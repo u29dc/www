@@ -4,20 +4,20 @@
  * Content Artifacts Item
  *
  * ## SUMMARY
- * Client component rendering individual artifact item with motion thumbnail animation.
+ * Client component rendering individual artifact item with hover-triggered video playback.
  *
  * ## RESPONSIBILITIES
  * - Render artifact item with title, description, date
- * - Animate thumbnail on hover with height transition
+ * - Manage hover state for video playback in thumbnail row
  * - Handle confidential state display
  *
  * @module components/content/content-artifacts-item
  */
 
-import { motion } from 'motion/react';
+import { useState } from 'react';
 import { AnimatedLink } from '@/components/animation/animated-link';
-import { CDN } from '@/lib/constants';
-import { getMediaType, sanitizeMediaFilename } from '@/lib/mdx-client';
+import ContentIndexArtifactsItemThumbnails from '@/components/content/content-index-artifacts-item-thumbnails';
+import type { MediaItem } from '@/lib/mdx-client';
 import { isStudy, type ParsedContent } from '@/lib/mdx-types';
 
 export interface ContentIndexArtifactsItemProps {
@@ -26,98 +26,55 @@ export interface ContentIndexArtifactsItemProps {
 	thumbnailUrl: string | null;
 	hoveredIndex?: number | null;
 	itemIndex?: number;
+	mediaItems: MediaItem[];
 }
 
 export function ContentIndexArtifactsItem({
 	item,
 	isConfidential,
-	thumbnailUrl,
+	thumbnailUrl: _thumbnailUrl,
 	hoveredIndex,
 	itemIndex,
+	mediaItems,
 }: ContentIndexArtifactsItemProps) {
 	const { frontmatter } = item;
 	const { title, slug, description, date } = frontmatter;
-
-	// Prepare thumbnail media
-	const sanitized = thumbnailUrl ? sanitizeMediaFilename(thumbnailUrl) : null;
-	const mediaType = sanitized ? getMediaType(sanitized) : null;
-	const cdnUrl = sanitized ? `${CDN.mediaUrl}${sanitized}` : null;
+	const [isHovered, setIsHovered] = useState(false);
 
 	const contentBlock = (
-		<div className="my-5 grid grid-cols-10 relative">
-			{/* Thumbnail with height animation */}
-			{cdnUrl && mediaType && (
-				<div className="hidden hover-device:block row-start-2 col-start-5 col-span-1 relative">
-					<motion.div
-						initial={{ opacity: 0, height: 0 }}
-						animate={{
-							opacity: hoveredIndex === itemIndex ? 1 : 0,
-							height: hoveredIndex === itemIndex ? '10rem' : 0,
-						}}
-						transition={{
-							opacity: {
-								duration: 0.25,
-								ease:
-									hoveredIndex === itemIndex ? [0, 1, 0.01, 1] : [0.99, 0, 1, 1],
-							},
-							height: {
-								duration: 0.25,
-								ease: [0.22, 1, 0.36, 1],
-							},
-						}}
-						className="pointer-events-none absolute left-0 top-1/2 translate-y-[-50%] w-full overflow-hidden"
-					>
-						{mediaType === 'image' ? (
-							// biome-ignore lint/performance/noImgElement: CDN-optimized thumbnails, Image component unnecessary overhead
-							<img
-								src={cdnUrl}
-								alt=""
-								className="w-full h-full object-cover"
-								loading="eager"
-							/>
-						) : (
-							<video
-								src={cdnUrl}
-								autoPlay
-								muted
-								loop
-								playsInline
-								className="w-full h-full object-cover"
-							/>
-						)}
-					</motion.div>
-					<motion.div
-						initial={{ opacity: 0 }}
-						animate={{ opacity: hoveredIndex === itemIndex ? 1 : 0 }}
-						transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-						className="absolute left-0 top-1/2 -translate-y-[1.6vw]"
-					>
-						<div className="font-mono opacity-20">{cdnUrl}</div>
-					</motion.div>
-				</div>
-			)}
-
-			<p
-				className={`col-span-base row-start-2 underline decoration-wavy transition-colors duration-250 ${hoveredIndex === itemIndex ? 'decoration-current' : 'decoration-transparent'}`}
-			>
-				{title.toUpperCase()}
+		// biome-ignore lint/a11y/noStaticElementInteractions: Hover state used for video playback control in child components, not primary interaction
+		<div
+			className={`py-5 pt-2 grid grid-cols-10 relative border-t border-current/10 underline decoration-wavy transition-colors duration-250 ${hoveredIndex === itemIndex && !isConfidential ? 'decoration-current' : 'decoration-transparent'} ${isConfidential ? 'cursor-not-allowed' : ''}`}
+			onMouseEnter={() => setIsHovered(true)}
+			onMouseLeave={() => setIsHovered(false)}
+		>
+			<p className={`col-span-base row-start-1`}>{title.toUpperCase()}</p>
+			<p className="col-span-full row-start-2 md:col-start-3 md:col-span-8 lg:col-start-4 lg:col-span-7 lg:row-start-2 xl:col-start-5 xl:col-span-3 xl:row-start-2 xl:row-span-2 2xl:col-start-2 2xl:col-span-4 normal-case">
+				{isConfidential ? 'Confidential' : description}
 			</p>
-			<p className="col-span-full row-start-3 md:col-start-3 md:col-span-8 lg:col-start-4 lg:col-span-7 xl:col-start-2 xl:col-span-3 xl:row-start-2 xl:row-span-2 2xl:col-start-2 2xl:col-span-4">
-				{isConfidential ? 'CONFIDENTIAL' : description}
-			</p>
-			<p className="col-span-1 row-start-1 md:col-span-1 md:row-start-2 col-start-1 md:col-start-1">
+			<p className="col-span-1 row-start-3 md:col-span-1 md:row-start-2 col-start-1 md:col-start-1">
 				{isStudy(frontmatter)
 					? new Date(date).getFullYear()
 					: new Date(date).toISOString().slice(0, 10).replace(/-/g, '/')}
 			</p>
-			<p className="col-span-4 row-start-1 md:col-span-1 md:row-start-3 col-start-1 md:col-start-1 md:pr-5 h-full flex flex-col justify-center text-right md:text-left font-mono">
+			<p className="col-span-4 row-start-2 -col-start-1 md:col-span-1 md:row-start-1 md:col-start-1 md:pr-5 h-full flex flex-col justify-center text-right md:text-left font-mono">
 				<span>{String(new Date(date).toISOString())}</span>
 			</p>
+
+			{/* Thumbnail row */}
+			<div className="col-span-base row-start--4 my-4">
+				<ContentIndexArtifactsItemThumbnails
+					mediaItems={mediaItems}
+					slug={slug}
+					maxItems={8}
+					isHovered={isHovered}
+				/>
+			</div>
 		</div>
 	);
 
 	if (isConfidential) {
-		return <div className="cursor-default">{contentBlock}</div>;
+		return <div>{contentBlock}</div>;
 	}
 
 	return <AnimatedLink href={`/${slug}`}>{contentBlock}</AnimatedLink>;

@@ -36,7 +36,7 @@ export function LayoutContentBlock({
 			className={`padding-standard py-0 grid grid-cols-10 mb-30 marker-all ${className || ''}`}
 		>
 			<div className="col-span-base row-start-1 col-start-1 sm:col-start-1 md:col-start-3 lg:col-start-4 xl:col-start-5 2xl:col-start-6 3xl:col-start-7 -col-end-1 font-mono">
-				<div className="text-right md:text-left mb-10 md:mb-5 border-b border-current/10 rounded-sm select-none pointer-events-none">
+				<div className="text-right md:text-left mb-10 md:mb-5 border-b border-current/10 rounded-sm">
 					<div className="">[ {title.toUpperCase()} ]</div>
 				</div>
 			</div>

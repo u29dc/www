@@ -50,7 +50,7 @@ export function ContentIndexAxiomsItem({
 export function ContentIndexAxioms() {
 	return (
 		<div className="grid grid-row-4 gap-y-4 my-10">
-			<div className="flex flex-col gap-0 annotation w-full md:w-1/3">
+			<div className="flex flex-col gap-0 font-mono w-full md:w-1/3">
 				<AnimatedStaggerRedacted stageId="meta-annotation" className="">
 					█▓▒ Three axioms form the architecture of our thinking.
 				</AnimatedStaggerRedacted>
@@ -72,7 +72,7 @@ export function ContentIndexAxioms() {
 			</div>
 
 			<AnimatedStaggerRedacted stageId="meta-annotation" className="w-full flex justify-end">
-				<div className="annotation text-right mb-10">[*]</div>
+				<div className="font-mono text-right mb-10">[*]</div>
 			</AnimatedStaggerRedacted>
 
 			<ContentIndexAxiomsItem
