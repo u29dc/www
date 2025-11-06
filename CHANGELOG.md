@@ -1,3 +1,10 @@
+# [1.11.0](https://github.com/u29dc/www/compare/v1.10.0...v1.11.0) (2025-11-06)
+
+
+### Features
+
+* **ui:** add handwritten font and update footer layout ([4da8173](https://github.com/u29dc/www/commit/4da81736ac2f54e8d4ddcd2b46214ef7a2337186))
+
 # [1.10.0](https://github.com/u29dc/www/compare/v1.9.0...v1.10.0) (2025-11-06)
 
 
