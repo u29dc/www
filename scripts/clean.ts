@@ -5,7 +5,6 @@
  */
 
 import { rm, stat } from 'node:fs/promises';
-import { createServer } from 'node:net';
 import { isAbsolute, join, relative } from 'node:path';
 import { Glob, spawn } from 'bun';
 import { colors, parseFlags, runScript, Timer } from './utils';
@@ -23,9 +22,6 @@ type RemovalResult = {
 const CLEAN_PATHS = ['.next', 'out', 'dist', 'build'] as const;
 const CLEAN_PATTERNS = ['*.tsbuildinfo'] as const;
 const CLEAN_PORTS = [3000, 3001, 3002, 3003] as const;
-const PORT_PROBE_HOST = '127.0.0.1';
-const PORT_RELEASE_TIMEOUT_MS = 1000;
-const PORT_RELEASE_INTERVAL_MS = 25;
 
 // ==================================================
 // UTILITIES
@@ -50,44 +46,7 @@ async function removePath(path: string): Promise<RemovalResult> {
 	}
 }
 
-function createPortProbe(port: number): Promise<boolean> {
-	return new Promise((resolve) => {
-		const server = createServer();
-		const complete = (result: boolean) => {
-			server.removeAllListeners();
-			resolve(result);
-		};
-
-		server.once('error', (error: NodeJS.ErrnoException) => {
-			if (error.code === 'EADDRINUSE') {
-				complete(false);
-				return;
-			}
-			complete(false);
-		});
-
-		server.listen({ port, host: PORT_PROBE_HOST, exclusive: true }, () =>
-			server.close(() => complete(true)),
-		);
-	});
-}
-
-async function isPortAvailable(port: number): Promise<boolean> {
-	try {
-		return await createPortProbe(port);
-	} catch {
-		return false;
-	}
-}
-
-async function detectBusyPorts(ports: readonly number[]): Promise<number[]> {
-	const results = await Promise.all(
-		ports.map(async (port) => ({ port, available: await isPortAvailable(port) })),
-	);
-	return results.filter((result) => !result.available).map((result) => result.port);
-}
-
-async function collectBusyPids(ports: number[]): Promise<Set<number>> {
+async function collectBusyPids(ports: readonly number[]): Promise<Set<number>> {
 	if (ports.length === 0) return new Set();
 	const args = ['lsof', '-nP', '-t', ...ports.map((port) => `-i:${port}`)];
 	const proc = spawn(args, { stdout: 'pipe', stderr: 'pipe' });
@@ -114,19 +73,6 @@ function signalProcesses(pids: Set<number>): void {
 			// Process already exited; ignore
 		}
 	}
-}
-
-async function waitForPortRelease(port: number): Promise<boolean> {
-	const deadline = performance.now() + PORT_RELEASE_TIMEOUT_MS;
-	while (performance.now() < deadline) {
-		if (await isPortAvailable(port)) return true;
-		await Bun.sleep(PORT_RELEASE_INTERVAL_MS);
-	}
-	return false;
-}
-
-async function waitForPorts(ports: number[]): Promise<void> {
-	await Promise.all(ports.map((port) => waitForPortRelease(port)));
 }
 
 function queueRemoval(targetPath: string, label: string | undefined): Promise<RemovalResult> {
@@ -162,17 +108,11 @@ function queueArtifactRemovals(): Promise<RemovalResult>[] {
 	return removalTasks;
 }
 
-async function cleanPorts(): Promise<number> {
-	const busyPorts = await detectBusyPorts(CLEAN_PORTS);
-	if (busyPorts.length === 0) return 0;
-
-	const pids = await collectBusyPids(busyPorts);
-	if (pids.size === 0) return 0;
-
-	signalProcesses(pids);
-	await waitForPorts(busyPorts);
-	const availability = await Promise.all(busyPorts.map((port) => isPortAvailable(port)));
-	return availability.filter(Boolean).length;
+async function cleanPorts(): Promise<void> {
+	const pids = await collectBusyPids(CLEAN_PORTS);
+	if (pids.size > 0) {
+		signalProcesses(pids);
+	}
 }
 
 // ==================================================
@@ -197,13 +137,7 @@ function reportRemovalResults(removalResults: RemovalResult[]): {
 	return { cleanedCount, failureCount };
 }
 
-function printCleanupSummary(
-	cleanedCount: number,
-	portsKilled: number,
-	failureCount: number,
-	skipPorts: boolean,
-	timer: Timer,
-): void {
+function printCleanupSummary(cleanedCount: number, failureCount: number, timer: Timer): void {
 	if (failureCount > 0) {
 		const failureWord = failureCount === 1 ? 'failure' : 'failures';
 		const artifactWord = cleanedCount === 1 ? 'artifact' : 'artifacts';
@@ -213,12 +147,8 @@ function printCleanupSummary(
 		process.exitCode = 1;
 	} else {
 		const artifactWord = cleanedCount === 1 ? 'artifact' : 'artifacts';
-		const portSummary =
-			skipPorts || portsKilled === 0
-				? ''
-				: `, cleared ${portsKilled} ${portsKilled === 1 ? 'port' : 'ports'}`;
 		console.log(
-			`${colors.blue}Cleaned ${cleanedCount} ${artifactWord}${portSummary} in ${timer.elapsedFormatted()}.${colors.reset}`,
+			`${colors.blue}Cleaned ${cleanedCount} ${artifactWord} in ${timer.elapsedFormatted()}.${colors.reset}`,
 		);
 	}
 }
@@ -242,11 +172,13 @@ async function main(): Promise<void> {
 	const removalResults = await Promise.all(removalTasks);
 
 	// Clean ports if not skipped
-	const portsKilled = skipPorts ? 0 : await cleanPorts();
+	if (!skipPorts) {
+		await cleanPorts();
+	}
 
 	// Report results and print summary
 	const { cleanedCount, failureCount } = reportRemovalResults(removalResults);
-	printCleanupSummary(cleanedCount, portsKilled, failureCount, skipPorts, timer);
+	printCleanupSummary(cleanedCount, failureCount, timer);
 }
 
 // Run if this is the main module
