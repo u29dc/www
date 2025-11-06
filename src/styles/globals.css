@@ -260,7 +260,7 @@
 }
 
 @utility media-fill {
-	@apply h-full w-full object-cover;
+	@apply h-full w-full object-cover transform-gpu;
 }
 
 @utility marker-all {
