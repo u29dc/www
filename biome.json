@@ -92,6 +92,15 @@
 				"useNodejsImportProtocol": "error",
 				"noNonNullAssertion": "error",
 				"useTemplate": "warn"
+			},
+			"nursery": {
+				"useSortedClasses": {
+					"level": "warn",
+					"options": {
+						"attributes": ["className", "class", "classList"],
+						"functions": ["clsx", "cva", "tw", "cn"]
+					}
+				}
 			}
 		},
 		"domains": {

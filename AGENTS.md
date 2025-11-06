@@ -16,6 +16,7 @@ Global CLAUDE.md rules inherited. Project-specific architecture and overrides on
 **MCP Tooling Access:** Project includes Next.js DevTools MCP Server providing direct access to official documentation and runtime introspection.
 
 **Documentation Lookup Priority:**
+
 1. **Primary:** MCP Server (`mcp__next-devtools__nextjs_docs`) for current Next.js 16+ information
 2. **LLM-Optimized:** https://nextjs.org/docs/llms.txt for comprehensive structured documentation
 3. **GitHub Direct:** `gitingest https://github.com/vercel/next.js/tree/canary/docs -o -` for latest features
@@ -24,6 +25,7 @@ Global CLAUDE.md rules inherited. Project-specific architecture and overrides on
 **When in doubt:** ALWAYS consult official documentation via MCP or gitingest before making assumptions about Next.js 16 behavior. Framework knowledge cutoff may be outdated for breaking changes.
 
 **Framework-Specific Resources:**
+
 1. **Next.js 16**: Use MCP or https://nextjs.org/docs/llms.txt. For GitHub: `gitingest https://github.com/vercel/next.js/tree/canary/docs -o -`. Focus subfolders with `-i "**/[pattern]*.mdx"`. Stream to terminal `-o -`, never create files. CRITICAL: Verify Next.js 16 breaking changes (middleware→proxy rename, async request APIs).
 2. **React 19**: New hooks (`use`, `useActionState`, `useFormStatus`, `useOptimistic`) over React 18 patterns. Avoid deprecated (string refs, legacy context). React Compiler auto-optimizes, minimize manual `useMemo`/`useCallback`/`memo`. Ref as prop instead of forwardRef. Action-oriented mutations.
 3. **Tailwind CSS 4**: PostCSS architecture (`@tailwindcss/postcss`), breaking changes from v3. CSS-first configuration. Fetch v4 docs for new patterns.
@@ -48,3 +50,4 @@ Global CLAUDE.md rules inherited. Project-specific architecture and overrides on
 3. **No Emojis**: Strictly forbidden. Enforced via `util:patterns`.
 4. **Mobile Safari**: Viewport height fix (`src/components/core/core-viewport-fix.tsx`) critical for full-height layouts, scroll consistency.
 5. **JSDoc Format**: Complex components use SUMMARY/RESPONSIBILITIES/USAGE/KEY FLOWS. See proxy.ts, lib/logger.ts, core-viewport-fix.tsx.
+6. **Tailwind Class Sorting**: Biome's `useSortedClasses` rule (experimental/nursery) enforces consistent class ordering across all components. Sorting pattern: negative values first (e.g., `-right-1`), then layout/positioning, display, sizing, spacing, typography, with responsive modifiers grouped by breakpoint. Custom classes may appear in non-standard positions but are consistently sorted. Suppress when needed: `// biome-ignore lint/nursery/useSortedClasses: <reason>`. Claude AI should match Biome's sorting order when writing/editing components, prioritizing consistency over conventional Tailwind ordering.
