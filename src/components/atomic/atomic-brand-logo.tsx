@@ -377,11 +377,37 @@ function createAtomicBrandLogoModule(): RendererModule<AtomicBrandLogoState> {
 				checkGlError('pointerMove');
 			};
 
-			document.addEventListener('pointermove', handlePointerMove);
-			document.addEventListener('mousemove', handlePointerMove);
+			// Canvas-scoped pointer tracking: only track when cursor is over canvas
+			let isTracking = false;
+
+			const handlePointerEnter = () => {
+				if (!isTracking) {
+					canvas.addEventListener('pointermove', handlePointerMove);
+					canvas.addEventListener('mousemove', handlePointerMove);
+					isTracking = true;
+				}
+			};
+
+			const handlePointerLeave = () => {
+				if (isTracking) {
+					canvas.removeEventListener('pointermove', handlePointerMove);
+					canvas.removeEventListener('mousemove', handlePointerMove);
+					isTracking = false;
+					// Keep last known position - allows smooth re-entry without visual jump
+					// Damping system naturally handles the transition
+				}
+			};
+
+			canvas.addEventListener('pointerenter', handlePointerEnter);
+			canvas.addEventListener('pointerleave', handlePointerLeave);
+
 			registerDisposer(() => {
-				document.removeEventListener('pointermove', handlePointerMove);
-				document.removeEventListener('mousemove', handlePointerMove);
+				canvas.removeEventListener('pointerenter', handlePointerEnter);
+				canvas.removeEventListener('pointerleave', handlePointerLeave);
+				if (isTracking) {
+					canvas.removeEventListener('pointermove', handlePointerMove);
+					canvas.removeEventListener('mousemove', handlePointerMove);
+				}
 			});
 
 			registerDisposer(() => {

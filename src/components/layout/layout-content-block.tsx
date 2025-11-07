@@ -33,7 +33,7 @@ export function LayoutContentBlock({
 		<div
 			data-id={id}
 			data-title={title}
-			className={`padding-standard marker-all mb-30 grid grid-cols-10 py-0 ${className || ''}`}
+			className={`padding-standard marker-all grid grid-cols-10 py-0 ${className || ''}`}
 		>
 			<div className="-col-end-1 col-span-base 3xl:col-start-7 col-start-1 row-start-1 font-mono sm:col-start-1 md:col-start-3 lg:col-start-4 xl:col-start-5 2xl:col-start-6">
 				<div className="mb-10 rounded-sm border-current/10 border-b text-right md:mb-5 md:text-left">

@@ -21,6 +21,7 @@
 import { motion } from 'motion/react';
 import type { SyntheticEvent } from 'react';
 import { useContext, useEffect, useId, useRef } from 'react';
+import { AtomicImage, AtomicVideo } from '@/components/atomic/atomic-media';
 import { MediaLayoutContext } from '@/components/mdx/mdx-media';
 import { CDN } from '@/lib/constants';
 
@@ -57,7 +58,8 @@ function getLoadedAspectRatio(
 export function MdxMediaItem({ src, alt }: MdxMediaItemProps) {
 	const id = useId();
 	const context = useContext(MediaLayoutContext);
-	const mediaRef = useRef<HTMLImageElement | HTMLVideoElement>(null);
+	const imageRef = useRef<HTMLImageElement>(null);
+	const videoRef = useRef<HTMLVideoElement>(null);
 	const fullUrl = `${CDN.mediaUrl}${src}`;
 	const isVideoFile = isVideo(src);
 
@@ -81,7 +83,7 @@ export function MdxMediaItem({ src, alt }: MdxMediaItemProps) {
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: context omitted to prevent infinite loops
 	useEffect(() => {
-		const element = mediaRef.current;
+		const element = isVideoFile ? videoRef.current : imageRef.current;
 		if (!element || !context) return;
 
 		const aspectRatio = getLoadedAspectRatio(element, isVideoFile);
@@ -92,9 +94,9 @@ export function MdxMediaItem({ src, alt }: MdxMediaItemProps) {
 	}, [id, isVideoFile]);
 
 	const handleViewportEnter = () => {
-		if (!isVideoFile || !mediaRef.current) return;
+		if (!isVideoFile || !videoRef.current) return;
 
-		const video = mediaRef.current as HTMLVideoElement;
+		const video = videoRef.current;
 
 		// Only play if video is ready and not already playing
 		if (video.readyState >= 2 && video.paused) {
@@ -110,9 +112,9 @@ export function MdxMediaItem({ src, alt }: MdxMediaItemProps) {
 	};
 
 	const handleViewportLeave = () => {
-		if (!isVideoFile || !mediaRef.current) return;
+		if (!isVideoFile || !videoRef.current) return;
 
-		const video = mediaRef.current as HTMLVideoElement;
+		const video = videoRef.current;
 
 		// Only pause if currently playing
 		if (!video.paused) {
@@ -134,24 +136,17 @@ export function MdxMediaItem({ src, alt }: MdxMediaItemProps) {
 			onViewportLeave={handleViewportLeave}
 		>
 			{isVideoFile ? (
-				<video
-					ref={mediaRef as React.RefObject<HTMLVideoElement>}
+				<AtomicVideo
+					videoRef={videoRef}
 					src={fullUrl}
-					muted
-					loop
-					playsInline
 					onLoadedMetadata={handleVideoMetadata}
-					className="media-fill"
 				/>
 			) : (
-				// biome-ignore lint/performance/noImgElement: MDX content requires direct HTML img control
-				<img
-					ref={mediaRef as React.RefObject<HTMLImageElement>}
+				<AtomicImage
+					imageRef={imageRef}
 					src={fullUrl}
 					alt={alt || ''}
-					loading="lazy"
 					onLoad={handleImageLoad}
-					className="media-fill"
 				/>
 			)}
 		</motion.div>

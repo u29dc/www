@@ -14,6 +14,7 @@
 
 import type { LoggerInstance } from '@/lib/logger';
 import { logEvent, logger as rootLogger } from '@/lib/logger';
+import { detectDeviceTier } from '@/lib/performance';
 
 export interface GraphicsContext {
 	gl: WebGL2RenderingContext;
@@ -225,7 +226,9 @@ export function createGraphicsContext(
 	};
 }
 
-const DEFAULT_DPR_CAP = 3;
+// Tier-based DPR caps: low-end devices use 1, medium use 1.5, high-end use 2
+const tier = typeof window !== 'undefined' ? detectDeviceTier() : 'high';
+const DEFAULT_DPR_CAP = tier === 'low' ? 1 : tier === 'medium' ? 1.5 : 2;
 
 export function measureCanvas(
 	canvas: HTMLCanvasElement,
@@ -273,6 +276,40 @@ export function measureCanvas(
 		dpr,
 		pixelWidth,
 		pixelHeight,
+	};
+}
+
+// Creates a visibility controller that monitors both document visibility
+// and canvas intersection to optimize rendering performance.
+function createVisibilityController(canvas: HTMLCanvasElement) {
+	let isDocumentVisible = document.visibilityState === 'visible';
+	let isIntersecting = false;
+
+	// Document visibility listener
+	const handleVisibilityChange = () => {
+		isDocumentVisible = document.visibilityState === 'visible';
+	};
+	document.addEventListener('visibilitychange', handleVisibilityChange);
+
+	// IntersectionObserver for canvas viewport intersection
+	const observer = new IntersectionObserver(
+		(entries) => {
+			const entry = entries[0];
+			if (entry) {
+				isIntersecting = entry.isIntersecting;
+			}
+		},
+		{ rootMargin: '0px', threshold: 0 },
+	);
+	observer.observe(canvas);
+
+	return {
+		shouldRender: (): boolean => isDocumentVisible && isIntersecting,
+
+		dispose: (): void => {
+			document.removeEventListener('visibilitychange', handleVisibilityChange);
+			observer.disconnect();
+		},
 	};
 }
 
@@ -515,26 +552,58 @@ export function createRenderer<TState>(options: RendererOptions<TState>): Render
 	let dimensions: CanvasDimensions = measureCanvas(canvas, dprCap);
 	applyCanvasSize(context, dimensions);
 
-	const disposers = new Set<() => void>();
-	const lifecycle: ModuleLifecycle<TState>[] = modules.map((module) => {
-		const moduleLogger = scopedLogger.child({ module: module.id });
-		return module.onInit({
-			context,
-			dimensions,
-			state,
-			logger: moduleLogger,
-			registerDisposer(disposer) {
-				disposers.add(disposer);
-			},
+	const moduleDisposers = new Set<() => void>();
+	const runtimeDisposers = new Set<() => void>();
+
+	const flushDisposers = (set: Set<() => void>, { logErrors }: { logErrors: boolean }) => {
+		set.forEach((fn) => {
+			if (!fn) return;
+			try {
+				fn();
+			} catch (error) {
+				if (logErrors) {
+					logEvent('WEBGL', 'DISPOSE', 'ERROR', {
+						errorMessage: error instanceof Error ? error.message : String(error),
+						errorStack: error instanceof Error ? error.stack : undefined,
+					});
+				}
+			}
 		});
-	});
+		set.clear();
+	};
+
+	// Helper to initialize modules (used on startup and after context restore)
+	const initializeModules = (): ModuleLifecycle<TState>[] => {
+		return modules.map((module) => {
+			const moduleLogger = scopedLogger.child({ module: module.id });
+			return module.onInit({
+				context,
+				dimensions,
+				state,
+				logger: moduleLogger,
+				registerDisposer(disposer) {
+					moduleDisposers.add(disposer);
+				},
+			});
+		});
+	};
+
+	// Helper to clean up module disposers (prevents leaks during module re-init)
+	const resetModuleDisposers = () => {
+		flushDisposers(moduleDisposers, { logErrors: false });
+	};
+
+	let lifecycle: ModuleLifecycle<TState>[] = initializeModules();
 
 	let isRunning = false;
 	let isDisposed = false;
+	let needsReinit = false;
+	let wasRunningBeforeLoss = false;
 	let lastTimestamp = 0;
 	let rafRelease: (() => void) | null = null;
 	let resizeObserver: ResizeObserver | null = null;
 	let windowResizeListener: (() => void) | null = null;
+	let visibilityController: ReturnType<typeof createVisibilityController> | null = null;
 
 	const notifyResize = (nextDimensions: CanvasDimensions) => {
 		dimensions = nextDimensions;
@@ -569,8 +638,15 @@ export function createRenderer<TState>(options: RendererOptions<TState>): Render
 			lastTimestamp = timestamp;
 		}
 
+		// Calculate delta and update timestamp BEFORE visibility check
+		// This prevents stale timestamps when canvas is hidden for extended periods
 		const delta = timestamp - lastTimestamp;
 		lastTimestamp = timestamp;
+
+		// Skip rendering if canvas is not visible
+		if (visibilityController && !visibilityController.shouldRender()) {
+			return;
+		}
 		const frame: FrameInfo = {
 			now: timestamp,
 			delta,
@@ -589,9 +665,22 @@ export function createRenderer<TState>(options: RendererOptions<TState>): Render
 			logEvent('WEBGL', 'RENDERER', 'NOOP', { reason: 'window-unavailable' });
 			return;
 		}
+		if (needsReinit) {
+			logEvent('WEBGL', 'RENDERER', 'NOOP', { reason: 'context-lost-awaiting-restore' });
+			return;
+		}
 
 		isRunning = true;
 		lastTimestamp = 0;
+
+		// Initialize visibility controller for automatic pause when hidden
+		if (!visibilityController) {
+			visibilityController = createVisibilityController(canvas);
+			runtimeDisposers.add(() => {
+				visibilityController?.dispose();
+				visibilityController = null;
+			});
+		}
 
 		if (rafManager) {
 			rafRelease = rafManager.subscribe(tick);
@@ -634,17 +723,8 @@ export function createRenderer<TState>(options: RendererOptions<TState>): Render
 			moduleRuntime.onDispose?.();
 		});
 
-		disposers.forEach((disposer) => {
-			try {
-				disposer();
-			} catch (error) {
-				logEvent('WEBGL', 'DISPOSE', 'ERROR', {
-					errorMessage: error instanceof Error ? error.message : String(error),
-					errorStack: error instanceof Error ? error.stack : undefined,
-				});
-			}
-		});
-		disposers.clear();
+		flushDisposers(moduleDisposers, { logErrors: true });
+		flushDisposers(runtimeDisposers, { logErrors: true });
 
 		if (resizeObserver) {
 			resizeObserver.disconnect();
@@ -668,7 +748,7 @@ export function createRenderer<TState>(options: RendererOptions<TState>): Render
 		const resizeHandler = () => resize();
 		globalWindow.addEventListener('resize', resizeHandler);
 		windowResizeListener = resizeHandler;
-		disposers.add(() => {
+		runtimeDisposers.add(() => {
 			globalWindow.removeEventListener('resize', resizeHandler);
 			windowResizeListener = null;
 		});
@@ -676,13 +756,56 @@ export function createRenderer<TState>(options: RendererOptions<TState>): Render
 		if (typeof maybeResizeObserver === 'function') {
 			resizeObserver = new maybeResizeObserver(() => resize());
 			resizeObserver.observe(canvas);
-			disposers.add(() => {
+			runtimeDisposers.add(() => {
 				resizeObserver?.disconnect();
 				resizeObserver = null;
 			});
 		}
 
 		resize();
+	}
+
+	// WebGL context loss/restore handling
+	if (typeof window !== 'undefined') {
+		const handleContextLost = (event: Event) => {
+			event.preventDefault(); // Prevent default context loss behavior
+			logEvent('WEBGL', 'CONTEXT', 'LOST', { recoverable: true, label });
+			wasRunningBeforeLoss = isRunning; // Capture state before stopping
+			stop(); // Stop render loop
+			needsReinit = true;
+		};
+
+		const handleContextRestored = () => {
+			logEvent('WEBGL', 'CONTEXT', 'RESTORED', { label });
+			needsReinit = false;
+
+			// Dispose old module runtimes
+			lifecycle.forEach((moduleRuntime) => {
+				moduleRuntime.onDispose?.();
+			});
+
+			// Clear existing module disposers to prevent leaks and duplicate listeners
+			resetModuleDisposers();
+
+			// Rebuild GPU resources by re-initializing modules
+			lifecycle = initializeModules();
+
+			// Reapply canvas sizing after context restore
+			applyCanvasSize(context, dimensions);
+
+			// Restart only if was running before loss (respects manual start/stop)
+			if (wasRunningBeforeLoss) {
+				start();
+			}
+		};
+
+		canvas.addEventListener('webglcontextlost', handleContextLost);
+		canvas.addEventListener('webglcontextrestored', handleContextRestored);
+
+		runtimeDisposers.add(() => {
+			canvas.removeEventListener('webglcontextlost', handleContextLost);
+			canvas.removeEventListener('webglcontextrestored', handleContextRestored);
+		});
 	}
 
 	const handle: RendererHandle<TState> = {
