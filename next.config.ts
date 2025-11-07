@@ -41,14 +41,8 @@ const nextConfig: NextConfig = {
 	async rewrites() {
 		return {
 			afterFiles: [
-				{
-					source: '/:slug.md',
-					destination: '/api/raw/md/:slug',
-				},
-				{
-					source: '/:slug.txt',
-					destination: '/api/raw/txt/:slug',
-				},
+				{ source: '/:slug.md', destination: '/api/raw/md/:slug' },
+				{ source: '/:slug.txt', destination: '/api/raw/txt/:slug' },
 			],
 		};
 	},

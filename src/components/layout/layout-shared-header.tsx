@@ -33,7 +33,7 @@ export function LayoutSharedHeader({ type, frontmatter, title }: LayoutSharedHea
 					position="top"
 					size="15rem"
 					fixed={true}
-					layers={10}
+					layers={5}
 					className="z-1000"
 				/>
 

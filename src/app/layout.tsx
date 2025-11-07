@@ -6,19 +6,15 @@
  *
  * ## RESPONSIBILITIES
  * - Apply global styles, fonts, and SSR theme class to prevent FOUC
- * - Initialize CSP nonce system and theme providers
+ * - Initialize CSP nonce system and consolidated app shell
  *
  * @module app/layout
  */
 
-import { ReactLenis } from 'lenis/react';
 import { headers } from 'next/headers';
 import Script from 'next/script';
-import { ThemeProvider } from 'next-themes';
 import type { ReactNode } from 'react';
 import { CoreAppShell } from '@/components/core/core-app-shell';
-import { CoreGrainOverlay } from '@/components/core/core-grain-overlay';
-import { CoreGridOverlay } from '@/components/core/core-grid-overlay';
 import { CoreViewportFix } from '@/components/core/core-viewport-fix';
 import { metadata, viewport } from '@/lib/constants';
 import { firaCode, neueHaas, professor } from '@/lib/fonts';
@@ -42,27 +38,8 @@ export default async function RootLayout({ children }: RootLayoutProps) {
 		>
 			<head>{nonce && <meta property="csp-nonce" content={nonce} />}</head>
 			<body className="min-h-screen font-sm">
-				<ReactLenis root options={{ lerp: 0.05 }}>
-					<CoreViewportFix />
-					<CoreAppShell>
-						<ThemeProvider
-							attribute="class"
-							defaultTheme="light"
-							enableSystem={false}
-							disableTransitionOnChange={true}
-						>
-							{children}
-
-							<CoreGrainOverlay
-								intensity={0.5}
-								grainScale={5.0}
-								animationSpeed={0.1}
-								exposure={0.1}
-							/>
-							<CoreGridOverlay />
-						</ThemeProvider>
-					</CoreAppShell>
-				</ReactLenis>
+				<CoreViewportFix />
+				<CoreAppShell>{children}</CoreAppShell>
 
 				{nonce && <Script src="/empty.js" strategy="afterInteractive" nonce={nonce} />}
 			</body>
