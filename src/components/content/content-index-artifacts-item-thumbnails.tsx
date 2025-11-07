@@ -16,6 +16,7 @@
  */
 
 import { useEffect, useRef } from 'react';
+import { AtomicImage, AtomicVideo } from '@/components/atomic/atomic-media';
 import { CDN } from '@/lib/constants';
 import type { MediaItem } from '@/lib/mdx-client';
 
@@ -62,10 +63,10 @@ function hashString(str: string): number {
 }
 
 /**
- * Deterministically select preset based on slug and index
+ * Deterministically select preset based on slug and filename
  */
-function selectPreset(slug: string, index: number): AspectRatioPreset {
-	const hash = hashString(`${slug}-${index}`);
+function selectPreset(slug: string, filename: string): AspectRatioPreset {
+	const hash = hashString(`${slug}-${filename}`);
 	const presetIndex = hash % ASPECT_RATIO_PRESETS.length;
 	return ASPECT_RATIO_PRESETS[presetIndex] as AspectRatioPreset;
 }
@@ -97,7 +98,7 @@ export default function ContentIndexArtifactsItemThumbnails({
 	maxItems = 4,
 	isHovered,
 }: ContentIndexArtifactsItemThumbnailsProps) {
-	const videoRefs = useRef<Map<number, HTMLVideoElement>>(new Map());
+	const videoRefs = useRef<Map<string, HTMLVideoElement>>(new Map());
 
 	// Limit items if maxItems is set (0 means unlimited)
 	const displayItems = maxItems > 0 ? mediaItems.slice(0, maxItems) : mediaItems;
@@ -134,35 +135,31 @@ export default function ContentIndexArtifactsItemThumbnails({
 			className={`flex gap-2 transition-all duration-300 ease-out ${isHovered ? 'opacity-100' : 'opacity-90 grayscale'}`}
 		>
 			{displayItems.map((mediaItem, index) => {
-				const preset = selectPreset(slug, index);
+				const uniqueKey = `${mediaItem.filename}-${index}`;
+				const preset = selectPreset(slug, mediaItem.filename);
 				const cdnUrl = `${CDN.mediaUrl}${mediaItem.filename}`;
 
 				return (
 					<div
-						key={`${mediaItem.filename}-${index}`}
-						className="flex-shrink-0"
+						key={uniqueKey}
+						className="shrink-0"
 						style={{
 							aspectRatio: preset.ratio,
 							height: `calc(5rem * ${preset.heightScale})`,
 						}}
 					>
 						{mediaItem.type === 'image' ? (
-							// biome-ignore lint/performance/noImgElement: CDN-optimized thumbnails, Image component unnecessary overhead
-							<img src={cdnUrl} alt="" className="media-fill" loading="lazy" />
+							<AtomicImage src={cdnUrl} alt={mediaItem.filename} />
 						) : (
-							<video
-								ref={(el) => {
+							<AtomicVideo
+								videoRef={(el) => {
 									if (el) {
-										videoRefs.current.set(index, el);
+										videoRefs.current.set(uniqueKey, el);
 									} else {
-										videoRefs.current.delete(index);
+										videoRefs.current.delete(uniqueKey);
 									}
 								}}
 								src={cdnUrl}
-								muted
-								loop
-								playsInline
-								className="media-fill"
 							/>
 						)}
 					</div>
