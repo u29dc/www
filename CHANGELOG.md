@@ -1,3 +1,10 @@
+## [1.11.1](https://github.com/u29dc/www/compare/v1.11.0...v1.11.1) (2025-11-07)
+
+
+### Performance Improvements
+
+* **core:** add device tier detection and adaptive performance system ([9f842dd](https://github.com/u29dc/www/commit/9f842dd9580ed7f726300bae095600b572dd7f60))
+
 # [1.11.0](https://github.com/u29dc/www/compare/v1.10.0...v1.11.0) (2025-11-06)
 
 
