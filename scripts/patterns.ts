@@ -338,8 +338,10 @@ async function discoverFiles(): Promise<string[]> {
 	return Array.from(selected).sort();
 }
 
-async function readFile(path: string): Promise<FileContext> {
+async function readFile(path: string): Promise<FileContext | null> {
 	const file = Bun.file(path);
+	const exists = await file.exists();
+	if (!exists) return null;
 	const content = await file.text();
 	const ext = extname(path).toLowerCase();
 	const context: FileContext = {
@@ -369,6 +371,7 @@ async function runChecker(): Promise<boolean> {
 		const batchPaths = filePaths.slice(index, index + BATCH_SIZE);
 		const contexts = await Promise.all(batchPaths.map(readFile));
 		for (const file of contexts) {
+			if (!file) continue;
 			for (const summary of summaries) {
 				if (!summary.rule.appliesTo(file)) continue;
 				const violations = summary.rule.check(file);

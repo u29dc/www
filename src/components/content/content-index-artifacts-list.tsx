@@ -14,10 +14,11 @@
  * @module components/content/content-index-artifacts-list
  */
 
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import type { ReactElement, ReactNode } from 'react';
 import { Children, cloneElement, isValidElement, useMemo, useState } from 'react';
 import { logEvent } from '@/lib/logger';
+import { useDeviceTier } from '@/lib/performance';
 import { useTimelineStage } from '@/lib/timeline';
 
 export interface ContentIndexArtifactsListProps {
@@ -25,6 +26,8 @@ export interface ContentIndexArtifactsListProps {
 	children: ReactNode;
 	className?: string;
 	staggerDelay?: number;
+	/** Whether to enable blur animations. Auto-disabled on low-tier devices or with reduced-motion preference. Default: true. */
+	enableBlur?: boolean;
 }
 
 export function ContentIndexArtifactsList({
@@ -32,8 +35,14 @@ export function ContentIndexArtifactsList({
 	children,
 	className,
 	staggerDelay = 0,
+	enableBlur = true,
 }: ContentIndexArtifactsListProps) {
 	const { stage, variant, advanceStage, stageConfig } = useTimelineStage(stageId);
+
+	// Device-aware blur detection (reactive to motion preference changes)
+	const tier = useDeviceTier();
+	const prefersReducedMotion = useReducedMotion();
+	const blurAllowed = enableBlur && tier !== 'low' && !prefersReducedMotion;
 
 	// Hover indicator state
 	const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -83,22 +92,26 @@ export function ContentIndexArtifactsList({
 		},
 	};
 
-	const itemVariants = {
-		hidden: {
-			opacity: 0,
-			y: -10,
-			filter: 'blur(5px)',
-		},
-		visible: {
-			opacity: 1,
-			y: 0,
-			filter: 'blur(0px)',
-			transition: {
-				duration: 0.5,
-				ease: [0.22, 1, 0.36, 1] as const,
+	const itemVariants = useMemo(
+		() => ({
+			hidden: {
+				opacity: 0,
+				y: -10,
+				// Conditionally apply blur filter
+				...(blurAllowed && { filter: 'blur(5px)' }),
 			},
-		},
-	};
+			visible: {
+				opacity: 1,
+				y: 0,
+				filter: 'blur(0px)',
+				transition: {
+					duration: 0.5,
+					ease: [0.22, 1, 0.36, 1] as const,
+				},
+			},
+		}),
+		[blurAllowed],
+	);
 
 	const lastIndex = childArray.length - 1;
 

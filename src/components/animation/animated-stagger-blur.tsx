@@ -12,11 +12,12 @@
  * @module components/animation/animated-stagger-blur
  */
 
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import type { ReactElement, ReactNode } from 'react';
 import { Children, cloneElement, isValidElement, useMemo } from 'react';
 import { extractTextContent, findLastWordIndex, isWhitespace, splitTextIntoWords } from '@/lib/dom';
 import { logEvent } from '@/lib/logger';
+import { useDeviceTier } from '@/lib/performance';
 import { useTimelineStage } from '@/lib/timeline';
 
 export interface AnimatedStaggerBlurProps {
@@ -25,8 +26,11 @@ export interface AnimatedStaggerBlurProps {
 	className?: string;
 	staggerDelay?: number;
 	elementStagger?: number;
+	/** Strength of blur effect in pixels. Default: 10. */
 	blurStrength?: number;
 	yOffset?: number;
+	/** Whether to enable blur animations. Auto-disabled on low-tier devices or with reduced-motion preference. Default: true. */
+	enableBlur?: boolean;
 }
 
 const MIN_STAGGER = 5;
@@ -115,10 +119,16 @@ export function AnimatedStaggerBlur({
 	className,
 	staggerDelay = 0,
 	elementStagger = 0,
-	blurStrength = 10,
+	blurStrength = 5,
 	yOffset = 5,
+	enableBlur = true,
 }: AnimatedStaggerBlurProps) {
 	const { stage, variant, advanceStage, stageConfig } = useTimelineStage(stageId);
+
+	// Device-aware blur detection (reactive to motion preference changes)
+	const tier = useDeviceTier();
+	const prefersReducedMotion = useReducedMotion();
+	const blurAllowed = enableBlur && tier !== 'low' && !prefersReducedMotion;
 
 	const childArray = useMemo(() => Children.toArray(children), [children]);
 	const hasElements = useMemo(
@@ -204,22 +214,26 @@ export function AnimatedStaggerBlur({
 		elementTextCache,
 	]);
 
-	const wordVariants = {
-		hidden: {
-			opacity: 0,
-			filter: `blur(${blurStrength}px)`,
-			y: yOffset,
-		},
-		visible: {
-			opacity: 1,
-			filter: 'blur(0px)',
-			y: 0,
-			transition: {
-				duration: 0.6,
-				ease: [0.22, 1, 0.36, 1] as const,
+	const wordVariants = useMemo(
+		() => ({
+			hidden: {
+				opacity: 0,
+				y: yOffset,
+				// Conditionally apply blur filter
+				...(blurAllowed && { filter: `blur(${blurStrength}px)` }),
 			},
-		},
-	};
+			visible: {
+				opacity: 1,
+				filter: 'blur(0px)',
+				y: 0,
+				transition: {
+					duration: 0.6,
+					ease: [0.22, 1, 0.36, 1] as const,
+				},
+			},
+		}),
+		[blurAllowed, blurStrength, yOffset],
+	);
 
 	const handleComplete = () => {
 		if (stage?.status === 'animating') {
