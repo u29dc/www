@@ -9,6 +9,9 @@ import { useSyncExternalStore } from 'react';
  */
 export type DeviceTier = 'high' | 'medium' | 'low';
 
+// Conservative SSR fallback to keep markup stable until hydration resolves tier
+const SERVER_DEFAULT_DEVICE_TIER: DeviceTier = 'low';
+
 // Module-level cache (NOT sessionStorage - avoids SSR issues)
 let cachedTier: DeviceTier | null = null;
 
@@ -22,6 +25,46 @@ let _tierVersion = 0;
 
 // Custom event name for tier changes
 const TIER_CHANGE_EVENT = 'devicetierchange';
+
+// Hydration-safe tier store backing useDeviceTier
+const tierStoreListeners = new Set<() => void>();
+let tierStoreValue: DeviceTier = SERVER_DEFAULT_DEVICE_TIER;
+let hasInitializedClientTierDetection = false;
+
+const notifyTierStoreSubscribers = () => {
+	for (const listener of tierStoreListeners) {
+		listener();
+	}
+};
+
+const setTierStoreValue = (nextTier: DeviceTier) => {
+	if (tierStoreValue === nextTier) return;
+	tierStoreValue = nextTier;
+	notifyTierStoreSubscribers();
+};
+
+const handleTierChange = () => {
+	setTierStoreValue(detectDeviceTier());
+};
+
+const initClientTierDetection = () => {
+	if (hasInitializedClientTierDetection || typeof window === 'undefined') {
+		return;
+	}
+	hasInitializedClientTierDetection = true;
+
+	// Resolve actual tier as soon as we're safely on the client
+	handleTierChange();
+	window.addEventListener(TIER_CHANGE_EVENT, handleTierChange);
+};
+
+const teardownClientTierDetection = () => {
+	if (!hasInitializedClientTierDetection || typeof window === 'undefined') {
+		return;
+	}
+	window.removeEventListener(TIER_CHANGE_EVENT, handleTierChange);
+	hasInitializedClientTierDetection = false;
+};
 
 /**
  * Detects the current device's performance tier based on hardware capabilities
@@ -125,7 +168,29 @@ export function resetDeviceTierCache(): void {
 
 	// Reset initialization flag
 	isInitializingMotionListener = false;
+
+	setTierStoreValue(SERVER_DEFAULT_DEVICE_TIER);
+	if (typeof window !== 'undefined' && hasInitializedClientTierDetection) {
+		handleTierChange();
+	}
 }
+
+const subscribeToTierStore = (callback: () => void) => {
+	tierStoreListeners.add(callback);
+	if (typeof window !== 'undefined') {
+		initClientTierDetection();
+	}
+	return () => {
+		tierStoreListeners.delete(callback);
+		if (tierStoreListeners.size === 0) {
+			teardownClientTierDetection();
+			tierStoreValue = SERVER_DEFAULT_DEVICE_TIER;
+		}
+	};
+};
+
+const getTierSnapshot = () => tierStoreValue;
+const getServerTierSnapshot = () => SERVER_DEFAULT_DEVICE_TIER;
 
 /**
  * React hook for reactive device tier detection.
@@ -133,8 +198,10 @@ export function resetDeviceTierCache(): void {
  * Unlike `detectDeviceTier()`, this hook automatically updates when the user's
  * motion preferences change, triggering a re-render with the new tier.
  *
- * Uses `useSyncExternalStore` to efficiently subscribe to tier changes via
- * a custom event, avoiding unnecessary re-renders.
+ * Hydration-safe: SSR and the first client render share the same
+ * conservative `'low'` tier, then a client-side store promotes the tier
+ * after hydration and keeps it up to date via `useSyncExternalStore`
+ * subscriptions to `TIER_CHANGE_EVENT` broadcasts.
  *
  * @returns Current device performance tier (updates reactively)
  *
@@ -151,21 +218,5 @@ export function resetDeviceTierCache(): void {
  * ```
  */
 export function useDeviceTier(): DeviceTier {
-	// Subscribe to tier change events
-	const subscribe = (callback: () => void) => {
-		if (typeof window !== 'undefined') {
-			window.addEventListener(TIER_CHANGE_EVENT, callback);
-			return () => window.removeEventListener(TIER_CHANGE_EVENT, callback);
-		}
-		// SSR: return no-op unsubscribe
-		return () => {};
-	};
-
-	// Get current tier (triggers detection if needed)
-	const getSnapshot = () => detectDeviceTier();
-
-	// SSR snapshot (matches client initial value)
-	const getServerSnapshot = () => 'high' as DeviceTier;
-
-	return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+	return useSyncExternalStore(subscribeToTierStore, getTierSnapshot, getServerTierSnapshot);
 }

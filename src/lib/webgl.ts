@@ -523,6 +523,15 @@ export interface RendererOptions<TState> {
 	label?: string;
 }
 
+function formatDisposerError(error: unknown): { errorMessage: string; errorStack?: string } {
+	const errorMessage = error instanceof Error ? error.message : String(error);
+
+	if (error instanceof Error && error.stack) {
+		return { errorMessage, errorStack: error.stack };
+	}
+	return { errorMessage };
+}
+
 export function createRenderer<TState>(options: RendererOptions<TState>): RendererHandle<TState> {
 	const {
 		canvas,
@@ -562,10 +571,7 @@ export function createRenderer<TState>(options: RendererOptions<TState>): Render
 				fn();
 			} catch (error) {
 				if (logErrors) {
-					logEvent('WEBGL', 'DISPOSE', 'ERROR', {
-						errorMessage: error instanceof Error ? error.message : String(error),
-						errorStack: error instanceof Error ? error.stack : undefined,
-					});
+					logEvent('WEBGL', 'DISPOSE', 'ERROR', formatDisposerError(error));
 				}
 			}
 		});
