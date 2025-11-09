@@ -357,6 +357,26 @@ async function readFile(path: string): Promise<FileContext | null> {
 	return context;
 }
 
+function processFileContexts(
+	contexts: (FileContext | null)[],
+	summaries: Array<{
+		rule: PatternRule;
+		files: Array<{ path: string; violations: Violation[] }>;
+		totalViolations: number;
+	}>,
+): void {
+	for (const file of contexts) {
+		if (!file) continue;
+		for (const summary of summaries) {
+			if (!summary.rule.appliesTo(file)) continue;
+			const violations = summary.rule.check(file);
+			if (violations.length === 0) continue;
+			summary.files.push({ path: file.path, violations });
+			summary.totalViolations += violations.length;
+		}
+	}
+}
+
 async function runChecker(): Promise<boolean> {
 	const timer = new Timer();
 	const filePaths = await discoverFiles();
@@ -370,16 +390,7 @@ async function runChecker(): Promise<boolean> {
 	for (let index = 0; index < filePaths.length; index += BATCH_SIZE) {
 		const batchPaths = filePaths.slice(index, index + BATCH_SIZE);
 		const contexts = await Promise.all(batchPaths.map(readFile));
-		for (const file of contexts) {
-			if (!file) continue;
-			for (const summary of summaries) {
-				if (!summary.rule.appliesTo(file)) continue;
-				const violations = summary.rule.check(file);
-				if (violations.length === 0) continue;
-				summary.files.push({ path: file.path, violations });
-				summary.totalViolations += violations.length;
-			}
-		}
+		processFileContexts(contexts, summaries);
 	}
 
 	return printResults(summaries, filePaths.length, timer);
