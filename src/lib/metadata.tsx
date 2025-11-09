@@ -71,7 +71,7 @@ export function generateRobots(): MetadataRoute.Robots {
 	return {
 		rules: {
 			userAgent: '*',
-			allow: '/',
+			allow: ['/', '/llms.txt'],
 		},
 		sitemap: `${SITE.url}/sitemap.xml`,
 	};
