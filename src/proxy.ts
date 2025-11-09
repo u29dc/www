@@ -111,6 +111,24 @@ export async function proxy(request: NextRequest) {
 				'picture-in-picture=()',
 			].join(', '),
 		);
+
+		const slugMatch = path.match(/^\/([a-z0-9-]+)$/);
+		if (slugMatch) {
+			const slug = slugMatch[1];
+			response.headers.append(
+				'link',
+				`</${slug}.txt>; rel="alternate"; type="text/plain"; title="${slug} text"`,
+			);
+			response.headers.append(
+				'link',
+				`</${slug}.md>; rel="alternate"; type="text/markdown"; title="${slug} markdown"`,
+			);
+		} else {
+			response.headers.append(
+				'link',
+				'</llms.txt>; rel="alternate"; type="text/plain"; title="LLMS context"',
+			);
+		}
 	}
 
 	// HSTS: Force HTTPS for 1 year including subdomains
