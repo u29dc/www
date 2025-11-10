@@ -47,6 +47,10 @@ export default async function ContentPage({ params }: ContentPageProps) {
 		throw error;
 	}
 
+	if (slug === 'llms') {
+		redirect('/llms.txt');
+	}
+
 	const content = await getContentBySlug(slug);
 
 	if (!content) notFound();
@@ -99,12 +103,17 @@ export async function generateMetadata({ params }: ContentPageProps): Promise<Me
 	if (!content) return { title: 'Not Found' };
 
 	const description = getContentDescription(content.frontmatter);
+	const canonicalPath = `/${slug}`;
 
 	return {
 		title: content.frontmatter.title,
 		description,
 		alternates: {
-			canonical: `/${slug}`,
+			canonical: canonicalPath,
+			types: {
+				'text/plain': `${canonicalPath}.txt`,
+				'text/markdown': `${canonicalPath}.md`,
+			},
 		},
 	};
 }

@@ -18,10 +18,10 @@ import matter from 'gray-matter';
 import yaml from 'js-yaml';
 import { unstable_cache } from 'next/cache';
 import { cache } from 'react';
+import { CDN } from '@/lib/constants';
 import { NotFoundError } from '@/lib/errors';
 import { logEvent } from '@/lib/logger';
-import { CDN, sanitizeMediaFilename } from '@/lib/mdx-client';
-import { type ContentItem, ContentSchema, type ParsedContent } from '@/lib/mdx-types';
+import { type ContentItem, ContentSchema, isStudy, type ParsedContent } from '@/lib/mdx-types';
 
 // ==================================================
 // RE-EXPORTS (Client/Server Shared Types)
@@ -88,6 +88,86 @@ export const getArtifactsContent = cache(
 		tags: ['content:artifacts', 'content:all'],
 	}),
 );
+
+async function getStudyArtifactsImpl(): Promise<ParsedContent[]> {
+	const artifacts = await getArtifactsContent();
+	return artifacts.filter(
+		(item) => isStudy(item.frontmatter) && !(item.frontmatter.isConfidential ?? false),
+	);
+}
+
+/**
+ * Get all study artifacts (type=study, isArtifactItem=true, non-confidential).
+ * Results are sorted by date descending (newest first).
+ *
+ * @returns Study content items
+ */
+export const getStudyArtifacts = cache(
+	unstable_cache(getStudyArtifactsImpl, ['content-study-artifacts'], {
+		tags: ['content:artifacts', 'content:all'],
+	}),
+);
+
+/**
+ * Format study artifacts as markdown section content.
+ * Each study is converted to a ### heading with full MDX body content below.
+ *
+ * @param studies - Study content items (should be pre-filtered and sorted)
+ * @param maxCount - Optional limit on number of studies to include
+ * @returns Formatted markdown string ready for injection
+ */
+export function formatStudyArtifactsAsMarkdown(
+	studies: ParsedContent[],
+	maxCount?: number,
+): string {
+	if (studies.length === 0) {
+		return '<!-- No study artifacts currently available -->\n';
+	}
+
+	// Apply optional limit
+	const limitedStudies = maxCount ? studies.slice(0, maxCount) : studies;
+
+	const sections = limitedStudies.map((study) => {
+		const { title } = study.frontmatter;
+
+		// Convert full MDX body to markdown (without frontmatter)
+		const bodyMarkdown = toMarkdownBody(study.frontmatter, study.content, {
+			stripMedia: true,
+		});
+
+		// Format as markdown section: ### Title\n\n{body}
+		return `### ${title}\n\n${bodyMarkdown}`;
+	});
+
+	return sections.join('\n\n');
+}
+
+/**
+ * Inject study artifacts into llms.mdx content at placeholder marker.
+ * Searches for [ARTIFACTS] token and replaces with formatted artifacts markdown.
+ *
+ * @param llmsContent - Raw markdown content from llms.mdx
+ * @param artifactsMarkdown - Formatted artifacts section content
+ * @returns Content with artifacts injected, or original if placeholder not found
+ */
+export function injectArtifactsIntoLlms(llmsContent: string, artifactsMarkdown: string): string {
+	const PLACEHOLDER = '[ARTIFACTS]';
+
+	if (!llmsContent.includes(PLACEHOLDER)) {
+		logEvent('MDX', 'INJECT_ARTIFACTS', 'PLACEHOLDER_MISSING', {
+			contentLength: llmsContent.length,
+		});
+		return llmsContent;
+	}
+
+	const injected = llmsContent.replace(PLACEHOLDER, artifactsMarkdown);
+
+	logEvent('MDX', 'INJECT_ARTIFACTS', 'SUCCESS', {
+		studyCount: artifactsMarkdown.split('###').length - 1,
+	});
+
+	return injected;
+}
 
 async function getContentBySlugImpl(slug: string): Promise<ParsedContent | null> {
 	try {
@@ -160,8 +240,86 @@ export async function parseMDX(filePath: string): Promise<ParsedContent> {
 // MARKDOWN TRANSFORMATION
 // ==================================================
 
+interface MarkdownTransformOptions {
+	stripMedia?: boolean;
+}
+
+function formatMediaSources(
+	sourceDeclaration: string,
+	stripMedia: boolean,
+	altText: string,
+): string {
+	if (stripMedia) {
+		return '';
+	}
+
+	const sources = sourceDeclaration
+		.split(',')
+		.map((item) => item.trim().replace(/^"|"$/g, ''))
+		.filter(Boolean);
+
+	if (sources.length === 0) {
+		return '';
+	}
+
+	const items = sources.map((filename) => {
+		const fullUrl = `${CDN.mediaUrl}${filename}`;
+		const altLabel = altText.trim();
+		const displayLabel = altLabel.length > 0 ? altLabel : filename;
+
+		return `[${displayLabel}](${fullUrl})`;
+	});
+
+	return `\n${items.join('\n\n')}\n`;
+}
+
 /**
- * Transforms MDX content to plain markdown.
+ * Converts MDX content to plain markdown body (without YAML frontmatter).
+ * Internal helper used by toMarkdown() and formatStudyArtifactsAsMarkdown().
+ *
+ * @param _frontmatter - Validated frontmatter (unused but kept for consistency)
+ * @param content - Raw MDX content
+ * @param options - Transformation options (strip media, etc.)
+ * @returns Clean markdown body without frontmatter
+ */
+function toMarkdownBody(
+	_frontmatter: ContentItem,
+	content: string,
+	options: MarkdownTransformOptions = {},
+): string {
+	const { stripMedia = false } = options;
+
+	let markdown = content;
+
+	markdown = markdown.replace(/<MdxParagraph>\s*/g, '');
+	markdown = markdown.replace(/\s*<\/MdxParagraph>/g, '');
+
+	markdown = markdown.replace(/<MdxMedia\s+[^>]*\/>/g, (match) => {
+		const srcMatch = match.match(/src=\{\[([^\]]+)\]\}/);
+		const src = srcMatch?.[1];
+		if (!src) {
+			return '';
+		}
+
+		const altMatch = match.match(/alt="([^"]+)"/);
+		const altCandidate = altMatch?.[1];
+		const altText: string =
+			typeof altCandidate === 'string' && altCandidate.length > 0 ? altCandidate : '';
+		return formatMediaSources(src, stripMedia, altText);
+	});
+
+	markdown = markdown.replace(/^import\s+.*$/gm, '');
+	markdown = markdown.replace(/^export\s+.*$/gm, '');
+	markdown = markdown.replace(/\n{3,}/g, '\n\n');
+	markdown = markdown.trim();
+
+	return markdown;
+}
+
+/**
+ * Transforms MDX content to plain markdown with YAML frontmatter.
+ * Used by Raw Content API for .md/.txt exports.
+ *
  * @param frontmatter - Validated frontmatter
  * @param content - Raw MDX content
  * @returns Plain markdown with YAML frontmatter
@@ -169,52 +327,7 @@ export async function parseMDX(filePath: string): Promise<ParsedContent> {
 export function toMarkdown(frontmatter: ContentItem, content: string): string {
 	const startTime = performance.now();
 
-	let markdown = content;
-
-	markdown = markdown.replace(/<MdxParagraph>\s*/g, '');
-	markdown = markdown.replace(/\s*<\/MdxParagraph>/g, '');
-
-	markdown = markdown.replace(/<MdxMedia\s+src=\{(\[[^\]]*\])\}\s*\/>/g, (match, srcArray) => {
-		try {
-			const normalizedArray = srcArray.replace(/'/g, '"');
-			const parsed = JSON.parse(normalizedArray);
-
-			if (!Array.isArray(parsed) || !parsed.every((item) => typeof item === 'string')) {
-				logEvent('MARKDOWN', 'EXTRACT_MEDIA', 'INVALID_ARRAY', { match });
-				return '\n\n<!-- Media gallery (invalid format) -->\n\n';
-			}
-
-			const sources: string[] = parsed;
-
-			const mediaItems = sources
-				.map((src: string) => {
-					const sanitized = sanitizeMediaFilename(src);
-					if (!sanitized) {
-						return null;
-					}
-
-					const url = `${CDN.mediaUrl}${sanitized}`;
-					return `![${sanitized}](${url})`;
-				})
-				.filter((item): item is string => item !== null)
-				.join('\n\n');
-
-			if (mediaItems.length === 0) {
-				logEvent('MARKDOWN', 'EXTRACT_MEDIA', 'NO_VALID_MEDIA', { match });
-				return '\n\n<!-- Media gallery (no valid files) -->\n\n';
-			}
-
-			return `\n\n${mediaItems}\n\n`;
-		} catch (error) {
-			logEvent('MARKDOWN', 'EXTRACT_MEDIA', 'FAIL', { error, match });
-			return '\n\n<!-- Media gallery (parsing error) -->\n\n';
-		}
-	});
-
-	markdown = markdown.replace(/^import\s+.*$/gm, '');
-	markdown = markdown.replace(/^export\s+.*$/gm, '');
-	markdown = markdown.replace(/\n{3,}/g, '\n\n');
-	markdown = markdown.trim();
+	const markdown = toMarkdownBody(frontmatter, content);
 
 	const yamlFrontmatter = yaml.dump(frontmatter, {
 		lineWidth: -1,

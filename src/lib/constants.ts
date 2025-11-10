@@ -134,6 +134,9 @@ export const metadata: Metadata = {
 	verification: {},
 	alternates: {
 		canonical: SITE.url,
+		types: {
+			'text/plain': '/llms.txt',
+		},
 	},
 	other: {
 		'color-scheme': 'light dark',

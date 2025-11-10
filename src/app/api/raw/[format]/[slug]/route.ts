@@ -26,7 +26,13 @@ import {
 	ValidationError,
 } from '@/lib/errors';
 import { logEvent } from '@/lib/logger';
-import { getContentBySlug, toMarkdown } from '@/lib/mdx-server';
+import {
+	formatStudyArtifactsAsMarkdown,
+	getContentBySlug,
+	getStudyArtifacts,
+	injectArtifactsIntoLlms,
+	toMarkdown,
+} from '@/lib/mdx-server';
 import { isStudy } from '@/lib/mdx-types';
 import { validateSlug } from '@/lib/validators';
 
@@ -82,6 +88,19 @@ export async function GET(
 
 	try {
 		let output = toMarkdown(content.frontmatter, content.content);
+
+		// Special handling for llms.mdx: inject study artifacts dynamically
+		if (slug === 'llms') {
+			const studies = await getStudyArtifacts();
+			const artifactsMarkdown = formatStudyArtifactsAsMarkdown(studies);
+			output = injectArtifactsIntoLlms(output, artifactsMarkdown);
+
+			logEvent('RAW', 'INJECT_LLMS_ARTIFACTS', 'SUCCESS', {
+				studyCount: studies.length,
+			});
+		}
+
+		// Add sitemap footer
 		output += `\n\n---\n\nFull sitemap: ${SITE.url}/sitemap.xml\n`;
 
 		const contentType =
