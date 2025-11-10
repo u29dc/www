@@ -1,3 +1,10 @@
+# [1.12.0](https://github.com/u29dc/www/compare/v1.11.1...v1.12.0) (2025-11-10)
+
+
+### Features
+
+* **core:** implement dynamic study artifacts injection for llms context ([234d92e](https://github.com/u29dc/www/commit/234d92edfbe2641dd44a3c78be54bbb29b9de9e6))
+
 ## [1.11.1](https://github.com/u29dc/www/compare/v1.11.0...v1.11.1) (2025-11-07)
 
 
