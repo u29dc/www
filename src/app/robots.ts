@@ -1,7 +1,7 @@
+import type { MetadataRoute } from 'next';
+import { generateRobots } from '@/lib/metadata';
+
 /** Generate robots.txt at /robots.txt. */
-
-export { generateRobots as default } from '@/lib/metadata';
-
-// Force static generation at build time
-export const dynamic = 'force-static';
-export const revalidate = false;
+export default async function robots(): Promise<MetadataRoute.Robots> {
+	return generateRobots();
+}

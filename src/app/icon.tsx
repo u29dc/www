@@ -1,11 +1,10 @@
-/** Generate favicons at multiple sizes (16, 32, 96, 192, 512). */
-
 import type { ImageResponse } from 'next/og';
 import { Icon, iconContentType } from '@/lib/metadata';
 
 export const contentType = iconContentType;
 
-export function generateImageMetadata() {
+/** Generate favicons at multiple sizes (16, 32, 96, 192, 512). */
+export async function generateImageMetadata() {
 	return [
 		{ id: '16', size: { width: 16, height: 16 }, contentType: 'image/png' },
 		{ id: '32', size: { width: 32, height: 32 }, contentType: 'image/png' },
@@ -25,7 +24,3 @@ export default async function IconRoute({ id }: { id: Promise<string> }): Promis
 
 	return Icon(size);
 }
-
-// Force static generation at build time
-export const dynamic = 'force-static';
-export const revalidate = false;

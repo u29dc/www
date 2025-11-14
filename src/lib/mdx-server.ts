@@ -16,27 +16,20 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import matter from 'gray-matter';
 import yaml from 'js-yaml';
-import { unstable_cache } from 'next/cache';
-import { cache } from 'react';
 import { CDN } from '@/lib/constants';
 import { NotFoundError } from '@/lib/errors';
 import { logEvent } from '@/lib/logger';
 import { type ContentItem, ContentSchema, isStudy, type ParsedContent } from '@/lib/mdx-types';
 
 // ==================================================
-// RE-EXPORTS (Client/Server Shared Types)
-// ==================================================
-
-// Re-export client types for convenience
-export type { MediaItem } from '@/lib/mdx-client';
-// Re-export all types and schemas from mdx-types for backward compatibility
-export * from '@/lib/mdx-types';
-
-// ==================================================
 // CONTENT AGGREGATION
 // ==================================================
 
-async function getAllContentImpl(): Promise<ParsedContent[]> {
+/**
+ * Retrieves all MDX content files sorted by date.
+ * @returns Parsed content sorted by date descending
+ */
+export async function getAllContent(): Promise<ParsedContent[]> {
 	const contentDir = path.join(process.cwd(), 'src/content');
 
 	const files = await fs.readdir(contentDir);
@@ -65,35 +58,12 @@ async function getAllContentImpl(): Promise<ParsedContent[]> {
 }
 
 /**
- * Retrieves all MDX content files sorted by date (cached).
- * @returns Parsed content sorted by date descending
- */
-export const getAllContent = cache(
-	unstable_cache(getAllContentImpl, ['content-all'], {
-		tags: ['content:all'],
-	}),
-);
-
-async function getArtifactsContentImpl(): Promise<ParsedContent[]> {
-	const allContent = await getAllContent();
-	return allContent.filter((item) => item.frontmatter.isArtifactItem === true);
-}
-
-/**
- * Get all artifact-visible content sorted by date (cached).
+ * Get all artifact-visible content sorted by date.
  * @returns Artifacts content sorted by date descending
  */
-export const getArtifactsContent = cache(
-	unstable_cache(getArtifactsContentImpl, ['content-artifacts'], {
-		tags: ['content:artifacts', 'content:all'],
-	}),
-);
-
-async function getStudyArtifactsImpl(): Promise<ParsedContent[]> {
-	const artifacts = await getArtifactsContent();
-	return artifacts.filter(
-		(item) => isStudy(item.frontmatter) && !(item.frontmatter.isConfidential ?? false),
-	);
+export async function getArtifactsContent(): Promise<ParsedContent[]> {
+	const allContent = await getAllContent();
+	return allContent.filter((item) => item.frontmatter.isArtifactItem === true);
 }
 
 /**
@@ -102,11 +72,12 @@ async function getStudyArtifactsImpl(): Promise<ParsedContent[]> {
  *
  * @returns Study content items
  */
-export const getStudyArtifacts = cache(
-	unstable_cache(getStudyArtifactsImpl, ['content-study-artifacts'], {
-		tags: ['content:artifacts', 'content:all'],
-	}),
-);
+export async function getStudyArtifacts(): Promise<ParsedContent[]> {
+	const artifacts = await getArtifactsContent();
+	return artifacts.filter(
+		(item) => isStudy(item.frontmatter) && !(item.frontmatter.isConfidential ?? false),
+	);
+}
 
 /**
  * Format study artifacts as markdown section content.
@@ -169,7 +140,12 @@ export function injectArtifactsIntoLlms(llmsContent: string, artifactsMarkdown: 
 	return injected;
 }
 
-async function getContentBySlugImpl(slug: string): Promise<ParsedContent | null> {
+/**
+ * Retrieves a single MDX content item by slug.
+ * @param slug - Content slug
+ * @returns Parsed content or null
+ */
+export async function getContentBySlug(slug: string): Promise<ParsedContent | null> {
 	try {
 		const contentDir = path.join(process.cwd(), 'src/content');
 		const filePath = path.join(contentDir, `${slug}.mdx`);
@@ -185,17 +161,6 @@ async function getContentBySlugImpl(slug: string): Promise<ParsedContent | null>
 		return null;
 	}
 }
-
-/**
- * Retrieves a single MDX content item by slug (cached).
- * @param slug - Content slug
- * @returns Parsed content or null
- */
-export const getContentBySlug = cache((slug: string) => {
-	return unstable_cache(async () => getContentBySlugImpl(slug), [`content-slug-${slug}`], {
-		tags: ['content:all', `content:${slug}`],
-	})();
-});
 
 // ==================================================
 // MDX PARSING

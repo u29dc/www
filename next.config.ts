@@ -7,7 +7,6 @@ const nextConfig: NextConfig = {
 	experimental: {
 		mcpServer: true,
 	},
-	cacheComponents: false,
 
 	env: {
 		NEXT_PUBLIC_COMMIT_SHA: process.env['VERCEL_GIT_COMMIT_SHA'] || undefined,

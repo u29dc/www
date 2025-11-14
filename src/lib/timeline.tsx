@@ -13,9 +13,11 @@
  * @module lib/timeline
  */
 
+import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 import {
 	createContext,
+	useCallback,
 	useContext,
 	useEffect,
 	useMemo,
@@ -155,131 +157,131 @@ function useTimelineOrchestrator(store: TimelineStore, config: TimelineConfig) {
 	const currentDirectionRef = useRef<StageDirection | null>(null);
 	const cancelRef = useRef(false);
 
-	const playDirection = async (
-		direction: StageDirection,
-		mode: NavigationMode,
-	): Promise<void> => {
-		if (playingRef.current) {
-			if (direction === 'exit' && currentDirectionRef.current === 'enter') {
-				logEvent('TIMELINE', 'PLAY', 'INTERRUPT', {
-					reason: 'exit-requested',
-					interrupted: 'enter',
-				});
-				cancelRef.current = true;
+	const playDirection = useCallback(
+		async (direction: StageDirection, mode: NavigationMode): Promise<void> => {
+			if (playingRef.current) {
+				if (direction === 'exit' && currentDirectionRef.current === 'enter') {
+					logEvent('TIMELINE', 'PLAY', 'INTERRUPT', {
+						reason: 'exit-requested',
+						interrupted: 'enter',
+					});
+					cancelRef.current = true;
 
-				const storeWithCallbacks = store as StoreWithCallbacks;
-				const callbacks = storeWithCallbacks._completionCallbacks;
-				if (callbacks) {
-					for (const callback of callbacks.values()) {
-						callback();
+					const storeWithCallbacks = store as StoreWithCallbacks;
+					const callbacks = storeWithCallbacks._completionCallbacks;
+					if (callbacks) {
+						for (const callback of callbacks.values()) {
+							callback();
+						}
+						callbacks.clear();
 					}
-					callbacks.clear();
+
+					await new Promise((resolve) => setTimeout(resolve, 50));
+				} else {
+					logEvent('TIMELINE', 'PLAY', 'SKIP', { reason: 'concurrent', direction });
+					return;
+				}
+			}
+
+			cancelRef.current = false;
+			playingRef.current = true;
+			currentDirectionRef.current = direction;
+
+			const stages = direction === 'enter' ? config.enterStages : config.exitStages;
+			const speedMultiplier =
+				direction === 'enter'
+					? config.enterSpeedMultiplier || 1
+					: config.exitSpeedMultiplier || 1;
+
+			logEvent('TIMELINE', 'PLAY_START', 'SUCCESS', {
+				timelineId: config.id,
+				direction,
+				mode,
+				stageCount: stages.length,
+			});
+
+			const stageStartTimes: number[] = [];
+			let cumulativeTime = 0;
+
+			for (let i = 0; i < stages.length; i++) {
+				const stage = stages[i];
+				if (!stage) continue;
+
+				const adjustedDelay = (stage.delay || 0) / speedMultiplier;
+				const adjustedDuration = stage.duration / speedMultiplier;
+
+				if (i === 0) {
+					stageStartTimes.push(0);
+					cumulativeTime = adjustedDuration;
+				} else {
+					const startTime = cumulativeTime + adjustedDelay;
+					stageStartTimes.push(startTime);
+
+					const endTime = startTime + adjustedDuration;
+					cumulativeTime = Math.max(cumulativeTime, endTime);
+				}
+			}
+
+			// Execute all stages with proper timing
+			const stagePromises: Promise<void>[] = [];
+			const startTime = performance.now();
+
+			for (let i = 0; i < stages.length; i++) {
+				const stage = stages[i];
+				if (!stage) continue;
+
+				const scheduledStartTime = stageStartTimes[i];
+				if (scheduledStartTime === undefined) continue;
+
+				if (cancelRef.current) {
+					logEvent('TIMELINE', 'PLAY_CANCELLED', 'SUCCESS', {
+						timelineId: config.id,
+						direction,
+					});
+					playingRef.current = false;
+					currentDirectionRef.current = null;
+					return;
 				}
 
-				await new Promise((resolve) => setTimeout(resolve, 50));
-			} else {
-				logEvent('TIMELINE', 'PLAY', 'SKIP', { reason: 'concurrent', direction });
-				return;
-			}
-		}
+				if (stage.shouldRun && !stage.shouldRun({ mode, direction })) {
+					logEvent('TIMELINE', 'STAGE_SKIP', 'SUCCESS', {
+						stageId: stage.id,
+						reason: 'predicate',
+					});
 
-		cancelRef.current = false;
-		playingRef.current = true;
-		currentDirectionRef.current = direction;
-
-		const stages = direction === 'enter' ? config.enterStages : config.exitStages;
-		const speedMultiplier =
-			direction === 'enter'
-				? config.enterSpeedMultiplier || 1
-				: config.exitSpeedMultiplier || 1;
-
-		logEvent('TIMELINE', 'PLAY_START', 'SUCCESS', {
-			timelineId: config.id,
-			direction,
-			mode,
-			stageCount: stages.length,
-		});
-
-		const stageStartTimes: number[] = [];
-		let cumulativeTime = 0;
-
-		for (let i = 0; i < stages.length; i++) {
-			const stage = stages[i];
-			if (!stage) continue;
-
-			const adjustedDelay = (stage.delay || 0) / speedMultiplier;
-			const adjustedDuration = stage.duration / speedMultiplier;
-
-			if (i === 0) {
-				stageStartTimes.push(0);
-				cumulativeTime = adjustedDuration;
-			} else {
-				const startTime = cumulativeTime + adjustedDelay;
-				stageStartTimes.push(startTime);
-
-				const endTime = startTime + adjustedDuration;
-				cumulativeTime = Math.max(cumulativeTime, endTime);
-			}
-		}
-
-		// Execute all stages with proper timing
-		const stagePromises: Promise<void>[] = [];
-		const startTime = performance.now();
-
-		for (let i = 0; i < stages.length; i++) {
-			const stage = stages[i];
-			if (!stage) continue;
-
-			const scheduledStartTime = stageStartTimes[i];
-			if (scheduledStartTime === undefined) continue;
-
-			if (cancelRef.current) {
-				logEvent('TIMELINE', 'PLAY_CANCELLED', 'SUCCESS', {
-					timelineId: config.id,
-					direction,
-				});
-				playingRef.current = false;
-				currentDirectionRef.current = null;
-				return;
-			}
-
-			if (stage.shouldRun && !stage.shouldRun({ mode, direction })) {
-				logEvent('TIMELINE', 'STAGE_SKIP', 'SUCCESS', {
-					stageId: stage.id,
-					reason: 'predicate',
-				});
-
-				// Mark stage as complete and add resolved promise to prevent blocking
-				store.setState(stage.id, { status: 'complete', direction });
-				stagePromises.push(Promise.resolve());
-				continue;
-			}
-
-			const stagePromise = (async () => {
-				const now = performance.now();
-				const elapsed = now - startTime;
-				const waitTime = Math.max(0, scheduledStartTime - elapsed);
-
-				if (waitTime > 0) {
-					await new Promise((resolve) => setTimeout(resolve, waitTime));
+					// Mark stage as complete and add resolved promise to prevent blocking
+					store.setState(stage.id, { status: 'complete', direction });
+					stagePromises.push(Promise.resolve());
+					continue;
 				}
 
-				await executeStage(store, stage, direction, speedMultiplier);
-			})();
+				const stagePromise = (async () => {
+					const now = performance.now();
+					const elapsed = now - startTime;
+					const waitTime = Math.max(0, scheduledStartTime - elapsed);
 
-			stagePromises.push(stagePromise);
-		}
+					if (waitTime > 0) {
+						await new Promise((resolve) => setTimeout(resolve, waitTime));
+					}
 
-		await Promise.all(stagePromises);
+					await executeStage(store, stage, direction, speedMultiplier);
+				})();
 
-		logEvent('TIMELINE', 'PLAY_COMPLETE', 'SUCCESS', {
-			timelineId: config.id,
-			direction,
-		});
+				stagePromises.push(stagePromise);
+			}
 
-		playingRef.current = false;
-		currentDirectionRef.current = null;
-	};
+			await Promise.all(stagePromises);
+
+			logEvent('TIMELINE', 'PLAY_COMPLETE', 'SUCCESS', {
+				timelineId: config.id,
+				direction,
+			});
+
+			playingRef.current = false;
+			currentDirectionRef.current = null;
+		},
+		[config, store],
+	);
 
 	return { playDirection };
 }
@@ -416,6 +418,7 @@ export function useTimelineStage(stageId: string) {
 export interface NavigationModeContextValue {
 	mode: NavigationMode;
 	setMode: (mode: NavigationMode) => void;
+	navigationEventId: number;
 }
 
 const NavigationModeContext = createContext<NavigationModeContextValue | undefined>(undefined);
@@ -448,8 +451,10 @@ function detectInitialMode(): NavigationMode {
 
 export function NavigationModeProvider({ children }: { children: ReactNode }) {
 	const [mode, setModeState] = useState<NavigationMode>('direct');
+	const [navigationEventId, setNavigationEventId] = useState(0);
 	const initializedRef = useRef(false);
 	const previousPathnameRef = useRef<string | null>(null);
+	const pathname = usePathname();
 
 	const setMode = (newMode: NavigationMode) => {
 		setModeState(newMode);
@@ -462,30 +467,26 @@ export function NavigationModeProvider({ children }: { children: ReactNode }) {
 
 		const detectedMode = detectInitialMode();
 		setModeState(detectedMode);
-		previousPathnameRef.current = window.location.pathname;
+		previousPathnameRef.current = pathname;
 
 		logEvent('NAVIGATION', 'INIT', 'SUCCESS', { mode: detectedMode });
-	}, []);
+	}, [pathname]);
 
 	useEffect(() => {
-		const currentPathname = window.location.pathname;
-
-		if (
-			previousPathnameRef.current !== null &&
-			previousPathnameRef.current !== currentPathname
-		) {
+		if (previousPathnameRef.current !== null && previousPathnameRef.current !== pathname) {
 			setModeState('in-app');
+			setNavigationEventId((id) => id + 1);
 			logEvent('NAVIGATION', 'PATHNAME_CHANGE', 'SUCCESS', {
 				from: previousPathnameRef.current,
-				to: currentPathname,
+				to: pathname,
 			});
 		}
 
-		previousPathnameRef.current = currentPathname;
-	});
+		previousPathnameRef.current = pathname;
+	}, [pathname]);
 
 	return (
-		<NavigationModeContext.Provider value={{ mode, setMode }}>
+		<NavigationModeContext.Provider value={{ mode, setMode, navigationEventId }}>
 			{children}
 		</NavigationModeContext.Provider>
 	);
