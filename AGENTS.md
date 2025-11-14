@@ -2,7 +2,7 @@
 
 ## Context
 
-Next.js 16.0.1, React 19.2.0, Tailwind CSS 4.1.16, Bun runtime, Biome tooling, TypeScript strict mode.
+Next.js 16, React 19, Tailwind CSS 4, Bun runtime, Biome tooling, TypeScript strict mode.
 Global CLAUDE.md rules inherited. Project-specific architecture and overrides only.
 
 ## Commands
@@ -13,22 +13,18 @@ Global CLAUDE.md rules inherited. Project-specific architecture and overrides on
 
 ## Documentation Strategy
 
-**MCP Tooling Access:** Project includes Next.js DevTools MCP Server providing direct access to official documentation and runtime introspection.
-
-**Documentation Lookup Priority:**
-
-1. **Primary:** MCP Server (`mcp__next-devtools__nextjs_docs`) for current Next.js 16+ information
-2. **LLM-Optimized:** https://nextjs.org/docs/llms.txt for comprehensive structured documentation
-3. **GitHub Direct:** `gitingest https://github.com/vercel/next.js/tree/canary/docs -o -` for latest features
-4. **Fallback:** Branch-specific docs only if MCP unavailable
-
-**When in doubt:** ALWAYS consult official documentation via MCP or gitingest before making assumptions about Next.js 16 behavior. Framework knowledge cutoff may be outdated for breaking changes.
-
-**Framework-Specific Resources:**
-
-1. **Next.js 16**: Use MCP or https://nextjs.org/docs/llms.txt. For GitHub: `gitingest https://github.com/vercel/next.js/tree/canary/docs -o -`. Focus subfolders with `-i "**/[pattern]*.mdx"`. Stream to terminal `-o -`, never create files. CRITICAL: Verify Next.js 16 breaking changes (middleware→proxy rename, async request APIs).
-2. **React 19**: New hooks (`use`, `useActionState`, `useFormStatus`, `useOptimistic`) over React 18 patterns. Avoid deprecated (string refs, legacy context). React Compiler auto-optimizes, minimize manual `useMemo`/`useCallback`/`memo`. Ref as prop instead of forwardRef. Action-oriented mutations.
-3. **Tailwind CSS 4**: PostCSS architecture (`@tailwindcss/postcss`), breaking changes from v3. CSS-first configuration. Fetch v4 docs for new patterns.
+1. **Session Initialization:** Execute `mcp__next-devtools__init` at project start before any operations. Mandatory. Establishes documentation-first requirements, fetches latest Next.js docs, configures runtime introspection. Automatic invocation required—do not wait for user prompt.
+2. **Lookup Priority:** Consult in order when investigating Next.js 16+ behavior:
+    - **Primary:** MCP Server (`mcp__next-devtools__nextjs_docs`) for current documentation and runtime introspection
+    - **LLM-Optimized:** https://nextjs.org/docs/llms.txt for comprehensive structured reference
+    - **GitHub Direct:** `gitingest https://github.com/vercel/next.js/tree/canary/docs -o -` for latest unreleased features
+    - **Fallback:** Branch-specific docs only if MCP unavailable
+    - ALWAYS verify assumptions against official sources—framework knowledge cutoff may be outdated for breaking changes.
+3. **Gitingest Usage:** Stream output to terminal (`-o -`), never create files. Focus subfolders with `-i "**/[pattern]*.mdx"`. Explore root with `--max-size 1024` to identify directories, then target specific folders.
+4. **Framework-Specific Verification:**
+    - **Next.js 16:** Verify breaking changes (middleware→proxy rename, async request APIs, deprecated patterns)
+    - **React 19:** Prefer new hooks (`use`, `useActionState`, `useFormStatus`, `useOptimistic`) over React 18 patterns. Avoid deprecated (string refs, legacy context). React Compiler auto-optimizes—minimize manual `useMemo`/`useCallback`/`memo`. Ref as prop instead of forwardRef.
+    - **Tailwind CSS 4:** PostCSS architecture (`@tailwindcss/postcss`), breaking changes from v3. CSS-first configuration. Fetch v4 docs for new patterns.
 
 ## Architecture
 
