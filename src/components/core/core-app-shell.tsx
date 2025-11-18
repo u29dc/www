@@ -27,7 +27,6 @@ import { useReducedMotion } from 'motion/react';
 import { ThemeProvider } from 'next-themes';
 import { type ReactNode, useMemo } from 'react';
 import { CoreGrainOverlay } from '@/components/core/core-grain-overlay';
-import { CoreGridOverlay } from '@/components/core/core-grid-overlay';
 import { useDeviceTier } from '@/lib/performance';
 import { NavigationModeProvider } from '@/lib/timeline';
 
@@ -63,7 +62,7 @@ export function CoreAppShell({ children }: CoreAppShellProps) {
 					animationSpeed={0.1}
 					exposure={0.1}
 				/>
-				<CoreGridOverlay />
+				<div className="grid-overlay" aria-hidden="true" />
 			</ThemeProvider>
 		</NavigationModeProvider>
 	);
