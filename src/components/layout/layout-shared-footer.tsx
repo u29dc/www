@@ -52,7 +52,7 @@ export function LayoutSharedFooterLink({
 
 export function LayoutSharedFooter() {
 	return (
-		<footer className="padding-standard grid h-fit min-h-screen w-full grid-cols-10 bg-black text-white">
+		<footer className="padding-standard grid h-fit min-h-screen w-full grid-cols-10 bg-black text-white uppercase">
 			<AtomicGradientBlur position="bottom" size="10rem" fixed={true} />
 
 			<AnimatedBlock

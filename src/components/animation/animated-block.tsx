@@ -72,7 +72,7 @@ export function AnimatedBlock({
 		() => ({
 			hidden: {
 				opacity: 0,
-				y: isExit ? 10 : -10, // Exit fades down, enter fades up
+				y: isExit ? 5 : -5, // Exit fades down, enter fades up
 				// Conditionally apply blur filter
 				...(blurAllowed && { filter: 'blur(5px)' }),
 			},

@@ -4,10 +4,11 @@
  * Animated Stagger Blur
  *
  * ## SUMMARY
- * Timeline-coordinated word-by-word stagger with staggered Motion animations.
+ * Timeline-coordinated word-by-word stagger with masked upward reveal animations.
  *
  * ## RESPONSIBILITIES
  * - Subscribe to timeline stage, split text into words, orchestrate staggered animations
+ * - Mask each word and animate from below the baseline for a clean reveal
  *
  * @module components/animation/animated-stagger-blur
  */
@@ -26,9 +27,9 @@ export interface AnimatedStaggerBlurProps {
 	className?: string;
 	staggerDelay?: number;
 	elementStagger?: number;
-	/** Strength of blur effect in pixels. Default: 10. */
-	blurStrength?: number;
 	yOffset?: number;
+	/** Strength of blur effect in pixels. Default: 5. */
+	blurStrength?: number;
 	/** Whether to enable blur animations. Auto-disabled on low-tier devices or with reduced-motion preference. Default: true. */
 	enableBlur?: boolean;
 }
@@ -119,13 +120,12 @@ export function AnimatedStaggerBlur({
 	className,
 	staggerDelay = 0,
 	elementStagger = 0,
-	blurStrength = 5,
 	yOffset = 5,
+	blurStrength = 5,
 	enableBlur = true,
 }: AnimatedStaggerBlurProps) {
 	const { stage, variant, advanceStage, stageConfig } = useTimelineStage(stageId);
 
-	// Device-aware blur detection (reactive to motion preference changes)
 	const tier = useDeviceTier();
 	const prefersReducedMotion = useReducedMotion();
 	const blurAllowed = enableBlur && tier !== 'low' && !prefersReducedMotion;
@@ -218,21 +218,20 @@ export function AnimatedStaggerBlur({
 		() => ({
 			hidden: {
 				opacity: 0,
-				y: yOffset,
-				// Conditionally apply blur filter
+				y: prefersReducedMotion ? 0 : `calc(100% + ${yOffset}px)`,
 				...(blurAllowed && { filter: `blur(${blurStrength}px)` }),
 			},
 			visible: {
 				opacity: 1,
-				filter: 'blur(0px)',
 				y: 0,
+				filter: 'blur(0px)',
 				transition: {
 					duration: 0.6,
 					ease: [0.22, 1, 0.36, 1] as const,
 				},
 			},
 		}),
-		[blurAllowed, blurStrength, yOffset],
+		[blurAllowed, blurStrength, prefersReducedMotion, yOffset],
 	);
 
 	const handleComplete = () => {
@@ -274,20 +273,35 @@ export function AnimatedStaggerBlur({
 			const isLastWord = isLastElement && index === lastWordIndex;
 
 			return (
-				<motion.span
+				<span
 					key={`${keyPrefix}-word-${
 						// biome-ignore lint/suspicious/noArrayIndexKey: stable within text
 						index
 					}`}
-					variants={wordVariants}
 					style={{
+						position: 'relative',
 						display: 'inline-block',
-						willChange: 'transform, opacity, filter',
+						overflow: 'hidden',
+						lineHeight: 'inherit',
 					}}
-					{...(isLastWord && { onAnimationComplete: handleComplete })}
 				>
-					{word}
-				</motion.span>
+					<span aria-hidden style={{ visibility: 'hidden', display: 'inline-block' }}>
+						{word}
+					</span>
+					<motion.span
+						variants={wordVariants}
+						style={{
+							position: 'absolute',
+							left: 0,
+							bottom: 0,
+							display: 'inline-block',
+							willChange: 'transform, opacity, filter',
+						}}
+						{...(isLastWord && { onAnimationComplete: handleComplete })}
+					>
+						{word}
+					</motion.span>
+				</span>
 			);
 		});
 	};

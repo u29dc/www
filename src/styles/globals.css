@@ -40,8 +40,7 @@
 	body {
 		@apply antialiased;
 		@apply font-sm;
-		@apply uppercase;
-		@apply leading-[1.15];
+		@apply leading-[1.25];
 		@apply font-semibold;
 		@apply not-italic;
 		@apply [text-rendering:optimizeLegibility];
@@ -95,7 +94,7 @@
 }
 
 @utility font-sm {
-	font-size: 1.1rem;
+	font-size: 1.2rem;
 }
 
 @utility font-xs {
@@ -115,7 +114,7 @@
 }
 
 @utility cover-hatch {
-	background: repeating-linear-gradient(135deg, var(--color-black) 0px, var(--color-black) 1px, transparent 1px, transparent 2px);
+	@apply bg-white;
 }
 
 /* ================================================== */
