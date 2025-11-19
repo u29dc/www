@@ -13,6 +13,7 @@
  */
 
 import type { ReactNode } from 'react';
+import { AnimatedBlock } from '@/components/animation/animated-block';
 
 export interface LayoutContentBlockProps {
 	id: string | number;
@@ -36,9 +37,11 @@ export function LayoutContentBlock({
 			className={`padding-standard marker-all grid grid-cols-10 py-0 ${className || ''}`}
 		>
 			<div className="-col-end-1 col-span-base 3xl:col-start-7 col-start-1 row-start-1 font-mono sm:col-start-1 md:col-start-3 lg:col-start-4 xl:col-start-5 2xl:col-start-6">
-				<div className="mb-10 rounded-sm border-current/10 border-b text-right md:mb-5 md:text-left">
-					<div className="">[ {title.toUpperCase()} ]</div>
-				</div>
+				<AnimatedBlock stageId="layout-section-title">
+					<div className="mb-10 rounded-sm border-current/10 border-b text-right md:mb-5 md:text-left">
+						<div className="">[ {title.toUpperCase()} ]</div>
+					</div>
+				</AnimatedBlock>
 			</div>
 			<div
 				className={`${colSpanFull ? 'col-span-full' : 'col-span-base'} row-start-2 md:row-start-1`}
