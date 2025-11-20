@@ -1,3 +1,10 @@
+## [1.12.1](https://github.com/u29dc/www/compare/v1.12.0...v1.12.1) (2025-11-20)
+
+
+### Bug Fixes
+
+* **config:** resolve turbopack bundling issue with pino dependencies ([8d2c641](https://github.com/u29dc/www/commit/8d2c641a59212e4c94955fb14806cf7a8b62b1ec))
+
 # [1.12.0](https://github.com/u29dc/www/compare/v1.11.1...v1.12.0) (2025-11-10)
 
 
