@@ -17,7 +17,7 @@ import { AnimatedStaggerRedacted } from '@/components/animation/animated-stagger
 export function ContentIndexStatement() {
 	return (
 		<div className="my-10 flex flex-col gap-10">
-			<AnimatedBlock stageId="index-statement-title" className="">
+			<AnimatedBlock stageId="index-statement-title" className="uppercase">
 				<h1>
 					<span className="flex w-full justify-between">
 						<span>An evolving, enigmatic,</span>
@@ -61,9 +61,9 @@ export function ContentIndexStatement() {
 				</div>
 			</AnimatedStaggerRedacted>
 
-			<AnimatedStaggerRedacted stageId="meta-annotation" className="self-end line-through">
+			<AnimatedBlock stageId="index-statement-description" className="self-end">
 				<div className="w-[35vw] font-handwritten md:w-[10vw]">IncompleteInfinity</div>
-			</AnimatedStaggerRedacted>
+			</AnimatedBlock>
 		</div>
 	);
 }

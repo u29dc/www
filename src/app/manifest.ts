@@ -1,7 +1,7 @@
+import type { MetadataRoute } from 'next';
+import { generateManifest } from '@/lib/metadata';
+
 /** Generate PWA manifest at /manifest.json. */
-
-export { generateManifest as default } from '@/lib/metadata';
-
-// Force static generation at build time
-export const dynamic = 'force-static';
-export const revalidate = false;
+export default async function manifest(): Promise<MetadataRoute.Manifest> {
+	return generateManifest();
+}

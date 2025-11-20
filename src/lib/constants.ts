@@ -134,9 +134,7 @@ export const metadata: Metadata = {
 	verification: {},
 	alternates: {
 		canonical: SITE.url,
-		types: {
-			'text/plain': '/llms.txt',
-		},
+		types: { 'text/plain': '/llms.txt' },
 	},
 	other: {
 		'color-scheme': 'light dark',
@@ -151,11 +149,12 @@ export const metadata: Metadata = {
 export const TIMELINE_INDEX: TimelineConfig = {
 	id: 'index',
 	enterStages: [
-		{ id: 'index-statement-title', duration: 1000, delay: 0 },
-		{ id: 'index-statement-description', duration: 1000, delay: 0 },
+		{ id: 'index-header-nav', duration: 200, delay: 0 },
+		{ id: 'index-header', duration: 200, delay: 0 },
 
-		{ id: 'index-header-nav', duration: 200, delay: -500 },
-		{ id: 'index-header', duration: 200, delay: -450 },
+		{ id: 'index-statement-title', duration: 1000, delay: -200 },
+		{ id: 'index-statement-description', duration: 1000, delay: -200 },
+		{ id: 'layout-section-title', duration: 600, delay: -600 },
 
 		{ id: 'index-artifacts', duration: 750, delay: -1000 },
 
@@ -194,6 +193,7 @@ export const TIMELINE_INDEX: TimelineConfig = {
 		{ id: 'index-header-nav', duration: 200, delay: -190 },
 
 		{ id: 'index-statement-description', duration: 200, delay: -190 },
+		{ id: 'layout-section-title', duration: 200, delay: -190 },
 		{ id: 'index-statement-title', duration: 200, delay: -190 },
 	],
 	enterSpeedMultiplier: 1,

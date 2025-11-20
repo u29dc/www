@@ -12,7 +12,6 @@
  * @module lib/mdx-client
  */
 
-import { CDN } from '@/lib/constants';
 import { logEvent } from '@/lib/logger';
 
 // ==================================================
@@ -133,12 +132,5 @@ export function extractMediaFromContent(content: string): MediaItem[] {
 		}
 	}
 
-	logEvent('MDX', 'EXTRACT_MEDIA', 'SUCCESS', {
-		count: mediaItems.length,
-	});
-
 	return mediaItems;
 }
-
-// Re-export CDN for use in markdown transformation
-export { CDN };

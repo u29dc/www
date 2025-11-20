@@ -27,9 +27,11 @@ export function LayoutSharedWrapper({ type, children, frontmatter }: LayoutShare
 			<section data-section="header" className="z-1000 w-full">
 				<LayoutSharedHeader type={type} frontmatter={frontmatter} />
 			</section>
-			<section data-section="content" className="w-full">
+
+			<section data-section="content" className="relative w-full">
 				{children}
 			</section>
+
 			<section data-section="footer" className="z-1100 w-full">
 				<LayoutSharedFooter />
 			</section>

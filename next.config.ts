@@ -7,7 +7,9 @@ const nextConfig: NextConfig = {
 	experimental: {
 		mcpServer: true,
 	},
-	cacheComponents: false,
+
+	// Exclude pino and thread-stream from bundling to avoid test file issues
+	serverExternalPackages: ['pino', 'thread-stream', 'pino-pretty'],
 
 	env: {
 		NEXT_PUBLIC_COMMIT_SHA: process.env['VERCEL_GIT_COMMIT_SHA'] || undefined,
