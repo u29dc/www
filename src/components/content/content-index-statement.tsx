@@ -11,59 +11,83 @@
  */
 
 import { AnimatedBlock } from '@/components/animation/animated-block';
-import { AnimatedStaggerBlur } from '@/components/animation/animated-stagger-blur';
 import { AnimatedStaggerRedacted } from '@/components/animation/animated-stagger-redacted';
 
 export function ContentIndexStatement() {
 	return (
-		<div className="my-10 flex flex-col gap-10">
+		<div className="my-10 flex flex-col gap-10 font-md">
 			<AnimatedBlock stageId="index-statement-title" className="uppercase">
 				<h1>
-					<span className="flex w-full justify-between">
-						<span>An evolving, enigmatic,</span>
-						<span>multifaceted</span>
-					</span>
-					<span className="flex w-full justify-between">
-						<span>creative practice</span>
-						<span>—</span>
-						<span>turning</span>
-						<span>complex futures into</span>
-					</span>
-					<span className="flex w-full justify-between">
-						<span>decision grade narratives.</span>
-					</span>
+					An evolving, enigmatic, multifaceted creative practice — turning complex futures
+					into decision grade narratives.
 				</h1>
 			</AnimatedBlock>
-			<AnimatedStaggerBlur stageId="index-statement-description" className="mb-0">
-				<div>It inhabits the space between what is seen and what is felt.</div>
-				<div>It operates in the deliberate pause, dwells in the charged moment.</div>
-				<div>It expresses itself... in incomplete form.</div>
-				<div>After all, isn't true infinity always incomplete?</div>
-			</AnimatedStaggerBlur>
 
-			<AnimatedStaggerBlur stageId="index-statement-description" className="mb-0">
+			<AnimatedBlock stageId="index-statement-problem" className="mb-0">
 				<div>
-					The practice questions premises before refining execution. Asks "why not
-					differently?" because the most interesting possibilities emerge not from
-					optimization, but from questioning the premise entirely. The work moves between
-					LAB (speculative research, public prototypes, new frames for understanding) and
-					COM (strategic narrative, decision-grade artifacts for organizations navigating
-					complexity). Research generates language; commerce deploys it. Each feeds the
-					other, operating in the productive tension between chaos and order, between the
-					mapped and the undiscovered.
+					Complex problems are typically addressed by first compressing them into familiar
+					frameworks, then dividing them among specialists. Define the challenge. Identify
+					which experts are needed. Assign components to each. Coordinate outputs into
+					deliverables—elevator pitches, brand positioning statements, predetermined
+					artifacts.
 				</div>
-			</AnimatedStaggerBlur>
-
-			<AnimatedStaggerRedacted stageId="meta-annotation">
-				<div className="w-full font-mono md:w-[10vw]">
-					this practice emerged from asking whether narrative work could address
-					complexity rather than reduce it
+				<br />
+				<div>
+					This succeeds when problems respect disciplinary boundaries and fit established
+					categories.
 				</div>
-			</AnimatedStaggerRedacted>
-
-			<AnimatedBlock stageId="index-statement-description" className="self-end">
-				<div className="w-[35vw] font-handwritten md:w-[10vw]">IncompleteInfinity</div>
+				<br />
+				<div>
+					It fails when the solution lives in the intersection—when territories must
+					inform each other from the beginning, not converge at the end. When the
+					challenge itself resists compression and demands synthesis rather than
+					simplification. These problems require working across domains from the start,
+					not coordinating specialists after division.
+				</div>
 			</AnimatedBlock>
+
+			<AnimatedBlock stageId="index-statement-approach" className="mb-0">
+				<div>
+					This demands different assumptions. Incompleteness as strategy, not failure.
+					Discovery determining form, not following templates. Premises questioned before
+					execution begins.
+				</div>
+				<br />
+				<div>
+					The practice itself embodies this duality—creating language for futures while
+					deploying clarity for present decisions. Speculative frameworks tested against
+					strategic reality. Strategic challenges revealing territories requiring new
+					inquiry. The work exists in the productive tension between research and
+					application, each mode making the other possible.
+				</div>
+			</AnimatedBlock>
+
+			<AnimatedBlock stageId="index-statement-essence" className="mb-0">
+				<div>
+					The work inhabits the space between what is seen and what is felt. It operates
+					in the deliberate pause, dwells in the charged moment. It expresses itself in
+					incomplete form—because strategic incompleteness rewards interpretation, invites
+					completion through engagement.
+				</div>
+				<br />
+				<div>After all, isn't true infinity always incomplete?</div>
+			</AnimatedBlock>
+
+			<AnimatedBlock stageId="index-statement-signature">
+				<div className="w-[35vw] font-handwritten md:w-[10vw]">Incomplete Infinity</div>
+			</AnimatedBlock>
+
+			<div className="mt-40">
+				<div className="float-right">
+					<AnimatedStaggerRedacted stageId="meta-annotation">
+						<div className="w-full text-right font-mono md:w-[10vw]">
+							complexity accelerates faster than disciplines evolve vocabularies for
+							it— the widening gap between what fields can articulate and what
+							problems demand is where this practice lives deliberately
+						</div>
+					</AnimatedStaggerRedacted>
+				</div>
+			</div>
 		</div>
 	);
 }
