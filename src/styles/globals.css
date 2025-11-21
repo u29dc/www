@@ -17,6 +17,9 @@
 	--color-black-faded: oklch(15% 0 0 / 0.25);
 	--color-black-pure: oklch(0% 0 0);
 
+	--color-selection-light: oklch(90% 0 0);
+	--color-selection-dark: oklch(30% 0 0);
+
 	--breakpoint-3xl: 120rem;
 	--breakpoint-4xl: 160rem;
 }
@@ -32,7 +35,6 @@
 
 	html {
 		@apply theme-light;
-		@apply select-none;
 		overflow-x: hidden;
 		max-width: 100vw;
 	}
@@ -133,11 +135,11 @@
 	@apply col-start-1 col-span-10
 	       sm:col-start-1 sm:col-span-10
 	       md:col-start-3 md:col-span-8
-	       lg:col-start-4 lg:col-span-7
-	       xl:col-start-5 xl:col-span-6
-	       2xl:col-start-6 2xl:col-span-5
+	       lg:col-start-4 lg:col-span-6
+	       xl:col-start-5 xl:col-span-5
+	       2xl:col-start-6 2xl:col-span-4
 	       3xl:col-start-7 3xl:col-span-3
-	       4xl:col-start-7 4xl:col-span-3;
+	       4xl:col-start-7 4xl:col-span-2;
 }
 
 @utility padding-standard {
@@ -167,8 +169,8 @@
 	color-scheme: light;
 
 	& ::selection {
-		background: var(--color-black);
-		color: var(--color-white);
+		background: var(--color-selection-light);
+		color: var(--color-black);
 	}
 
 	@media (prefers-color-scheme: dark) {
@@ -184,8 +186,8 @@
 		}
 
 		&:not(.light) ::selection {
-			background: var(--color-white);
-			color: var(--color-black);
+			background: var(--color-selection-dark);
+			color: var(--color-white);
 		}
 	}
 
@@ -201,8 +203,8 @@
 		}
 
 		&:not(.dark) ::selection {
-			background: var(--color-black);
-			color: var(--color-white);
+			background: var(--color-selection-light);
+			color: var(--color-black);
 		}
 	}
 
@@ -233,8 +235,8 @@
 	}
 
 	& ::selection {
-		background: var(--color-white);
-		color: var(--color-black);
+		background: var(--color-selection-dark);
+		color: var(--color-white);
 	}
 }
 
@@ -249,8 +251,8 @@
 	}
 
 	& ::selection {
-		background: var(--color-black);
-		color: var(--color-white);
+		background: var(--color-selection-light);
+		color: var(--color-black);
 	}
 }
 
@@ -297,66 +299,38 @@ html.dark .marker-all {
 /**
  * Development Grid Overlay
  *
- * Pure CSS grid overlay for development alignment verification.
- * - Mobile: 6 vertical lines (5 columns at 0%, 20%, 40%, 60%, 80%, 100%)
- * - Desktop: 11 vertical lines (10 columns at 0%-100% in 10% increments)
- * - Theme-aware via currentColor
- * - Zero JavaScript, instant rendering
- * - Dashed pattern: 4px visible, 4px gap
+ * Fixed frame overlay aligned to the col-span-base content.
+ * - Wrapper: full-screen, pointer-events-none, theme-aware color
+ * - Inner: col-span-base alignment with only left/right guide lines
  */
 @utility grid-overlay {
 	@apply fixed inset-0 z-1200 pointer-events-none;
-	@apply px-2 md:px-5;
+	@apply grid h-full w-full grid-cols-10 px-2 md:px-5;
+}
+
+@utility grid-overlay-inner {
+	@apply relative col-span-base h-full;
+
+	&::before,
+	&::after {
+		content: '';
+		@apply absolute top-0 h-full w-px;
+		opacity: 0.1;
+		background-image: repeating-linear-gradient(
+			to bottom,
+			currentColor 0,
+			currentColor 4px,
+			transparent 4px,
+			transparent 8px
+		);
+		background-repeat: repeat-y;
+	}
 
 	&::before {
-		content: '';
-		@apply block w-full h-full;
-		opacity: 0.1;
-		background-size: 1px 100%;
-		background-repeat: no-repeat;
+		@apply left-0;
+	}
 
-		/* Mobile: 6 vertical lines at 5-column grid boundaries */
-		background-image:
-			repeating-linear-gradient(to bottom, currentColor 0, currentColor 4px, transparent 4px, transparent 8px),
-			repeating-linear-gradient(to bottom, currentColor 0, currentColor 4px, transparent 4px, transparent 8px),
-			repeating-linear-gradient(to bottom, currentColor 0, currentColor 4px, transparent 4px, transparent 8px),
-			repeating-linear-gradient(to bottom, currentColor 0, currentColor 4px, transparent 4px, transparent 8px),
-			repeating-linear-gradient(to bottom, currentColor 0, currentColor 4px, transparent 4px, transparent 8px),
-			repeating-linear-gradient(to bottom, currentColor 0, currentColor 4px, transparent 4px, transparent 8px);
-		background-position:
-			0% 0,
-			20% 0,
-			40% 0,
-			60% 0,
-			80% 0,
-			100% 0;
-
-		/* Desktop: 11 vertical lines at 10-column grid boundaries */
-		@media (min-width: 768px) {
-			background-image:
-				repeating-linear-gradient(to bottom, currentColor 0, currentColor 4px, transparent 4px, transparent 8px),
-				repeating-linear-gradient(to bottom, currentColor 0, currentColor 4px, transparent 4px, transparent 8px),
-				repeating-linear-gradient(to bottom, currentColor 0, currentColor 4px, transparent 4px, transparent 8px),
-				repeating-linear-gradient(to bottom, currentColor 0, currentColor 4px, transparent 4px, transparent 8px),
-				repeating-linear-gradient(to bottom, currentColor 0, currentColor 4px, transparent 4px, transparent 8px),
-				repeating-linear-gradient(to bottom, currentColor 0, currentColor 4px, transparent 4px, transparent 8px),
-				repeating-linear-gradient(to bottom, currentColor 0, currentColor 4px, transparent 4px, transparent 8px),
-				repeating-linear-gradient(to bottom, currentColor 0, currentColor 4px, transparent 4px, transparent 8px),
-				repeating-linear-gradient(to bottom, currentColor 0, currentColor 4px, transparent 4px, transparent 8px),
-				repeating-linear-gradient(to bottom, currentColor 0, currentColor 4px, transparent 4px, transparent 8px),
-				repeating-linear-gradient(to bottom, currentColor 0, currentColor 4px, transparent 4px, transparent 8px);
-			background-position:
-				0% 0,
-				10% 0,
-				20% 0,
-				30% 0,
-				40% 0,
-				50% 0,
-				60% 0,
-				70% 0,
-				80% 0,
-				90% 0,
-				100% 0;
-		}
+	&::after {
+		@apply right-0;
 	}
 }
