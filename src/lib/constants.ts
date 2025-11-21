@@ -152,13 +152,15 @@ export const TIMELINE_INDEX: TimelineConfig = {
 		{ id: 'index-header-nav', duration: 200, delay: 0 },
 		{ id: 'index-header', duration: 200, delay: 0 },
 
-		{ id: 'index-statement-title', duration: 1000, delay: -200 },
-		{ id: 'index-statement-description', duration: 1000, delay: -200 },
-		{ id: 'layout-section-title', duration: 600, delay: -600 },
+		{ id: 'index-statement-title', duration: 1000, delay: -400 },
+		{ id: 'index-statement-problem', duration: 500, delay: -400 },
+		{ id: 'index-statement-approach', duration: 500, delay: -400 },
+		{ id: 'index-statement-essence', duration: 500, delay: -400 },
+		{ id: 'index-statement-signature', duration: 500, delay: -400 },
 
-		{ id: 'index-artifacts', duration: 750, delay: -1000 },
-
-		{ id: 'meta-annotation', duration: 0, delay: -1200 },
+		{ id: 'layout-section-title', duration: 600, delay: -400 },
+		{ id: 'index-artifacts', duration: 750, delay: -400 },
+		{ id: 'meta-annotation', duration: 0, delay: -800 },
 
 		{ id: 'index-axioms-intro', duration: 750, delay: -700 },
 		{ id: 'index-axioms-imperfect', duration: 750, delay: -700 },
@@ -186,15 +188,17 @@ export const TIMELINE_INDEX: TimelineConfig = {
 		{ id: 'index-axioms-intro', duration: 100, delay: -90 },
 
 		{ id: 'meta-annotation', duration: 0, delay: -100 },
-
 		{ id: 'index-artifacts', duration: 200, delay: -100 },
+		{ id: 'layout-section-title', duration: 200, delay: -190 },
+
+		{ id: 'index-statement-signature', duration: 200, delay: -200 },
+		{ id: 'index-statement-essence', duration: 200, delay: -200 },
+		{ id: 'index-statement-approach', duration: 200, delay: -200 },
+		{ id: 'index-statement-problem', duration: 200, delay: -200 },
+		{ id: 'index-statement-title', duration: 200, delay: -200 },
 
 		{ id: 'index-header', duration: 200, delay: -190 },
 		{ id: 'index-header-nav', duration: 200, delay: -190 },
-
-		{ id: 'index-statement-description', duration: 200, delay: -190 },
-		{ id: 'layout-section-title', duration: 200, delay: -190 },
-		{ id: 'index-statement-title', duration: 200, delay: -190 },
 	],
 	enterSpeedMultiplier: 1,
 	exitSpeedMultiplier: 2.0,

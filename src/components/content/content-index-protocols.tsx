@@ -37,13 +37,14 @@ export function ContentIndexProtocolsItem({
 		>
 			<div>
 				<div className="mb-2 font-bold text-2xl uppercase">{title}</div>
-				<div className="text-sm opacity-80">{subtitle}</div>
+				<div className="opacity-80">{subtitle}</div>
 			</div>
 			<div>
-				{description && <div className="mb-3 w-2/3 max-w-full text-sm">{description}</div>}
+				{description && <div className="mb-3 w-2/3 max-w-full">{description}</div>}
 
-				<div className="font-mono text-sm opacity-80">
-					{investment} | {duration}
+				<div className="mt-6 flex justify-between text-lg opacity-50">
+					<div className="">{duration}</div>
+					<div className="">{investment}</div>
 				</div>
 			</div>
 		</AnimatedBlock>
@@ -53,32 +54,27 @@ export function ContentIndexProtocolsItem({
 export function ContentIndexProtocols() {
 	return (
 		<div className="my-10 flex flex-col gap-8">
-			{/* Introduction */}
 			<div className="flex w-full flex-col gap-0 text-right font-mono">
-				<AnimatedStaggerRedacted stageId="index-protocols-intro" className="">
-					Incomplete Infinity operates through three connected protocols.
+				<AnimatedStaggerRedacted stageId="index-protocols-intro">
+					Three protocols structure engagement. Each embodies the practice's
 				</AnimatedStaggerRedacted>
-				<AnimatedStaggerRedacted stageId="index-protocols-intro" className="">
-					Every engagement begins with MAP. Each follows the same foundation:
+				<AnimatedStaggerRedacted stageId="index-protocols-intro">
+					core principle: discovery determines direction, not the reverse.
 				</AnimatedStaggerRedacted>
-				<AnimatedStaggerRedacted stageId="index-protocols-intro" className="">
-					Discover (interview, materials analysis, core challenge identification),
+				<AnimatedStaggerRedacted stageId="index-protocols-intro">
+					MAP establishes territory. LAB creates language where vocabulary
 				</AnimatedStaggerRedacted>
-				<AnimatedStaggerRedacted stageId="index-protocols-intro" className="">
-					Create (research, design, production), and Deliver (complete work with
-				</AnimatedStaggerRedacted>
-				<AnimatedStaggerRedacted stageId="index-protocols-intro" className="">
-					implementation guidance and revision round included).
+				<AnimatedStaggerRedacted stageId="index-protocols-intro">
+					doesn't exist. COM deploys clarity where decisions demand it.
 				</AnimatedStaggerRedacted>
 			</div>
 
-			{/* Protocol Cards */}
 			<div className="grid-row-3 grid gap-y-6">
 				<ContentIndexProtocolsItem
 					stageId="index-protocols-map"
 					title="MAP"
-					subtitle="Mapping the territory before choosing direction."
-					description="Strategic foundations that prevent building the wrong thing well. Discovery that challenges assumptions before committing resources. Required first step for LAB and COM."
+					subtitle="Discovery is work, not prelude to work."
+					description="Seven days mapping territory before choosing direction. Understanding what you're actually solving, not what you assume you're solving. Determines whether challenge requires creating new language or deploying existing clarity. Credits toward LAB or COM—required entry point for both."
 					investment="£2,000"
 					duration="7 days"
 				/>
@@ -86,18 +82,18 @@ export function ContentIndexProtocols() {
 				<ContentIndexProtocolsItem
 					stageId="index-protocols-lab"
 					title="LAB"
-					subtitle="Creating language for climate and AI futures through public prototypes and inquiry frameworks."
-					description="For organizations facing questions that lack existing vocabulary. Structure: inquiry framework + public prototype (format determined by research question) + briefing monograph + dissemination support."
-					investment="£15,000-35,000"
+					subtitle="Creating vocabulary where none exists."
+					description="For organizations confronting futures that resist existing frameworks. Inquiry generates prototypes—whether film, installation, or interactive system—that make abstract complexity tangible. The outcome: language that travels beyond initial context, frameworks others adopt."
+					investment="£15,000-30,000"
 					duration="4-8 weeks"
 				/>
 
 				<ContentIndexProtocolsItem
 					stageId="index-protocols-com"
 					title="COM"
-					subtitle="Decision-adjacent outcomes for founders at critical inflection points."
-					description="Translating complexity into clarity when choices matter—funding, partnerships, product direction. Narrative System: complete narrative architecture. Ongoing Partnership: sustained narrative stewardship."
-					investment="£20,000-50,000"
+					subtitle="Clarity enabling movement, not just understanding."
+					description="For founders at inflection points where complexity paralyzes decision-making. Compressing futures into decision-grade narrative—not simplification, but synthesis that preserves necessary complexity while enabling action. The outcome: movement forward with confidence."
+					investment="£20,000-60,000"
 					duration="2-4 weeks"
 				/>
 			</div>

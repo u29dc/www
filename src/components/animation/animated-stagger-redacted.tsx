@@ -129,8 +129,8 @@ export function AnimatedStaggerRedacted({
 		<motion.div
 			className={
 				mergedClassName
-					? `animation-redacted uppercase ${mergedClassName}`
-					: 'animation-redacted uppercase'
+					? `animation-redacted select-none uppercase ${mergedClassName}`
+					: 'animation-redacted select-none uppercase'
 			}
 			initial={false}
 			animate={variant}

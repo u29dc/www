@@ -27,7 +27,7 @@ export default function HomePage() {
 					<ContentIndexStatement />
 				</LayoutContentBlock>
 
-				<div className="h-[40vh]"></div>
+				<div className="h-120"></div>
 
 				<LayoutContentBlock id={1} title="artifacts" colSpanFull={true} className="">
 					<ContentIndexArtifacts />
