@@ -62,7 +62,9 @@ export function CoreAppShell({ children }: CoreAppShellProps) {
 					animationSpeed={0.1}
 					exposure={0.1}
 				/>
-				<div className="grid-overlay" aria-hidden="true" />
+				<div className="grid-overlay" aria-hidden="true">
+					<div className="grid-overlay-inner" />
+				</div>
 			</ThemeProvider>
 		</NavigationModeProvider>
 	);
