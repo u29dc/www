@@ -37,12 +37,12 @@ export function ContentIndexProtocolsItem({
 		>
 			<div>
 				<div className="mb-2 font-bold text-2xl uppercase">{title}</div>
-				<div className="text-sm opacity-80">{subtitle}</div>
+				<div className="opacity-80">{subtitle}</div>
 			</div>
 			<div>
-				{description && <div className="mb-3 w-2/3 max-w-full text-sm">{description}</div>}
+				{description && <div className="mb-3 w-2/3 max-w-full">{description}</div>}
 
-				<div className="font-mono text-sm opacity-80">
+				<div className="mt-6 text-lg opacity-50">
 					{investment} | {duration}
 				</div>
 			</div>

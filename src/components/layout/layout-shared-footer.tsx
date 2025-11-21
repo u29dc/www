@@ -52,7 +52,7 @@ export function LayoutSharedFooterLink({
 
 export function LayoutSharedFooter() {
 	return (
-		<footer className="padding-standard grid h-fit min-h-screen w-full grid-cols-10 bg-black text-white uppercase">
+		<footer className="padding-standard grid h-fit min-h-screen w-full select-none grid-cols-10 bg-black text-white uppercase">
 			<AtomicGradientBlur position="bottom" size="10rem" fixed={true} />
 
 			<AnimatedBlock
@@ -67,7 +67,7 @@ export function LayoutSharedFooter() {
 							link="https://cal.com/u29dc/hey"
 						>
 							<AnimatedStaggerRedacted stageId="meta-annotation">
-								<div className="w-full font-mono md:w-[10vw]">
+								<div className="font-mono">
 									[ Always open to conversations that question premises, not just
 									solve within them ]
 								</div>
@@ -79,14 +79,10 @@ export function LayoutSharedFooter() {
 							link="mailto:hey@u29dc.com"
 						>
 							<AnimatedStaggerRedacted stageId="meta-annotation">
-								<div className="w-full font-mono md:w-[10vw]">
-									[ Response time: 48 hours ]
-								</div>
+								<div className="font-mono">[ Response time: 48 hours ]</div>
 							</AnimatedStaggerRedacted>
 						</LayoutSharedFooterLink>
-
 						<div className="col-span-2 h-20"></div>
-
 						<LayoutSharedFooterLink
 							title="Instagram"
 							description="@u29dc"
@@ -103,9 +99,7 @@ export function LayoutSharedFooter() {
 							link="https://github.com/u29dc/www"
 						>
 							<AnimatedStaggerRedacted stageId="meta-annotation">
-								<div className="w-full font-mono md:w-[10vw]">
-									{BUILD.commitSha}
-								</div>
+								<div className="font-mono">{BUILD.commitSha}</div>
 							</AnimatedStaggerRedacted>
 						</LayoutSharedFooterLink>
 					</div>

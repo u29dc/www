@@ -57,7 +57,7 @@ export function ContentIndexArtifactsItem({
 					? new Date(date).getFullYear()
 					: new Date(date).toISOString().slice(0, 10).replace(/-/g, '/')}
 			</p>
-			<p className="-col-start-1 col-span-4 row-start-2 flex h-full flex-col justify-center text-right font-mono md:col-span-1 md:col-start-1 md:row-start-1 md:pr-5 md:text-left">
+			<p className="-col-start-1 col-span-4 row-start-2 flex h-full select-none flex-col justify-center text-right font-mono md:col-span-1 md:col-start-1 md:row-start-1 md:pr-5 md:text-left">
 				<span>{String(new Date(date).toISOString())}</span>
 			</p>
 

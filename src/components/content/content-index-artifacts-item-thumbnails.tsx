@@ -145,7 +145,7 @@ export default function ContentIndexArtifactsItemThumbnails({
 						className="shrink-0"
 						style={{
 							aspectRatio: preset.ratio,
-							height: `calc(5rem * ${preset.heightScale})`,
+							height: `calc(4rem * ${preset.heightScale})`,
 						}}
 					>
 						{mediaItem.type === 'image' ? (
