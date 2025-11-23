@@ -158,8 +158,8 @@ export const TIMELINE_INDEX: TimelineConfig = {
 		{ id: 'index-statement-essence', duration: 500, delay: -400 },
 		{ id: 'index-statement-signature', duration: 500, delay: -400 },
 
-		{ id: 'index-scroll-line', duration: 1000, delay: -400 },
-		{ id: 'index-scroll-cta', duration: 1000, delay: -800 },
+		{ id: 'layout-scroll-line', duration: 1000, delay: -400 },
+		{ id: 'layout-scroll-cta', duration: 1000, delay: -800 },
 
 		{ id: 'index-artifacts', duration: 750, delay: -700 },
 		{ id: 'layout-section-title', duration: 600, delay: -400 },
@@ -194,8 +194,8 @@ export const TIMELINE_INDEX: TimelineConfig = {
 		{ id: 'layout-section-title', duration: 200, delay: -190 },
 		{ id: 'index-artifacts', duration: 200, delay: -100 },
 
-		{ id: 'index-scroll-cta', duration: 150, delay: -120 },
-		{ id: 'index-scroll-line', duration: 150, delay: -150 },
+		{ id: 'layout-scroll-cta', duration: 150, delay: -120 },
+		{ id: 'layout-scroll-line', duration: 150, delay: -150 },
 
 		{ id: 'index-statement-signature', duration: 200, delay: -200 },
 		{ id: 'index-statement-essence', duration: 200, delay: -200 },
@@ -216,12 +216,20 @@ export const TIMELINE_ARTICLE: TimelineConfig = {
 	enterStages: [
 		{ id: 'article-header-nav', duration: 200, delay: 0 },
 		{ id: 'article-header', duration: 200, delay: -50 },
+
+		{ id: 'layout-scroll-line', duration: 800, delay: -300 },
+		{ id: 'layout-scroll-cta', duration: 800, delay: -650 },
+
 		{ id: 'article-body', duration: 500, delay: -250 },
 		{ id: 'layout-footer-nav', duration: 500, delay: -250 },
 	],
 	exitStages: [
 		{ id: 'layout-footer-nav', duration: 200, delay: 0 },
 		{ id: 'article-body', duration: 200, delay: -100 },
+
+		{ id: 'layout-scroll-cta', duration: 150, delay: -120 },
+		{ id: 'layout-scroll-line', duration: 150, delay: -150 },
+
 		{ id: 'article-header', duration: 200, delay: -100 },
 		{ id: 'article-header-nav', duration: 200, delay: -100 },
 	],

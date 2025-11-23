@@ -64,7 +64,7 @@ export function LayoutSharedFooter() {
 						<LayoutSharedFooterLink
 							title="Calendar"
 							description="Let's meet"
-							link="https://cal.com/u29dc/hey"
+							link="https://u29dc.co/hey"
 						>
 							<AnimatedStaggerRedacted stageId="meta-annotation">
 								<div className="font-mono">

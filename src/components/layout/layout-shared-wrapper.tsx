@@ -29,8 +29,6 @@ export function LayoutSharedWrapper({ type, children, frontmatter }: LayoutShare
 				<LayoutSharedHeader type={type} frontmatter={frontmatter} />
 			</section>
 
-			{type === 'index' && <CoreScrollOverlay />}
-
 			<section data-section="content" className="relative w-full">
 				{children}
 			</section>
@@ -38,6 +36,8 @@ export function LayoutSharedWrapper({ type, children, frontmatter }: LayoutShare
 			<section data-section="footer" className="relative z-40 w-full">
 				<LayoutSharedFooter />
 			</section>
+
+			<CoreScrollOverlay pageType={type} />
 		</main>
 	);
 }

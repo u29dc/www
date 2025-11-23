@@ -10,7 +10,6 @@
  * @module components/layout/layout-shared-header
  */
 
-import { AnimatedLink } from '@/components/animation/animated-link';
 import { AnimatedStaggerBlur } from '@/components/animation/animated-stagger-blur';
 import { AtomicBrandLogo } from '@/components/atomic/atomic-brand-logo';
 import { AtomicGradientBlur } from '@/components/atomic/atomic-gradient-blur';
@@ -25,6 +24,9 @@ export interface LayoutSharedHeaderProps {
 
 export function LayoutSharedHeader({ type, frontmatter, title }: LayoutSharedHeaderProps) {
 	const siteTitle = title ?? SITE.title;
+	const headingContent = type === 'article' ? (frontmatter?.title ?? siteTitle) : siteTitle;
+	const headingStageId = type === 'article' ? 'article-header' : 'index-header';
+	const navStageId = type === 'article' ? 'article-header-nav' : 'index-header-nav';
 
 	return (
 		<div className="padding-standard grid h-60 grid-cols-10">
@@ -38,44 +40,23 @@ export function LayoutSharedHeader({ type, frontmatter, title }: LayoutSharedHea
 				/>
 
 				<div className="full-container relative z-10 uppercase">
-					{type === 'index' && (
-						<>
-							<div className="-translate-x-1/2 absolute bottom-0 left-1/2 w-full text-center">
-								<AnimatedStaggerBlur
-									stageId="index-header"
-									staggerDelay={50}
-									blurStrength={5}
-								>
-									{siteTitle}
-								</AnimatedStaggerBlur>
-							</div>
-							<nav className="absolute bottom-0 left-0">
-								<AtomicBrandLogo
-									className="-translate-x-30 translate-y-6"
-									theme="light"
-								/>
-							</nav>
-						</>
-					)}
-
-					{type === 'article' && frontmatter && (
-						<>
-							<div className="-translate-x-1/2 absolute bottom-0 left-1/2 w-full text-center">
-								<AnimatedStaggerBlur
-									stageId="article-header"
-									staggerDelay={50}
-									blurStrength={5}
-								>
-									{frontmatter.title}
-								</AnimatedStaggerBlur>
-							</div>
-							<nav className="absolute bottom-0 left-0">
-								<AnimatedStaggerBlur stageId="article-header-nav">
-									<AnimatedLink href="/">Back</AnimatedLink>
-								</AnimatedStaggerBlur>
-							</nav>
-						</>
-					)}
+					<div className="-translate-x-1/2 absolute bottom-0 left-1/2 w-full text-center">
+						<AnimatedStaggerBlur
+							stageId={headingStageId}
+							staggerDelay={50}
+							blurStrength={5}
+						>
+							{headingContent}
+						</AnimatedStaggerBlur>
+					</div>
+					<nav className="absolute bottom-0 left-0">
+						<AnimatedStaggerBlur stageId={navStageId}>
+							<AtomicBrandLogo
+								className="-translate-x-30 translate-y-6"
+								theme="light"
+							/>
+						</AnimatedStaggerBlur>
+					</nav>
 				</div>
 			</header>
 		</div>
