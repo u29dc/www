@@ -11,6 +11,7 @@
  */
 
 import type { ReactNode } from 'react';
+import { CoreScrollOverlay } from '@/components/core/core-scroll-overlay';
 import { LayoutSharedFooter } from '@/components/layout/layout-shared-footer';
 import { LayoutSharedHeader } from '@/components/layout/layout-shared-header';
 import type { ContentItem } from '@/lib/mdx-types';
@@ -23,8 +24,8 @@ export interface LayoutSharedWrapperProps {
 
 export function LayoutSharedWrapper({ type, children, frontmatter }: LayoutSharedWrapperProps) {
 	return (
-		<main className="full-container min-h-screen overflow-x-hidden">
-			<section data-section="header" className="z-1000 w-full">
+		<main className="full-container relative isolate min-h-screen overflow-x-hidden">
+			<section data-section="header" className="relative z-10 w-full">
 				<LayoutSharedHeader type={type} frontmatter={frontmatter} />
 			</section>
 
@@ -32,9 +33,11 @@ export function LayoutSharedWrapper({ type, children, frontmatter }: LayoutShare
 				{children}
 			</section>
 
-			<section data-section="footer" className="z-1100 w-full">
+			<section data-section="footer" className="relative z-40 w-full">
 				<LayoutSharedFooter />
 			</section>
+
+			<CoreScrollOverlay pageType={type} />
 		</main>
 	);
 }
