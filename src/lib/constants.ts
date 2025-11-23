@@ -158,8 +158,11 @@ export const TIMELINE_INDEX: TimelineConfig = {
 		{ id: 'index-statement-essence', duration: 500, delay: -400 },
 		{ id: 'index-statement-signature', duration: 500, delay: -400 },
 
+		{ id: 'index-scroll-line', duration: 1000, delay: -400 },
+		{ id: 'index-scroll-cta', duration: 1000, delay: -800 },
+
+		{ id: 'index-artifacts', duration: 750, delay: -700 },
 		{ id: 'layout-section-title', duration: 600, delay: -400 },
-		{ id: 'index-artifacts', duration: 750, delay: -400 },
 		{ id: 'meta-annotation', duration: 0, delay: -800 },
 
 		{ id: 'index-axioms-intro', duration: 750, delay: -700 },
@@ -188,8 +191,11 @@ export const TIMELINE_INDEX: TimelineConfig = {
 		{ id: 'index-axioms-intro', duration: 100, delay: -90 },
 
 		{ id: 'meta-annotation', duration: 0, delay: -100 },
-		{ id: 'index-artifacts', duration: 200, delay: -100 },
 		{ id: 'layout-section-title', duration: 200, delay: -190 },
+		{ id: 'index-artifacts', duration: 200, delay: -100 },
+
+		{ id: 'index-scroll-cta', duration: 150, delay: -120 },
+		{ id: 'index-scroll-line', duration: 150, delay: -150 },
 
 		{ id: 'index-statement-signature', duration: 200, delay: -200 },
 		{ id: 'index-statement-essence', duration: 200, delay: -200 },
