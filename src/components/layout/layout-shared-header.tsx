@@ -34,10 +34,10 @@ export function LayoutSharedHeader({ type, frontmatter, title }: LayoutSharedHea
 					size="15rem"
 					fixed={true}
 					layers={5}
-					className="z-1000"
+					className="z-0"
 				/>
 
-				<div className="full-container relative z-1001 uppercase">
+				<div className="full-container relative z-10 uppercase">
 					{type === 'index' && (
 						<>
 							<div className="-translate-x-1/2 absolute bottom-0 left-1/2 w-full text-center">

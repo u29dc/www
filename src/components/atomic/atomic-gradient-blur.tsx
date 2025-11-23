@@ -28,6 +28,7 @@ export interface AtomicGradientBlurProps {
 	animated?: boolean;
 	opacity?: number;
 	fixed?: boolean;
+	zIndex?: number;
 	className?: string;
 	children?: ReactNode;
 }
@@ -42,6 +43,7 @@ const DEFAULT_CONFIG = {
 	animated: false,
 	opacity: 1,
 	fixed: true,
+	zIndex: 0,
 	className: '',
 } as const;
 
@@ -158,7 +160,7 @@ export function AtomicGradientBlur(props: AtomicGradientBlurProps) {
 		pointerEvents: 'none',
 		opacity: isVisible ? 1 : 0,
 		transition: config.animated ? 'opacity 0.3s ease-out' : undefined,
-		zIndex: 1000,
+		zIndex: config.zIndex,
 		contain: 'layout style paint',
 		[config.position]: 0,
 	};

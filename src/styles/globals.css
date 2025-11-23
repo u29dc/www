@@ -304,7 +304,7 @@ html.dark .marker-all {
  * - Inner: col-span-base alignment with only left/right guide lines
  */
 @utility grid-overlay {
-	@apply fixed inset-0 z-1200 pointer-events-none;
+	@apply fixed inset-0 z-30 pointer-events-none;
 	@apply grid h-full w-full grid-cols-10 px-2 md:px-5;
 }
 

@@ -57,7 +57,7 @@ export function LayoutSharedFooter() {
 
 			<AnimatedBlock
 				stageId="layout-footer-nav"
-				className="z-1001 col-span-base row-start-1 h-full"
+				className="relative z-10 col-span-base row-start-1 h-full"
 			>
 				<div className="padding-standard flex h-full flex-col justify-between gap-4 px-0">
 					<div className="grid w-full grid-cols-2 gap-4">
