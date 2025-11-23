@@ -1,3 +1,11 @@
+# [1.13.0](https://github.com/u29dc/www/compare/v1.12.1...v1.13.0) (2025-11-23)
+
+
+### Features
+
+* **ui:** add adaptive scroll overlay with magnetic mouse tracking ([4ab4928](https://github.com/u29dc/www/commit/4ab4928200142149953bca4316c236a306645bec))
+* **ui:** add scroll-bound cta overlay with mouse tracking ([bb08371](https://github.com/u29dc/www/commit/bb0837177e8cff096c71341f3c9c58ca3dd0def2))
+
 ## [1.12.1](https://github.com/u29dc/www/compare/v1.12.0...v1.12.1) (2025-11-20)
 
 
