@@ -220,12 +220,16 @@ export const TIMELINE_ARTICLE: TimelineConfig = {
 		{ id: 'layout-scroll-line', duration: 800, delay: -300 },
 		{ id: 'layout-scroll-cta', duration: 800, delay: -650 },
 
+		{ id: 'meta-annotation', duration: 0, delay: -800 },
+
 		{ id: 'article-body', duration: 500, delay: -250 },
 		{ id: 'layout-footer-nav', duration: 500, delay: -250 },
 	],
 	exitStages: [
 		{ id: 'layout-footer-nav', duration: 200, delay: 0 },
 		{ id: 'article-body', duration: 200, delay: -100 },
+
+		{ id: 'meta-annotation', duration: 0, delay: -100 },
 
 		{ id: 'layout-scroll-cta', duration: 150, delay: -120 },
 		{ id: 'layout-scroll-line', duration: 150, delay: -150 },
