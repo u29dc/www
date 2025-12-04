@@ -1,3 +1,10 @@
+# [1.14.0](https://github.com/u29dc/www/compare/v1.13.0...v1.14.0) (2025-12-04)
+
+
+### Features
+
+* **ui:** add meta-annotation to article timeline ([b659c2d](https://github.com/u29dc/www/commit/b659c2d4bbe64560edea2dc9fd4ad8f5f9a77137))
+
 # [1.13.0](https://github.com/u29dc/www/compare/v1.12.1...v1.13.0) (2025-11-23)
 
 
