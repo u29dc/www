@@ -40,6 +40,7 @@ let overlayRef = $state<HTMLDivElement | null>(null);
 let isMdUp = $state(false);
 let lineOffset = $state(0);
 let ctaOffset = $state(0);
+let overlayRect: DOMRect | null = null;
 
 const lineStyle = $derived(`transform: translate3d(0, ${lineOffset}px, 0);`);
 const ctaStyle = $derived(`transform: translate3d(${ctaOffset}px, 0, 0);`);
@@ -47,9 +48,11 @@ const anchorLeft = $derived(isMdUp ? '20%' : '100%');
 
 const attachOverlay = (node: HTMLDivElement) => {
 	overlayRef = node;
+	overlayRect = node.getBoundingClientRect();
 	return {
 		destroy() {
 			overlayRef = null;
+			overlayRect = null;
 		},
 	};
 };
@@ -58,6 +61,9 @@ onMount(() => {
 	const updateIsMdUp = () => {
 		isMdUp = window.matchMedia('(min-width: 768px)').matches;
 	};
+
+	const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+	let isActive = document.visibilityState === 'visible' && !motionQuery.matches;
 
 	let maxScroll = 1000;
 	let windowWidth = window.innerWidth;
@@ -70,6 +76,10 @@ onMount(() => {
 	const magnetX = { value: 0, velocity: 0 };
 	const magnetY = { value: 0, velocity: 0 };
 
+	const updateOverlayRect = () => {
+		overlayRect = overlayRef?.getBoundingClientRect() ?? null;
+	};
+
 	const updateMeasurements = () => {
 		const footer = document.querySelector('[data-section="footer"]') as HTMLElement | null;
 		const footerHeight = footer?.getBoundingClientRect().height ?? 0;
@@ -79,6 +89,7 @@ onMount(() => {
 
 		windowWidth = window.innerWidth;
 		updateIsMdUp();
+		updateOverlayRect();
 
 		const fallbackX = isMdUp ? windowWidth * 0.2 : windowWidth;
 		const fallbackY = window.innerHeight / 2;
@@ -106,7 +117,41 @@ onMount(() => {
 	let rafId = 0;
 	let lastTime = 0;
 
+	const start = () => {
+		if (rafId !== 0) return;
+		rafId = requestAnimationFrame(tick);
+	};
+
+	const stop = () => {
+		if (rafId === 0) return;
+		cancelAnimationFrame(rafId);
+		rafId = 0;
+		lastTime = 0;
+	};
+
+	const setActive = (next: boolean) => {
+		if (isActive === next) return;
+		isActive = next;
+		if (isActive) {
+			start();
+		} else {
+			stop();
+		}
+	};
+
+	const updateActive = () => {
+		setActive(document.visibilityState === 'visible' && !motionQuery.matches);
+	};
+
+	document.addEventListener('visibilitychange', updateActive);
+	motionQuery.addEventListener('change', updateActive);
+
 	const tick = (time: number) => {
+		if (!isActive) {
+			rafId = 0;
+			return;
+		}
+
 		if (lastTime === 0) {
 			lastTime = time;
 			rafId = requestAnimationFrame(tick);
@@ -121,7 +166,6 @@ onMount(() => {
 		const lineTarget = progress * LINE_HEIGHT;
 		spring(line, lineTarget, SPRING_LINE.stiffness, SPRING_LINE.damping, delta);
 
-		const overlayRect = overlayRef?.getBoundingClientRect();
 		const anchorX = overlayRect ? (isMdUp ? overlayRect.width * 0.2 : overlayRect.width) : isMdUp ? windowWidth * 0.2 : windowWidth;
 		const anchorY = overlayRect ? overlayRect.top + line.value + magnetY.value : line.value;
 
@@ -146,13 +190,18 @@ onMount(() => {
 		rafId = requestAnimationFrame(tick);
 	};
 
-	rafId = requestAnimationFrame(tick);
+	updateActive();
+	if (isActive) {
+		start();
+	}
 
 	return () => {
 		window.removeEventListener('resize', updateMeasurements);
 		window.removeEventListener('mousemove', handleMouseMove);
+		window.removeEventListener('visibilitychange', updateActive);
+		motionQuery.removeEventListener('change', updateActive);
 		observer.disconnect();
-		cancelAnimationFrame(rafId);
+		stop();
 	};
 });
 </script>

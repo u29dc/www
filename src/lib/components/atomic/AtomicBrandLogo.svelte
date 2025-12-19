@@ -14,6 +14,7 @@ export interface AtomicBrandLogoProps {
 	animateNoise?: boolean;
 	className?: string;
 	theme?: 'light' | 'dark' | 'system';
+	observeVisibility?: boolean;
 }
 
 type ThemeVariant = 'light' | 'dark';
@@ -50,6 +51,9 @@ interface BufferDescriptor {
 interface AtomicBrandLogoRenderer {
 	resize(dimensions?: Partial<Pick<CanvasDimensions, 'width' | 'height'>>): void;
 	setState(state: AtomicBrandLogoState): void;
+	start(): void;
+	stop(): void;
+	renderOnce(): void;
 	dispose(): void;
 }
 
@@ -585,10 +589,11 @@ function createAtomicBrandLogoRenderer(canvas: HTMLCanvasElement, initialState: 
 
 	let frameId: number | null = null;
 	let lastTimestamp = 0;
+	let isRunning = false;
 	let isDisposed = false;
 	let resizeObserver: ResizeObserver | null = null;
 
-	const tick = (timestamp: number) => {
+	const drawFrame = (timestamp: number) => {
 		if (isDisposed) return;
 		if (lastTimestamp === 0) {
 			lastTimestamp = timestamp;
@@ -625,11 +630,35 @@ function createAtomicBrandLogoRenderer(canvas: HTMLCanvasElement, initialState: 
 		gl.bindVertexArray(null);
 
 		checkGlError('afterDraw');
+	};
 
+	const tick = (timestamp: number) => {
+		if (!isRunning) return;
+		drawFrame(timestamp);
 		frameId = requestAnimationFrame(tick);
 	};
 
-	frameId = requestAnimationFrame(tick);
+	const start = () => {
+		if (isRunning || isDisposed) return;
+		isRunning = true;
+		lastTimestamp = 0;
+		frameId = requestAnimationFrame(tick);
+	};
+
+	const stop = () => {
+		if (!isRunning) return;
+		isRunning = false;
+		if (frameId !== null) {
+			cancelAnimationFrame(frameId);
+			frameId = null;
+		}
+	};
+
+	const renderOnce = () => {
+		drawFrame(performance.now());
+	};
+
+	start();
 
 	const handleResize = (overrides?: Partial<Pick<CanvasDimensions, 'width' | 'height'>>) => {
 		const targetWidth = overrides?.width ?? state.width;
@@ -683,10 +712,7 @@ function createAtomicBrandLogoRenderer(canvas: HTMLCanvasElement, initialState: 
 		if (isDisposed) return;
 		isDisposed = true;
 
-		if (frameId !== null) {
-			cancelAnimationFrame(frameId);
-		}
-		frameId = null;
+		stop();
 
 		canvas.removeEventListener('pointerenter', handlePointerEnter);
 		canvas.removeEventListener('pointerleave', handlePointerLeave);
@@ -715,6 +741,9 @@ function createAtomicBrandLogoRenderer(canvas: HTMLCanvasElement, initialState: 
 	return {
 		resize,
 		setState,
+		start,
+		stop,
+		renderOnce,
 		dispose,
 	};
 }
@@ -731,6 +760,7 @@ let {
 	animateNoise = false,
 	className = '',
 	theme = 'system',
+	observeVisibility = true,
 }: AtomicBrandLogoProps = $props();
 
 const height = $derived(width / 4);
@@ -741,6 +771,13 @@ const canvasStyle = 'width: 100%; height: 100%; display: block;';
 let canvasRef = $state<HTMLCanvasElement | null>(null);
 let renderer = $state<AtomicBrandLogoRenderer | null>(null);
 let resolvedTheme = $state<ThemeVariant>('light');
+let isInView = $state(true);
+let isPageVisible = $state(true);
+let prefersReducedMotion = $state(false);
+let deviceTier = $state<DeviceTier>('high');
+let hasRenderedStatic = false;
+
+const isActive = $derived(deviceTier !== 'low' && isPageVisible && !prefersReducedMotion && (observeVisibility ? isInView : true));
 
 $effect(() => {
 	resolvedTheme = resolveTheme(theme, readSystemTheme());
@@ -761,7 +798,27 @@ const buildState = (): AtomicBrandLogoState => ({
 });
 
 onMount(() => {
-	if (!canvasRef) return;
+	deviceTier = detectDeviceTier();
+
+	const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+	const updateMotionPreference = () => {
+		prefersReducedMotion = motionQuery.matches;
+	};
+	updateMotionPreference();
+	motionQuery.addEventListener('change', updateMotionPreference);
+
+	const updatePageVisibility = () => {
+		isPageVisible = document.visibilityState === 'visible';
+	};
+	updatePageVisibility();
+	document.addEventListener('visibilitychange', updatePageVisibility);
+
+	if (!canvasRef) {
+		return () => {
+			motionQuery.removeEventListener('change', updateMotionPreference);
+			document.removeEventListener('visibilitychange', updatePageVisibility);
+		};
+	}
 
 	resolvedTheme = resolveTheme(theme, readSystemTheme());
 	const state = buildState();
@@ -784,6 +841,8 @@ onMount(() => {
 		});
 		return () => {
 			mediaQuery?.removeEventListener('change', handleMediaChange ?? (() => {}));
+			motionQuery.removeEventListener('change', updateMotionPreference);
+			document.removeEventListener('visibilitychange', updatePageVisibility);
 		};
 	}
 
@@ -791,7 +850,45 @@ onMount(() => {
 		renderer?.dispose();
 		renderer = null;
 		mediaQuery?.removeEventListener('change', handleMediaChange ?? (() => {}));
+		motionQuery.removeEventListener('change', updateMotionPreference);
+		document.removeEventListener('visibilitychange', updatePageVisibility);
 	};
+});
+
+$effect(() => {
+	if (!observeVisibility) {
+		isInView = true;
+		return;
+	}
+	if (!canvasRef) return;
+	if (typeof IntersectionObserver === 'undefined') {
+		isInView = true;
+		return;
+	}
+	const observer = new IntersectionObserver(
+		([entry]) => {
+			isInView = entry?.isIntersecting ?? true;
+		},
+		{ rootMargin: '200px' },
+	);
+	observer.observe(canvasRef);
+	return () => {
+		observer.disconnect();
+	};
+});
+
+$effect(() => {
+	if (!renderer) return;
+	if (isActive) {
+		hasRenderedStatic = false;
+		renderer.start();
+		return;
+	}
+	renderer.stop();
+	if (!hasRenderedStatic) {
+		renderer.renderOnce();
+		hasRenderedStatic = true;
+	}
 });
 
 $effect(() => {
@@ -799,6 +896,10 @@ $effect(() => {
 	const nextState = buildState();
 	renderer.setState(nextState);
 	renderer.resize({ width: nextState.width, height: nextState.height });
+	if (!isActive) {
+		renderer.renderOnce();
+		hasRenderedStatic = true;
+	}
 });
 </script>
 
