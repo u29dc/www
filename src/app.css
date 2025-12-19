@@ -92,6 +92,23 @@
 	}
 }
 
+/* ================================================== */
+/* SMOOTH SCROLL */
+/* ================================================== */
+
+html.scroll,
+html.scroll body {
+	height: auto;
+}
+
+html.scroll.scroll-stopped {
+	overflow: clip;
+}
+
+html.scroll.scroll-smooth iframe {
+	pointer-events: none;
+}
+
 @media (hover: hover) and (pointer: fine) {
 	.hover-device\:block {
 		display: block;
