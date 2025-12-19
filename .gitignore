@@ -17,6 +17,9 @@ out/
 dist/
 certificates
 
+# SvelteKit
+.svelte-kit/
+
 # Production builds
 build/
 
