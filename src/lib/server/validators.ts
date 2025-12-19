@@ -1,4 +1,3 @@
-import path from 'node:path';
 import { ValidationError } from '$lib/errors';
 import { logEvent } from '$lib/logger';
 
@@ -11,10 +10,7 @@ export function isValidSlugFormat(slug: string): boolean {
 }
 
 export function isValidContentPath(slug: string): boolean {
-	const contentDir = path.join(process.cwd(), 'src/content');
-	const resolvedPath = path.resolve(path.join(contentDir, `${slug}.mdx`));
-
-	return resolvedPath.startsWith(contentDir);
+	return !slug.includes('/') && !slug.includes('\\') && !slug.includes('..');
 }
 
 export function validateSlug(rawSlug: string): string {

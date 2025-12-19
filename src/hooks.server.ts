@@ -1,4 +1,3 @@
-import crypto from 'node:crypto';
 import type { Handle } from '@sveltejs/kit';
 import { dev } from '$app/environment';
 import { CDN } from '$lib/constants';
@@ -31,8 +30,38 @@ const buildCsp = (nonce: string): string => {
 		.concat('; upgrade-insecure-requests');
 };
 
+const BASE64_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+
+const bytesToBase64 = (bytes: Uint8Array): string => {
+	let output = '';
+	for (let i = 0; i < bytes.length; i += 3) {
+		const a = bytes[i] ?? 0;
+		const b = bytes[i + 1] ?? 0;
+		const c = bytes[i + 2] ?? 0;
+		const triple = (a << 16) | (b << 8) | c;
+		output += BASE64_ALPHABET[(triple >> 18) & 63];
+		output += BASE64_ALPHABET[(triple >> 12) & 63];
+		output += i + 1 < bytes.length ? BASE64_ALPHABET[(triple >> 6) & 63] : '=';
+		output += i + 2 < bytes.length ? BASE64_ALPHABET[triple & 63] : '=';
+	}
+	return output;
+};
+
+const createNonce = (): string => {
+	const bytes = new Uint8Array(16);
+	crypto.getRandomValues(bytes);
+	return bytesToBase64(bytes);
+};
+
+const shouldRedirectToHome = (path: string): boolean => {
+	if (path.startsWith('/api')) return false;
+	if (path.endsWith('.md') || path.endsWith('.txt')) return false;
+	if (path === '/llms.txt' || path === '/sitemap.xml' || path === '/robots.txt' || path === '/manifest.json') return false;
+	return !path.includes('.');
+};
+
 export const handle: Handle = async ({ event, resolve }) => {
-	const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
+	const nonce = createNonce();
 	event.locals.nonce = nonce;
 
 	const response = await resolve(event, {
@@ -60,7 +89,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	response.headers.set('strict-transport-security', 'max-age=31536000; includeSubDomains');
 
-	if (response.status === 404 && !path.startsWith('/api')) {
+	if (response.status === 404 && shouldRedirectToHome(path)) {
 		const redirectHeaders = new Headers(response.headers);
 		redirectHeaders.set('location', '/');
 		return new Response(null, { status: 302, headers: redirectHeaders });

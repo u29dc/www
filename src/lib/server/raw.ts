@@ -51,12 +51,13 @@ export async function handleRawContentRequest(format: string, rawSlug: string): 
 
 		const contentType = format === 'txt' ? 'text/plain; charset=utf-8' : 'text/markdown; charset=utf-8';
 
+		const byteLength = new TextEncoder().encode(output).length;
 		const response = new Response(output, {
 			status: 200,
 			headers: {
 				'Content-Type': contentType,
 				'Content-Disposition': `inline; filename="${slug}.${format}"`,
-				'Content-Length': String(Buffer.byteLength(output, 'utf-8')),
+				'Content-Length': String(byteLength),
 				'Cache-Control': 'public, s-maxage=86400, stale-while-revalidate=43200',
 				'X-Robots-Tag': 'noindex, nofollow',
 				'X-Content-Type-Options': 'nosniff',

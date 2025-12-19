@@ -1,5 +1,3 @@
-import fs from 'node:fs/promises';
-import path from 'node:path';
 import matter from 'gray-matter';
 import yaml from 'js-yaml';
 import { CDN } from '$lib/constants';
@@ -7,17 +5,31 @@ import { type ContentItem, ContentSchema, isStudy, type ParsedContent } from '$l
 import { NotFoundError } from '$lib/errors';
 import { logEvent } from '$lib/logger';
 
-export async function getAllContent(): Promise<ParsedContent[]> {
-	const contentDir = path.join(process.cwd(), 'src/content');
-	const files = await fs.readdir(contentDir);
-	const mdxFiles = files.filter((file) => file.endsWith('.mdx'));
+type MdxEntry = {
+	filePath: string;
+	filename: string;
+	slug: string;
+	source: string;
+};
 
-	const content = await Promise.all(
-		mdxFiles.map(async (file) => {
-			const filePath = path.join(contentDir, file);
-			return parseMdx(filePath);
-		}),
-	);
+const mdxModules = import.meta.glob('/src/content/*.mdx', {
+	query: '?raw',
+	import: 'default',
+	eager: true,
+}) as Record<string, string>;
+
+const mdxEntries: MdxEntry[] = Object.entries(mdxModules)
+	.map(([filePath, source]) => {
+		const filename = filePath.split('/').pop() ?? filePath;
+		const slug = filename.replace(/\.mdx$/, '');
+		return { filePath, filename, slug, source };
+	})
+	.filter((entry) => entry.slug.length > 0);
+
+const mdxBySlug = new Map<string, MdxEntry>(mdxEntries.map((entry) => [entry.slug, entry]));
+
+export async function getAllContent(): Promise<ParsedContent[]> {
+	const content = await Promise.all(mdxEntries.map((entry) => parseMdx(entry.source, entry.filePath)));
 
 	const sorted = content.sort((a, b) => {
 		const dateA = new Date(a.frontmatter.date).getTime();
@@ -27,7 +39,7 @@ export async function getAllContent(): Promise<ParsedContent[]> {
 
 	logEvent('MDX', 'AGGREGATE', 'SUCCESS', {
 		count: sorted.length,
-		files: mdxFiles,
+		files: mdxEntries.map((entry) => entry.filename),
 	});
 
 	return sorted;
@@ -79,10 +91,14 @@ export function injectArtifactsIntoLlms(llmsContent: string, artifactsMarkdown: 
 }
 
 export async function getContentBySlug(slug: string): Promise<ParsedContent | null> {
+	const entry = mdxBySlug.get(slug);
+	if (!entry) {
+		logEvent('MDX', 'GET_BY_SLUG', 'FAIL', { slug });
+		return null;
+	}
+
 	try {
-		const contentDir = path.join(process.cwd(), 'src/content');
-		const filePath = path.join(contentDir, `${slug}.mdx`);
-		const result = await parseMdx(filePath);
+		const result = await parseMdx(entry.source, entry.filePath);
 
 		logEvent('MDX', 'GET_BY_SLUG', 'SUCCESS', { slug });
 		return result;
@@ -92,9 +108,8 @@ export async function getContentBySlug(slug: string): Promise<ParsedContent | nu
 	}
 }
 
-export async function parseMdx(filePath: string): Promise<ParsedContent> {
+export async function parseMdx(source: string, filePath: string): Promise<ParsedContent> {
 	try {
-		const source = await fs.readFile(filePath, 'utf8');
 		const { data, content } = matter(source);
 		const parsedData = data as { date?: string | Date } & Record<string, unknown>;
 
