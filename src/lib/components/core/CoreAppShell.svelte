@@ -1,12 +1,22 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
 import { onMount } from 'svelte';
+import { afterNavigate } from '$app/navigation';
 import { createScroll, type ScrollController } from '$lib/scroll';
 
 let { children }: { children: Snippet } = $props();
+let controller: ScrollController | null = null;
+
+afterNavigate(() => {
+	if (controller) {
+		controller.jumpTo(0);
+		return;
+	}
+
+	window.scrollTo(0, 0);
+});
 
 onMount(() => {
-	let controller: ScrollController | null = null;
 	const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
 
 	const syncController = () => {

@@ -8,6 +8,7 @@ export type ScrollController = {
 	start: () => void;
 	stop: () => void;
 	scrollTo: (target: number) => void;
+	jumpTo: (target: number) => void;
 	destroy: () => void;
 };
 
@@ -244,6 +245,13 @@ export const createScroll = (options: ScrollOptions = {}): ScrollController => {
 		targetScroll = clamp(0, target, dimensions.limit);
 	};
 
+	const jumpTo = (target: number) => {
+		targetScroll = clamp(0, target, dimensions.limit);
+		animatedScroll = targetScroll;
+		pendingDelta = 0;
+		setScroll(animatedScroll);
+	};
+
 	const destroy = () => {
 		if (rafId !== null) {
 			cancelAnimationFrame(rafId);
@@ -271,6 +279,7 @@ export const createScroll = (options: ScrollOptions = {}): ScrollController => {
 		start,
 		stop,
 		scrollTo,
+		jumpTo,
 		destroy,
 	};
 };
