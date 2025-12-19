@@ -1,5 +1,8 @@
 {
 	"$schema": "https://biomejs.dev/schemas/2.3.10/schema.json",
+	"files": {
+		"includes": ["**", "!tmp", "!.svelte-kit", "!build", "!node_modules"]
+	},
 	"formatter": {
 		"enabled": true,
 		"indentStyle": "tab",

@@ -19,6 +19,7 @@ certificates
 
 # SvelteKit
 .svelte-kit/
+.wrangler/
 
 # Production builds
 build/
