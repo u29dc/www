@@ -1,5 +1,15 @@
 import matter from 'gray-matter';
+import type { Element, ElementContent, Properties } from 'hast';
+import { h } from 'hastscript';
 import yaml from 'js-yaml';
+import type { MdxJsxAttribute, MdxJsxAttributeValueExpression, MdxJsxFlowElement } from 'mdast-util-mdx-jsx';
+import type { State } from 'mdast-util-to-hast';
+import rehypeStringify from 'rehype-stringify';
+import remarkGfm from 'remark-gfm';
+import remarkMdx from 'remark-mdx';
+import remarkParse from 'remark-parse';
+import remarkRehype from 'remark-rehype';
+import { unified } from 'unified';
 import { CDN } from '$lib/constants';
 import { type ContentItem, ContentSchema, isStudy, type ParsedContent } from '$lib/content-types';
 import { NotFoundError } from '$lib/errors';
@@ -11,6 +21,82 @@ type MdxEntry = {
 	slug: string;
 	source: string;
 };
+
+const MDX_SCRIPT_BLOCK = /<script[^>]*>[\s\S]*?<\/script>/g;
+
+const stripMdxScript = (source: string): string =>
+	source
+		.replace(MDX_SCRIPT_BLOCK, '')
+		.replace(/^import\s+.*$/gm, '')
+		.replace(/^export\s+.*$/gm, '');
+
+const readMdxAttribute = (node: MdxJsxFlowElement, name: string): string | undefined => {
+	const attributes = node.attributes ?? [];
+	for (const entry of attributes) {
+		if (!entry || typeof entry !== 'object') continue;
+		const attribute = entry as Partial<MdxJsxAttribute>;
+		if (attribute.name !== name) continue;
+		const value = attribute.value;
+		if (typeof value === 'string') return value;
+		if (value && typeof value === 'object') {
+			const expressionValue = (value as MdxJsxAttributeValueExpression).value;
+			if (typeof expressionValue === 'string') return expressionValue;
+		}
+	}
+	return undefined;
+};
+
+const parseMediaSources = (value: string | undefined): string[] => {
+	if (!value) return [];
+	try {
+		const normalized = value.replace(/'/g, '"');
+		const parsed = JSON.parse(normalized);
+		if (Array.isArray(parsed) && parsed.every((item) => typeof item === 'string')) {
+			return parsed;
+		}
+		if (typeof parsed === 'string') return [parsed];
+	} catch {
+		// fall through
+	}
+	return [];
+};
+
+const mdxParagraphWrapper = (children: ElementContent[]): Element => h('div', { className: 'padding-standard grid grid-cols-10' }, [h('div', { className: 'col-span-base' }, children)]);
+
+const mdxMediaPlaceholder = (sources: string[], alt?: string): Element => {
+	const payload = JSON.stringify(sources);
+	const properties: Properties = {
+		className: 'mdx-media',
+		'data-mdx-media': payload,
+	};
+	if (alt) {
+		properties['data-mdx-alt'] = alt;
+	}
+	return h('div', properties, []);
+};
+
+const mdxJsxFlowElementHandler = (state: State, node: MdxJsxFlowElement): Element => {
+	if (node.name === 'MdxParagraph') {
+		return mdxParagraphWrapper(state.all(node));
+	}
+	if (node.name === 'MdxMedia') {
+		const sources = parseMediaSources(readMdxAttribute(node, 'src'));
+		const alt = readMdxAttribute(node, 'alt');
+		return mdxMediaPlaceholder(sources, alt);
+	}
+	return h('div', {}, state.all(node));
+};
+
+const markdownProcessor = unified()
+	.use(remarkParse)
+	.use(remarkMdx)
+	.use(remarkGfm)
+	.use(remarkRehype, {
+		handlers: {
+			mdxJsxFlowElement: (state, node) => mdxJsxFlowElementHandler(state, node as MdxJsxFlowElement),
+		},
+	})
+	.use(rehypeStringify);
 
 const mdxModules = import.meta.glob('/src/content/*.mdx', {
 	query: '?raw',
@@ -137,6 +223,18 @@ export async function parseMdx(source: string, filePath: string): Promise<Parsed
 	}
 }
 
+export function renderContentHtml(source: string): string {
+	const sanitized = stripMdxScript(source).trim();
+	try {
+		return String(markdownProcessor.processSync(sanitized));
+	} catch (error) {
+		logEvent('MDX', 'RENDER_HTML', 'FAIL', {
+			error: error instanceof Error ? error.message : String(error),
+		});
+		throw error;
+	}
+}
+
 interface MarkdownTransformOptions {
 	stripMedia?: boolean;
 }
@@ -169,7 +267,7 @@ function formatMediaSources(sourceDeclaration: string, stripMedia: boolean, altT
 function toMarkdownBody(_frontmatter: ContentItem, content: string, options: MarkdownTransformOptions = {}): string {
 	const { stripMedia = false } = options;
 
-	let markdown = content;
+	let markdown = stripMdxScript(content);
 
 	markdown = markdown.replace(/<MdxParagraph>\s*/g, '');
 	markdown = markdown.replace(/\s*<\/MdxParagraph>/g, '');

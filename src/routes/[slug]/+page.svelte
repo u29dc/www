@@ -1,14 +1,11 @@
 <script lang="ts">
-import type { SvelteComponent } from 'svelte';
 import LayoutSharedWrapper from '$lib/components/layout/LayoutSharedWrapper.svelte';
+import MdxMediaEnhancer from '$lib/components/mdx/MdxMediaEnhancer.svelte';
 import { SITE } from '$lib/constants';
 import type { PageData } from './$types';
 
 let { data }: { data: PageData } = $props();
-
-const modules = import.meta.glob('/src/content/*.mdx', { eager: true });
-const module = $derived(modules[`/src/content/${data.slug}.mdx`] as { default?: typeof SvelteComponent } | undefined);
-const Content = $derived(module?.default);
+const contentHtml = $derived(data.contentHtml);
 </script>
 
 <svelte:head>
@@ -17,7 +14,6 @@ const Content = $derived(module?.default);
 </svelte:head>
 
 <LayoutSharedWrapper type="article" frontmatter={data.frontmatter}>
-	{#if Content}
-		<Content />
-	{/if}
+	{@html contentHtml}
+	<MdxMediaEnhancer />
 </LayoutSharedWrapper>
