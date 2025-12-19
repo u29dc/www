@@ -17,6 +17,7 @@ type VirtualScrollData = {
 	event: WheelEvent | TouchEvent;
 };
 
+// Convert wheel deltaMode=1 (line-based) into pixels with a consistent baseline.
 const LINE_HEIGHT = 100 / 6;
 const LISTENER_OPTIONS: AddEventListenerOptions = { passive: false };
 
@@ -59,7 +60,6 @@ class VirtualScroll {
 	private options: { wheelMultiplier: number; touchMultiplier: number };
 	private onScroll: (data: VirtualScrollData) => void;
 	private touchStart = { x: 0, y: 0 };
-	private lastDelta = { x: 0, y: 0 };
 	private windowSize = { width: 0, height: 0 };
 
 	constructor(element: HTMLElement, options: { wheelMultiplier: number; touchMultiplier: number }, onScroll: (data: VirtualScrollData) => void) {
@@ -109,7 +109,6 @@ class VirtualScroll {
 
 		this.touchStart.x = touch.clientX;
 		this.touchStart.y = touch.clientY;
-		this.lastDelta = { x: 0, y: 0 };
 
 		this.onScroll({ deltaX: 0, deltaY: 0, event });
 	};
@@ -123,13 +122,12 @@ class VirtualScroll {
 
 		this.touchStart.x = touch.clientX;
 		this.touchStart.y = touch.clientY;
-		this.lastDelta = { x: deltaX, y: deltaY };
 
 		this.onScroll({ deltaX, deltaY, event });
 	};
 
 	private handleTouchEnd = (event: TouchEvent) => {
-		this.onScroll({ deltaX: this.lastDelta.x, deltaY: this.lastDelta.y, event });
+		this.onScroll({ deltaX: 0, deltaY: 0, event });
 	};
 }
 
@@ -150,6 +148,7 @@ export const createScroll = (options: ScrollOptions = {}): ScrollController => {
 	let isStopped = false;
 	let preventNextNative = false;
 	let contentResizeObserver: ResizeObserver | null = null;
+	let pendingDelta = 0;
 
 	const updateClasses = () => {
 		root.classList.add('scroll');
@@ -196,7 +195,7 @@ export const createScroll = (options: ScrollOptions = {}): ScrollController => {
 
 		const delta = Math.abs(deltaY) >= Math.abs(deltaX) ? deltaY : deltaX;
 		if (delta === 0) return;
-		applyDelta(delta);
+		pendingDelta += delta;
 	};
 
 	const virtualScroll = new VirtualScroll(content, { wheelMultiplier, touchMultiplier }, handleVirtualScroll);
@@ -211,7 +210,13 @@ export const createScroll = (options: ScrollOptions = {}): ScrollController => {
 		const deltaTime = (time - lastTime) / 1000;
 		lastTime = time;
 
+		if (pendingDelta !== 0) {
+			applyDelta(pendingDelta);
+			pendingDelta = 0;
+		}
+
 		if (!isStopped) {
+			// Scale lerp for 60fps to keep easing consistent across refresh rates.
 			const next = damp(animatedScroll, targetScroll, lerp * 60, deltaTime);
 			const diff = Math.abs(next - targetScroll);
 			animatedScroll = diff < 0.1 ? targetScroll : next;

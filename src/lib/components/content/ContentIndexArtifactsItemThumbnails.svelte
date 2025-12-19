@@ -5,8 +5,7 @@ import { CDN } from '$lib/constants';
 import type { MediaItem } from '$lib/mdx-client';
 
 interface AspectRatioPreset {
-	ratio: string;
-	heightScale: number;
+	className: string;
 }
 
 type Props = {
@@ -18,11 +17,7 @@ type Props = {
 
 let { mediaItems = [], slug, maxItems = 4, isHovered }: Props = $props();
 
-const ASPECT_RATIO_PRESETS: AspectRatioPreset[] = [
-	{ ratio: '16/9', heightScale: 1.0 },
-	{ ratio: '3/4', heightScale: 1.5 },
-	{ ratio: '21/9', heightScale: 1.25 },
-];
+const ASPECT_RATIO_PRESETS: AspectRatioPreset[] = [{ className: 'aspect-[16/9] h-[4rem]' }, { className: 'aspect-[3/4] h-[6rem]' }, { className: 'aspect-[21/9] h-[5rem]' }];
 
 const hashString = (input: string): number => {
 	let hash = 5381;
@@ -88,10 +83,7 @@ onMount(() => {
 			{@const uniqueKey = `${mediaItem.filename}-${index}`}
 			{@const preset = selectPreset(slug, mediaItem.filename)}
 			{@const cdnUrl = `${CDN.mediaUrl}${mediaItem.filename}`}
-			<div
-				class="shrink-0"
-				style={`aspect-ratio: ${preset.ratio}; height: calc(4rem * ${preset.heightScale});`}
-			>
+            <div class={`shrink-0 ${preset.className}`}>
 				{#if mediaItem.type === 'image'}
 					<img class="media-fill" src={cdnUrl} alt={mediaItem.filename} loading="lazy" crossorigin="anonymous" referrerpolicy="origin" />
 				{:else}

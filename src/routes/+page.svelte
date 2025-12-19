@@ -17,25 +17,25 @@ let { data }: { data: PageData } = $props();
 </svelte:head>
 
 <LayoutSharedWrapper type="index">
-	<LayoutContentBlock id={0} title="statement" colSpanFull={false}>
+    <LayoutContentBlock id="statement" title="statement" colSpanFull={false}>
 		<ContentIndexStatement />
 	</LayoutContentBlock>
 
 	<div class="h-120"></div>
 
-	<LayoutContentBlock id={1} title="artifacts" colSpanFull={true}>
+    <LayoutContentBlock id="artifacts" title="artifacts" colSpanFull={true}>
 		<ContentIndexArtifacts items={data.artifacts} />
 	</LayoutContentBlock>
 
 	<div class="h-120"></div>
 
-	<LayoutContentBlock id={2} title="axioms" colSpanFull={false}>
+    <LayoutContentBlock id="axioms" title="axioms" colSpanFull={false}>
 		<ContentIndexAxioms />
 	</LayoutContentBlock>
 
 	<div class="h-120"></div>
 
-	<LayoutContentBlock id={3} title="protocols" colSpanFull={false}>
+    <LayoutContentBlock id="protocols" title="protocols" colSpanFull={false}>
 		<ContentIndexProtocols />
 	</LayoutContentBlock>
 

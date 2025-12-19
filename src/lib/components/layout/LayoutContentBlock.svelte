@@ -2,7 +2,7 @@
 import type { Snippet } from 'svelte';
 
 type Props = {
-	id: string | number;
+	id: string;
 	title: string;
 	colSpanFull?: boolean;
 	className?: string;
