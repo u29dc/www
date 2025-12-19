@@ -35,7 +35,9 @@ export const handle: Handle = async ({ event, resolve }) => {
 	const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
 	event.locals.nonce = nonce;
 
-	const response = await resolve(event);
+	const response = await resolve(event, {
+		transformPageChunk: ({ html }) => html.replace(/<script(?![^>]*nonce=)/g, `<script nonce="${nonce}"`),
+	});
 	const path = event.url.pathname;
 
 	response.headers.set('content-security-policy', buildCsp(nonce));

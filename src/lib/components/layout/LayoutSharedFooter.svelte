@@ -27,7 +27,7 @@ import { BUILD } from '$lib/constants';
 				</LayoutSharedFooterLink>
 			</div>
 
-			<AtomicBrandLogo className="-translate-x-150" width={1000} />
+			<AtomicBrandLogo className="-translate-x-150" width={1000} theme="dark" />
 
 			<div class="grid w-full grid-cols-2 gap-4 font-mono">
 				<div class="font-handwritten">After all, isn't true infinity always incomplete?</div>
