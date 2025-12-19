@@ -34,14 +34,6 @@
 			Discovery determining form, not following templates. Premises questioned before
 			execution begins.
 		</div>
-		<br />
-		<div>
-			The practice itself embodies this duality—creating language for futures while
-			deploying clarity for present decisions. Speculative frameworks tested against
-			strategic reality. Strategic challenges revealing territories requiring new
-			inquiry. The work exists in the productive tension between research and
-			application, each mode making the other possible.
-		</div>
 	</div>
 
 	<div class="mb-0">

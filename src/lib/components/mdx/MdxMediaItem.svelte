@@ -11,7 +11,7 @@ type Props = {
 let { src, alt = '' }: Props = $props();
 
 const context = getContext<MediaLayoutContextValue>(MEDIA_LAYOUT_CONTEXT);
-const id = $state(Math.random().toString(36).slice(2));
+const id = Math.random().toString(36).slice(2);
 const fullUrl = $derived(`${CDN.mediaUrl}${src}`);
 const isVideo = $derived(src.toLowerCase().includes('.webm') || src.toLowerCase().includes('.mp4'));
 
@@ -63,6 +63,7 @@ const flexBasis = $derived(context ? context.getFlexBasis(id) : '1');
 			bind:this={videoRef}
 			class="media-fill"
 			src={fullUrl}
+			autoplay
 			muted
 			loop
 			playsinline
