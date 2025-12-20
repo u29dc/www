@@ -27,10 +27,12 @@ onMount(() => {
 </script>
 
 {#key renderKey}
-	<main class="full-container relative isolate min-h-screen overflow-x-hidden">
+	<main
+		class="full-container relative isolate min-h-screen overflow-x-hidden"
+	>
 		<section data-section="header" class="relative z-10 w-full">
 			<Animate stage="header">
-				<LayoutSharedHeader type={type} frontmatter={frontmatter} />
+				<LayoutSharedHeader {type} {frontmatter} />
 			</Animate>
 		</section>
 

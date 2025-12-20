@@ -143,7 +143,9 @@ const loadBlueNoisePixels = async (): Promise<Uint8Array> => {
 		return blueNoisePixelsPromise;
 	}
 	blueNoisePixelsPromise = (async () => {
-		const response = await fetch(BLUE_NOISE_URL, { cache: 'force-cache' });
+		const response = await fetch(BLUE_NOISE_URL, {
+			cache: 'force-cache',
+		});
 		if (!response.ok) {
 			throw new Error(`Failed to fetch blue-noise texture (${response.status}).`);
 		}
@@ -169,7 +171,9 @@ const scheduleIdleTask = (callback: () => void) => {
 	};
 
 	if (idleWindow.requestIdleCallback) {
-		const handle = idleWindow.requestIdleCallback(() => callback(), { timeout: 1200 });
+		const handle = idleWindow.requestIdleCallback(() => callback(), {
+			timeout: 1200,
+		});
 		return () => idleWindow.cancelIdleCallback?.(handle);
 	}
 
@@ -665,7 +669,10 @@ onMount(() => {
 	const themeObserver = new MutationObserver(() => {
 		syncTheme();
 	});
-	themeObserver.observe(root, { attributes: true, attributeFilter: ['class'] });
+	themeObserver.observe(root, {
+		attributes: true,
+		attributeFilter: ['class'],
+	});
 
 	const themeQuery = window.matchMedia('(prefers-color-scheme: dark)');
 	const handleThemeChange = () => {

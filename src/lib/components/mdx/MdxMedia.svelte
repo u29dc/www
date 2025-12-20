@@ -30,7 +30,10 @@ const getFlexBasis = (id: string): string => {
 	return `${percentage}%`;
 };
 
-setContext<MediaLayoutContextValue>(MEDIA_LAYOUT_CONTEXT, { registerItem, getFlexBasis });
+setContext<MediaLayoutContextValue>(MEDIA_LAYOUT_CONTEXT, {
+	registerItem,
+	getFlexBasis,
+});
 
 const totalRatio = $derived(Array.from(aspectRatios.values()).reduce((sum, value) => sum + value, 0));
 const calculatedHeight = $derived(containerWidth > 0 && totalRatio > 0 ? containerWidth / totalRatio : 0);
@@ -63,11 +66,11 @@ onMount(() => {
 <div class="padding-standard grid grid-cols-10">
 	<div
 		bind:this={container}
-		class={`col-span-full col-start-1 flex transition-opacity duration-300 ${isLayoutReady ? 'opacity-100' : 'opacity-0'}`}
-		style={calculatedHeight > 0 ? `height: ${calculatedHeight}px;` : ''}
+		class={`col-span-full col-start-1 flex transition-opacity duration-300 ${isLayoutReady ? "opacity-100" : "opacity-0"}`}
+		style={calculatedHeight > 0 ? `height: ${calculatedHeight}px;` : ""}
 	>
 		{#each src as source (source)}
-			<MdxMediaItem src={source} alt={alt} />
+			<MdxMediaItem src={source} {alt} />
 		{/each}
 	</div>
 </div>

@@ -10,7 +10,9 @@ type Props = {
 let { title, subtitle, description, investment, duration }: Props = $props();
 </script>
 
-<div class="relative flex h-[20rem] flex-col justify-between rounded-sm border border-current/10 p-4">
+<div
+	class="relative flex h-[20rem] flex-col justify-between rounded-sm border border-current/10 p-4"
+>
 	<div>
 		<div class="mb-2 font-bold text-2xl uppercase">{title}</div>
 		<div class="opacity-80">{subtitle}</div>

@@ -23,9 +23,13 @@ let { items = [], className = '', startIndex = 0 }: Props = $props();
 <div class={`${className} overflow-visible`}>
 	{#each items as entry, index (entry.item.frontmatter.slug)}
 		<Animate stage="artifacts" index={startIndex + index} stagger={90}>
-			<div class="-my-1 group relative cursor-pointer overflow-visible py-1 transition-opacity duration-200">
+			<div
+				class="-my-1 group relative cursor-pointer overflow-visible py-1 transition-opacity duration-200"
+			>
 				<div class="hidden hover-device:block group-hover:block">
-					<div class="-right-2 md:-right-5 pointer-events-none absolute top-1/2 h-[1px] w-[4px] translate-y-[-50%] bg-current"></div>
+					<div
+						class="-right-2 md:-right-5 pointer-events-none absolute top-1/2 h-[1px] w-[4px] translate-y-[-50%] bg-current"
+					></div>
 				</div>
 				<ContentIndexArtifactsItem
 					item={entry.item}

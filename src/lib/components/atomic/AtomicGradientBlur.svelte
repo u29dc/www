@@ -141,7 +141,11 @@ onMount(() => {
 });
 </script>
 
-<div bind:this={container} class={`relative isolate hidden md:block ${className}`} style={containerStyle}>
+<div
+	bind:this={container}
+	class={`relative isolate hidden md:block ${className}`}
+	style={containerStyle}
+>
 	<div class="full-container relative">
 		{#each layerStyles as layerStyle}
 			<div class="absolute inset-0" style={layerStyle}></div>

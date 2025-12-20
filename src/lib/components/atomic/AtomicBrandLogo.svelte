@@ -895,5 +895,10 @@ $effect(() => {
 
 <div class={classValue} style={containerStyle}>
 	<!-- svelte-ignore a11y_no_interactive_element_to_noninteractive_role -->
-	<canvas bind:this={canvasRef} style={canvasStyle} aria-label="u29dc logo" role="img"></canvas>
+	<canvas
+		bind:this={canvasRef}
+		style={canvasStyle}
+		aria-label="u29dc logo"
+		role="img"
+	></canvas>
 </div>

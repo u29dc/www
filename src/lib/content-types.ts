@@ -9,7 +9,6 @@ export const StudySchema = z.object({
 	isArtifactItem: z.boolean(),
 
 	client: z.string().min(1),
-	role: z.string().min(1),
 	mode: z.enum(['MAP', 'LAB', 'COM']),
 	thumbnailMedia: z.string().optional(),
 	isConfidential: z.boolean().optional().default(false),
