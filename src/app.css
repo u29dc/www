@@ -184,6 +184,11 @@ html.scroll.scroll-smooth iframe {
 	@apply h-full w-full object-cover transform-gpu;
 }
 
+@utility content-visibility-auto {
+	content-visibility: auto;
+	contain-intrinsic-size: 1000px 800px;
+}
+
 @utility scrollbar-hidden {
 	scrollbar-width: none;
 	&::-webkit-scrollbar {
