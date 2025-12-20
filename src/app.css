@@ -143,7 +143,7 @@ html.scroll.scroll-smooth iframe {
 @utility font-mono {
 	font-family: var(--font-mono);
 	font-weight: normal;
-	@apply text-left font-xs leading-none;
+	@apply text-left font-xs uppercase leading-none;
 }
 
 @utility font-handwritten {
