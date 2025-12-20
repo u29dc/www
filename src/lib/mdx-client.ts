@@ -1,22 +1,4 @@
-/**
- * MDX Client Utilities
- *
- * ## SUMMARY
- * Client-safe utilities for extracting media references from MDX content.
- *
- * ## RESPONSIBILITIES
- * - Parse MdxMedia component syntax from content strings
- * - Extract and validate media filenames
- * - Classify media types (image/video)
- *
- * @module lib/mdx-client
- */
-
-import { logEvent } from '@/lib/logger';
-
-// ==================================================
-// TYPE DEFINITIONS
-// ==================================================
+import { logEvent } from '$lib/logger';
 
 export interface MediaItem {
 	filename: string;
@@ -24,19 +6,10 @@ export interface MediaItem {
 	extension: string;
 }
 
-// ==================================================
-// MEDIA EXTRACTION
-// ==================================================
-
 const IMAGE_EXTENSIONS = ['.webp', '.jpg', '.jpeg', '.png', '.gif'];
 const ALLOWED_MEDIA_EXTENSIONS = ['.webp', '.webm', '.jpg', '.jpeg', '.png', '.gif', '.mp4'];
 const SAFE_FILENAME_PATTERN = /^[a-zA-Z0-9_-]+\.[a-z0-9]+$/;
 
-/**
- * Determines media type (image or video) from filename extension
- * @param filename - Media filename with extension
- * @returns 'image' | 'video' | null if invalid
- */
 export function getMediaType(filename: string): 'image' | 'video' | null {
 	const lastDot = filename.lastIndexOf('.');
 	if (lastDot === -1) return null;
@@ -107,11 +80,6 @@ function createMediaItem(filename: string): MediaItem | null {
 	return { filename: sanitized, type, extension };
 }
 
-/**
- * Extracts all image and video links from MDX content.
- * @param content - Raw MDX content string
- * @returns Array of media items with filename, type, and extension
- */
 export function extractMediaFromContent(content: string): MediaItem[] {
 	const mediaItems: MediaItem[] = [];
 	const regex = /<MdxMedia\s+src=\{(\[[^\]]*\])\}\s*\/>/g;

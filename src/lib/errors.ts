@@ -1,17 +1,4 @@
-/**
- * Error Handling System
- *
- * ## SUMMARY
- * Typed error classes with HTTP status codes and response utilities.
- *
- * ## RESPONSIBILITIES
- * - Provide domain-specific error classes with HTTP status codes
- * - Convert errors to HTTP responses with environment-aware sanitization
- *
- * @module lib/errors
- */
-
-import { logEvent } from '@/lib/logger';
+import { logEvent } from '$lib/logger';
 
 export interface ErrorResponseOptions {
 	format?: 'json' | 'text';
@@ -26,10 +13,6 @@ export interface ErrorResponseData {
 		stack?: string;
 	};
 }
-
-// ==================================================
-// ERROR CLASSES
-// ==================================================
 
 export class AppError extends Error {
 	public readonly isOperational: boolean = true;
@@ -59,9 +42,7 @@ export class ValidationError extends AppError {
 
 export class ForbiddenError extends AppError {
 	constructor(resource: string, reason?: string) {
-		const message = reason
-			? `Access to ${resource} forbidden: ${reason}`
-			: `Access to ${resource} forbidden`;
+		const message = reason ? `Access to ${resource} forbidden: ${reason}` : `Access to ${resource} forbidden`;
 		super(403, message, 'FORBIDDEN');
 	}
 }
@@ -75,12 +56,9 @@ export class ProcessingError extends AppError {
 	}
 }
 
-// ==================================================
-// RESPONSE UTILITIES
-// ==================================================
-
 function errorToData(error: AppError | Error): ErrorResponseData {
-	const isDevelopment = process.env.NODE_ENV === 'development';
+	const env = typeof process !== 'undefined' ? (process.env as { NODE_ENV?: string }) : undefined;
+	const isDevelopment = env?.NODE_ENV === 'development';
 
 	if (error instanceof AppError) {
 		return {
@@ -103,16 +81,7 @@ function errorToData(error: AppError | Error): ErrorResponseData {
 	};
 }
 
-/**
- * Creates HTTP Response from error with consistent formatting.
- * @param error - Error to convert
- * @param options - Response options
- * @returns HTTP Response
- */
-export function createErrorResponse(
-	error: AppError | Error,
-	options: ErrorResponseOptions = {},
-): Response {
+export function createErrorResponse(error: AppError | Error, options: ErrorResponseOptions = {}): Response {
 	const { format = 'json', headers: customHeaders = {} } = options;
 
 	const errorData = errorToData(error);

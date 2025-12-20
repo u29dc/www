@@ -1,17 +1,5 @@
-/**
- * Structured Logger
- *
- * ## SUMMARY
- * Environment-aware structured logging with domain-tagged [DOMAIN|ACTION|RESULT] format.
- *
- * ## RESPONSIBILITIES
- * - Provide structured logging with environment awareness (dev vs prod)
- * - Support request-scoped context propagation
- *
- * @module lib/logger
- */
-
 import pino from 'pino';
+import { browser, dev } from '$app/environment';
 
 export type LogMeta = Record<string, unknown>;
 
@@ -24,18 +12,14 @@ export interface LoggerInstance {
 
 class PinoLoggerWrapper implements LoggerInstance {
 	private pinoLogger: pino.Logger;
-	private isDevelopment: boolean;
-	private isBrowser: boolean;
 
 	constructor(pinoLogger: pino.Logger) {
 		this.pinoLogger = pinoLogger;
-		this.isDevelopment = process.env.NODE_ENV === 'development';
-		this.isBrowser = typeof window !== 'undefined';
 	}
 
 	private shouldLog(): boolean {
-		if (this.isDevelopment) return true;
-		return !this.isBrowser;
+		if (dev) return true;
+		return !browser;
 	}
 
 	info(message: string, meta?: LogMeta): void {
@@ -69,13 +53,10 @@ class PinoLoggerWrapper implements LoggerInstance {
 }
 
 function createLogger(): LoggerInstance {
-	const isDevelopment = process.env.NODE_ENV === 'development';
-	const isBrowser = typeof window !== 'undefined';
-
-	if (isBrowser) {
+	if (browser) {
 		return new PinoLoggerWrapper(
 			pino({
-				level: isDevelopment ? 'debug' : 'silent',
+				level: dev ? 'debug' : 'silent',
 				browser: { asObject: true },
 			}),
 		);
@@ -83,20 +64,13 @@ function createLogger(): LoggerInstance {
 
 	return new PinoLoggerWrapper(
 		pino({
-			level: isDevelopment ? 'debug' : 'info',
+			level: dev ? 'debug' : 'info',
 		}),
 	);
 }
 
 export const logger = createLogger();
 
-/**
- * Logs structured event with domain tagging.
- * @param domain - Event domain
- * @param action - Event action
- * @param result - Event result
- * @param data - Additional metadata
- */
 export function logEvent(domain: string, action: string, result: string, data?: LogMeta): void {
 	const message = `[${domain}|${action}|${result}]`;
 
@@ -109,12 +83,6 @@ export function logEvent(domain: string, action: string, result: string, data?: 
 	}
 }
 
-/**
- * Creates request-scoped logger.
- * @param requestId - Unique request identifier
- * @param context - Initial context
- * @returns Request-scoped logger
- */
 export function createRequestLogger(requestId: string, context?: LogMeta): LoggerInstance {
 	return logger.child({
 		requestId,

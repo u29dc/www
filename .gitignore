@@ -17,6 +17,10 @@ out/
 dist/
 certificates
 
+# SvelteKit
+.svelte-kit/
+.wrangler/
+
 # Production builds
 build/
 
