@@ -1,4 +1,5 @@
 import { SITE } from '$lib/constants';
+import { isStudy } from '$lib/content-types';
 import { logEvent } from '$lib/logger';
 import { getAllContent } from '$lib/server/content';
 
@@ -87,8 +88,19 @@ export async function generateSitemapXml(): Promise<string> {
 		];
 
 		for (const item of allContent) {
+			if (isStudy(item.frontmatter) && item.frontmatter.isConfidential) continue;
+
 			const { slug, date } = item.frontmatter;
 			const lastMod = new Date(date);
+
+			if (slug === 'llms') {
+				entries.push({
+					url: `${SITE.url}/${slug}.txt`,
+					lastModified: lastMod,
+					changeFrequency: 'monthly',
+				});
+				continue;
+			}
 
 			entries.push(
 				{
