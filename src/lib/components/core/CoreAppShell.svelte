@@ -2,6 +2,7 @@
 import type { Snippet } from 'svelte';
 import { onMount } from 'svelte';
 import { afterNavigate } from '$app/navigation';
+import CoreGrainOverlay from '$lib/components/core/CoreGrainOverlay.svelte';
 import { createScroll, type ScrollController } from '$lib/scroll';
 
 let { children }: { children: Snippet } = $props();
@@ -48,6 +49,8 @@ onMount(() => {
 </script>
 
 {@render children()}
+
+<CoreGrainOverlay intensity={0.5} grainScale={5.0} animationSpeed={0.1} exposure={0.1} />
 
 <div class="grid-overlay" aria-hidden="true">
 	<div class="grid-overlay-inner"></div>
