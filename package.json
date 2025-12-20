@@ -28,6 +28,8 @@
 		"utils--------------------------------": "",
 		"util:clean": "rm -rf .svelte-kit build node_modules/.vite .turbo *.tsbuildinfo",
 		"util:check": "bun run util:format && bun run util:lint && bun run util:types",
+		"perf---------------------------------": "",
+		"perf:lighthouse": "CHROME_PATH=\"/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge\" bunx lighthouse http://localhost:4173 --output json --output html --output-path ./tmp/lighthouse.report --chrome-flags='--headless --no-sandbox'",
 		"release------------------------------": "",
 		"semantic-release": "bunx semantic-release"
 	},
@@ -48,6 +50,7 @@
 		"@types/js-yaml": "^4.0.9",
 		"@typescript-eslint/types": "^8.50.0",
 		"husky": "^9.1.7",
+		"lighthouse": "^13.0.1",
 		"lint-staged": "^16.2.7",
 		"mdsvex": "^0.12.6",
 		"semantic-release": "^25.0.2",

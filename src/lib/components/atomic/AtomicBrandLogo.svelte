@@ -1,6 +1,7 @@
 <script lang="ts">
 import { onMount } from 'svelte';
 import { logEvent } from '$lib/logger';
+import { registerRafTask } from '$lib/raf';
 
 export interface AtomicBrandLogoProps {
 	width?: number;
@@ -587,32 +588,22 @@ function createAtomicBrandLogoRenderer(canvas: HTMLCanvasElement, initialState: 
 	applyThemeUniforms(state.theme);
 	updateResolutionUniforms(dimensions);
 
-	let frameId: number | null = null;
-	let lastTimestamp = 0;
 	let isRunning = false;
 	let isDisposed = false;
 	let resizeObserver: ResizeObserver | null = null;
 
-	const drawFrame = (timestamp: number) => {
+	const drawFrame = (timestamp: number, deltaSeconds: number) => {
 		if (isDisposed) return;
-		if (lastTimestamp === 0) {
-			lastTimestamp = timestamp;
-		}
-
-		const delta = timestamp - lastTimestamp;
-		lastTimestamp = timestamp;
-
-		const dt = delta / 1000;
 		if (!hasLoggedFirstFrame) {
 			hasLoggedFirstFrame = true;
 			logEvent('WEBGL', 'ATOMIC-LOGO', 'FRAME-START', {
-				delta,
+				delta: deltaSeconds * 1000,
 				now: timestamp,
 			});
 		}
 
-		dampedMouse.x = damp(dampedMouse.x, mousePosition.x, 8, dt);
-		dampedMouse.y = damp(dampedMouse.y, mousePosition.y, 8, dt);
+		dampedMouse.x = damp(dampedMouse.x, mousePosition.x, 8, deltaSeconds);
+		dampedMouse.y = damp(dampedMouse.y, mousePosition.y, 8, deltaSeconds);
 
 		gl.useProgram(program);
 		gl.bindVertexArray(vao);
@@ -632,30 +623,28 @@ function createAtomicBrandLogoRenderer(canvas: HTMLCanvasElement, initialState: 
 		checkGlError('afterDraw');
 	};
 
-	const tick = (timestamp: number) => {
-		if (!isRunning) return;
-		drawFrame(timestamp);
-		frameId = requestAnimationFrame(tick);
+	const tick = (timestamp: number, deltaSeconds: number) => {
+		if (!isRunning) return false;
+		drawFrame(timestamp, deltaSeconds);
+		return true;
 	};
+
+	const rafTask = registerRafTask(tick, { autoStart: false });
 
 	const start = () => {
 		if (isRunning || isDisposed) return;
 		isRunning = true;
-		lastTimestamp = 0;
-		frameId = requestAnimationFrame(tick);
+		rafTask.wake();
 	};
 
 	const stop = () => {
 		if (!isRunning) return;
 		isRunning = false;
-		if (frameId !== null) {
-			cancelAnimationFrame(frameId);
-			frameId = null;
-		}
+		rafTask.sleep();
 	};
 
 	const renderOnce = () => {
-		drawFrame(performance.now());
+		drawFrame(performance.now(), 0);
 	};
 
 	start();
@@ -713,6 +702,7 @@ function createAtomicBrandLogoRenderer(canvas: HTMLCanvasElement, initialState: 
 		isDisposed = true;
 
 		stop();
+		rafTask.dispose();
 
 		canvas.removeEventListener('pointerenter', handlePointerEnter);
 		canvas.removeEventListener('pointerleave', handlePointerLeave);

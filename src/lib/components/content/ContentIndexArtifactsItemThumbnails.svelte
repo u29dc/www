@@ -1,6 +1,4 @@
 <script lang="ts">
-import { onMount } from 'svelte';
-import { browser } from '$app/environment';
 import { CDN } from '$lib/constants';
 import type { MediaItem } from '$lib/mdx-client';
 
@@ -33,72 +31,25 @@ const selectPreset = (itemSlug: string, filename: string): AspectRatioPreset => 
 	return ASPECT_RATIO_PRESETS[presetIndex] ?? ASPECT_RATIO_PRESETS[0];
 };
 
-const videoRefs = new Map<string, HTMLVideoElement>();
-
-const registerVideo = (key: string) => (node: HTMLVideoElement) => {
-	videoRefs.set(key, node);
-	return {
-		destroy() {
-			videoRefs.delete(key);
-		},
-	};
-};
-
-const pauseAll = () => {
-	for (const video of videoRefs.values()) {
-		video.pause();
-	}
-};
-
-const playAll = () => {
-	for (const video of videoRefs.values()) {
-		video.play().catch(() => {
-			// autoplay may be blocked
-		});
-	}
-};
-
-const displayItems = $derived(maxItems > 0 ? mediaItems.slice(0, maxItems) : mediaItems);
-
-$effect(() => {
-	if (!browser) return;
-	if (isHovered) {
-		playAll();
-	} else {
-		pauseAll();
-	}
-});
-
-onMount(() => {
-	return () => {
-		pauseAll();
-		videoRefs.clear();
-	};
-});
+const imageItems = $derived(mediaItems.filter((item) => item.type === 'image'));
+const displayItems = $derived(maxItems > 0 ? imageItems.slice(0, maxItems) : imageItems);
 </script>
 
 {#if displayItems.length > 0}
 	<div class={`flex gap-2 transition-all duration-300 ease-out ${isHovered ? 'opacity-100' : 'opacity-90 grayscale'}`}>
-{#each displayItems as mediaItem, index (mediaItem.filename + '-' + index)}
-			{@const uniqueKey = `${mediaItem.filename}-${index}`}
+	{#each displayItems as mediaItem, index (mediaItem.filename + '-' + index)}
 			{@const preset = selectPreset(slug, mediaItem.filename)}
 			{@const cdnUrl = `${CDN.mediaUrl}${mediaItem.filename}`}
-            <div class={`shrink-0 ${preset.className}`}>
-				{#if mediaItem.type === 'image'}
-					<img class="media-fill" src={cdnUrl} alt={mediaItem.filename} loading="lazy" crossorigin="anonymous" referrerpolicy="origin" />
-				{:else}
-					<video
-						use:registerVideo={uniqueKey}
-						class="media-fill"
-						src={cdnUrl}
-						muted
-						loop
-						playsinline
-						preload="metadata"
-						crossorigin="anonymous"
-						referrerpolicy="origin"
-					></video>
-				{/if}
+			<div class={`shrink-0 ${preset.className}`}>
+				<img
+					class="media-fill"
+					src={cdnUrl}
+					alt={mediaItem.filename}
+					loading="lazy"
+					decoding="async"
+					crossorigin="anonymous"
+					referrerpolicy="origin"
+				/>
 			</div>
 		{/each}
 	</div>

@@ -16,8 +16,8 @@ type Props = {
 
 let { type, frontmatter, children }: Props = $props();
 
-const timeline = type === 'index' ? TIMELINE_INDEX : TIMELINE_ARTICLE;
-setTimeline(timeline);
+const resolveTimeline = () => (type === 'index' ? TIMELINE_INDEX : TIMELINE_ARTICLE);
+setTimeline(resolveTimeline());
 
 let renderKey = $state(0);
 
