@@ -3,6 +3,7 @@ import { onMount } from 'svelte';
 import { prefersReducedMotion } from 'svelte/motion';
 import { resolve } from '$app/paths';
 import { fadeBlur, getTimeline, resolveStage } from '$lib/animation';
+import { registerRafTask } from '$lib/raf';
 
 type Props = {
 	pageType: 'index' | 'article';
@@ -79,14 +80,12 @@ onMount(() => {
 		isMdUp = window.matchMedia('(min-width: 768px)').matches;
 	};
 
-	const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-	let isActive = document.visibilityState === 'visible' && !motionQuery.matches;
-
 	let maxScroll = 1000;
 	let windowWidth = window.innerWidth;
 	let pointerX = windowWidth * 0.2;
 	let pointerY = window.innerHeight / 2;
 	let mouseX = pointerX;
+	let rafHandle: ReturnType<typeof registerRafTask> | null = null;
 
 	const line = { value: 0, velocity: 0 };
 	const base = { value: 0, velocity: 0 };
@@ -131,52 +130,10 @@ onMount(() => {
 	const observer = new ResizeObserver(updateMeasurements);
 	observer.observe(document.body);
 
-	let rafId = 0;
-	let lastTime = 0;
+	const tick = (_time: number, deltaSeconds: number) => {
+		if (deltaSeconds === 0) return;
 
-	const start = () => {
-		if (rafId !== 0) return;
-		rafId = requestAnimationFrame(tick);
-	};
-
-	const stop = () => {
-		if (rafId === 0) return;
-		cancelAnimationFrame(rafId);
-		rafId = 0;
-		lastTime = 0;
-	};
-
-	const setActive = (next: boolean) => {
-		if (isActive === next) return;
-		isActive = next;
-		if (isActive) {
-			start();
-		} else {
-			stop();
-		}
-	};
-
-	const updateActive = () => {
-		setActive(document.visibilityState === 'visible' && !motionQuery.matches);
-	};
-
-	document.addEventListener('visibilitychange', updateActive);
-	motionQuery.addEventListener('change', updateActive);
-
-	const tick = (time: number) => {
-		if (!isActive) {
-			rafId = 0;
-			return;
-		}
-
-		if (lastTime === 0) {
-			lastTime = time;
-			rafId = requestAnimationFrame(tick);
-			return;
-		}
-
-		const delta = Math.min((time - lastTime) / 1000, 0.05);
-		lastTime = time;
+		const delta = Math.min(deltaSeconds, 0.05);
 
 		// Scroll → line mapping (0–500px), excluding footer.
 		const progress = clamp(0, window.scrollY / maxScroll, 1);
@@ -203,22 +160,16 @@ onMount(() => {
 
 		lineOffset = line.value + magnetY.value;
 		ctaOffset = (isMdUp ? base.value : 0) + magnetX.value;
-
-		rafId = requestAnimationFrame(tick);
 	};
 
-	updateActive();
-	if (isActive) {
-		start();
-	}
+	rafHandle = registerRafTask(tick);
 
 	return () => {
 		window.removeEventListener('resize', updateMeasurements);
 		window.removeEventListener('mousemove', handleMouseMove);
-		window.removeEventListener('visibilitychange', updateActive);
-		motionQuery.removeEventListener('change', updateActive);
 		observer.disconnect();
-		stop();
+		rafHandle?.dispose();
+		rafHandle = null;
 	};
 });
 </script>

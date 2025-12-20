@@ -1,3 +1,5 @@
+import { registerRafTask, requestFrame } from '$lib/raf';
+
 type ScrollOptions = {
 	lerp?: number;
 	wheelMultiplier?: number;
@@ -145,11 +147,11 @@ export const createScroll = (options: ScrollOptions = {}): ScrollController => {
 	let targetScroll = wrapper.scrollY;
 	let animatedScroll = targetScroll;
 	let lastTime = 0;
-	let rafId: number | null = null;
 	let isStopped = false;
 	let preventNextNative = false;
 	let contentResizeObserver: ResizeObserver | null = null;
 	let pendingDelta = 0;
+	let rafHandle: ReturnType<typeof registerRafTask> | null = null;
 
 	const updateClasses = () => {
 		root.classList.add('scroll');
@@ -160,7 +162,7 @@ export const createScroll = (options: ScrollOptions = {}): ScrollController => {
 	const setScroll = (value: number) => {
 		preventNextNative = true;
 		wrapper.scrollTo({ top: value, behavior: 'instant' });
-		requestAnimationFrame(() => {
+		requestFrame(() => {
 			preventNextNative = false;
 		});
 	};
@@ -201,10 +203,14 @@ export const createScroll = (options: ScrollOptions = {}): ScrollController => {
 
 	const virtualScroll = new VirtualScroll(content, { wheelMultiplier, touchMultiplier }, handleVirtualScroll);
 
-	const tick = (time: number) => {
+	const tick = (time: number, _deltaSeconds: number) => {
+		if (isStopped) {
+			pendingDelta = 0;
+			lastTime = 0;
+			return;
+		}
 		if (lastTime === 0) {
 			lastTime = time;
-			rafId = requestAnimationFrame(tick);
 			return;
 		}
 
@@ -216,28 +222,26 @@ export const createScroll = (options: ScrollOptions = {}): ScrollController => {
 			pendingDelta = 0;
 		}
 
-		if (!isStopped) {
-			// Scale lerp for 60fps to keep easing consistent across refresh rates.
-			const next = damp(animatedScroll, targetScroll, lerp * 60, deltaTime);
-			const diff = Math.abs(next - targetScroll);
-			animatedScroll = diff < 0.1 ? targetScroll : next;
-			if (Math.abs(animatedScroll - wrapper.scrollY) > 0.1) {
-				setScroll(animatedScroll);
-			}
+		// Scale lerp for 60fps to keep easing consistent across refresh rates.
+		const next = damp(animatedScroll, targetScroll, lerp * 60, deltaTime);
+		const diff = Math.abs(next - targetScroll);
+		animatedScroll = diff < 0.1 ? targetScroll : next;
+		if (Math.abs(animatedScroll - wrapper.scrollY) > 0.1) {
+			setScroll(animatedScroll);
 		}
-
-		rafId = requestAnimationFrame(tick);
 	};
 
 	const start = () => {
 		if (!isStopped) return;
 		isStopped = false;
+		lastTime = 0;
 		updateClasses();
 	};
 
 	const stop = () => {
 		if (isStopped) return;
 		isStopped = true;
+		lastTime = 0;
 		updateClasses();
 	};
 
@@ -253,10 +257,8 @@ export const createScroll = (options: ScrollOptions = {}): ScrollController => {
 	};
 
 	const destroy = () => {
-		if (rafId !== null) {
-			cancelAnimationFrame(rafId);
-		}
-		rafId = null;
+		rafHandle?.dispose();
+		rafHandle = null;
 		contentResizeObserver?.disconnect();
 		contentResizeObserver = null;
 		virtualScroll.destroy();
@@ -273,7 +275,7 @@ export const createScroll = (options: ScrollOptions = {}): ScrollController => {
 		contentResizeObserver.observe(content);
 	}
 	updateClasses();
-	rafId = requestAnimationFrame(tick);
+	rafHandle = registerRafTask(tick);
 
 	return {
 		start,
