@@ -36,8 +36,10 @@ const displayItems = $derived(maxItems > 0 ? imageItems.slice(0, maxItems) : ima
 </script>
 
 {#if displayItems.length > 0}
-	<div class={`flex gap-2 transition-all duration-300 ease-out ${isHovered ? 'opacity-100' : 'opacity-90 grayscale'}`}>
-	{#each displayItems as mediaItem, index (mediaItem.filename + '-' + index)}
+	<div
+		class={`flex gap-2 transition-all duration-300 ease-out ${isHovered ? "opacity-100" : "opacity-90 grayscale"}`}
+	>
+		{#each displayItems as mediaItem, index (mediaItem.filename + "-" + index)}
 			{@const preset = selectPreset(slug, mediaItem.filename)}
 			{@const cdnUrl = `${CDN.mediaUrl}${mediaItem.filename}`}
 			<div class={`shrink-0 ${preset.className}`}>

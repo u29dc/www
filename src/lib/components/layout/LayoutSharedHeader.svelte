@@ -18,10 +18,18 @@ const headingContent = $derived(type === 'article' ? (frontmatter?.title ?? titl
 
 <div class="padding-standard grid h-60 grid-cols-10">
 	<header class="col-span-base">
-		<AtomicGradientBlur position="top" size="15rem" fixed={true} layers={5} className="z-0" />
+		<AtomicGradientBlur
+			position="top"
+			size="15rem"
+			fixed={true}
+			layers={5}
+			className="z-0"
+		/>
 
 		<div class="full-container relative z-10 uppercase">
-			<div class="-translate-x-1/2 absolute bottom-0 left-1/2 w-full text-center">
+			<div
+				class="-translate-x-1/2 absolute bottom-0 left-1/2 w-full text-center"
+			>
 				<div>{headingContent}</div>
 			</div>
 			<nav class="absolute bottom-0 left-0">

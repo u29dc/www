@@ -19,11 +19,17 @@ let { items = [] }: Props = $props();
 </script>
 
 <div class="my-10">
-	<Animate stage="artifacts" index={0} stagger={90} className="flex w-full justify-end">
+	<Animate
+		stage="artifacts"
+		index={0}
+		stagger={90}
+		className="flex w-full justify-end"
+	>
 		<div class="mb-10 text-right font-mono">
-			the territory between disciplines holds questions specialists cannot ask alone
+			the territory between disciplines holds questions specialists cannot
+			ask alone
 		</div>
 	</Animate>
 
-	<ContentIndexArtifactsList items={items} startIndex={1} />
+	<ContentIndexArtifactsList {items} startIndex={1} />
 </div>

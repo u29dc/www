@@ -50,7 +50,12 @@ onMount(() => {
 
 {@render children()}
 
-<CoreGrainOverlay intensity={0.5} grainScale={5.0} animationSpeed={0.1} exposure={0.1} />
+<CoreGrainOverlay
+	intensity={0.5}
+	grainScale={5.0}
+	animationSpeed={0.1}
+	exposure={0.1}
+/>
 
 <div class="grid-overlay" aria-hidden="true">
 	<div class="grid-overlay-inner"></div>

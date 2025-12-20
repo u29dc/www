@@ -118,7 +118,7 @@ $effect(() => {
 			bind:this={imageRef}
 			class="media-fill"
 			src={fullUrl}
-			alt={alt}
+			{alt}
 			loading="lazy"
 			decoding="async"
 			crossorigin="anonymous"

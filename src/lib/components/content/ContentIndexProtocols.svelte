@@ -4,9 +4,18 @@ import ContentIndexProtocolsItem from '$lib/components/content/ContentIndexProto
 </script>
 
 <div class="my-10 flex flex-col gap-8">
-	<Animate stage="protocols" index={0} stagger={120} className="flex w-full flex-col gap-0 text-right font-mono">
-		<div>Three protocols structure engagement. Each embodies the practice's</div>
-		<div>core principle: discovery determines direction, not the reverse.</div>
+	<Animate
+		stage="protocols"
+		index={0}
+		stagger={120}
+		className="flex w-full flex-col gap-0 text-right font-mono"
+	>
+		<div>
+			Three protocols structure engagement. Each embodies the practice's
+		</div>
+		<div>
+			core principle: discovery determines direction, not the reverse.
+		</div>
 		<div>MAP establishes territory. ARC builds the architecture.</div>
 		<div>ADV maintains stewardship.</div>
 	</Animate>

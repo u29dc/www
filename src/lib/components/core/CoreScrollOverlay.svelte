@@ -174,8 +174,14 @@ onMount(() => {
 });
 </script>
 
-<div use:attachOverlay class="-translate-y-1/2 padding-standard pointer-events-none fixed top-1/2 left-0 z-20 h-[500px] w-full select-none">
-	<div class="relative h-px w-full" style={`${lineStyle}; will-change: transform; backface-visibility: hidden;`}>
+<div
+	use:attachOverlay
+	class="-translate-y-1/2 padding-standard pointer-events-none fixed top-1/2 left-0 z-20 h-[500px] w-full select-none"
+>
+	<div
+		class="relative h-px w-full"
+		style={`${lineStyle}; will-change: transform; backface-visibility: hidden;`}
+	>
 		<div
 			class="absolute inset-0 origin-left bg-black transform-gpu"
 			style={`will-change: opacity, filter; backface-visibility: hidden; ${lineHiddenStyle}`}
@@ -205,14 +211,23 @@ onMount(() => {
 			}}
 		>
 			{#if isIndexPage}
-				<a class="-m-2.5 inline-block p-2.5" href="https://u29dc.co/hey" target="_blank" rel="noopener noreferrer">
-					<div class="-translate-x-full whitespace-nowrap bg-black px-3 py-2 font-mono text-sm text-white md:-translate-x-1/2">
+				<a
+					class="-m-2.5 inline-block p-2.5"
+					href="https://u29dc.co/hey"
+					target="_blank"
+					rel="noopener noreferrer"
+				>
+					<div
+						class="-translate-x-full whitespace-nowrap bg-black px-3 py-2 font-mono text-sm text-white md:-translate-x-1/2"
+					>
 						{ctaLabel}
 					</div>
 				</a>
 			{:else}
-				<a class="-m-2.5 inline-block p-2.5" href={resolve('/')}>
-					<div class="-translate-x-full whitespace-nowrap bg-black px-3 py-2 font-mono text-sm text-white md:-translate-x-1/2">
+				<a class="-m-2.5 inline-block p-2.5" href={resolve("/")}>
+					<div
+						class="-translate-x-full whitespace-nowrap bg-black px-3 py-2 font-mono text-sm text-white md:-translate-x-1/2"
+					>
 						{ctaLabel}
 					</div>
 				</a>
