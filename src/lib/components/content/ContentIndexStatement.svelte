@@ -1,11 +1,16 @@
-<div class="my-10 flex flex-col gap-10 font-md">
-	<div class="uppercase">
-		<h1>
-			An evolving, enigmatic, multifaceted creative practice — turning complex futures into decision grade narratives.
-		</h1>
-	</div>
+<script lang="ts">
+import Animate from '$lib/components/animation/Animate.svelte';
+</script>
 
-	<div class="mb-0">
+<div class="my-10 flex flex-col gap-10 font-md">
+	<Animate stage="statement" index={0} stagger={120} className="uppercase">
+		<h1>
+			An evolving, enigmatic, multifaceted creative practice — turning complex futures
+			into decision grade narratives.
+		</h1>
+	</Animate>
+
+	<Animate stage="statement" index={1} stagger={120} className="mb-0">
 		<div>
 			Complex problems are typically addressed by first compressing them into familiar
 			frameworks, then dividing them among specialists. Define the challenge. Identify
@@ -26,17 +31,17 @@
 			simplification. These problems require working across domains from the start,
 			not coordinating specialists after division.
 		</div>
-	</div>
+	</Animate>
 
-	<div class="mb-0">
+	<Animate stage="statement" index={2} stagger={120} className="mb-0">
 		<div>
 			This demands different assumptions. Incompleteness as strategy, not failure.
 			Discovery determining form, not following templates. Premises questioned before
 			execution begins.
 		</div>
-	</div>
+	</Animate>
 
-	<div class="mb-0">
+	<Animate stage="statement" index={3} stagger={120} className="mb-0">
 		<div>
 			The work inhabits the space between what is seen and what is felt. It operates
 			in the deliberate pause, dwells in the charged moment. It expresses itself in
@@ -45,13 +50,13 @@
 		</div>
 		<br />
 		<div>After all, isn't true infinity always incomplete?</div>
-	</div>
+	</Animate>
 
-	<div>
+	<Animate stage="statement" index={4} stagger={120}>
 		<div class="w-[35vw] font-handwritten md:w-[10vw]">Incomplete Infinity</div>
-	</div>
+	</Animate>
 
-	<div class="mt-40">
+	<Animate stage="statement" index={5} stagger={120} className="mt-40">
 		<div class="float-right">
 			<div class="w-full text-right font-mono md:w-[10vw]">
 				complexity accelerates faster than disciplines evolve vocabularies for
@@ -59,5 +64,5 @@
 				problems demand is where this practice lives deliberately
 			</div>
 		</div>
-	</div>
+	</Animate>
 </div>

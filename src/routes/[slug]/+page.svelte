@@ -1,4 +1,5 @@
 <script lang="ts">
+import Animate from '$lib/components/animation/Animate.svelte';
 import LayoutSharedWrapper from '$lib/components/layout/LayoutSharedWrapper.svelte';
 import MdxMediaEnhancer from '$lib/components/mdx/MdxMediaEnhancer.svelte';
 import { SITE } from '$lib/constants';
@@ -14,6 +15,8 @@ const contentHtml = $derived(data.contentHtml);
 </svelte:head>
 
 <LayoutSharedWrapper type="article" frontmatter={data.frontmatter}>
-	{@html contentHtml}
+	<Animate stage="article">
+		<div>{@html contentHtml}</div>
+	</Animate>
 	<MdxMediaEnhancer />
 </LayoutSharedWrapper>
