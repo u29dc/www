@@ -1,3 +1,10 @@
+# [2.1.0](https://github.com/u29dc/www/compare/v2.0.0...v2.1.0) (2025-12-20)
+
+
+### Features
+
+* **ui:** add timeline-based animation system with staggered transitions ([8712177](https://github.com/u29dc/www/commit/87121771fedf4fdec0c63f07867d194ed6e51961))
+
 # [2.0.0](https://github.com/u29dc/www/compare/v1.14.0...v2.0.0) (2025-12-20)
 
 
