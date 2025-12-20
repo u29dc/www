@@ -1,3 +1,34 @@
+# [2.0.0](https://github.com/u29dc/www/compare/v1.14.0...v2.0.0) (2025-12-20)
+
+
+* feat(config)!: restore semantic-release for sveltekit ([508e96b](https://github.com/u29dc/www/commit/508e96b93c7b73f84c043a07f4caecfb7a5f95f7))
+
+
+### Bug Fixes
+
+* **ui:** add key to thumbnails each block ([2593379](https://github.com/u29dc/www/commit/2593379243ad8164c65d456d55e019d745d7b267))
+* **ui:** improve component types and accessibility ([3ac0ea2](https://github.com/u29dc/www/commit/3ac0ea21a554d9b4a7593d1e456fb5da8891a219))
+
+
+### Features
+
+* **core:** add jumpto method for instant scroll positioning ([e526778](https://github.com/u29dc/www/commit/e5267781121d2b1d475c96fdc41aa2120fa3e1da))
+* **core:** add server-side mdx rendering pipeline ([e3f0647](https://github.com/u29dc/www/commit/e3f06474b308a7797949900c0e98716d1c5c208a))
+* **core:** add smooth scroll system with spring physics ([c9462fd](https://github.com/u29dc/www/commit/c9462fd5fde1cf2f8ad31e949eb8d0017d0681c5))
+* **core:** add sveltekit application structure ([7af2208](https://github.com/u29dc/www/commit/7af220803eabfb5108b8f4225559f678c63f8073))
+* **core:** add webgl2 film grain overlay effect ([6e48ca2](https://github.com/u29dc/www/commit/6e48ca243669289ddcce8bfee09b1e70304ee41c))
+* **ui:** replace brand logo with webgl canvas renderer ([dd477ea](https://github.com/u29dc/www/commit/dd477eaf0809e2caae1e7097f3713296943f9e91))
+
+
+### Performance Improvements
+
+* **ui:** add visibility and motion gating to animations ([22c9ec8](https://github.com/u29dc/www/commit/22c9ec811ed3ee9a088bce486177a99e4cfa8de7))
+
+
+### BREAKING CHANGES
+
+* migrated from next.js to sveltekit
+
 # [1.14.0](https://github.com/u29dc/www/compare/v1.13.0...v1.14.0) (2025-12-04)
 
 
