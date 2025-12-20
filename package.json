@@ -8,7 +8,7 @@
 		"url": "https://github.com/u29dc/www"
 	},
 	"homepage": "https://u29dc.com",
-	"version": "2.1.1",
+	"version": "2.1.2",
 	"private": true,
 	"type": "module",
 	"scripts": {

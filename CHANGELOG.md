@@ -1,3 +1,10 @@
+## [2.1.2](https://github.com/u29dc/www/compare/v2.1.1...v2.1.2) (2025-12-20)
+
+
+### Bug Fixes
+
+* **core:** exclude confidential studies and handle llms in sitemap ([bde79e5](https://github.com/u29dc/www/commit/bde79e544d7d440c49765e608aa747a9b5fdb2da))
+
 ## [2.1.1](https://github.com/u29dc/www/compare/v2.1.0...v2.1.1) (2025-12-20)
 
 
