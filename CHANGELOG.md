@@ -1,3 +1,16 @@
+## [2.1.1](https://github.com/u29dc/www/compare/v2.1.0...v2.1.1) (2025-12-20)
+
+
+### Bug Fixes
+
+* **ui:** allow viewport zoom for accessibility ([72689ff](https://github.com/u29dc/www/commit/72689ff897093b97142ca2b568f2545a872a0728))
+
+
+### Performance Improvements
+
+* **core:** centralize raf loop and migrate animation components ([888c4f5](https://github.com/u29dc/www/commit/888c4f5a218ac644f307092dbf0555fb3f41f92e))
+* **ui:** add content-visibility and lazy video loading ([7b5667f](https://github.com/u29dc/www/commit/7b5667f4ac3c8b9c7a9bd3270b41c8411c0c325e))
+
 # [2.1.0](https://github.com/u29dc/www/compare/v2.0.0...v2.1.0) (2025-12-20)
 
 
