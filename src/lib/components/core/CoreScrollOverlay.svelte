@@ -1,6 +1,8 @@
 <script lang="ts">
 import { onMount } from 'svelte';
+import { prefersReducedMotion } from 'svelte/motion';
 import { resolve } from '$app/paths';
+import { fadeBlur, getTimeline, resolveStage } from '$lib/animation';
 
 type Props = {
 	pageType: 'index' | 'article';
@@ -36,11 +38,22 @@ let { pageType }: Props = $props();
 const isIndexPage = $derived(pageType === 'index');
 const ctaLabel = $derived(isIndexPage ? 'BOOK A CALL ↗' : '← GO BACK');
 
+const timeline = getTimeline();
+const scrollStage = $derived(resolveStage(timeline, 'scroll'));
+const lineDelay = $derived(scrollStage.delay);
+const ctaDelay = $derived(scrollStage.delay + 140);
+const lineDuration = $derived(scrollStage.duration);
+const ctaDuration = $derived(scrollStage.duration);
+
 let overlayRef = $state<HTMLDivElement | null>(null);
 let isMdUp = $state(false);
 let lineOffset = $state(0);
 let ctaOffset = $state(0);
 let overlayRect: DOMRect | null = null;
+let lineIntroStarted = $state(false);
+let ctaIntroStarted = $state(false);
+const lineHiddenStyle = $derived(lineIntroStarted ? '' : `opacity: 0; filter: blur(${scrollStage.blur}px);`);
+const ctaHiddenStyle = $derived(ctaIntroStarted ? '' : `opacity: 0; filter: blur(${scrollStage.blur}px);`);
 
 const lineStyle = $derived(`transform: translate3d(0, ${lineOffset}px, 0);`);
 const ctaStyle = $derived(`transform: translate3d(${ctaOffset}px, 0, 0);`);
@@ -58,6 +71,10 @@ const attachOverlay = (node: HTMLDivElement) => {
 };
 
 onMount(() => {
+	if (prefersReducedMotion.current) {
+		lineIntroStarted = true;
+		ctaIntroStarted = true;
+	}
 	const updateIsMdUp = () => {
 		isMdUp = window.matchMedia('(min-width: 768px)').matches;
 	};
@@ -207,9 +224,35 @@ onMount(() => {
 </script>
 
 <div use:attachOverlay class="-translate-y-1/2 padding-standard pointer-events-none fixed top-1/2 left-0 z-20 h-[500px] w-full select-none">
-	<div class="relative h-px w-full" style={lineStyle}>
-		<div class="absolute inset-0 origin-left bg-black"></div>
-		<div class="pointer-events-auto absolute top-[1px]" style={`left: ${anchorLeft}; ${ctaStyle}`}>
+	<div class="relative h-px w-full" style={`${lineStyle}; will-change: transform; backface-visibility: hidden;`}>
+		<div
+			class="absolute inset-0 origin-left bg-black transform-gpu"
+			style={`will-change: opacity, filter; backface-visibility: hidden; ${lineHiddenStyle}`}
+			in:fadeBlur={{
+				delay: lineDelay,
+				duration: lineDuration,
+				y: 0,
+				blur: scrollStage.blur,
+				easing: scrollStage.easing,
+			}}
+			onintrostart={() => {
+				lineIntroStarted = true;
+			}}
+		></div>
+		<div
+			class="pointer-events-auto absolute top-[1px] transform-gpu"
+			style={`left: ${anchorLeft}; ${ctaStyle}; will-change: transform, opacity, filter; backface-visibility: hidden; ${ctaHiddenStyle}`}
+			in:fadeBlur={{
+				delay: ctaDelay,
+				duration: ctaDuration,
+				y: 0,
+				blur: scrollStage.blur,
+				easing: scrollStage.easing,
+			}}
+			onintrostart={() => {
+				ctaIntroStarted = true;
+			}}
+		>
 			{#if isIndexPage}
 				<a class="-m-2.5 inline-block p-2.5" href="https://u29dc.co/hey" target="_blank" rel="noopener noreferrer">
 					<div class="-translate-x-full whitespace-nowrap bg-black px-3 py-2 font-mono text-sm text-white md:-translate-x-1/2">

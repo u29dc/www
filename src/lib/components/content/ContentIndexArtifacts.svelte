@@ -1,4 +1,5 @@
 <script lang="ts">
+import Animate from '$lib/components/animation/Animate.svelte';
 import ContentIndexArtifactsList from '$lib/components/content/ContentIndexArtifactsList.svelte';
 import type { ParsedContent } from '$lib/content-types';
 import type { MediaItem } from '$lib/mdx-client';
@@ -18,11 +19,11 @@ let { items = [] }: Props = $props();
 </script>
 
 <div class="my-10">
-	<div class="flex w-full justify-end">
+	<Animate stage="artifacts" index={0} stagger={90} className="flex w-full justify-end">
 		<div class="mb-10 text-right font-mono">
 			the territory between disciplines holds questions specialists cannot ask alone
 		</div>
-	</div>
+	</Animate>
 
-	<ContentIndexArtifactsList items={items} />
+	<ContentIndexArtifactsList items={items} startIndex={1} />
 </div>
