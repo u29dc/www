@@ -3,12 +3,12 @@ import Animate from '$lib/components/animation/Animate.svelte';
 </script>
 
 <div class="my-10 flex flex-col gap-10 font-md">
-	<Animate stage="statement" index={0} stagger={120} className="uppercase">
+	<div class="uppercase">
 		<h1>
 			An evolving, enigmatic, multifaceted creative practice — turning complex futures
 			into decision grade narratives.
 		</h1>
-	</Animate>
+	</div>
 
 	<Animate stage="statement" index={1} stagger={120} className="mb-0">
 		<div>
