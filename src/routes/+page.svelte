@@ -1,6 +1,5 @@
 <script lang="ts">
 import ContentIndexArtifacts from '$lib/components/content/ContentIndexArtifacts.svelte';
-import ContentIndexAxioms from '$lib/components/content/ContentIndexAxioms.svelte';
 import ContentIndexProtocols from '$lib/components/content/ContentIndexProtocols.svelte';
 import ContentIndexStatement from '$lib/components/content/ContentIndexStatement.svelte';
 import LayoutContentBlock from '$lib/components/layout/LayoutContentBlock.svelte';
@@ -30,17 +29,6 @@ let { data }: { data: PageData } = $props();
 		className="content-visibility-auto"
 	>
 		<ContentIndexArtifacts items={data.artifacts} />
-	</LayoutContentBlock>
-
-	<div class="h-120"></div>
-
-	<LayoutContentBlock
-		id="axioms"
-		title="axioms"
-		colSpanFull={false}
-		className="content-visibility-auto"
-	>
-		<ContentIndexAxioms />
 	</LayoutContentBlock>
 
 	<div class="h-120"></div>
