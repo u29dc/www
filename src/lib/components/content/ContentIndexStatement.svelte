@@ -9,65 +9,59 @@ import Animate from '$lib/components/animation/Animate.svelte';
 			complex futures into decision grade narratives.
 		</h1>
 	</div>
+</div>
 
-	<Animate stage="statement" index={1} stagger={120} className="mb-0">
-		<div>
-			Complex problems are typically addressed by first compressing them
-			into familiar frameworks, then dividing them among specialists.
-			Define the challenge. Identify which experts are needed. Assign
-			components to each. Coordinate outputs into deliverables—elevator
-			pitches, brand positioning statements, predetermined artifacts.
-		</div>
-		<br />
-		<div>
-			This succeeds when problems respect disciplinary boundaries and fit
-			established categories.
-		</div>
-		<br />
-		<div>
-			It fails when the solution lives in the intersection—when
-			territories must inform each other from the beginning, not converge
-			at the end. When the challenge itself resists compression and
-			demands synthesis rather than simplification. These problems require
-			working across domains from the start, not coordinating specialists
-			after division.
-		</div>
+<div class="my-10 flex flex-col gap-8 font-mono">
+	<Animate stage="statement" index={0} stagger={120}>
+		<div>Imperfect.</div>
+		<div>Inexplicable.</div>
+		<div>Incomplete.</div>
 	</Animate>
 
-	<Animate stage="statement" index={2} stagger={120} className="mb-0">
-		<div>
-			This demands different assumptions. Incompleteness as strategy, not
-			failure. Discovery determining form, not following templates.
-			Premises questioned before execution begins.
-		</div>
+	<Animate stage="statement" index={1} stagger={120}>
+		<div>These shape everything that follows.</div>
 	</Animate>
 
-	<Animate stage="statement" index={3} stagger={120} className="mb-0">
-		<div>
-			The work inhabits the space between what is seen and what is felt.
-			It operates in the deliberate pause, dwells in the charged moment.
-			It expresses itself in incomplete form—because strategic
-			incompleteness rewards interpretation, invites completion through
-			engagement.
+	<Animate stage="statement" index={2} stagger={120}>
+		<div>We turn complex futures into decision-grade narratives.</div>
+	</Animate>
+
+	<Animate stage="statement" index={3} stagger={120}>
+		<div class="ml-auto w-9/10">
+			<div>Where others see boundaries—</div>
 		</div>
-		<br />
-		<div>After all, isn't true infinity always incomplete?</div>
+		<div class="ml-auto w-8/10">
+			<div>strategy,</div>
+			<div>design—</div>
+			<div>film,</div>
+			<div>architecture,</div>
+			<div>code,</div>
+		</div>
+		<div class="ml-auto w-9/10">
+			<div>we see continuous territory.</div>
+		</div>
 	</Animate>
 
 	<Animate stage="statement" index={4} stagger={120}>
-		<div class="w-[35vw] font-handwritten md:w-[10vw]">
-			Incomplete Infinity
+		<div class="ml-auto w-19/20">
+			<div>The work inhabits intersections.</div>
+		</div>
+		<div class="ml-auto w-9/10">
+			<div>Where compression fails.</div>
+			<div>Where division destroys solutions.</div>
+			<div>Where specialists refer problems elsewhere.</div>
 		</div>
 	</Animate>
 
-	<Animate stage="statement" index={5} stagger={120} className="mt-40">
-		<div class="float-right">
-			<div class="w-full text-right font-mono md:w-[10vw]">
-				complexity accelerates faster than disciplines evolve
-				vocabularies for it— the widening gap between what fields can
-				articulate and what problems demand is where this practice lives
-				deliberately
-			</div>
-		</div>
+	<Animate stage="statement" index={5} stagger={120}>
+		<div>Strategic incompleteness is our method.</div>
+		<div>Discovery determines form.</div>
+		<div>Premises questioned before execution begins.</div>
 	</Animate>
+
+	<Animate stage="statement" index={6} stagger={120}>
+		<div>After all, isn't true infinity always incomplete?</div>
+	</Animate>
+
+	<div class="w-[35vw] font-handwritten md:w-[10vw]">Incomplete Infinity</div>
 </div>

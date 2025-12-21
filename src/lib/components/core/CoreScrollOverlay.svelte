@@ -18,7 +18,7 @@ const SPRING_LINE = { stiffness: 100, damping: 30 };
 const SPRING_BASE = { stiffness: 60, damping: 30 };
 const SPRING_MAGNET = { stiffness: 80, damping: 18 };
 
-const LINE_HEIGHT = 500;
+const LINE_HEIGHT = 600;
 const BASE_RANGE = 50;
 const BASE_TANH_SCALE = 0.003;
 const MAGNET_RADIUS = 150;
@@ -135,7 +135,7 @@ onMount(() => {
 
 		const delta = Math.min(deltaSeconds, 0.05);
 
-		// Scroll → line mapping (0–500px), excluding footer.
+		// Scroll → line mapping, excluding footer.
 		const progress = clamp(0, window.scrollY / maxScroll, 1);
 		const lineTarget = progress * LINE_HEIGHT;
 		spring(line, lineTarget, SPRING_LINE.stiffness, SPRING_LINE.damping, delta);
@@ -176,7 +176,7 @@ onMount(() => {
 
 <div
 	use:attachOverlay
-	class="-translate-y-1/2 padding-standard pointer-events-none fixed top-1/2 left-0 z-20 h-[500px] w-full select-none"
+	class="-translate-y-[250px] padding-standard pointer-events-none fixed top-1/2 left-0 z-20 h-[400px] w-full select-none"
 >
 	<div
 		class="relative h-px w-full"
