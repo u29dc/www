@@ -23,23 +23,23 @@ let { data }: { data: PageData } = $props();
 	<div class="h-120"></div>
 
 	<LayoutContentBlock
-		id="protocols"
-		title="protocols"
-		colSpanFull={false}
-		className="content-visibility-auto"
-	>
-		<ContentIndexProtocols />
-	</LayoutContentBlock>
-
-	<div class="h-120"></div>
-
-	<LayoutContentBlock
 		id="artifacts"
 		title="artifacts"
 		colSpanFull={true}
 		className="content-visibility-auto"
 	>
 		<ContentIndexArtifacts items={data.artifacts} />
+	</LayoutContentBlock>
+
+	<div class="h-120"></div>
+
+	<LayoutContentBlock
+		id="protocols"
+		title="protocols"
+		colSpanFull={false}
+		className="content-visibility-auto"
+	>
+		<ContentIndexProtocols />
 	</LayoutContentBlock>
 
 	<div class="h-120"></div>

@@ -63,9 +63,5 @@ import Animate from '$lib/components/animation/Animate.svelte';
 		<div>After all, isn't true infinity always incomplete?</div>
 	</Animate>
 
-	<Animate stage="statement" index={7} stagger={120}>
-		<div class="w-[35vw] font-handwritten md:w-[10vw]">
-			Incomplete Infinity
-		</div>
-	</Animate>
+	<div class="w-[35vw] font-handwritten md:w-[10vw]">Incomplete Infinity</div>
 </div>
