@@ -30,7 +30,12 @@ const headingContent = $derived(type === 'article' ? (frontmatter?.title ?? titl
 			<div
 				class="-translate-x-1/2 absolute bottom-0 left-1/2 w-full text-center"
 			>
-				<div>{headingContent}</div>
+				<div>
+					{headingContent}
+					{#if type === "index"}
+						<span class="align-top font-mono">U29DC</span>
+					{/if}
+				</div>
 			</div>
 			<nav class="absolute bottom-0 left-0">
 				<AtomicBrandLogo className="-translate-x-30 translate-y-6" />
