@@ -43,6 +43,12 @@ const DEFAULT_STAGE: StageTiming = {
 	easing: cubicOut,
 };
 
+const EASING_CSS_MAP = new Map<EasingFunction, string>([[cubicOut, 'cubic-bezier(0.33, 1, 0.68, 1)']]);
+
+export const resolveEasingCss = (easing: EasingFunction): string => {
+	return EASING_CSS_MAP.get(easing) ?? 'cubic-bezier(0.33, 1, 0.68, 1)';
+};
+
 const clampZero = (value: number) => Math.max(0, value);
 
 export const createTimeline = (spec: TimelineSpec): Timeline => {

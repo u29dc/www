@@ -618,7 +618,7 @@ function createGrainRenderer(canvas: HTMLCanvasElement, initialState: GrainState
 let { intensity = 0.25, grainScale = 1.6, animationSpeed = 0.45, chromaticVariance = 0.12, exposure = 0.9, className = '' }: CoreGrainOverlayProps = $props();
 
 const classValue = $derived(className);
-const canvasStyle = 'width: 100%; height: 100%; display: block;';
+const canvasStyle = 'width: 100%; height: 100%; display: block; --animate-duration: 700ms; --animate-delay: 0ms; --animate-y: 0px; --animate-blur: 0px;';
 const timeOffset = Math.random() * 1000;
 
 let canvasRef = $state<HTMLCanvasElement | null>(null);
@@ -767,8 +767,9 @@ $effect(() => {
 </script>
 
 <canvas
-	bind:this={canvasRef}
-	class={`pointer-events-none fixed inset-0 z-50 ${classValue}`}
-	style={canvasStyle}
-	aria-hidden="true"
+    bind:this={canvasRef}
+    class={`pointer-events-none fixed inset-0 z-50 ${classValue}`}
+    style={canvasStyle}
+    data-animate
+    aria-hidden="true"
 ></canvas>

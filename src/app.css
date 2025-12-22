@@ -93,6 +93,35 @@
 }
 
 /* ================================================== */
+/* ANIMATION GATE */
+/* ================================================== */
+
+html.js:not([data-animate-ready]) [data-animate] {
+	opacity: 0;
+	filter: blur(var(--animate-blur, 0px));
+	translate: 0 var(--animate-y, 0px);
+}
+
+html.js[data-animate-ready] [data-animate] {
+	opacity: 1;
+	filter: blur(0px);
+	translate: 0 0;
+	transition:
+		opacity var(--animate-duration, 600ms) var(--animate-ease, ease) var(--animate-delay, 0ms),
+		filter var(--animate-duration, 600ms) var(--animate-ease, ease) var(--animate-delay, 0ms),
+		translate var(--animate-duration, 600ms) var(--animate-ease, ease) var(--animate-delay, 0ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	html.js [data-animate] {
+		opacity: 1;
+		filter: none;
+		translate: 0 0;
+		transition: none;
+	}
+}
+
+/* ================================================== */
 /* SMOOTH SCROLL */
 /* ================================================== */
 

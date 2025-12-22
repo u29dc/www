@@ -2,7 +2,7 @@
 import { onMount } from 'svelte';
 import { prefersReducedMotion } from 'svelte/motion';
 import { resolve } from '$app/paths';
-import { fadeBlur, getTimeline, resolveStage } from '$lib/animation';
+import { fadeBlur, getTimeline, resolveEasingCss, resolveStage } from '$lib/animation';
 import { registerRafTask } from '$lib/raf';
 
 type Props = {
@@ -45,6 +45,7 @@ const lineDelay = $derived(scrollStage.delay);
 const ctaDelay = $derived(scrollStage.delay + 140);
 const lineDuration = $derived(scrollStage.duration);
 const ctaDuration = $derived(scrollStage.duration);
+const scrollEasingCss = $derived(resolveEasingCss(scrollStage.easing));
 
 let overlayRef = $state<HTMLDivElement | null>(null);
 let isMdUp = $state(false);
@@ -55,6 +56,8 @@ let lineIntroStarted = $state(false);
 let ctaIntroStarted = $state(false);
 const lineHiddenStyle = $derived(lineIntroStarted ? '' : `opacity: 0; filter: blur(${scrollStage.blur}px);`);
 const ctaHiddenStyle = $derived(ctaIntroStarted ? '' : `opacity: 0; filter: blur(${scrollStage.blur}px);`);
+const lineGateVars = $derived(`--animate-delay: ${lineDelay}ms; --animate-duration: ${lineDuration}ms; --animate-y: 0px; --animate-blur: ${scrollStage.blur}px; --animate-ease: ${scrollEasingCss};`);
+const ctaGateVars = $derived(`--animate-delay: ${ctaDelay}ms; --animate-duration: ${ctaDuration}ms; --animate-y: 0px; --animate-blur: ${scrollStage.blur}px; --animate-ease: ${scrollEasingCss};`);
 
 const lineStyle = $derived(`transform: translate3d(0, ${lineOffset}px, 0);`);
 const ctaStyle = $derived(`transform: translate3d(${ctaOffset}px, 0, 0);`);
@@ -73,6 +76,11 @@ const attachOverlay = (node: HTMLDivElement) => {
 
 onMount(() => {
 	if (prefersReducedMotion.current) {
+		lineIntroStarted = true;
+		ctaIntroStarted = true;
+	}
+	const root = document.documentElement;
+	if (!root.hasAttribute('data-animate-ready')) {
 		lineIntroStarted = true;
 		ctaIntroStarted = true;
 	}
@@ -182,13 +190,14 @@ onMount(() => {
 		class="relative h-px w-full"
 		style={`${lineStyle}; will-change: transform; backface-visibility: hidden;`}
 	>
-		<div
-			class="absolute inset-0 origin-left bg-black transform-gpu"
-			style={`will-change: opacity, filter; backface-visibility: hidden; ${lineHiddenStyle}`}
-			in:fadeBlur={{
-				delay: lineDelay,
-				duration: lineDuration,
-				y: 0,
+        <div
+            class="absolute inset-0 origin-left bg-black transform-gpu"
+            style={`will-change: opacity, filter; backface-visibility: hidden; ${lineHiddenStyle} ${lineGateVars}`}
+            data-animate
+            in:fadeBlur={{
+                delay: lineDelay,
+                duration: lineDuration,
+                y: 0,
 				blur: scrollStage.blur,
 				easing: scrollStage.easing,
 			}}
@@ -196,13 +205,14 @@ onMount(() => {
 				lineIntroStarted = true;
 			}}
 		></div>
-		<div
-			class="pointer-events-auto absolute top-[1px] transform-gpu"
-			style={`left: ${anchorLeft}; ${ctaStyle}; will-change: transform, opacity, filter; backface-visibility: hidden; ${ctaHiddenStyle}`}
-			in:fadeBlur={{
-				delay: ctaDelay,
-				duration: ctaDuration,
-				y: 0,
+        <div
+            class="pointer-events-auto absolute top-[1px] transform-gpu"
+            style={`left: ${anchorLeft}; ${ctaStyle}; will-change: transform, opacity, filter; backface-visibility: hidden; ${ctaHiddenStyle} ${ctaGateVars}`}
+            data-animate
+            in:fadeBlur={{
+                delay: ctaDelay,
+                duration: ctaDuration,
+                y: 0,
 				blur: scrollStage.blur,
 				easing: scrollStage.easing,
 			}}
