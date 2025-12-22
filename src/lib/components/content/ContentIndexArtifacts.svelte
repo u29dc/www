@@ -31,5 +31,7 @@ let { items = [] }: Props = $props();
 		</div>
 	</Animate>
 
-	<ContentIndexArtifactsList {items} startIndex={1} />
+	<Animate stage="artifacts" index={1} stagger={90}>
+		<ContentIndexArtifactsList {items} startIndex={1} />
+	</Animate>
 </div>
