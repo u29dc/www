@@ -756,7 +756,7 @@ let {
 const height = $derived(width / 4);
 const classValue = $derived(className);
 const containerStyle = $derived(`width: ${width}px; height: ${height}px;`);
-const canvasStyle = 'width: 100%; height: 100%; display: block;';
+const canvasStyle = 'width: 100%; height: 100%; display: block; --animate-duration: 600ms; --animate-delay: 0ms; --animate-y: 0px; --animate-blur: 0px;';
 
 let canvasRef = $state<HTMLCanvasElement | null>(null);
 let renderer = $state<AtomicBrandLogoRenderer | null>(null);
@@ -895,10 +895,11 @@ $effect(() => {
 
 <div class={classValue} style={containerStyle}>
 	<!-- svelte-ignore a11y_no_interactive_element_to_noninteractive_role -->
-	<canvas
-		bind:this={canvasRef}
-		style={canvasStyle}
-		aria-label="u29dc logo"
-		role="img"
-	></canvas>
+    <canvas
+        bind:this={canvasRef}
+        style={canvasStyle}
+        data-animate
+        aria-label="u29dc logo"
+        role="img"
+    ></canvas>
 </div>

@@ -18,6 +18,11 @@ afterNavigate(() => {
 });
 
 onMount(() => {
+	const root = document.documentElement;
+	requestAnimationFrame(() => {
+		root.dataset.animateReady = 'true';
+	});
+
 	const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
 
 	const syncController = () => {

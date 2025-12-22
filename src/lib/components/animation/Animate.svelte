@@ -1,6 +1,6 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
-import { fadeBlur, getTimeline, resolveStage } from '$lib/animation';
+import { fadeBlur, getTimeline, resolveEasingCss, resolveStage } from '$lib/animation';
 
 type Props = {
 	stage: string;
@@ -24,14 +24,27 @@ const computedDelay = $derived(Math.max(0, stageTiming.delay + delay + index * s
 const computedDuration = $derived(duration ?? stageTiming.duration);
 const computedY = $derived(y ?? stageTiming.y);
 const computedBlur = $derived(blur ?? stageTiming.blur);
+const easingCss = $derived(resolveEasingCss(stageTiming.easing));
 
 const classes = $derived(className ? `transform-gpu ${className}` : 'transform-gpu');
+const style = $derived.by(() => {
+	return [
+		'will-change: transform, opacity, filter',
+		'backface-visibility: hidden',
+		`--animate-delay: ${computedDelay}ms`,
+		`--animate-duration: ${computedDuration}ms`,
+		`--animate-y: ${computedY}px`,
+		`--animate-blur: ${computedBlur}px`,
+		`--animate-ease: ${easingCss}`,
+	].join('; ');
+});
 </script>
 
 <svelte:element
 	this={tag}
 	class={classes}
-	style="will-change: transform, opacity, filter; backface-visibility: hidden;"
+	{style}
+	data-animate
 	in:fadeBlur={{
 		delay: computedDelay,
 		duration: computedDuration,
