@@ -31,9 +31,7 @@ onMount(() => {
 		class="full-container relative isolate min-h-screen overflow-x-hidden"
 	>
 		<section data-section="header" class="relative z-10 w-full">
-			<Animate stage="header">
-				<LayoutSharedHeader {type} {frontmatter} />
-			</Animate>
+			<LayoutSharedHeader {type} {frontmatter} />
 		</section>
 
 		<section data-section="content" class="relative w-full">
