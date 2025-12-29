@@ -1,8 +1,13 @@
 name: Release
 
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Run without publishing (test mode)'
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: release
@@ -46,6 +51,6 @@ jobs:
         run: bun run build
 
       - name: Release
-        run: bun run semantic-release
+        run: bun run semantic-release ${{ inputs.dry_run && '--dry-run' || '' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
