@@ -1,59 +1,26 @@
-# Dependencies
+# dependencies
 node_modules/
-.pnp/
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
 
-# Testing
-coverage/
-
-# Next.js
-.next/
-out/
+# build
 dist/
-certificates
-
-# SvelteKit
-.svelte-kit/
-.wrangler/
-
-# Production builds
 build/
-
-# Misc
-.DS_Store
-*.pem
-.husky/_/
-tmp/
-
-# Debug logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-bun-debug.log*
-
-# Environment
-.env*
-!.env.example
-
-# Vercel
-.vercel
-
-# TypeScript
 *.tsbuildinfo
-next-env.d.ts
+.biome
+.svelte-kit/
 
-# IDEs
-.zed/
+# system
+.DS_Store
+._*
 .vscode/
+.zed/
 .idea/
-*.swp
-*.swo
-*~
+*.log
+.tmp/
+.env
+.env.*
+!.env.example
+.husky/_/
 
-Thumbs.db
+# project
+.wrangler/
+.claude/

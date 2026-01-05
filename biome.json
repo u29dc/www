@@ -1,61 +1,6 @@
 {
-	"$schema": "https://biomejs.dev/schemas/2.3.10/schema.json",
-	"files": {
-		"includes": ["**", "!tmp", "!.svelte-kit", "!build", "!node_modules"]
-	},
-	"formatter": {
-		"enabled": true,
-		"indentStyle": "tab",
-		"indentWidth": 4,
-		"lineWidth": 200,
-		"lineEnding": "lf"
-	},
-	"css": {
-		"parser": {
-			"tailwindDirectives": true
-		}
-	},
-	"vcs": {
-		"enabled": true,
-		"clientKind": "git",
-		"useIgnoreFile": true
-	},
-	"javascript": {
-		"formatter": {
-			"quoteStyle": "single",
-			"jsxQuoteStyle": "double",
-			"trailingCommas": "all",
-			"semicolons": "always",
-			"arrowParentheses": "always"
-		}
-	},
-	"linter": {
-		"enabled": true,
-		"rules": {
-			"recommended": true,
-			"suspicious": {
-				"noExplicitAny": "error",
-				"noConsole": "error"
-			},
-			"correctness": {
-				"noUnusedVariables": "error",
-				"noUnusedImports": "error"
-			},
-			"style": {
-				"noNonNullAssertion": "error",
-				"useConst": "error"
-			},
-			"nursery": {
-				"useSortedClasses": {
-					"level": "warn",
-					"options": {
-						"attributes": ["class"],
-						"functions": ["clsx", "cva", "tw", "cn"]
-					}
-				}
-			}
-		}
-	},
+	"$schema": "https://biomejs.dev/schemas/2.3.11/schema.json",
+	"extends": ["/Users/han/.config/biome/biome.json"],
 	"overrides": [
 		{
 			"includes": ["**/*.svelte"],
