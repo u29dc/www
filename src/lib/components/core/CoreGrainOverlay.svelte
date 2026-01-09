@@ -1,6 +1,6 @@
 <script lang="ts">
 import { onMount } from 'svelte';
-import { resolve } from '$app/paths';
+import { base } from '$app/paths';
 import { logEvent } from '$lib/logger';
 import { registerRafTask } from '$lib/raf';
 
@@ -135,7 +135,7 @@ void main() {
 
 const BLUE_NOISE_SIZE = 64;
 const BLUE_NOISE_PATH = '/textures/blue-noise-64.rgba';
-const BLUE_NOISE_URL = resolve(BLUE_NOISE_PATH);
+const BLUE_NOISE_URL = `${base}${BLUE_NOISE_PATH}`;
 let blueNoisePixelsPromise: Promise<Uint8Array> | null = null;
 
 const loadBlueNoisePixels = async (): Promise<Uint8Array> => {

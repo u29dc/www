@@ -1,7 +1,7 @@
 <script lang="ts">
 import { onMount } from 'svelte';
 import { prefersReducedMotion } from 'svelte/motion';
-import { resolve } from '$app/paths';
+import { base } from '$app/paths';
 import { fadeBlur, getTimeline, resolveEasingCss, resolveStage } from '$lib/animation';
 import { registerRafTask } from '$lib/raf';
 
@@ -234,7 +234,7 @@ onMount(() => {
 					</div>
 				</a>
 			{:else}
-				<a class="-m-2.5 inline-block p-2.5" href={resolve("/")}>
+				<a class="-m-2.5 inline-block p-2.5" href={`${base}/`}>
 					<div
 						class="-translate-x-full whitespace-nowrap bg-black px-3 py-2 font-mono text-sm text-white md:-translate-x-1/2"
 					>

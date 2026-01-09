@@ -7,7 +7,6 @@ import type { MediaItem } from '$lib/mdx-client';
 type ArtifactEntry = {
 	item: ParsedContent;
 	isConfidential: boolean;
-	thumbnailUrl: string | null;
 	mediaItems: MediaItem[];
 };
 
@@ -34,7 +33,6 @@ let { items = [], className = '', startIndex = 0 }: Props = $props();
 				<ContentIndexArtifactsItem
 					item={entry.item}
 					isConfidential={entry.isConfidential}
-					thumbnailUrl={entry.thumbnailUrl}
 					mediaItems={entry.mediaItems}
 				/>
 			</div>

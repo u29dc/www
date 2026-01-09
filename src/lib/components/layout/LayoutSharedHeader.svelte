@@ -6,7 +6,7 @@ import type { ContentItem } from '$lib/content-types';
 
 type Props = {
 	type: 'index' | 'article';
-	frontmatter?: ContentItem;
+	frontmatter?: ContentItem | undefined;
 	title?: string;
 };
 

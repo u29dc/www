@@ -108,7 +108,7 @@ $effect(() => {
 					playsinline
 					preload="none"
 					crossorigin="anonymous"
-					referrerpolicy="origin"
+					{...{ referrerpolicy: 'origin' }}
 					onloadedmetadata={handleVideoMetadata}
 				></video>
 			{/if}
@@ -122,7 +122,7 @@ $effect(() => {
 			loading="lazy"
 			decoding="async"
 			crossorigin="anonymous"
-			referrerpolicy="origin"
+			{...{ referrerpolicy: 'origin' }}
 			onload={handleImageLoad}
 		/>
 	{/if}

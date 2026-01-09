@@ -28,7 +28,8 @@ const hashString = (input: string): number => {
 const selectPreset = (itemSlug: string, filename: string): AspectRatioPreset => {
 	const hash = hashString(`${itemSlug}-${filename}`);
 	const presetIndex = hash % ASPECT_RATIO_PRESETS.length;
-	return ASPECT_RATIO_PRESETS[presetIndex] ?? ASPECT_RATIO_PRESETS[0];
+	// Non-null assertion is safe: modulo guarantees 0 <= presetIndex < length
+	return ASPECT_RATIO_PRESETS[presetIndex]!;
 };
 
 const imageItems = $derived(mediaItems.filter((item) => item.type === 'image'));

@@ -6,11 +6,10 @@ import type { MediaItem } from '$lib/mdx-client';
 type Props = {
 	item: ParsedContent;
 	isConfidential: boolean;
-	thumbnailUrl: string | null;
 	mediaItems: MediaItem[];
 };
 
-let { item, isConfidential, thumbnailUrl, mediaItems }: Props = $props();
+let { item, isConfidential, mediaItems }: Props = $props();
 
 let isHovered = $state(false);
 

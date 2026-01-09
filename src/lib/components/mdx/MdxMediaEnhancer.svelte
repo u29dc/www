@@ -22,30 +22,33 @@ const parseSources = (value: string | undefined): string[] => {
 	return [];
 };
 
-onMount(async () => {
-	const nodes = Array.from(document.querySelectorAll<HTMLElement>('[data-mdx-media]')).filter((node) => node.dataset.mdxMounted !== 'true');
-	if (nodes.length === 0) return;
-
-	const { default: MdxMedia } = await import('$lib/components/mdx/MdxMedia.svelte');
-
+onMount(() => {
 	const mounted: MountedMedia[] = [];
-	for (const node of nodes) {
-		const sources = parseSources(node.dataset.mdxMedia);
-		if (sources.length === 0) continue;
-		const alt = node.dataset.mdxAlt ?? '';
-		node.dataset.mdxMounted = 'true';
-		node.replaceChildren();
-		const instance = mount(MdxMedia, {
-			target: node,
-			props: { src: sources, alt },
-		});
-		mounted.push({ node, instance });
-	}
+
+	(async () => {
+		const nodes = Array.from(document.querySelectorAll<HTMLElement>('[data-mdx-media]')).filter((node) => node.dataset['mdxMounted'] !== 'true');
+		if (nodes.length === 0) return;
+
+		const { default: MdxMedia } = await import('$lib/components/mdx/MdxMedia.svelte');
+
+		for (const node of nodes) {
+			const sources = parseSources(node.dataset['mdxMedia']);
+			if (sources.length === 0) continue;
+			const alt = node.dataset['mdxAlt'] ?? '';
+			node.dataset['mdxMounted'] = 'true';
+			node.replaceChildren();
+			const instance = mount(MdxMedia, {
+				target: node,
+				props: { src: sources, alt },
+			});
+			mounted.push({ node, instance });
+		}
+	})();
 
 	return () => {
 		for (const entry of mounted) {
 			unmount(entry.instance);
-			delete entry.node.dataset.mdxMounted;
+			delete entry.node.dataset['mdxMounted'];
 		}
 	};
 });

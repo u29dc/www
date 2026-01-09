@@ -18,7 +18,6 @@ export const load: PageServerLoad = async () => {
 		return {
 			item,
 			isConfidential: isStudy(item.frontmatter) && (item.frontmatter.isConfidential ?? false),
-			thumbnailUrl: isThumbnailImage ? safeThumbnail : null,
 			mediaItems: orderedMediaItems,
 		};
 	});

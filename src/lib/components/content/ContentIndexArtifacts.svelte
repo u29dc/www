@@ -7,7 +7,6 @@ import type { MediaItem } from '$lib/mdx-client';
 type ArtifactEntry = {
 	item: ParsedContent;
 	isConfidential: boolean;
-	thumbnailUrl: string | null;
 	mediaItems: MediaItem[];
 };
 
