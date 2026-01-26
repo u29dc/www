@@ -1,6 +1,6 @@
 <script lang="ts">
-import Animate from '$lib/components/animation/Animate.svelte';
-import ContentIndexProtocolsItem from '$lib/components/content/ContentIndexProtocolsItem.svelte';
+	import Animate from "$lib/components/animation/Animate.svelte";
+	import ContentIndexProtocolsItem from "$lib/components/content/ContentIndexProtocolsItem.svelte";
 </script>
 
 <div class="my-10 flex flex-col gap-8">
@@ -25,9 +25,9 @@ import ContentIndexProtocolsItem from '$lib/components/content/ContentIndexProto
 			<ContentIndexProtocolsItem
 				title="MAP"
 				subtitle="Discovery is work, not prelude to work."
-				description="Seven to ten days mapping territory before choosing direction. Understanding what you're actually solving, not what you assume you're solving. Determines whether challenge warrants full engagement and what that engagement should look like. Credits toward ARC within 45 days. Required entry point."
-				investment="£2,500-4,000"
-				duration="7-10 days"
+				description="Strategic diagnosis delivered within 48 hours of interview. Understanding what you're actually solving, not what you assume you're solving. Determines whether challenge warrants full engagement and what that engagement should look like. Credits toward ARC within 45 days. Required entry point."
+				investment="£3,000"
+				duration="48 hours"
 			/>
 		</Animate>
 
