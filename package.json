@@ -21,41 +21,40 @@
 		"util:lint:staged": "bunx lint-staged",
 		"util:types": "bunx --bun svelte-kit sync && bunx --bun tsgo --noEmit && bunx svelte-check-rs --tsconfig ./tsconfig.svelte.json",
 		"util:clean": "rm -rf .svelte-kit build node_modules/.vite .turbo *.tsbuildinfo",
-		"util:check": "STATUS=0; bun run util:format || STATUS=1; bun run util:lint || STATUS=1; bun run util:types || STATUS=1; exit $STATUS",
-		"perf:lighthouse": "CHROME_PATH=\"/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge\" bunx lighthouse http://localhost:4173 --output json --output html --output-path ./tmp/lighthouse.report --chrome-flags='--headless --no-sandbox'"
+		"util:check": "STATUS=0; bun run util:format || STATUS=1; bun run util:lint || STATUS=1; bun run util:types || STATUS=1; exit $STATUS"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.3.11",
+		"@biomejs/biome": "^2.3.12",
 		"@commitlint/cli": "^20.3.1",
 		"@commitlint/config-conventional": "^20.3.1",
-		"@sveltejs/adapter-cloudflare": "^7.2.5",
-		"@sveltejs/kit": "^2.49.5",
+		"@sveltejs/adapter-cloudflare": "^7.2.6",
+		"@sveltejs/kit": "^2.50.1",
 		"@sveltejs/vite-plugin-svelte": "^6.2.4",
 		"@tailwindcss/vite": "^4.1.18",
 		"@types/js-yaml": "^4.0.9",
-		"@typescript-eslint/types": "^8.53.0",
-		"@typescript/native-preview": "^7.0.0-dev.20260115.1",
+		"@typescript-eslint/types": "^8.53.1",
+		"@typescript/native-preview": "^7.0.0-dev.20260126.1",
 		"husky": "^9.1.7",
 		"lighthouse": "^13.0.1",
 		"lint-staged": "^16.2.7",
 		"mdsvex": "^0.12.6",
-		"svelte": "^5.46.4",
-		"svelte-check-rs": "^0.6.6",
+		"svelte": "^5.48.2",
+		"svelte-check-rs": "^0.7.0",
 		"tailwindcss": "^4.1.18",
 		"vite": "^7.3.1"
 	},
 	"dependencies": {
-		"@lucide/svelte": "^0.562.0",
+		"@lucide/svelte": "^0.563.1",
 		"gray-matter": "^4.0.3",
 		"hastscript": "^9.0.1",
 		"js-yaml": "^4.1.1",
-		"pino": "^10.2.0",
+		"pino": "^10.3.0",
 		"rehype-stringify": "^10.0.1",
 		"remark-gfm": "^4.0.1",
 		"remark-mdx": "^3.1.1",
 		"remark-parse": "^11.0.0",
 		"remark-rehype": "^11.1.2",
 		"unified": "^11.0.5",
-		"zod": "^4.3.5"
+		"zod": "^4.3.6"
 	}
 }
