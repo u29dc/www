@@ -1,0 +1,23 @@
+src/lib/components/layout/LayoutSharedHeader.svelte
+  560a026869b409b2 15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.40",
+  "base_commit_sha": "236ac7cde72d2460cfe9ebc0bb382f9b09b8744e",
+  "prompts": {
+    "560a026869b409b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "34133532-bd28-4e5c-9217-6ffcb4f12bf1",
+        "model": "claude-opus-4-5-20251101"
+      },
+      "human_author": "Han <han@u29dc.com>",
+      "messages": [],
+      "total_additions": 8,
+      "total_deletions": 7,
+      "accepted_lines": 5,
+      "overriden_lines": 0
+    }
+  }
+}
