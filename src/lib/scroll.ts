@@ -2,6 +2,7 @@ import { registerRafTask, requestFrame } from '$lib/raf';
 
 type ScrollOptions = {
 	lerp?: number;
+	touchLerp?: number;
 	wheelMultiplier?: number;
 	touchMultiplier?: number;
 };
@@ -139,6 +140,7 @@ export const createScroll = (options: ScrollOptions = {}): ScrollController => {
 	const wrapper = window;
 	const content = document.documentElement;
 	const lerp = options.lerp ?? 0.05;
+	const touchLerp = options.touchLerp ?? lerp;
 	const wheelMultiplier = options.wheelMultiplier ?? 1;
 	const touchMultiplier = options.touchMultiplier ?? 1;
 
@@ -152,6 +154,7 @@ export const createScroll = (options: ScrollOptions = {}): ScrollController => {
 	let contentResizeObserver: ResizeObserver | null = null;
 	let pendingDelta = 0;
 	let rafHandle: ReturnType<typeof registerRafTask> | null = null;
+	let lastInput: 'wheel' | 'touch' | 'unknown' = 'unknown';
 
 	const updateClasses = () => {
 		root.classList.add('scroll');
@@ -189,6 +192,7 @@ export const createScroll = (options: ScrollOptions = {}): ScrollController => {
 		if (isStopped) return;
 		if (event.ctrlKey) return;
 		if (dimensions.limit <= 0) return;
+		lastInput = event.type.startsWith('touch') ? 'touch' : event.type === 'wheel' ? 'wheel' : lastInput;
 
 		// Nested scroll prevention would be handled here, but is skipped to keep scope minimal.
 
@@ -223,7 +227,8 @@ export const createScroll = (options: ScrollOptions = {}): ScrollController => {
 		}
 
 		// Scale lerp for 60fps to keep easing consistent across refresh rates.
-		const next = damp(animatedScroll, targetScroll, lerp * 60, deltaTime);
+		const activeLerp = lastInput === 'touch' ? touchLerp : lerp;
+		const next = damp(animatedScroll, targetScroll, activeLerp * 60, deltaTime);
 		const diff = Math.abs(next - targetScroll);
 		animatedScroll = diff < 0.1 ? targetScroll : next;
 		if (Math.abs(animatedScroll - wrapper.scrollY) > 0.1) {

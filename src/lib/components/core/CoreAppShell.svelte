@@ -33,7 +33,7 @@ onMount(() => {
 		}
 
 		if (!controller) {
-			controller = createScroll({ lerp: 0.05 });
+			controller = createScroll({ lerp: 0.05, touchLerp: 0.12, touchMultiplier: 1.6 });
 		}
 	};
 
