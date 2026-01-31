@@ -24,6 +24,9 @@ type VirtualScrollData = {
 // Convert wheel deltaMode=1 (line-based) into pixels with a consistent baseline.
 const LINE_HEIGHT = 100 / 6;
 const LISTENER_OPTIONS: AddEventListenerOptions = { passive: false };
+const TOUCH_SCROLL_THRESHOLD = 8;
+const TOUCH_INTERACTIVE_THRESHOLD = 12;
+const INTERACTIVE_SELECTOR = 'a,button,input,textarea,select,label,summary,[role="button"],[role="link"],[contenteditable="true"],[data-scroll-allow]';
 
 const clamp = (min: number, value: number, max: number) => Math.max(min, Math.min(value, max));
 
@@ -64,6 +67,9 @@ class VirtualScroll {
 	private options: { wheelMultiplier: number; touchMultiplier: number };
 	private onScroll: (data: VirtualScrollData) => void;
 	private touchStart = { x: 0, y: 0 };
+	private touchOrigin = { x: 0, y: 0 };
+	private touchIsScrolling = false;
+	private touchIsInteractive = false;
 	private windowSize = { width: 0, height: 0 };
 
 	constructor(element: HTMLElement, options: { wheelMultiplier: number; touchMultiplier: number }, onScroll: (data: VirtualScrollData) => void) {
@@ -113,6 +119,16 @@ class VirtualScroll {
 
 		this.touchStart.x = touch.clientX;
 		this.touchStart.y = touch.clientY;
+		this.touchOrigin.x = touch.clientX;
+		this.touchOrigin.y = touch.clientY;
+		this.touchIsScrolling = false;
+		this.touchIsInteractive = false;
+
+		const target = event.target instanceof HTMLElement ? event.target : null;
+		if (target) {
+			const interactive = target.closest(INTERACTIVE_SELECTOR);
+			this.touchIsInteractive = Boolean(interactive);
+		}
 
 		this.onScroll({ deltaX: 0, deltaY: 0, event });
 	};
@@ -120,6 +136,19 @@ class VirtualScroll {
 	private handleTouchMove = (event: TouchEvent) => {
 		const touch = event.targetTouches[0];
 		if (!touch) return;
+
+		const totalX = touch.clientX - this.touchOrigin.x;
+		const totalY = touch.clientY - this.touchOrigin.y;
+		const distance = Math.hypot(totalX, totalY);
+		const threshold = this.touchIsInteractive ? TOUCH_INTERACTIVE_THRESHOLD : TOUCH_SCROLL_THRESHOLD;
+
+		if (!this.touchIsScrolling && distance < threshold) {
+			this.touchStart.x = touch.clientX;
+			this.touchStart.y = touch.clientY;
+			return;
+		}
+
+		this.touchIsScrolling = true;
 
 		const deltaX = -(touch.clientX - this.touchStart.x) * this.options.touchMultiplier;
 		const deltaY = -(touch.clientY - this.touchStart.y) * this.options.touchMultiplier;
@@ -131,6 +160,8 @@ class VirtualScroll {
 	};
 
 	private handleTouchEnd = (event: TouchEvent) => {
+		this.touchIsScrolling = false;
+		this.touchIsInteractive = false;
 		this.onScroll({ deltaX: 0, deltaY: 0, event });
 	};
 }
@@ -196,7 +227,7 @@ export const createScroll = (options: ScrollOptions = {}): ScrollController => {
 
 		// Nested scroll prevention would be handled here, but is skipped to keep scope minimal.
 
-		if (event.cancelable) {
+		if (event.cancelable && (event.type === 'wheel' || event.type === 'touchmove')) {
 			event.preventDefault();
 		}
 
