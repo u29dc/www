@@ -12,8 +12,7 @@ type Props = {
 
 let { type, frontmatter, title }: Props = $props();
 
-const fallbackTitle = SITE.title;
-const headingContent = $derived(type === 'article' ? (frontmatter?.title ?? title ?? fallbackTitle) : (title ?? fallbackTitle));
+const headingContent = $derived(type === 'article' ? (frontmatter?.title ?? title ?? SITE.title) : (title ?? SITE.title));
 </script>
 
 <div class="padding-standard grid h-60 grid-cols-10">
