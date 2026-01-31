@@ -1,0 +1,23 @@
+src/hooks.server.ts
+  cd5bbf347ca096f4 5-38,42-66,126-127,129,132-141
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.40",
+  "base_commit_sha": "73646086f49e8f2fecf1a72741a0656af5df89a7",
+  "prompts": {
+    "cd5bbf347ca096f4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e65aa292-684a-4969-9f96-dd2434621a16",
+        "model": "claude-opus-4-5-20251101"
+      },
+      "human_author": "Han <han@u29dc.com>",
+      "messages": [],
+      "total_additions": 85,
+      "total_deletions": 1,
+      "accepted_lines": 72,
+      "overriden_lines": 4
+    }
+  }
+}
