@@ -52,7 +52,6 @@
 </script>
 
 <div
-	class="grid-section-full"
 	style:opacity
 	style:transition="opacity {duration}ms var(--ease-out)"
 	style:will-change={willChange}

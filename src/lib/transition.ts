@@ -7,8 +7,8 @@ import type Lenis from 'lenis';
 
 // Transition timing constants (in milliseconds)
 export const TRANSITION = {
-	exitDuration: 1000,
-	enterDuration: 1000,
+	exitDuration: 650,
+	enterDuration: 650,
 } as const;
 
 // Reference to Lenis instance (set by CoreSmoothScroll)

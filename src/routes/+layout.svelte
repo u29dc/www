@@ -40,17 +40,18 @@
 
 <CoreViewportFix />
 <CoreSmoothScroll />
-<CoreHeader />
-<CoreScrollLine />
-<CoreGrainOverlay
-	intensity={0.5}
-	grainScale={10.0}
-	animationSpeed={0.1}
-	exposure={0.01}
-/>
 
-<main class="grid-page">
-	<CorePageTransition>
+<CorePageTransition>
+	<CoreHeader />
+	<CoreScrollLine />
+	<CoreGrainOverlay
+		intensity={0.5}
+		grainScale={10.0}
+		animationSpeed={0.1}
+		exposure={0.01}
+	/>
+
+	<main class="grid-page">
 		{@render children()}
-	</CorePageTransition>
-</main>
+	</main>
+</CorePageTransition>
