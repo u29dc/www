@@ -69,7 +69,7 @@
 			{/if}
 		{:else}
 			<!-- Logo -->
-			<div class="relative min-h-[30px] w-[80px] rounded-md bg-black/5">
+			<div class="relative min-h-[30px] w-[80px]">
 				<div
 					class="absolute top-1/2 left-1/2 w-0 -translate-x-1/2 -translate-y-1/2 overflow-visible"
 				>
@@ -92,7 +92,9 @@
 				<AtomicHeaderButton
 					href="#{section.id}"
 					class="hidden sm:inline-flex"
-					aria-current={activeSection === section.id ? "true" : undefined}
+					aria-current={activeSection === section.id
+						? "true"
+						: undefined}
 				>
 					{section.num}
 					{section.name}
