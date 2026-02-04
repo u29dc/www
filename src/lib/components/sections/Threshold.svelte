@@ -18,8 +18,8 @@
 		},
 		{
 			title: "Email",
-			description: "hey@u29dc.com",
-			href: "mailto:hey@u29dc.com",
+			description: "han@u29dc.com",
+			href: "mailto:han@u29dc.com",
 			note: "Response time: 48 hours",
 		},
 		{
