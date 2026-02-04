@@ -71,7 +71,7 @@
 	});
 </script>
 
-<section id="artifacts" class="col-content py-32">
+<section id="artifacts" class="col-content py-44">
 	<header class="mb-16">
 		<h2 class="font-mono text-muted">[ 03 ARTIFACTS ]</h2>
 	</header>

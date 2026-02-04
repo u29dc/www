@@ -46,7 +46,7 @@
 	];
 </script>
 
-<section id="protocols" class="col-content-wide py-32">
+<section id="protocols" class="col-content-wide py-44">
 	<header class="mb-16">
 		<h2 class="font-mono text-muted">[ 02 PROTOCOLS ]</h2>
 	</header>

@@ -1,4 +1,4 @@
-<section id="signal" class="col-content py-32">
+<section id="signal" class="col-content py-44">
 	<header class="mb-16">
 		<h2 class="font-mono text-muted">[ 01 SIGNAL ]</h2>
 	</header>

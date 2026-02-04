@@ -38,7 +38,7 @@
 <section
 	id="threshold"
 	data-section="footer"
-	class="mt-64 grid-section-full min-h-screen-safe bg-black/5"
+	class="mt-96 grid-section-full min-h-screen-safe bg-black/5"
 >
 	<div class="col-content flex flex-col justify-between gap-16 pb-16 pt-64">
 		<!-- Top: Headline + Pricing + Grid Links -->

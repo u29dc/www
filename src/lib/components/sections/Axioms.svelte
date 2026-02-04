@@ -66,7 +66,7 @@
 	});
 </script>
 
-<section id="axioms" class="col-content py-32">
+<section id="axioms" class="col-content py-44">
 	<header class="mb-16">
 		<h2 class="font-mono text-muted">[ 04 AXIOMS ]</h2>
 	</header>
