@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { prefersReducedMotion } from 'svelte/motion';
-	import { CDN } from '$lib/constants';
-	import { registerRafTask } from '$lib/raf';
+	import { onMount } from "svelte";
+	import { prefersReducedMotion } from "svelte/motion";
+	import { CDN } from "$lib/constants";
+	import { registerRafTask } from "$lib/raf";
 
 	// Physics constants tuned for weighted, graceful motion
 	const SPRING = { stiffness: 25, damping: 12 };
@@ -12,7 +12,13 @@
 
 	type SpringState = { value: number; velocity: number };
 
-	const spring = (current: SpringState, target: number, stiffness: number, damping: number, delta: number) => {
+	const spring = (
+		current: SpringState,
+		target: number,
+		stiffness: number,
+		damping: number,
+		delta: number,
+	) => {
 		const force = (target - current.value) * stiffness;
 		const accel = force - current.velocity * damping;
 		current.velocity += accel * delta;
@@ -59,8 +65,16 @@
 			const strength = 1 - t * t * (3 - 2 * t); // smoothstep for gradual fade
 
 			// Gentle targets with soft directional bias
-			const targetX = (dx / Math.max(distance, 1)) * MAX_OFFSET * strength * Math.min(1, distance * 0.005);
-			const targetY = (dy / Math.max(distance, 1)) * MAX_OFFSET * strength * Math.min(1, distance * 0.005);
+			const targetX =
+				(dx / Math.max(distance, 1)) *
+				MAX_OFFSET *
+				strength *
+				Math.min(1, distance * 0.005);
+			const targetY =
+				(dy / Math.max(distance, 1)) *
+				MAX_OFFSET *
+				strength *
+				Math.min(1, distance * 0.005);
 
 			spring(springX, targetX, SPRING.stiffness, SPRING.damping, d);
 			spring(springY, targetY, SPRING.stiffness, SPRING.damping, d);
@@ -69,17 +83,17 @@
 			offsetY = springY.value;
 		};
 
-		window.addEventListener('mousemove', handleMouseMove);
-		window.addEventListener('resize', updateRect);
-		window.addEventListener('scroll', updateRect, { passive: true });
+		window.addEventListener("mousemove", handleMouseMove);
+		window.addEventListener("resize", updateRect);
+		window.addEventListener("scroll", updateRect, { passive: true });
 		updateRect();
 
 		const rafHandle = registerRafTask(tick);
 
 		return () => {
-			window.removeEventListener('mousemove', handleMouseMove);
-			window.removeEventListener('resize', updateRect);
-			window.removeEventListener('scroll', updateRect);
+			window.removeEventListener("mousemove", handleMouseMove);
+			window.removeEventListener("resize", updateRect);
+			window.removeEventListener("scroll", updateRect);
 			rafHandle.dispose();
 		};
 	});
@@ -90,17 +104,20 @@
 		<h2 class="font-mono text-muted">[ 05 FOUNDER ]</h2>
 	</header>
 
-	<div
-		class="grid gap-8 md:grid-cols-[auto_1fr] md:gap-12"
-	>
-		<div class="group relative w-full max-w-[200px] overflow-hidden" bind:this={photoRef}>
+	<div class="grid gap-8 md:grid-cols-[auto_1fr] md:gap-12">
+		<div
+			class="group relative w-full max-w-[200px] overflow-hidden"
+			bind:this={photoRef}
+		>
 			<img
 				src={`${CDN.mediaUrl}_HAN.webp`}
 				alt="Han, founder"
 				loading="lazy"
 				decoding="async"
 				class="aspect-square w-full origin-center object-cover mix-blend-darken"
-				style:transform={prefersReducedMotion.current ? 'none' : `scale(${PHOTO_SCALE}) translate3d(${offsetX}px, ${offsetY}px, 0)`}
+				style:transform={prefersReducedMotion.current
+					? "none"
+					: `scale(${PHOTO_SCALE}) translate3d(${offsetX}px, ${offsetY}px, 0)`}
 			/>
 			<div
 				class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"

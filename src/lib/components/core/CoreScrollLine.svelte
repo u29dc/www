@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { prefersReducedMotion } from 'svelte/motion';
-	import { page } from '$app/state';
-	import { registerRafTask } from '$lib/raf';
-	import { getScrollY } from '$lib/scroll';
+	import { onMount } from "svelte";
+	import { prefersReducedMotion } from "svelte/motion";
+	import { page } from "$app/state";
+	import { registerRafTask } from "$lib/raf";
+	import { getScrollY } from "$lib/scroll";
 
-	const isSlugPage = $derived(page.route.id === '/[slug]');
+	const isSlugPage = $derived(page.route.id === "/[slug]");
 
 	type SpringState = {
 		value: number;
@@ -23,9 +23,16 @@
 	const MAGNET_X_RANGE = 50;
 	const MAGNET_Y_RANGE = 20;
 
-	const clamp = (min: number, value: number, max: number) => Math.max(min, Math.min(value, max));
+	const clamp = (min: number, value: number, max: number) =>
+		Math.max(min, Math.min(value, max));
 
-	const spring = (current: SpringState, target: number, stiffness: number, damping: number, delta: number) => {
+	const spring = (
+		current: SpringState,
+		target: number,
+		stiffness: number,
+		damping: number,
+		delta: number,
+	) => {
 		const force = (target - current.value) * stiffness;
 		const accel = force - current.velocity * damping;
 		current.velocity += accel * delta;
@@ -39,9 +46,11 @@
 	let isVisible = $state(false);
 	let overlayRect: DOMRect | null = null;
 
-	const lineStyle = $derived(`transform: translate3d(0, ${lineOffset}px, 0);`);
+	const lineStyle = $derived(
+		`transform: translate3d(0, ${lineOffset}px, 0);`,
+	);
 	const ctaStyle = $derived(`transform: translate3d(${ctaOffset}px, 0, 0);`);
-	const anchorLeft = $derived(isMdUp ? '20%' : '100%');
+	const anchorLeft = $derived(isMdUp ? "20%" : "100%");
 
 	const attachOverlay = (node: HTMLDivElement) => {
 		overlayRef = node;
@@ -60,7 +69,7 @@
 		}
 
 		const updateIsMdUp = () => {
-			isMdUp = window.matchMedia('(min-width: 768px)').matches;
+			isMdUp = window.matchMedia("(min-width: 768px)").matches;
 		};
 
 		let maxScroll = 1000;
@@ -81,14 +90,19 @@
 		};
 
 		const updateMeasurements = () => {
-			const footer = document.querySelector('[data-section="footer"]') as HTMLElement | null;
+			const footer = document.querySelector(
+				'[data-section="footer"]',
+			) as HTMLElement | null;
 			const footerHeight = footer?.getBoundingClientRect().height ?? 0;
 			const docHeight = document.documentElement.scrollHeight;
 			const winHeight = window.innerHeight;
 
 			// Scroll range excludes hero (starts when hero is half-scrolled)
 			scrollStart = winHeight * 0.5;
-			maxScroll = Math.max(docHeight - winHeight - footerHeight - scrollStart, 1);
+			maxScroll = Math.max(
+				docHeight - winHeight - footerHeight - scrollStart,
+				1,
+			);
 
 			windowWidth = window.innerWidth;
 			updateIsMdUp();
@@ -111,8 +125,8 @@
 
 		updateMeasurements();
 
-		window.addEventListener('resize', updateMeasurements);
-		window.addEventListener('mousemove', handleMouseMove);
+		window.addEventListener("resize", updateMeasurements);
+		window.addEventListener("mousemove", handleMouseMove);
 
 		const observer = new ResizeObserver(updateMeasurements);
 		observer.observe(document.body);
@@ -131,25 +145,65 @@
 			const adjustedScroll = Math.max(0, scrollY - scrollStart);
 			const progress = clamp(0, adjustedScroll / maxScroll, 1);
 			const lineTarget = progress * LINE_HEIGHT;
-			spring(line, lineTarget, SPRING_LINE.stiffness, SPRING_LINE.damping, delta);
+			spring(
+				line,
+				lineTarget,
+				SPRING_LINE.stiffness,
+				SPRING_LINE.damping,
+				delta,
+			);
 
-			const anchorX = overlayRect ? (isMdUp ? overlayRect.width * 0.2 : overlayRect.width) : isMdUp ? windowWidth * 0.2 : windowWidth;
-			const anchorY = overlayRect ? overlayRect.top + line.value + magnetY.value : line.value;
+			const anchorX = overlayRect
+				? isMdUp
+					? overlayRect.width * 0.2
+					: overlayRect.width
+				: isMdUp
+					? windowWidth * 0.2
+					: windowWidth;
+			const anchorY = overlayRect
+				? overlayRect.top + line.value + magnetY.value
+				: line.value;
 
 			// Base follow (soft clamp) + magnetic offset
 			const baseAnchor = windowWidth * 0.2;
 			const baseDiff = mouseX - baseAnchor;
-			const baseTarget = isMdUp ? Math.tanh(baseDiff * BASE_TANH_SCALE) * BASE_RANGE : 0;
-			spring(base, baseTarget, SPRING_BASE.stiffness, SPRING_BASE.damping, delta);
+			const baseTarget = isMdUp
+				? Math.tanh(baseDiff * BASE_TANH_SCALE) * BASE_RANGE
+				: 0;
+			spring(
+				base,
+				baseTarget,
+				SPRING_BASE.stiffness,
+				SPRING_BASE.damping,
+				delta,
+			);
 
 			const dx = pointerX - anchorX;
 			const dy = pointerY - anchorY;
 			const distance = Math.hypot(dx, dy);
 			const strength = Math.max(0, 1 - distance / MAGNET_RADIUS);
-			const magnetTargetX = Math.tanh((dx / Math.max(distance, 1)) * 2) * MAGNET_X_RANGE * strength;
-			const magnetTargetY = Math.tanh((dy / Math.max(distance, 1)) * 2) * MAGNET_Y_RANGE * strength;
-			spring(magnetX, magnetTargetX, SPRING_MAGNET.stiffness, SPRING_MAGNET.damping, delta);
-			spring(magnetY, magnetTargetY, SPRING_MAGNET.stiffness, SPRING_MAGNET.damping, delta);
+			const magnetTargetX =
+				Math.tanh((dx / Math.max(distance, 1)) * 2) *
+				MAGNET_X_RANGE *
+				strength;
+			const magnetTargetY =
+				Math.tanh((dy / Math.max(distance, 1)) * 2) *
+				MAGNET_Y_RANGE *
+				strength;
+			spring(
+				magnetX,
+				magnetTargetX,
+				SPRING_MAGNET.stiffness,
+				SPRING_MAGNET.damping,
+				delta,
+			);
+			spring(
+				magnetY,
+				magnetTargetY,
+				SPRING_MAGNET.stiffness,
+				SPRING_MAGNET.damping,
+				delta,
+			);
 
 			lineOffset = line.value + magnetY.value;
 			ctaOffset = (isMdUp ? base.value : 0) + magnetX.value;
@@ -158,8 +212,8 @@
 		rafHandle = registerRafTask(tick);
 
 		return () => {
-			window.removeEventListener('resize', updateMeasurements);
-			window.removeEventListener('mousemove', handleMouseMove);
+			window.removeEventListener("resize", updateMeasurements);
+			window.removeEventListener("mousemove", handleMouseMove);
 			observer.disconnect();
 			rafHandle?.dispose();
 			rafHandle = null;

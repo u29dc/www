@@ -1,12 +1,16 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { prefersReducedMotion } from 'svelte/motion';
-	import { registerRafTask } from '$lib/raf';
-	import { setLenisInstance } from '$lib/scroll';
-	import Lenis from 'lenis';
+	import { onMount } from "svelte";
+	import { prefersReducedMotion } from "svelte/motion";
+	import { registerRafTask } from "$lib/raf";
+	import { setLenisInstance } from "$lib/scroll";
+	import Lenis from "lenis";
 
 	const isTouchDevice = () => {
-		return 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.matchMedia('(pointer: coarse)').matches;
+		return (
+			"ontouchstart" in window ||
+			navigator.maxTouchPoints > 0 ||
+			window.matchMedia("(pointer: coarse)").matches
+		);
 	};
 
 	onMount(() => {
@@ -21,8 +25,8 @@
 			duration: 1.2,
 			smoothWheel: true,
 			autoRaf: false,
-			orientation: 'vertical',
-			gestureOrientation: 'vertical',
+			orientation: "vertical",
+			gestureOrientation: "vertical",
 		});
 
 		// Expose Lenis instance for other components to read scroll position
@@ -34,10 +38,10 @@
 		});
 
 		// Add lenis classes to html for CSS hooks
-		document.documentElement.classList.add('lenis', 'lenis-smooth');
+		document.documentElement.classList.add("lenis", "lenis-smooth");
 
 		return () => {
-			document.documentElement.classList.remove('lenis', 'lenis-smooth');
+			document.documentElement.classList.remove("lenis", "lenis-smooth");
 			setLenisInstance(null);
 			rafHandle.dispose();
 			lenis.destroy();

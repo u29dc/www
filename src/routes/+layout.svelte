@@ -18,7 +18,11 @@
 	<meta name="theme-color" content={SITE.themeColor} />
 	<meta name="color-scheme" content="light dark" />
 	<link rel="preconnect" href={CDN.baseUrl} crossorigin="anonymous" />
-	<link rel="preconnect" href="https://use.typekit.net" crossorigin="anonymous" />
+	<link
+		rel="preconnect"
+		href="https://use.typekit.net"
+		crossorigin="anonymous"
+	/>
 	<link rel="stylesheet" href="https://use.typekit.net/dim0jav.css" />
 	<link rel="manifest" href="/manifest.json" />
 	<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -43,8 +47,19 @@
 <CoreSmoothScroll />
 
 <CorePageTransition>
-	<AtomicGradientBlur position="top" size="12rem" fixed={true} layers={5} zIndex={40} />
-	<AtomicGradientBlur position="bottom" size="10rem" fixed={true} zIndex={40} />
+	<AtomicGradientBlur
+		position="top"
+		size="12rem"
+		fixed={true}
+		layers={5}
+		zIndex={40}
+	/>
+	<AtomicGradientBlur
+		position="bottom"
+		size="10rem"
+		fixed={true}
+		zIndex={40}
+	/>
 	<CoreHeader />
 	<CoreScrollLine />
 	<CoreGrainOverlay

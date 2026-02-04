@@ -1,9 +1,11 @@
 <script lang="ts">
-	import { SITE } from '$lib/constants';
+	import { SITE } from "$lib/constants";
 
 	let { status }: { status: number } = $props();
 
-	const headline = $derived(status === 404 ? 'Page not found' : 'Something went wrong');
+	const headline = $derived(
+		status === 404 ? "Page not found" : "Something went wrong",
+	);
 </script>
 
 <svelte:head>
