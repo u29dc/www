@@ -39,7 +39,15 @@
 	font-display: swap;
 }
 
-/* Meno Display - Serif (italic only) */
+/* Meno Display - Serif (italic-only design, mapped to both normal and italic faces for iOS Safari compatibility) */
+@font-face {
+	font-family: "Meno Display";
+	src: url("/fonts/meno-display-400-italic.woff2") format("woff2");
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+
 @font-face {
 	font-family: "Meno Display";
 	src: url("/fonts/meno-display-400-italic.woff2") format("woff2");
@@ -52,7 +60,23 @@
 	font-family: "Meno Display";
 	src: url("/fonts/meno-display-600-italic.woff2") format("woff2");
 	font-weight: 600;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: "Meno Display";
+	src: url("/fonts/meno-display-600-italic.woff2") format("woff2");
+	font-weight: 600;
 	font-style: italic;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: "Meno Display";
+	src: url("/fonts/meno-display-700-italic.woff2") format("woff2");
+	font-weight: 700;
+	font-style: normal;
 	font-display: swap;
 }
 
