@@ -1,12 +1,17 @@
 <script lang="ts">
-import '../app.css';
-import type { Snippet } from 'svelte';
-import CoreAppShell from '$lib/components/core/CoreAppShell.svelte';
-import CoreViewportFix from '$lib/components/core/CoreViewportFix.svelte';
-import { CDN, SITE } from '$lib/constants';
-import type { LayoutData } from './$types';
+	import "../app.css";
+	import type { Snippet } from "svelte";
+	import AtomicGradientBlur from "$lib/components/atomic/AtomicGradientBlur.svelte";
+	import CoreGrainOverlay from "$lib/components/core/CoreGrainOverlay.svelte";
+	import CoreHeader from "$lib/components/core/CoreHeader.svelte";
+	import CorePageTransition from "$lib/components/core/CorePageTransition.svelte";
+	import CoreScrollLine from "$lib/components/core/CoreScrollLine.svelte";
+	import CoreSmoothScroll from "$lib/components/core/CoreSmoothScroll.svelte";
+	import CoreViewportFix from "$lib/components/core/CoreViewportFix.svelte";
+	import { CDN, SITE } from "$lib/constants";
+	import type { LayoutData } from "./$types";
 
-let { data, children }: { data: LayoutData; children: Snippet } = $props();
+	let { data, children }: { data: LayoutData; children: Snippet } = $props();
 </script>
 
 <svelte:head>
@@ -33,6 +38,32 @@ let { data, children }: { data: LayoutData; children: Snippet } = $props();
 </svelte:head>
 
 <CoreViewportFix />
-<CoreAppShell>
-	{@render children()}
-</CoreAppShell>
+<CoreSmoothScroll />
+
+<CorePageTransition>
+	<AtomicGradientBlur
+		position="top"
+		size="12rem"
+		fixed={true}
+		layers={5}
+		zIndex={40}
+	/>
+	<AtomicGradientBlur
+		position="bottom"
+		size="10rem"
+		fixed={true}
+		zIndex={40}
+	/>
+	<CoreHeader />
+	<CoreScrollLine />
+	<CoreGrainOverlay
+		intensity={0.5}
+		grainScale={10.0}
+		animationSpeed={0.1}
+		exposure={0.01}
+	/>
+
+	<main class="grid-page">
+		{@render children()}
+	</main>
+</CorePageTransition>

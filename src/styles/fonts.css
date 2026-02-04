@@ -1,27 +1,70 @@
+/* Acumin Pro - Sans Serif */
 @font-face {
-	font-family: "Neue Haas Grotesk Display";
-	src: url("/fonts/neue-haas-grotesk-display-500-normal.woff2") format("woff2");
-	font-weight: 500;
+	font-family: "Acumin Pro";
+	src: url("/fonts/acumin-pro-300-normal.woff2") format("woff2");
+	font-weight: 300;
 	font-style: normal;
 	font-display: swap;
 }
 
 @font-face {
-	font-family: "Neue Haas Grotesk Display";
-	src: url("/fonts/neue-haas-grotesk-display-500-italic.woff2") format("woff2");
-	font-weight: 500;
+	font-family: "Acumin Pro";
+	src: url("/fonts/acumin-pro-400-normal.woff2") format("woff2");
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: "Acumin Pro";
+	src: url("/fonts/acumin-pro-400-italic.woff2") format("woff2");
+	font-weight: 400;
 	font-style: italic;
 	font-display: swap;
 }
 
 @font-face {
-	font-family: "Neue Haas Grotesk Display";
-	src: url("/fonts/neue-haas-grotesk-display-600-normal.woff2") format("woff2");
+	font-family: "Acumin Pro";
+	src: url("/fonts/acumin-pro-500-normal.woff2") format("woff2");
+	font-weight: 500;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: "Acumin Pro";
+	src: url("/fonts/acumin-pro-600-normal.woff2") format("woff2");
 	font-weight: 600;
 	font-style: normal;
 	font-display: swap;
 }
 
+/* Meno Display - Serif (italic only) */
+@font-face {
+	font-family: "Meno Display";
+	src: url("/fonts/meno-display-400-italic.woff2") format("woff2");
+	font-weight: 400;
+	font-style: italic;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: "Meno Display";
+	src: url("/fonts/meno-display-600-italic.woff2") format("woff2");
+	font-weight: 600;
+	font-style: italic;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: "Meno Display";
+	src: url("/fonts/meno-display-700-italic.woff2") format("woff2");
+	font-weight: 700;
+	font-style: italic;
+	font-display: swap;
+}
+
+/* Fira Code - Monospace (Variable) */
 @font-face {
 	font-family: "Fira Code";
 	src: url("/fonts/fira-code-variable-normal.woff2") format("woff2");
@@ -30,6 +73,7 @@
 	font-display: swap;
 }
 
+/* Professor - Handwritten */
 @font-face {
 	font-family: "Professor";
 	src: url("/fonts/professor-400-normal.woff2") format("woff2");
@@ -39,7 +83,11 @@
 }
 
 :root {
-	--font-neue-haas: "Neue Haas Grotesk Display", system-ui, -apple-system, BlinkMacSystemFont, "SF Pro", "Segoe UI", "Roboto", "Helvetica Neue", "Arial", sans-serif;
+	/* Primary fonts (now self-hosted) */
+	--font-acumin: "Acumin Pro", system-ui, -apple-system, BlinkMacSystemFont, "SF Pro", "Segoe UI", "Roboto", "Helvetica Neue", "Arial", sans-serif;
+	--font-meno: "Meno Display", "Georgia", "Times New Roman", serif;
+
+	/* Utility fonts */
 	--font-fira-code: "Fira Code", "SF Mono", "Cascadia Code", "Menlo", "Consolas", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace;
 	--font-professor: "Professor", cursive, sans-serif;
 }

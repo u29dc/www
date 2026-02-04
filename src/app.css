@@ -3,7 +3,8 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-	--font-sans: var(--font-neue-haas);
+	--font-sans: var(--font-acumin);
+	--font-serif: var(--font-meno);
 	--font-mono: var(--font-fira-code);
 	--font-handwritten: var(--font-professor);
 
@@ -21,27 +22,63 @@
 	--breakpoint-3xl: 120rem;
 	--breakpoint-4xl: 160rem;
 
-	--color-bg: var(--bg);
-	--color-panel: var(--panel);
-	--color-border: var(--border);
-	--color-text: var(--text);
-	--color-muted: var(--muted);
+	/* Semantic color tokens - studio philosophy naming */
+	--color-ground: var(--ground);
+	--color-surface: var(--surface);
+	--color-edge: var(--edge);
+	--color-ink: var(--ink);
+	--color-trace: var(--trace);
+
+	/* Legacy aliases for compatibility */
+	--color-bg: var(--ground);
+	--color-panel: var(--surface);
+	--color-border: var(--edge);
+	--color-text: var(--ink);
+	--color-muted: var(--trace);
+
+	/* Grid system tokens */
+	--grid-gap: 1rem;
+	--grid-margin: 1rem;
+	--grid-margin-md: 2rem;
+
+	/*
+	 * Animation easing curves
+	 * --ease-settle: deceleration curve for elements arriving/settling into place
+	 * --ease-tension: spring with overshoot for organic, imperfect motion
+	 * --ease-exit: acceleration curve for elements departing
+	 */
+	--ease-settle: cubic-bezier(0.16, 1, 0.3, 1);
+	--ease-tension: cubic-bezier(0.34, 1.56, 0.64, 1);
+	--ease-exit: cubic-bezier(0.55, 0, 1, 0.45);
+
+	/* Legacy aliases */
+	--ease-out: var(--ease-settle);
+	--ease-spring: var(--ease-tension);
 }
 
 :root {
-	--bg: #f8f9fa;
-	--panel: #ffffff;
-	--border: #e5e7eb;
-	--text: #1f2937;
-	--muted: #9ca3af;
+	/* Semantic tokens: ground (foundation), surface (elevated), edge (boundaries), ink (marks), trace (faded) */
+	--ground: #f8f9fa;
+	--surface: #ffffff;
+	--edge: #e5e7eb;
+	--ink: #1f2937;
+	--trace: #9ca3af;
+
+	/* Legacy aliases */
+	--bg: var(--ground);
+	--panel: var(--surface);
+	--border: var(--edge);
+	--text: var(--ink);
+	--muted: var(--trace);
 }
 
 .dark {
-	--bg: #0d0f10;
-	--panel: #1a1d1f;
-	--border: #3a3f43;
-	--text: #e6e6e8;
-	--muted: #9ca3af;
+	--ground: #0d0f10;
+	--surface: #1a1d1f;
+	--edge: #3a3f43;
+	--ink: #e6e6e8;
+	/* Lighter in dark mode for ~4.5:1 contrast against #0d0f10 */
+	--trace: #a8a8b3;
 }
 
 /* ================================================== */
@@ -50,6 +87,7 @@
 
 @layer base {
 	:root {
+		/* 10px base for intuitive rem math: 1.2rem = 12px, 1.6rem = 16px, 2rem = 20px */
 		font-size: 10px;
 	}
 
@@ -57,6 +95,7 @@
 		@apply theme-light;
 		overflow-x: hidden;
 		max-width: 100vw;
+		scroll-behavior: smooth;
 	}
 
 	body {
@@ -66,6 +105,7 @@
 		@apply font-semibold;
 		@apply not-italic;
 		@apply [text-rendering:optimizeLegibility];
+		@apply cursor-default;
 		font-family: var(--font-sans);
 		overflow-x: hidden;
 		max-width: 100vw;
@@ -93,64 +133,17 @@
 }
 
 /* ================================================== */
-/* ANIMATION GATE */
-/* ================================================== */
-
-html.js:not([data-animate-ready]) [data-animate] {
-	opacity: 0;
-	filter: blur(var(--animate-blur, 0px));
-	translate: 0 var(--animate-y, 0px);
-}
-
-html.js[data-animate-ready] [data-animate] {
-	opacity: 1;
-	filter: blur(0px);
-	translate: 0 0;
-	transition:
-		opacity var(--animate-duration, 600ms) var(--animate-ease, ease) var(--animate-delay, 0ms),
-		filter var(--animate-duration, 600ms) var(--animate-ease, ease) var(--animate-delay, 0ms),
-		translate var(--animate-duration, 600ms) var(--animate-ease, ease) var(--animate-delay, 0ms);
-}
-
-@media (prefers-reduced-motion: reduce) {
-	html.js [data-animate] {
-		opacity: 1;
-		filter: none;
-		translate: 0 0;
-		transition: none;
-	}
-}
-
-/* ================================================== */
-/* SMOOTH SCROLL */
-/* ================================================== */
-
-html.scroll,
-html.scroll body {
-	height: auto;
-}
-
-html.scroll.scroll-stopped {
-	overflow: clip;
-}
-
-html.scroll.scroll-smooth iframe {
-	pointer-events: none;
-}
-
-@media (hover: hover) and (pointer: fine) {
-	.hover-device\:block {
-		display: block;
-	}
-}
-
-/* ================================================== */
 /* TYPOGRAPHY */
 /* ================================================== */
 
-@utility font-xl {
+@utility font-2xl {
 	font-size: 2.5rem;
 	line-height: 1.2;
+}
+
+@utility font-xl {
+	font-size: 2rem;
+	line-height: 1.3;
 }
 
 @utility font-lg {
@@ -181,8 +174,90 @@ html.scroll.scroll-smooth iframe {
 	@apply text-left font-md normal-case;
 }
 
-@utility cover-hatch {
-	@apply bg-white;
+@utility font-subtitle {
+	@apply font-lg font-semibold uppercase;
+}
+
+/* ================================================== */
+/* GRID SYSTEM */
+/* ================================================== */
+
+/* Page-level 10-column grid container */
+@utility grid-page {
+	display: grid;
+	grid-template-columns: repeat(10, 1fr);
+	column-gap: var(--grid-gap);
+	padding-inline: var(--grid-margin);
+
+	@media (width >= 48rem) {
+		padding-inline: var(--grid-margin-md);
+	}
+}
+
+/* Full-bleed section with subgrid (Hero, Threshold) */
+@utility grid-section-full {
+	grid-column: 1 / -1;
+	display: grid;
+	grid-template-columns: subgrid;
+}
+
+/* Content column span - ASYMMETRIC (offset right of center) */
+@utility col-content {
+	grid-column: 1 / -1;
+
+	@media (width >= 48rem) {
+		grid-column: 3 / 11;
+	}
+	@media (width >= 64rem) {
+		grid-column: 4 / 10;
+	}
+	@media (width >= 80rem) {
+		grid-column: 5 / 9;
+	}
+	/* Ultra-wide: 2560px+ (4K/5K monitors) - shifted right for asymmetry */
+	@media (width >= 160rem) {
+		grid-column: 6 / 9;
+	}
+}
+
+/* Wide content span - starts at content edge, extends right (Protocols) */
+@utility col-content-wide {
+	grid-column: 1 / -1;
+
+	@media (width >= 48rem) {
+		grid-column: 3 / 11;
+	}
+	@media (width >= 64rem) {
+		grid-column: 4 / 11;
+	}
+	@media (width >= 80rem) {
+		grid-column: 5 / 11;
+	}
+	/* Ultra-wide: 2560px+ (4K/5K monitors) - shifted right for asymmetry */
+	@media (width >= 160rem) {
+		grid-column: 6 / 10;
+	}
+}
+
+/* Wide content span (Axioms, slug page first media) */
+@utility col-wide {
+	grid-column: 1 / -1;
+
+	@media (width >= 48rem) {
+		grid-column: 2 / 11;
+	}
+	@media (width >= 80rem) {
+		grid-column: 3 / 10;
+	}
+	/* Ultra-wide: 2560px+ (4K/5K monitors) - shifted right for asymmetry */
+	@media (width >= 160rem) {
+		grid-column: 5 / 10;
+	}
+}
+
+/* Full span (backgrounds, decorative elements) */
+@utility col-full {
+	grid-column: 1 / -1;
 }
 
 /* ================================================== */
@@ -195,14 +270,6 @@ html.scroll.scroll-smooth iframe {
 
 @utility h-screen-safe {
 	height: calc(var(--vh, 1vh) * 100);
-}
-
-@utility col-span-base {
-	@apply col-start-1 col-span-10 sm:col-start-1 sm:col-span-10 md:col-start-3 md:col-span-8 lg:col-start-4 lg:col-span-6 xl:col-start-5 xl:col-span-5 2xl:col-start-6 2xl:col-span-4 3xl:col-start-7 3xl:col-span-3 4xl:col-start-7 4xl:col-span-2;
-}
-
-@utility padding-standard {
-	@apply p-2 md:p-5;
 }
 
 @utility full-container {
@@ -222,6 +289,14 @@ html.scroll.scroll-smooth iframe {
 	scrollbar-width: none;
 	&::-webkit-scrollbar {
 		display: none;
+	}
+}
+
+/* Focus ring using box-shadow (respects border-radius, unlike outline) */
+@utility focus-ring {
+	&:focus-visible {
+		outline: none;
+		box-shadow: 0 0 0 2px var(--ground), 0 0 0 4px currentColor;
 	}
 }
 
@@ -360,35 +435,84 @@ html.dark .marker-all {
 		linear-gradient(to top, var(--color-white-faded), var(--color-white-faded)), linear-gradient(to left, var(--color-white-faded), var(--color-white-faded));
 }
 
-/**
- * Development Grid Overlay
- *
- * Fixed frame overlay aligned to the col-span-base content.
- * - Wrapper: full-screen, pointer-events-none, theme-aware color
- * - Inner: col-span-base alignment with only left/right guide lines
- */
-@utility grid-overlay {
-	@apply fixed inset-0 z-30 pointer-events-none;
-	@apply grid h-full w-full grid-cols-10 px-2 md:px-5;
+/* ================================================== */
+/* LENIS SMOOTH SCROLL */
+/* ================================================== */
+
+html.lenis,
+html.lenis body {
+	height: auto;
 }
 
-@utility grid-overlay-inner {
-	@apply relative col-span-base h-full;
+html.lenis.lenis-smooth {
+	scroll-behavior: auto;
+}
 
-	&::before,
-	&::after {
-		content: "";
-		@apply absolute top-0 h-full w-px;
-		opacity: 0.1;
-		background-image: repeating-linear-gradient(to bottom, currentColor 0, currentColor 4px, transparent 4px, transparent 8px);
-		background-repeat: repeat-y;
+html.lenis.lenis-smooth [data-lenis-prevent] {
+	overscroll-behavior: contain;
+}
+
+html.lenis.lenis-stopped {
+	overflow: clip;
+}
+
+/* ================================================== */
+/* SCROLL-TRIGGERED REVEALS */
+/* ================================================== */
+
+@utility reveal-hidden {
+	opacity: 0;
+	transform: translateY(12px);
+}
+
+@utility reveal-visible {
+	opacity: 1;
+	transform: translateY(0);
+	transition:
+		opacity 500ms var(--ease-out),
+		transform 500ms var(--ease-out);
+}
+
+/* Staggered reveal delays for list items (supports up to 10 items) */
+.reveal-visible:nth-child(1) {
+	transition-delay: 0ms;
+}
+.reveal-visible:nth-child(2) {
+	transition-delay: 50ms;
+}
+.reveal-visible:nth-child(3) {
+	transition-delay: 100ms;
+}
+.reveal-visible:nth-child(4) {
+	transition-delay: 150ms;
+}
+.reveal-visible:nth-child(5) {
+	transition-delay: 200ms;
+}
+.reveal-visible:nth-child(6) {
+	transition-delay: 250ms;
+}
+.reveal-visible:nth-child(7) {
+	transition-delay: 300ms;
+}
+.reveal-visible:nth-child(8) {
+	transition-delay: 350ms;
+}
+.reveal-visible:nth-child(9) {
+	transition-delay: 400ms;
+}
+.reveal-visible:nth-child(10) {
+	transition-delay: 450ms;
+}
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+	.reveal-hidden {
+		opacity: 1;
+		transform: none;
 	}
 
-	&::before {
-		@apply left-0;
-	}
-
-	&::after {
-		@apply right-0;
+	.reveal-visible {
+		transition: none;
 	}
 }

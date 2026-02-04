@@ -1,20 +1,21 @@
 ---
 type: study
 date: 2022-10-01T00:00:00Z
-title: Battersea Power Station Media Room
-description: Real-time interactive installation for the Experience Room at London's most significant heritage reopening in decades.
+title: Neither Embalming Nor Erasure
+description: Spatial narrative for an iconic redevelopment.
 slug: battersea
 isArtifactItem: true
 
-client: Lusion (for Squint/Opera)
-role: Project Lead, Real-time Development
+client: Squint/Opera & Battersea Power Station
+role: Creative Technology, Real-time Development
 mode: COM
 thumbnailMedia: B1D1.webp
 ---
 
 <script>
-	import MdxParagraph from '$lib/components/mdx/MdxParagraph.svelte'; import
-	MdxMedia from '$lib/components/mdx/MdxMedia.svelte';
+	import MdxParagraph from '$lib/components/mdx/MdxParagraph.svelte';
+	import MdxMedia from '$lib/components/mdx/MdxMedia.svelte';
+	import MdxSpacer from '$lib/components/mdx/MdxSpacer.svelte';
 </script>
 
 <MdxParagraph>
@@ -25,21 +26,23 @@ Battersea Power Station carried London's electricity for half a century before f
 
 <MdxParagraph>
 
-Squint/Opera designed the Experience Room—an interpretive threshold where visitors encounter the building's story before dispersing into the development. They contracted Lusion for the interactive installation. I led the project: Unity development, client coordination, and on-site installation alongside Squint/Opera's technical team.
+The Experience Room sits at the threshold—where visitors encounter the building's story before dispersing into the development. Most heritage interpretation defaults to one of two modes: embalming the past behind glass, or bulldozing it into generic retail narrative. Both are failures of imagination. The first freezes a building in amber. The second erases the thing that made anyone care in the first place.
 
 </MdxParagraph>
 
 <MdxParagraph>
 
-The installation aimed for a third position between embalming the past and ignoring it entirely: reinvention as continuation of essential character. A building that once converted energy for a city now converts attention, gathering people into a space still defined by monumental ambition. The technical architecture served that idea—interactive content responding to presence, heritage interpretation that doesn't feel like a museum panel.
+The installation aimed for a third position: reinvention as continuation of essential character. A building that once converted energy for a city now converts attention, gathering people into a space still defined by monumental ambition. Interactive content responding to presence—heritage interpretation that doesn't feel like a museum panel, doesn't feel like a marketing exercise, and doesn't pretend the transformation isn't happening.
 
 </MdxParagraph>
 
 <MdxParagraph>
 
-The system I built now runs in the Experience Room, greeting visitors entering one of London's most improbable resurrections.
+The real-time system runs in Unity, built to sustain years of continuous operation. It still greets visitors entering one of London's most improbable resurrections—the building that refused to stay dead, now asking a better question than "what was this?" The question is: what is it becoming?
 
 </MdxParagraph>
+
+<MdxSpacer />
 
 <MdxMedia src={["B1D1.webp"]} />
 
@@ -47,4 +50,6 @@ The system I built now runs in the Experience Room, greeting visitors entering o
 
 <MdxMedia src={["B1C1.webp"]} />
 
-<MdxMedia src={["B1A1.webm", "B1D2.webp"]} />
+<MdxMedia src={["B1A1.webm"]} />
+
+<MdxMedia src={["B1D2.webp"]} />

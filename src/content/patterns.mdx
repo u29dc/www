@@ -1,13 +1,13 @@
 ---
 type: study
 date: 2022-12-01T00:00:00Z
-title: Patterns of Possibilities V2
-description: Museum-scale generative installation exploring probability and emergence—cryptographic randomness made tangible across three international venues.
+title: 4,096 Events That Will Never Recur
+description: Generative installation making emergence visible at museum scale.
 slug: patterns
 isArtifactItem: true
 
 client: Candaş Şişman
-role: Generative System Development
+role: Generative System Design
 mode: LAB
 venue: Taiwan National Museum of Fine Arts, Akbank Sanat Istanbul, Noise Media Art Fair
 featured: false
@@ -15,8 +15,9 @@ thumbnailMedia: P2A1.webm
 ---
 
 <script>
-	import MdxParagraph from '$lib/components/mdx/MdxParagraph.svelte'; import
-	MdxMedia from '$lib/components/mdx/MdxMedia.svelte';
+	import MdxParagraph from '$lib/components/mdx/MdxParagraph.svelte';
+	import MdxMedia from '$lib/components/mdx/MdxMedia.svelte';
+	import MdxSpacer from '$lib/components/mdx/MdxSpacer.svelte';
 </script>
 
 <MdxParagraph>
@@ -27,21 +28,23 @@ Candaş Şişman's original Patterns of Possibilities threw hundreds of dice ont
 
 <MdxParagraph>
 
-I developed the generative system in collaboration with Candaş. The installation generates dice throws continuously using cryptographic randomness—not pseudo-random approximation but mathematical unpredictability ensuring each cycle produces a pattern that has never existed and will never recur. Every eight minutes, 4,096 probability events accumulate into a complete composition, then dissolve to begin again. The rhythm emerged through calibration: slow enough to perceive individual moments, fast enough to experience the larger pattern taking shape.
+The generative system uses cryptographic randomness—not pseudo-random approximation but mathematical unpredictability ensuring each cycle produces a pattern that has never existed and will never recur. Every eight minutes, 4,096 probability events accumulate into a complete composition, then dissolve to begin again. The rhythm emerged through calibration: slow enough to perceive individual moments, fast enough to experience the larger pattern taking shape.
 
 </MdxParagraph>
 
 <MdxParagraph>
 
-Technical architecture served philosophical ends. True randomness honours the work's engagement with chance as fundamental principle, not aesthetic effect. Audio coupling transforms visual probability into sonic pattern—each die value triggering a distinct tone, accumulating into evolving soundscapes that mirror the visual composition. The 224×224cm LED display establishes the work at architectural scale, positioning viewers in relation to pattern formation as temporal event rather than static object.
+Every technical decision served a philosophical end. True randomness honours the work's engagement with chance as fundamental principle, not aesthetic effect. Audio coupling transforms visual probability into sonic pattern—each die value triggering a distinct tone, accumulating into evolving soundscapes that mirror the visual composition. The 224×224cm LED display establishes the work at architectural scale, positioning viewers in relation to pattern formation as temporal event rather than static object.
 
 </MdxParagraph>
 
 <MdxParagraph>
 
-The installation premiered in Taiwan before touring to Akbank Sanat in Istanbul and Noise Media Art Fair—probability made tangible through sustained observation of order emerging from chaos. This kind of work—where technical decisions carry conceptual weight, where code becomes philosophy—is where I learned that execution and meaning aren't separate concerns.
+The installation premiered in Taiwan before touring to Akbank Sanat in Istanbul and Noise Media Art Fair—probability made tangible through sustained observation of order emerging from chaos. Work where technical decisions carry conceptual weight, where code becomes philosophy, where execution and meaning are the same concern.
 
 </MdxParagraph>
+
+<MdxSpacer />
 
 <MdxMedia src={["P2A1.webm"]} />
 
@@ -49,6 +52,10 @@ The installation premiered in Taiwan before touring to Akbank Sanat in Istanbul 
 
 <MdxMedia src={["P2D2.webp"]} />
 
-<MdxMedia src={["P2B1.webm", "P2C1.webm"]} />
+<MdxMedia src={["P2B1.webm"]} />
 
-<MdxMedia src={["P2E1.webp", "P2E2.webp"]} />
+<MdxMedia src={["P2C1.webm"]} />
+
+<MdxMedia src={["P2E1.webp"]} />
+
+<MdxMedia src={["P2E2.webp"]} />

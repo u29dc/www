@@ -1,26 +1,19 @@
-import { isStudy } from '$lib/content-types';
-import { extractMediaFromContent, getMediaType, sanitizeMediaFilename } from '$lib/mdx-client';
-import { getArtifactsContent } from '$lib/server/content';
-import type { PageServerLoad } from './$types';
+import { extractMediaFromContent, getArtifactsContent } from '$lib/server/content';
 
-export const load: PageServerLoad = async () => {
-	const content = await getArtifactsContent();
-	const artifacts = content.map((item) => {
-		const rawThumbnail = item.frontmatter.thumbnailMedia ?? null;
-		const safeThumbnail = rawThumbnail ? sanitizeMediaFilename(rawThumbnail) : null;
-		const isThumbnailImage = safeThumbnail ? getMediaType(safeThumbnail) === 'image' : false;
+export async function load() {
+	const artifacts = await getArtifactsContent();
 
-		const mediaItems = extractMediaFromContent(item.content).filter((entry) => entry.type === 'image');
-		const orderedMediaItems = isThumbnailImage
-			? [...mediaItems.filter((entry) => entry.filename === safeThumbnail), ...mediaItems.filter((entry) => entry.filename !== safeThumbnail)]
-			: mediaItems;
+	const filtered = artifacts.filter((item) => item.frontmatter.slug !== 'llms');
 
-		return {
-			item,
-			isConfidential: isStudy(item.frontmatter) && (item.frontmatter.isConfidential ?? false),
-			mediaItems: orderedMediaItems,
-		};
-	});
-
-	return { artifacts };
-};
+	return {
+		artifacts: filtered.map((item) => ({
+			slug: item.frontmatter.slug,
+			title: item.frontmatter.title,
+			description: item.frontmatter.description,
+			type: item.frontmatter.type,
+			date: item.frontmatter.date,
+			media: extractMediaFromContent(item.content),
+			isConfidential: item.frontmatter.type === 'study' && 'isConfidential' in item.frontmatter ? (item.frontmatter.isConfidential ?? false) : false,
+		})),
+	};
+}

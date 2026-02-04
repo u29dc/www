@@ -1,323 +1,37 @@
-import { registerRafTask, requestFrame } from '$lib/raf';
+import type Lenis from 'lenis';
 
-type ScrollOptions = {
-	lerp?: number;
-	touchLerp?: number;
-	wheelMultiplier?: number;
-	touchMultiplier?: number;
+let instance: Lenis | null = null;
+
+export const setLenisInstance = (lenis: Lenis | null) => {
+	instance = lenis;
 };
 
-export type ScrollController = {
-	start: () => void;
-	stop: () => void;
-	scrollTo: (target: number) => void;
-	jumpTo: (target: number) => void;
-	destroy: () => void;
+/**
+ * Returns the target scroll position (where scroll is heading).
+ * When Lenis is active, returns targetScroll to avoid double-smoothing.
+ * Falls back to window.scrollY when Lenis is inactive.
+ */
+export const getScrollY = () => {
+	return instance?.targetScroll ?? window.scrollY;
 };
 
-type VirtualScrollData = {
-	deltaX: number;
-	deltaY: number;
-	event: WheelEvent | TouchEvent;
+/**
+ * Returns the current interpolated scroll position.
+ * Useful when you need the actual visual position, not the target.
+ */
+export const getInterpolatedScrollY = () => {
+	return instance?.scroll ?? window.scrollY;
 };
 
-// Convert wheel deltaMode=1 (line-based) into pixels with a consistent baseline.
-const LINE_HEIGHT = 100 / 6;
-const LISTENER_OPTIONS: AddEventListenerOptions = { passive: false };
-const TOUCH_SCROLL_THRESHOLD = 8;
-const TOUCH_INTERACTIVE_THRESHOLD = 12;
-const INTERACTIVE_SELECTOR = 'a,button,input,textarea,select,label,summary,[role="button"],[role="link"],[contenteditable="true"],[data-scroll-allow]';
-
-const clamp = (min: number, value: number, max: number) => Math.max(min, Math.min(value, max));
-
-const damp = (current: number, target: number, lambda: number, deltaTime: number) => {
-	const t = 1 - Math.exp(-lambda * deltaTime);
-	return current + (target - current) * t;
-};
-
-class Dimensions {
-	private wrapper: Window;
-	private content: HTMLElement;
-
-	width = 0;
-	height = 0;
-	scrollHeight = 0;
-
-	constructor(wrapper: Window, content: HTMLElement) {
-		this.wrapper = wrapper;
-		this.content = content;
-		this.resize();
+/**
+ * Reset scroll position to top.
+ * Uses Lenis scrollTo when available for instant positioning,
+ * falls back to native window.scrollTo otherwise.
+ */
+export const resetScroll = () => {
+	if (instance) {
+		instance.scrollTo(0, { immediate: true });
+	} else {
+		window.scrollTo(0, 0);
 	}
-
-	destroy() {}
-
-	resize() {
-		this.width = this.wrapper.innerWidth;
-		this.height = this.wrapper.innerHeight;
-		this.scrollHeight = this.content.scrollHeight;
-	}
-
-	get limit() {
-		return Math.max(0, this.scrollHeight - this.height);
-	}
-}
-
-class VirtualScroll {
-	private element: HTMLElement;
-	private options: { wheelMultiplier: number; touchMultiplier: number };
-	private onScroll: (data: VirtualScrollData) => void;
-	private touchStart = { x: 0, y: 0 };
-	private touchOrigin = { x: 0, y: 0 };
-	private touchIsScrolling = false;
-	private touchIsInteractive = false;
-	private windowSize = { width: 0, height: 0 };
-
-	constructor(element: HTMLElement, options: { wheelMultiplier: number; touchMultiplier: number }, onScroll: (data: VirtualScrollData) => void) {
-		this.element = element;
-		this.options = options;
-		this.onScroll = onScroll;
-
-		this.handleWindowResize();
-		window.addEventListener('resize', this.handleWindowResize, false);
-
-		this.element.addEventListener('wheel', this.handleWheel, LISTENER_OPTIONS);
-		this.element.addEventListener('touchstart', this.handleTouchStart, LISTENER_OPTIONS);
-		this.element.addEventListener('touchmove', this.handleTouchMove, LISTENER_OPTIONS);
-		this.element.addEventListener('touchend', this.handleTouchEnd, LISTENER_OPTIONS);
-	}
-
-	destroy() {
-		window.removeEventListener('resize', this.handleWindowResize, false);
-		this.element.removeEventListener('wheel', this.handleWheel, LISTENER_OPTIONS);
-		this.element.removeEventListener('touchstart', this.handleTouchStart, LISTENER_OPTIONS);
-		this.element.removeEventListener('touchmove', this.handleTouchMove, LISTENER_OPTIONS);
-		this.element.removeEventListener('touchend', this.handleTouchEnd, LISTENER_OPTIONS);
-	}
-
-	private handleWindowResize = () => {
-		this.windowSize = {
-			width: window.innerWidth,
-			height: window.innerHeight,
-		};
-	};
-
-	private handleWheel = (event: WheelEvent) => {
-		let { deltaX, deltaY, deltaMode } = event;
-
-		const multiplierX = deltaMode === 1 ? LINE_HEIGHT : deltaMode === 2 ? this.windowSize.width : 1;
-		const multiplierY = deltaMode === 1 ? LINE_HEIGHT : deltaMode === 2 ? this.windowSize.height : 1;
-
-		deltaX *= multiplierX * this.options.wheelMultiplier;
-		deltaY *= multiplierY * this.options.wheelMultiplier;
-
-		this.onScroll({ deltaX, deltaY, event });
-	};
-
-	private handleTouchStart = (event: TouchEvent) => {
-		const touch = event.targetTouches[0];
-		if (!touch) return;
-
-		this.touchStart.x = touch.clientX;
-		this.touchStart.y = touch.clientY;
-		this.touchOrigin.x = touch.clientX;
-		this.touchOrigin.y = touch.clientY;
-		this.touchIsScrolling = false;
-		this.touchIsInteractive = false;
-
-		const target = event.target instanceof HTMLElement ? event.target : null;
-		if (target) {
-			const interactive = target.closest(INTERACTIVE_SELECTOR);
-			this.touchIsInteractive = Boolean(interactive);
-		}
-
-		this.onScroll({ deltaX: 0, deltaY: 0, event });
-	};
-
-	private handleTouchMove = (event: TouchEvent) => {
-		const touch = event.targetTouches[0];
-		if (!touch) return;
-
-		const totalX = touch.clientX - this.touchOrigin.x;
-		const totalY = touch.clientY - this.touchOrigin.y;
-		const distance = Math.hypot(totalX, totalY);
-		const threshold = this.touchIsInteractive ? TOUCH_INTERACTIVE_THRESHOLD : TOUCH_SCROLL_THRESHOLD;
-
-		if (!this.touchIsScrolling && distance < threshold) {
-			this.touchStart.x = touch.clientX;
-			this.touchStart.y = touch.clientY;
-			return;
-		}
-
-		this.touchIsScrolling = true;
-
-		const deltaX = -(touch.clientX - this.touchStart.x) * this.options.touchMultiplier;
-		const deltaY = -(touch.clientY - this.touchStart.y) * this.options.touchMultiplier;
-
-		this.touchStart.x = touch.clientX;
-		this.touchStart.y = touch.clientY;
-
-		this.onScroll({ deltaX, deltaY, event });
-	};
-
-	private handleTouchEnd = (event: TouchEvent) => {
-		this.touchIsScrolling = false;
-		this.touchIsInteractive = false;
-		this.onScroll({ deltaX: 0, deltaY: 0, event });
-	};
-}
-
-export const createScroll = (options: ScrollOptions = {}): ScrollController => {
-	const root = document.documentElement;
-	const wrapper = window;
-	const content = document.documentElement;
-	const lerp = options.lerp ?? 0.05;
-	const touchLerp = options.touchLerp ?? lerp;
-	const wheelMultiplier = options.wheelMultiplier ?? 1;
-	const touchMultiplier = options.touchMultiplier ?? 1;
-
-	const dimensions = new Dimensions(wrapper, content);
-
-	let targetScroll = wrapper.scrollY;
-	let animatedScroll = targetScroll;
-	let lastTime = 0;
-	let isStopped = false;
-	let preventNextNative = false;
-	let contentResizeObserver: ResizeObserver | null = null;
-	let pendingDelta = 0;
-	let rafHandle: ReturnType<typeof registerRafTask> | null = null;
-	let lastInput: 'wheel' | 'touch' | 'unknown' = 'unknown';
-
-	const updateClasses = () => {
-		root.classList.add('scroll');
-		root.classList.toggle('scroll-smooth', !isStopped);
-		root.classList.toggle('scroll-stopped', isStopped);
-	};
-
-	const setScroll = (value: number) => {
-		preventNextNative = true;
-		wrapper.scrollTo({ top: value, behavior: 'instant' });
-		requestFrame(() => {
-			preventNextNative = false;
-		});
-	};
-
-	const handleNativeScroll = () => {
-		if (preventNextNative) return;
-		animatedScroll = wrapper.scrollY;
-		targetScroll = animatedScroll;
-	};
-
-	const handleResize = () => {
-		dimensions.resize();
-		targetScroll = clamp(0, targetScroll, dimensions.limit);
-		animatedScroll = clamp(0, animatedScroll, dimensions.limit);
-		setScroll(animatedScroll);
-	};
-
-	const applyDelta = (delta: number) => {
-		if (dimensions.limit <= 0) return;
-		targetScroll = clamp(0, targetScroll + delta, dimensions.limit);
-	};
-
-	const handleVirtualScroll = ({ deltaX, deltaY, event }: VirtualScrollData) => {
-		if (isStopped) return;
-		if (event.ctrlKey) return;
-		if (dimensions.limit <= 0) return;
-		lastInput = event.type.startsWith('touch') ? 'touch' : event.type === 'wheel' ? 'wheel' : lastInput;
-
-		// Nested scroll prevention would be handled here, but is skipped to keep scope minimal.
-
-		if (event.cancelable && (event.type === 'wheel' || event.type === 'touchmove')) {
-			event.preventDefault();
-		}
-
-		const delta = Math.abs(deltaY) >= Math.abs(deltaX) ? deltaY : deltaX;
-		if (delta === 0) return;
-		pendingDelta += delta;
-	};
-
-	const virtualScroll = new VirtualScroll(content, { wheelMultiplier, touchMultiplier }, handleVirtualScroll);
-
-	const tick = (time: number, _deltaSeconds: number) => {
-		if (isStopped) {
-			pendingDelta = 0;
-			lastTime = 0;
-			return;
-		}
-		if (lastTime === 0) {
-			lastTime = time;
-			return;
-		}
-
-		const deltaTime = (time - lastTime) / 1000;
-		lastTime = time;
-
-		if (pendingDelta !== 0) {
-			applyDelta(pendingDelta);
-			pendingDelta = 0;
-		}
-
-		// Scale lerp for 60fps to keep easing consistent across refresh rates.
-		const activeLerp = lastInput === 'touch' ? touchLerp : lerp;
-		const next = damp(animatedScroll, targetScroll, activeLerp * 60, deltaTime);
-		const diff = Math.abs(next - targetScroll);
-		animatedScroll = diff < 0.1 ? targetScroll : next;
-		if (Math.abs(animatedScroll - wrapper.scrollY) > 0.1) {
-			setScroll(animatedScroll);
-		}
-	};
-
-	const start = () => {
-		if (!isStopped) return;
-		isStopped = false;
-		lastTime = 0;
-		updateClasses();
-	};
-
-	const stop = () => {
-		if (isStopped) return;
-		isStopped = true;
-		lastTime = 0;
-		updateClasses();
-	};
-
-	const scrollTo = (target: number) => {
-		targetScroll = clamp(0, target, dimensions.limit);
-	};
-
-	const jumpTo = (target: number) => {
-		targetScroll = clamp(0, target, dimensions.limit);
-		animatedScroll = targetScroll;
-		pendingDelta = 0;
-		setScroll(animatedScroll);
-	};
-
-	const destroy = () => {
-		rafHandle?.dispose();
-		rafHandle = null;
-		contentResizeObserver?.disconnect();
-		contentResizeObserver = null;
-		virtualScroll.destroy();
-		dimensions.destroy();
-		wrapper.removeEventListener('scroll', handleNativeScroll, false);
-		wrapper.removeEventListener('resize', handleResize, false);
-		root.classList.remove('scroll', 'scroll-smooth', 'scroll-stopped');
-	};
-
-	wrapper.addEventListener('scroll', handleNativeScroll, false);
-	wrapper.addEventListener('resize', handleResize, false);
-	if (typeof ResizeObserver !== 'undefined') {
-		contentResizeObserver = new ResizeObserver(() => handleResize());
-		contentResizeObserver.observe(content);
-	}
-	updateClasses();
-	rafHandle = registerRafTask(tick);
-
-	return {
-		start,
-		stop,
-		scrollTo,
-		jumpTo,
-		destroy,
-	};
 };

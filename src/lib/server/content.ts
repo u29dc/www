@@ -61,7 +61,7 @@ const parseMediaSources = (value: string | undefined): string[] => {
 	return [];
 };
 
-const mdxParagraphWrapper = (children: ElementContent[]): Element => h('div', { className: 'padding-standard grid grid-cols-10' }, [h('div', { className: 'col-span-base' }, children)]);
+const mdxParagraphWrapper = (children: ElementContent[]): Element => h('div', { className: 'mdx-paragraph' }, children);
 
 const mdxMediaPlaceholder = (sources: string[], alt?: string): Element => {
 	const payload = JSON.stringify(sources);
@@ -75,6 +75,8 @@ const mdxMediaPlaceholder = (sources: string[], alt?: string): Element => {
 	return h('div', properties, []);
 };
 
+const mdxSpacerPlaceholder = (): Element => h('div', { className: 'mdx-spacer h-10' }, []);
+
 const mdxJsxFlowElementHandler = (state: State, node: MdxJsxFlowElement): Element => {
 	if (node.name === 'MdxParagraph') {
 		return mdxParagraphWrapper(state.all(node));
@@ -83,6 +85,9 @@ const mdxJsxFlowElementHandler = (state: State, node: MdxJsxFlowElement): Elemen
 		const sources = parseMediaSources(readMdxAttribute(node, 'src'));
 		const alt = readMdxAttribute(node, 'alt');
 		return mdxMediaPlaceholder(sources, alt);
+	}
+	if (node.name === 'MdxSpacer') {
+		return mdxSpacerPlaceholder();
 	}
 	return h('div', {}, state.all(node));
 };
@@ -271,6 +276,7 @@ function toMarkdownBody(_frontmatter: ContentItem, content: string, options: Mar
 
 	markdown = markdown.replace(/<MdxParagraph>\s*/g, '');
 	markdown = markdown.replace(/\s*<\/MdxParagraph>/g, '');
+	markdown = markdown.replace(/<MdxSpacer\s*\/>/g, '');
 
 	markdown = markdown.replace(/<MdxMedia\s+[^>]*\/>/g, (match) => {
 		const srcMatch = match.match(/src=\{\[([^\]]+)\]\}/);
@@ -291,6 +297,49 @@ function toMarkdownBody(_frontmatter: ContentItem, content: string, options: Mar
 	markdown = markdown.trim();
 
 	return markdown;
+}
+
+export function extractMediaFromContent(content: string): string[] {
+	const mdxMediaRegex = /<MdxMedia\s+[^>]*src=\{\[([^\]]+)\]\}[^>]*\/>/g;
+	const matches = content.matchAll(mdxMediaRegex);
+
+	const media: string[] = [];
+	for (const match of matches) {
+		const srcContent = match[1];
+		if (!srcContent) continue;
+
+		const filenames = srcContent
+			.split(',')
+			.map((item) => item.trim().replace(/^["']|["']$/g, ''))
+			.filter(Boolean);
+
+		media.push(...filenames);
+	}
+
+	return media;
+}
+
+export function extractFirstMedia(content: string): { firstMedia: string[] | null; remainingContent: string } {
+	const mdxMediaRegex = /<MdxMedia\s+[^>]*src=\{\[([^\]]+)\]\}[^>]*\/>/;
+	const match = content.match(mdxMediaRegex);
+
+	if (!match) {
+		return { firstMedia: null, remainingContent: content };
+	}
+
+	const srcContent = match[1];
+	if (!srcContent) {
+		return { firstMedia: null, remainingContent: content };
+	}
+
+	const filenames = srcContent
+		.split(',')
+		.map((item) => item.trim().replace(/^["']|["']$/g, ''))
+		.filter(Boolean);
+
+	const remainingContent = content.replace(match[0], '').trim();
+
+	return { firstMedia: filenames.length > 0 ? filenames : null, remainingContent };
 }
 
 export function toMarkdown(frontmatter: ContentItem, content: string): string {
