@@ -76,10 +76,10 @@ const buildCsp = (nonce: string): string => {
 		{ name: 'connect-src', values: ["'self'"] },
 		{ name: 'frame-ancestors', values: ["'none'"] },
 		{ name: 'object-src', values: ["'none'"] },
-		{ name: 'style-src', values: ["'self'", "'unsafe-inline'", 'https://use.typekit.net', 'https://p.typekit.net'] },
+		{ name: 'style-src', values: ["'self'", "'unsafe-inline'"] },
 		{ name: 'media-src', values: ["'self'", CDN.baseUrl] },
-		{ name: 'img-src', values: ["'self'", 'data:', 'blob:', CDN.baseUrl, 'https://p.typekit.net'] },
-		{ name: 'font-src', values: ["'self'", 'data:', 'https://use.typekit.net'] },
+		{ name: 'img-src', values: ["'self'", 'data:', 'blob:', CDN.baseUrl] },
+		{ name: 'font-src', values: ["'self'", 'data:'] },
 		{
 			name: 'script-src',
 			values: ["'self'", `'nonce-${nonce}'`, ...(dev ? ["'unsafe-eval'", "'unsafe-inline'"] : [])],

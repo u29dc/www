@@ -18,12 +18,6 @@
 	<meta name="theme-color" content={SITE.themeColor} />
 	<meta name="color-scheme" content="light dark" />
 	<link rel="preconnect" href={CDN.baseUrl} crossorigin="anonymous" />
-	<link
-		rel="preconnect"
-		href="https://use.typekit.net"
-		crossorigin="anonymous"
-	/>
-	<link rel="stylesheet" href="https://use.typekit.net/dim0jav.css" />
 	<link rel="manifest" href="/manifest.json" />
 	<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 	<link rel="icon" href="/favicon.ico" sizes="any" type="image/x-icon" />
