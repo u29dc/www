@@ -39,7 +39,7 @@
 		<div class="group relative w-full max-w-[200px] overflow-hidden">
 			<img
 				src={`${CDN.mediaUrl}_HAN.webp`}
-				alt="Photo of Han"
+				alt="Han, founder"
 				loading="lazy"
 				decoding="async"
 				class="aspect-square w-full object-cover mix-blend-darken transition-all duration-500"
