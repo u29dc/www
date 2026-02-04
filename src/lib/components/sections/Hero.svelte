@@ -82,7 +82,7 @@
 		style="opacity: {contentOpacity}; transform: translateY(-{parallaxY * 0.3}px)"
 	>
 		<div class="col-content flex h-full flex-col justify-center gap-8 text-white">
-			<h1 class="font-xl font-semibold uppercase">The technology works. The story doesn't.</h1>
+			<h1 class="font-serif font-2xl font-semibold">The technology works. The story doesn't.</h1>
 			<div aria-label="Scroll down">
 				<ChevronDown size={24} strokeWidth={1.5} aria-hidden="true" />
 			</div>

@@ -21,7 +21,7 @@
 	<div class="col-content flex flex-col justify-between gap-16 pb-16 pt-64">
 		<!-- Top: Headline + Pricing + Grid Links -->
 		<div class="w-full">
-			<h2 class="font-xl font-semibold uppercase">Stories that hold aren't written. They're built.</h2>
+			<h2 class="font-serif font-2xl font-semibold">Stories that hold aren't written. They're built.</h2>
 
 			<p class="mt-8 font-mono text-muted">£3,000 · 48 hours · Three routes, one recommendation.</p>
 
