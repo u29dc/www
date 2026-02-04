@@ -22,3 +22,16 @@ export const getScrollY = () => {
 export const getInterpolatedScrollY = () => {
 	return instance?.scroll ?? window.scrollY;
 };
+
+/**
+ * Reset scroll position to top.
+ * Uses Lenis scrollTo when available for instant positioning,
+ * falls back to native window.scrollTo otherwise.
+ */
+export const resetScroll = () => {
+	if (instance) {
+		instance.scrollTo(0, { immediate: true });
+	} else {
+		window.scrollTo(0, 0);
+	}
+};

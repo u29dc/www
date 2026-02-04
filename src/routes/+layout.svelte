@@ -3,6 +3,7 @@
 	import type { Snippet } from "svelte";
 	import CoreGrainOverlay from "$lib/components/core/CoreGrainOverlay.svelte";
 	import CoreHeader from "$lib/components/core/CoreHeader.svelte";
+	import CorePageTransition from "$lib/components/core/CorePageTransition.svelte";
 	import CoreScrollLine from "$lib/components/core/CoreScrollLine.svelte";
 	import CoreSmoothScroll from "$lib/components/core/CoreSmoothScroll.svelte";
 	import CoreViewportFix from "$lib/components/core/CoreViewportFix.svelte";
@@ -49,5 +50,7 @@
 />
 
 <main class="grid-page">
-	{@render children()}
+	<CorePageTransition>
+		{@render children()}
+	</CorePageTransition>
 </main>
