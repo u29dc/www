@@ -75,6 +75,8 @@ const mdxMediaPlaceholder = (sources: string[], alt?: string): Element => {
 	return h('div', properties, []);
 };
 
+const mdxSpacerPlaceholder = (): Element => h('div', { className: 'mdx-spacer h-10' }, []);
+
 const mdxJsxFlowElementHandler = (state: State, node: MdxJsxFlowElement): Element => {
 	if (node.name === 'MdxParagraph') {
 		return mdxParagraphWrapper(state.all(node));
@@ -83,6 +85,9 @@ const mdxJsxFlowElementHandler = (state: State, node: MdxJsxFlowElement): Elemen
 		const sources = parseMediaSources(readMdxAttribute(node, 'src'));
 		const alt = readMdxAttribute(node, 'alt');
 		return mdxMediaPlaceholder(sources, alt);
+	}
+	if (node.name === 'MdxSpacer') {
+		return mdxSpacerPlaceholder();
 	}
 	return h('div', {}, state.all(node));
 };
@@ -271,6 +276,7 @@ function toMarkdownBody(_frontmatter: ContentItem, content: string, options: Mar
 
 	markdown = markdown.replace(/<MdxParagraph>\s*/g, '');
 	markdown = markdown.replace(/\s*<\/MdxParagraph>/g, '');
+	markdown = markdown.replace(/<MdxSpacer\s*\/>/g, '');
 
 	markdown = markdown.replace(/<MdxMedia\s+[^>]*\/>/g, (match) => {
 		const srcMatch = match.match(/src=\{\[([^\]]+)\]\}/);
