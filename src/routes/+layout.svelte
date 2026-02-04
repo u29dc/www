@@ -3,6 +3,8 @@
 	import type { Snippet } from "svelte";
 	import CoreGrainOverlay from "$lib/components/core/CoreGrainOverlay.svelte";
 	import CoreHeader from "$lib/components/core/CoreHeader.svelte";
+	import CoreScrollLine from "$lib/components/core/CoreScrollLine.svelte";
+	import CoreSmoothScroll from "$lib/components/core/CoreSmoothScroll.svelte";
 	import CoreViewportFix from "$lib/components/core/CoreViewportFix.svelte";
 	import { CDN, SITE } from "$lib/constants";
 	import type { LayoutData } from "./$types";
@@ -36,7 +38,9 @@
 </svelte:head>
 
 <CoreViewportFix />
+<CoreSmoothScroll />
 <CoreHeader />
+<CoreScrollLine />
 <CoreGrainOverlay
 	intensity={0.5}
 	grainScale={10.0}
