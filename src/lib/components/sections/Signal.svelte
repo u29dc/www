@@ -5,11 +5,9 @@
 
 	<div class="font-xl font-medium space-y-8">
 		<p>
-			Most companies building complex technology can explain what they do.
-			Fewer can make anyone feel why it matters. The explanation is fluent
-			— the team is credible, the market is real. But somewhere between
-			what's been built and what the world believes, the signal breaks
-			down.
+			<span class="font-serif font-bold underline decoration-1 underline-offset-4">Most companies building complex technology can explain what they do.</span><br />
+			<span class="font-serif font-bold underline decoration-1 underline-offset-4">Fewer can make anyone feel why it matters.</span><br />
+			The explanation is fluent — the team is credible, the market is real. But somewhere between what's been built and what the world believes, the signal breaks down.
 		</p>
 
 		<p>
