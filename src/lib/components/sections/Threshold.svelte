@@ -38,13 +38,14 @@
 <section
 	id="threshold"
 	data-section="footer"
-	class="mt-96 grid-section-full min-h-screen-safe bg-black/5"
+	class="mt-96 grid-section-full min-h-screen-safe bg-black/5 -mx-[var(--grid-margin)] px-[var(--grid-margin)] md:-mx-[var(--grid-margin-md)] md:px-[var(--grid-margin-md)] lg:mx-0 lg:px-0"
 >
 	<div class="col-content flex flex-col justify-between gap-16 pb-16 pt-64">
 		<!-- Top: Headline + Pricing + Grid Links -->
 		<div class="w-full">
 			<h2 class="font-serif font-2xl bold">
-				Stories that hold aren't written. They're built.
+				<span class="block sm:inline">Stories that hold aren't written.</span>
+				<span class="block sm:inline">They're built.</span>
 			</h2>
 
 			<p class="mt-8 font-mono text-muted">
