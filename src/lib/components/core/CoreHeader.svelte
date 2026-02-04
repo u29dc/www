@@ -25,7 +25,7 @@
 	>
 		{#if isSlugPage}
 			<!-- Back button -->
-			<AtomicHeaderButton href="/" class="flex items-center gap-2">
+			<AtomicHeaderButton href="/" class="inline-flex items-center gap-2">
 				<ArrowLeft size={14} />
 				Back
 			</AtomicHeaderButton>

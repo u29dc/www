@@ -24,7 +24,7 @@
 
 <a
 	{href}
-	class="inline-flex min-h-[30px] items-center rounded-md px-3 font-mono text-[9px] transition-colors {variantClasses} {className}"
+	class="min-h-[30px] items-center rounded-md px-3 font-mono text-[9px] transition-colors {variantClasses} {className}"
 >
 	{@render children()}
 </a>
