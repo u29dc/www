@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from "svelte";
 	import { page } from "$app/state";
 	import { ArrowLeft } from "@lucide/svelte";
 	import AtomicBrandLogo from "$lib/components/atomic/AtomicBrandLogo.svelte";
@@ -16,6 +17,33 @@
 	const articleTitle = $derived(
 		(page.data?.["frontmatter"] as { title?: string } | undefined)?.title,
 	);
+
+	let activeSection = $state<string | null>(null);
+
+	onMount(() => {
+		if (isSlugPage) return;
+
+		const sectionElements = sections
+			.map(({ id }) => document.getElementById(id))
+			.filter((el): el is HTMLElement => el !== null);
+
+		const observer = new IntersectionObserver(
+			(entries) => {
+				for (const entry of entries) {
+					if (entry.isIntersecting) {
+						activeSection = entry.target.id;
+					}
+				}
+			},
+			{ threshold: 0.3, rootMargin: "-100px 0px -50% 0px" },
+		);
+
+		for (const el of sectionElements) {
+			observer.observe(el);
+		}
+
+		return () => observer.disconnect();
+	});
 </script>
 
 <header class="fixed top-4 left-0 right-0 z-50 grid-page">
@@ -64,6 +92,7 @@
 				<AtomicHeaderButton
 					href="#{section.id}"
 					class="hidden sm:inline-flex"
+					aria-current={activeSection === section.id ? "true" : undefined}
 				>
 					{section.num}
 					{section.name}

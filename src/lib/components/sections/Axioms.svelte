@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte";
+	import { prefersReducedMotion } from "svelte/motion";
 
 	interface Axiom {
 		number: string;
@@ -30,14 +31,9 @@
 
 	let items: HTMLElement[] = $state([]);
 	let visibleItems = $state(new Set<number>());
-	let prefersReducedMotion = $state(false);
 
 	onMount(() => {
-		prefersReducedMotion = window.matchMedia(
-			"(prefers-reduced-motion: reduce)",
-		).matches;
-
-		if (prefersReducedMotion) {
+		if (prefersReducedMotion.current) {
 			visibleItems = new Set(axioms.map((_, i) => i));
 			return;
 		}
@@ -80,7 +76,7 @@
 				class:translate-y-5={!visibleItems.has(index)}
 				class:opacity-100={visibleItems.has(index)}
 				class:translate-y-0={visibleItems.has(index)}
-				style:transition-delay={prefersReducedMotion
+				style:transition-delay={prefersReducedMotion.current
 					? "0ms"
 					: `${index * 100}ms`}
 			>

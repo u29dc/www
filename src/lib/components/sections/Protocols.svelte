@@ -105,7 +105,7 @@
 				{:else}
 					<a
 						href="https://cal.com/u29dc"
-						class="mt-8 flex w-full items-center justify-between rounded-md px-4 py-3 font-medium transition-colors {protocol.emphasized
+						class="mt-8 flex w-full items-center justify-between rounded-md px-4 py-3 font-medium transition-colors focus-ring {protocol.emphasized
 							? 'bg-white text-black hover:bg-white/90'
 							: 'bg-black/10 hover:bg-black/15'}"
 					>

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte";
+	import { prefersReducedMotion } from "svelte/motion";
 	import { CDN } from "$lib/constants";
 
 	interface Artifact {
@@ -16,7 +17,6 @@
 
 	let items: HTMLElement[] = $state([]);
 	let visibleItems = $state(new Set<number>());
-	let prefersReducedMotion = $state(false);
 
 	const MAX_THUMBNAILS = 6;
 
@@ -38,11 +38,7 @@
 	};
 
 	onMount(() => {
-		prefersReducedMotion = window.matchMedia(
-			"(prefers-reduced-motion: reduce)",
-		).matches;
-
-		if (prefersReducedMotion) {
+		if (prefersReducedMotion.current) {
 			visibleItems = new Set(artifacts.map((_, i) => i));
 			return;
 		}
@@ -85,7 +81,7 @@
 				class:translate-y-5={!visibleItems.has(index)}
 				class:opacity-100={visibleItems.has(index)}
 				class:translate-y-0={visibleItems.has(index)}
-				style:transition-delay={prefersReducedMotion
+				style:transition-delay={prefersReducedMotion.current
 					? "0ms"
 					: `${index * 90}ms`}
 			>

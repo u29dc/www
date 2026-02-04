@@ -5,6 +5,7 @@
 		href: string;
 		variant?: "ghost" | "solid";
 		class?: string;
+		"aria-current"?: "true" | "page" | "step" | "location" | "date" | "time" | undefined;
 		children: Snippet;
 	}
 
@@ -12,6 +13,7 @@
 		href,
 		variant = "ghost",
 		class: className = "",
+		"aria-current": ariaCurrent,
 		children,
 	}: Props = $props();
 
@@ -24,7 +26,8 @@
 
 <a
 	{href}
-	class="min-h-[30px] items-center rounded-md px-3 font-mono text-[9px] transition-colors {variantClasses} {className}"
+	class="min-h-[30px] items-center rounded-md px-3 font-mono font-xs transition-colors focus-ring {variantClasses} {className}"
+	aria-current={ariaCurrent}
 >
 	{@render children()}
 </a>

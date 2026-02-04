@@ -22,36 +22,63 @@
 	--breakpoint-3xl: 120rem;
 	--breakpoint-4xl: 160rem;
 
-	--color-bg: var(--bg);
-	--color-panel: var(--panel);
-	--color-border: var(--border);
-	--color-text: var(--text);
-	--color-muted: var(--muted);
+	/* Semantic color tokens - studio philosophy naming */
+	--color-ground: var(--ground);
+	--color-surface: var(--surface);
+	--color-edge: var(--edge);
+	--color-ink: var(--ink);
+	--color-trace: var(--trace);
+
+	/* Legacy aliases for compatibility */
+	--color-bg: var(--ground);
+	--color-panel: var(--surface);
+	--color-border: var(--edge);
+	--color-text: var(--ink);
+	--color-muted: var(--trace);
 
 	/* Grid system tokens */
 	--grid-gap: 1rem;
 	--grid-margin: 1rem;
 	--grid-margin-md: 2rem;
 
-	/* Animation easing curves (Linear/Vercel-style) */
-	--ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-	--ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+	/*
+	 * Animation easing curves
+	 * --ease-settle: deceleration curve for elements arriving/settling into place
+	 * --ease-tension: spring with overshoot for organic, imperfect motion
+	 * --ease-exit: acceleration curve for elements departing
+	 */
+	--ease-settle: cubic-bezier(0.16, 1, 0.3, 1);
+	--ease-tension: cubic-bezier(0.34, 1.56, 0.64, 1);
+	--ease-exit: cubic-bezier(0.55, 0, 1, 0.45);
+
+	/* Legacy aliases */
+	--ease-out: var(--ease-settle);
+	--ease-spring: var(--ease-tension);
 }
 
 :root {
-	--bg: #f8f9fa;
-	--panel: #ffffff;
-	--border: #e5e7eb;
-	--text: #1f2937;
-	--muted: #9ca3af;
+	/* Semantic tokens: ground (foundation), surface (elevated), edge (boundaries), ink (marks), trace (faded) */
+	--ground: #f8f9fa;
+	--surface: #ffffff;
+	--edge: #e5e7eb;
+	--ink: #1f2937;
+	--trace: #9ca3af;
+
+	/* Legacy aliases */
+	--bg: var(--ground);
+	--panel: var(--surface);
+	--border: var(--edge);
+	--text: var(--ink);
+	--muted: var(--trace);
 }
 
 .dark {
-	--bg: #0d0f10;
-	--panel: #1a1d1f;
-	--border: #3a3f43;
-	--text: #e6e6e8;
-	--muted: #9ca3af;
+	--ground: #0d0f10;
+	--surface: #1a1d1f;
+	--edge: #3a3f43;
+	--ink: #e6e6e8;
+	/* Lighter in dark mode for ~4.5:1 contrast against #0d0f10 */
+	--trace: #a8a8b3;
 }
 
 /* ================================================== */
@@ -60,6 +87,7 @@
 
 @layer base {
 	:root {
+		/* 10px base for intuitive rem math: 1.2rem = 12px, 1.6rem = 16px, 2rem = 20px */
 		font-size: 10px;
 	}
 
@@ -264,6 +292,14 @@
 	}
 }
 
+/* Focus ring using box-shadow (respects border-radius, unlike outline) */
+@utility focus-ring {
+	&:focus-visible {
+		outline: none;
+		box-shadow: 0 0 0 2px var(--ground), 0 0 0 4px currentColor;
+	}
+}
+
 /* ================================================== */
 /* THEME SYSTEM */
 /* ================================================== */
@@ -437,7 +473,7 @@ html.lenis.lenis-stopped {
 		transform 500ms var(--ease-out);
 }
 
-/* Staggered reveal delays for list items */
+/* Staggered reveal delays for list items (supports up to 10 items) */
 .reveal-visible:nth-child(1) {
 	transition-delay: 0ms;
 }
@@ -461,6 +497,12 @@ html.lenis.lenis-stopped {
 }
 .reveal-visible:nth-child(8) {
 	transition-delay: 350ms;
+}
+.reveal-visible:nth-child(9) {
+	transition-delay: 400ms;
+}
+.reveal-visible:nth-child(10) {
+	transition-delay: 450ms;
 }
 
 /* Respect reduced motion preference */
