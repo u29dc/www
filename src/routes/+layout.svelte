@@ -1,18 +1,21 @@
 <script lang="ts">
-import '../app.css';
-import type { Snippet } from 'svelte';
-import CoreAppShell from '$lib/components/core/CoreAppShell.svelte';
-import CoreViewportFix from '$lib/components/core/CoreViewportFix.svelte';
-import { CDN, SITE } from '$lib/constants';
-import type { LayoutData } from './$types';
+	import "../app.css";
+	import type { Snippet } from "svelte";
+	import CoreGrainOverlay from "$lib/components/core/CoreGrainOverlay.svelte";
+	import CoreHeader from "$lib/components/core/CoreHeader.svelte";
+	import CoreViewportFix from "$lib/components/core/CoreViewportFix.svelte";
+	import { CDN, SITE } from "$lib/constants";
+	import type { LayoutData } from "./$types";
 
-let { data, children }: { data: LayoutData; children: Snippet } = $props();
+	let { data, children }: { data: LayoutData; children: Snippet } = $props();
 </script>
 
 <svelte:head>
 	<meta name="theme-color" content={SITE.themeColor} />
 	<meta name="color-scheme" content="light dark" />
 	<link rel="preconnect" href={CDN.baseUrl} crossorigin="anonymous" />
+	<link rel="preconnect" href="https://use.typekit.net" crossorigin="anonymous" />
+	<link rel="stylesheet" href="https://use.typekit.net/dim0jav.css" />
 	<link rel="manifest" href="/manifest.json" />
 	<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 	<link rel="icon" href="/favicon.ico" sizes="any" type="image/x-icon" />
@@ -33,6 +36,14 @@ let { data, children }: { data: LayoutData; children: Snippet } = $props();
 </svelte:head>
 
 <CoreViewportFix />
-<CoreAppShell>
+<CoreHeader />
+<CoreGrainOverlay
+	intensity={0.5}
+	grainScale={10.0}
+	animationSpeed={0.1}
+	exposure={0.01}
+/>
+
+<main class="grid-page">
 	{@render children()}
-</CoreAppShell>
+</main>

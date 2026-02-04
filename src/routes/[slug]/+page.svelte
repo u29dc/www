@@ -1,12 +1,9 @@
 <script lang="ts">
-import Animate from '$lib/components/animation/Animate.svelte';
-import LayoutSharedWrapper from '$lib/components/layout/LayoutSharedWrapper.svelte';
-import MdxMediaEnhancer from '$lib/components/mdx/MdxMediaEnhancer.svelte';
-import { SITE } from '$lib/constants';
-import type { PageData } from './$types';
+	import MdxMediaEnhancer from '$lib/components/mdx/MdxMediaEnhancer.svelte';
+	import { SITE } from '$lib/constants';
+	import type { PageData } from './$types';
 
-let { data }: { data: PageData } = $props();
-const contentHtml = $derived(data.contentHtml);
+	let { data }: { data: PageData } = $props();
 </script>
 
 <svelte:head>
@@ -14,9 +11,17 @@ const contentHtml = $derived(data.contentHtml);
 	<meta name="description" content={data.frontmatter.description} />
 </svelte:head>
 
-<LayoutSharedWrapper type="article" frontmatter={data.frontmatter}>
-	<Animate stage="article">
-		<div>{@html contentHtml}</div>
-	</Animate>
+<article class="padding-standard">
+	<header class="mb-8">
+		<h1>{data.frontmatter.title}</h1>
+		{#if data.frontmatter.description}
+			<p class="mt-2 text-muted">{data.frontmatter.description}</p>
+		{/if}
+	</header>
+
+	<div class="content">
+		{@html data.contentHtml}
+	</div>
+
 	<MdxMediaEnhancer />
-</LayoutSharedWrapper>
+</article>

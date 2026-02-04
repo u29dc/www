@@ -1,4 +1,44 @@
 @font-face {
+	font-family: "Neue Montreal";
+	src: url("/fonts/neue-montreal-100-normal.otf") format("opentype");
+	font-weight: 100;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: "Neue Montreal";
+	src: url("/fonts/neue-montreal-400-normal.otf") format("opentype");
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: "Neue Montreal";
+	src: url("/fonts/neue-montreal-400-italic.otf") format("opentype");
+	font-weight: 400;
+	font-style: italic;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: "Neue Montreal";
+	src: url("/fonts/neue-montreal-500-normal.otf") format("opentype");
+	font-weight: 500;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: "Neue Montreal";
+	src: url("/fonts/neue-montreal-700-normal.otf") format("opentype");
+	font-weight: 700;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
 	font-family: "Neue Haas Grotesk Display";
 	src: url("/fonts/neue-haas-grotesk-display-500-normal.woff2") format("woff2");
 	font-weight: 500;
@@ -39,6 +79,14 @@
 }
 
 :root {
+	/* Adobe Fonts (Typekit) */
+	--font-acumin: acumin-pro, system-ui, -apple-system, BlinkMacSystemFont, "SF Pro", "Segoe UI", "Roboto", "Helvetica Neue", "Arial", sans-serif;
+	--font-meno: meno-display, "Georgia", "Times New Roman", serif;
+	--font-meno-condensed: meno-display-condensed, "Georgia", "Times New Roman", serif;
+	--font-meno-extra-condensed: meno-display-extra-condensed, "Georgia", "Times New Roman", serif;
+
+	/* Local fonts */
+	--font-neue-montreal: "Neue Montreal", system-ui, -apple-system, BlinkMacSystemFont, "SF Pro", "Segoe UI", "Roboto", "Helvetica Neue", "Arial", sans-serif;
 	--font-neue-haas: "Neue Haas Grotesk Display", system-ui, -apple-system, BlinkMacSystemFont, "SF Pro", "Segoe UI", "Roboto", "Helvetica Neue", "Arial", sans-serif;
 	--font-fira-code: "Fira Code", "SF Mono", "Cascadia Code", "Menlo", "Consolas", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace;
 	--font-professor: "Professor", cursive, sans-serif;
