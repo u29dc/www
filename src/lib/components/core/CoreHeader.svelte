@@ -61,6 +61,14 @@
 			<!-- Divider -->
 			<div class="h-4 w-px bg-black/10" aria-hidden="true"></div>
 
+			<!-- Brand name -->
+			<span class="hidden font-mono text-[9px] text-black/60 uppercase sm:inline">
+				Incomplete Infinity
+			</span>
+
+			<!-- Divider -->
+			<div class="hidden h-4 w-px bg-black/10 sm:block" aria-hidden="true"></div>
+
 			<!-- Article title -->
 			{#if articleTitle}
 				<span class="font-mono text-[9px] text-black/60 uppercase">

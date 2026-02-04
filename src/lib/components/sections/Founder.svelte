@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import { prefersReducedMotion } from "svelte/motion";
+	import ArrowUpRight from "@lucide/svelte/icons/arrow-up-right";
 	import { CDN } from "$lib/constants";
 	import { registerRafTask } from "$lib/raf";
 
@@ -151,6 +152,16 @@
 					in those gaps rather than around them.
 				</p>
 			</div>
+
+			<a
+				href="https://linkedin.com/in/u29dc"
+				target="_blank"
+				rel="noopener noreferrer"
+				class="group/link mt-2 inline-flex w-fit items-center gap-1 text-muted transition-colors duration-150 hover:text-foreground"
+			>
+				<span>Follow on LinkedIn</span>
+				<ArrowUpRight class="size-4 transition-transform duration-150 group-hover/link:-translate-y-0.5 group-hover/link:translate-x-0.5" />
+			</a>
 		</div>
 	</div>
 </section>
