@@ -59,8 +59,8 @@
 
 <!-- Fixed hero container -->
 <div class="fixed inset-0 z-0 h-screen overflow-hidden">
-	<!-- Parallax video -->
-	<video
+	<!-- Parallax video (commented out for style testing) -->
+	<!-- <video
 		bind:this={videoRef}
 		src="{CDN.mediaUrl}_HERO.webm"
 		autoplay
@@ -71,7 +71,15 @@
 		preload="auto"
 		class="pointer-events-none absolute inset-0 h-[calc(100%+30vh)] w-full object-cover grayscale will-change-transform"
 		style="transform: translateY(-{parallaxY}px)"
-	></video>
+	></video> -->
+
+	<!-- Temporary image for style testing -->
+	<img
+		src="{CDN.mediaUrl}_HERO.webp"
+		alt=""
+		class="pointer-events-none absolute inset-0 h-[calc(100%+30vh)] w-full object-cover grayscale will-change-transform"
+		style="transform: translateY(-{parallaxY}px)"
+	/>
 
 	<!-- White overlay that fades in as user scrolls -->
 	<div class="absolute inset-0 bg-white will-change-[opacity]" style="opacity: {overlayOpacity}" aria-hidden="true"></div>
@@ -81,11 +89,19 @@
 		class="relative z-10 grid-page h-full will-change-[opacity,transform]"
 		style="opacity: {contentOpacity}; transform: translateY(-{parallaxY * 0.3}px)"
 	>
-		<div class="col-content flex h-full flex-col justify-center gap-8 text-white">
-			<h1 class="font-serif font-2xl font-semibold">The technology works. The story doesn't.</h1>
-			<div aria-label="Scroll down">
-				<ChevronDown size={24} strokeWidth={1.5} aria-hidden="true" />
-			</div>
+		<div class="col-content flex h-full flex-col justify-center text-white">
+			<h1 class="font-serif font-2xl font-semibold">The technology works.<br class="sm:hidden" /> The story doesn't.</h1>
+		</div>
+	</div>
+
+	<!-- Scroll indicator at bottom -->
+	<div
+		class="absolute inset-x-0 bottom-8 z-10 flex justify-center text-white will-change-[opacity] md:bottom-[120px] md:grid-page md:justify-start"
+		style="opacity: {Math.max(0, 1 - progress * 3)}"
+		aria-label="Scroll down"
+	>
+		<div class="md:col-content">
+			<ChevronDown size={24} strokeWidth={1.5} aria-hidden="true" />
 		</div>
 	</div>
 </div>

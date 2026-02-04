@@ -53,6 +53,6 @@
 		<AtomicBrandLogo className="-translate-x-[375px]" width={1000} defaultBlurIntensity={0.25} mouseBlurIntensity={0.4} noiseIntensity={0.1} noiseScale={0.5} theme="light" />
 
 		<!-- Bottom: Handwritten Signature -->
-		<div class="font-handwritten">After all, isn't true infinity always incomplete?</div>
+		<div class="relative -top-20 font-handwritten sm:-top-24">After all, isn't true infinity always incomplete?</div>
 	</div>
 </section>

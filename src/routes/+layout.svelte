@@ -1,6 +1,7 @@
 <script lang="ts">
 	import "../app.css";
 	import type { Snippet } from "svelte";
+	import AtomicGradientBlur from "$lib/components/atomic/AtomicGradientBlur.svelte";
 	import CoreGrainOverlay from "$lib/components/core/CoreGrainOverlay.svelte";
 	import CoreHeader from "$lib/components/core/CoreHeader.svelte";
 	import CorePageTransition from "$lib/components/core/CorePageTransition.svelte";
@@ -42,6 +43,8 @@
 <CoreSmoothScroll />
 
 <CorePageTransition>
+	<AtomicGradientBlur position="top" size="12rem" fixed={true} layers={5} zIndex={40} />
+	<AtomicGradientBlur position="bottom" size="10rem" fixed={true} zIndex={40} />
 	<CoreHeader />
 	<CoreScrollLine />
 	<CoreGrainOverlay

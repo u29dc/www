@@ -1,6 +1,7 @@
 <script lang="ts">
 	import MdxMedia from '$lib/components/mdx/MdxMedia.svelte';
 	import MdxMediaEnhancer from '$lib/components/mdx/MdxMediaEnhancer.svelte';
+	import Threshold from '$lib/components/sections/Threshold.svelte';
 	import { SITE } from '$lib/constants';
 	import type { PageData } from './$types';
 
@@ -21,7 +22,7 @@
 
 	<div class="col-content">
 		<header class="mb-16">
-			<h1>{data.frontmatter.title}</h1>
+			<h1 class="font-serif font-semibold">{data.frontmatter.title}</h1>
 			{#if data.frontmatter.description}
 				<p class="mt-4 text-muted">{data.frontmatter.description}</p>
 			{/if}
@@ -34,3 +35,5 @@
 		<MdxMediaEnhancer />
 	</div>
 </article>
+
+<Threshold />

@@ -50,7 +50,7 @@
 
 	<div class="grid gap-4 md:grid-cols-3">
 		{#each protocols as protocol}
-			<article class="flex min-h-[420px] flex-col rounded-lg p-8 {protocol.emphasized ? 'bg-black text-white' : 'bg-black/5'}">
+			<article class="flex min-h-[300px] flex-col rounded-lg p-8 md:min-h-[420px] {protocol.emphasized ? 'bg-black text-white' : 'bg-black/5'}">
 				<!-- Header -->
 				<div>
 					<p class="font-mono text-xs {protocol.emphasized ? 'text-white/50' : 'text-muted'}">{protocol.subtitle}</p>
