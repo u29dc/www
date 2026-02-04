@@ -17,7 +17,7 @@
 		</p>
 
 		<p>
-			What's missing is narrative architecture — the structural logic underneath how a company explains itself. Not a deck. Not a brand book no one opens after launch week. A north-star artifact that strategy is built into, not bolted onto. Something a team can actually scale from.
+			What's missing is narrative architecture — the structural logic underneath how a company explains itself. Not a deck. Not a brand book no one opens after launch week. Decision-grade narratives your team can actually move on.
 		</p>
 	</div>
 </section>

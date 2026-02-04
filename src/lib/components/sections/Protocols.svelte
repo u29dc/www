@@ -54,13 +54,13 @@
 				<!-- Header -->
 				<div>
 					<p class="font-mono text-xs {protocol.emphasized ? 'text-white/50' : 'text-muted'}">{protocol.subtitle}</p>
-					<h3 class="font-xl font-semibold mt-2">{protocol.title}</h3>
+					<h3 class="font-subtitle mt-2">{protocol.title}</h3>
 				</div>
 
 				<!-- Price -->
 				<div class="mt-8">
 					<p class="font-lg font-medium">{protocol.price}</p>
-					<p class="font-mono text-xs mt-1 {protocol.emphasized ? 'text-white/50' : 'text-muted'}">{protocol.timeline}</p>
+					<p class="font-mono mt-1 {protocol.emphasized ? 'text-white/50' : 'text-muted'}">{protocol.timeline}</p>
 				</div>
 
 				<!-- Description -->

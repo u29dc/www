@@ -1,4 +1,4 @@
-import { getArtifactsContent } from '$lib/server/content';
+import { extractMediaFromContent, getArtifactsContent } from '$lib/server/content';
 
 export async function load() {
 	const artifacts = await getArtifactsContent();
@@ -11,6 +11,8 @@ export async function load() {
 			title: item.frontmatter.title,
 			description: item.frontmatter.description,
 			type: item.frontmatter.type,
+			date: item.frontmatter.date,
+			media: extractMediaFromContent(item.content),
 			isConfidential: item.frontmatter.type === 'study' && 'isConfidential' in item.frontmatter ? (item.frontmatter.isConfidential ?? false) : false,
 		})),
 	};

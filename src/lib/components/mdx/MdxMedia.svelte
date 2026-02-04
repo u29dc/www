@@ -63,14 +63,12 @@ onMount(() => {
 });
 </script>
 
-<div class="padding-standard grid grid-cols-10">
-	<div
-		bind:this={container}
-		class={`col-span-full col-start-1 flex transition-opacity duration-300 ${isLayoutReady ? "opacity-100" : "opacity-0"}`}
-		style={calculatedHeight > 0 ? `height: ${calculatedHeight}px;` : ""}
-	>
-		{#each src as source (source)}
-			<MdxMediaItem src={source} {alt} />
-		{/each}
-	</div>
+<div
+	bind:this={container}
+	class={`w-full flex transition-opacity duration-300 ${isLayoutReady ? "opacity-100" : "opacity-0"}`}
+	style={calculatedHeight > 0 ? `height: ${calculatedHeight}px;` : ""}
+>
+	{#each src as source (source)}
+		<MdxMediaItem src={source} {alt} />
+	{/each}
 </div>

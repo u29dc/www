@@ -1,11 +1,13 @@
 <script lang="ts">
 	import { ChevronDown } from '@lucide/svelte';
 	import { onMount } from 'svelte';
+	import { CDN } from '$lib/constants';
 
 	const PARALLAX_FACTOR = 0.5; // image moves at half scroll speed
 
 	let scrollY = $state(0);
 	let viewportHeight = $state(800); // fallback, updated on mount
+	let videoRef = $state<HTMLVideoElement | null>(null);
 
 	// Scroll range = 50% of viewport height
 	let scrollRange = $derived(viewportHeight * 0.5);
@@ -19,6 +21,20 @@
 	// Opacity values
 	let contentOpacity = $derived(1 - progress);
 	let overlayOpacity = $derived(progress);
+
+	// Video should play when not fully faded out (progress < 1)
+	let shouldPlay = $derived(progress < 1);
+
+	$effect(() => {
+		if (!videoRef) return;
+		if (shouldPlay) {
+			videoRef.play().catch(() => {
+				// autoplay may be blocked by browser policy
+			});
+		} else {
+			videoRef.pause();
+		}
+	});
 
 	onMount(() => {
 		const onScroll = () => {
@@ -43,13 +59,19 @@
 
 <!-- Fixed hero container -->
 <div class="fixed inset-0 z-0 h-screen overflow-hidden">
-	<!-- Parallax image -->
-	<img
-		src="https://cdn.sanity.io/images/3ccg9tet/production/85011037640cc82be8d86a3271a2c49909c60357-2048x1168.png"
-		alt=""
+	<!-- Parallax video -->
+	<video
+		bind:this={videoRef}
+		src="{CDN.mediaUrl}_HERO.webm"
+		autoplay
+		muted
+		loop
+		playsinline
+		disablepictureinpicture
+		preload="auto"
 		class="pointer-events-none absolute inset-0 h-[calc(100%+30vh)] w-full object-cover grayscale will-change-transform"
 		style="transform: translateY(-{parallaxY}px)"
-	/>
+	></video>
 
 	<!-- White overlay that fades in as user scrolls -->
 	<div class="absolute inset-0 bg-white will-change-[opacity]" style="opacity: {overlayOpacity}" aria-hidden="true"></div>
@@ -60,7 +82,7 @@
 		style="opacity: {contentOpacity}; transform: translateY(-{parallaxY * 0.3}px)"
 	>
 		<div class="col-content flex h-full flex-col justify-center gap-8 text-white">
-			<h1 class="font-2xl font-medium max-w-3xl">The technology works. The story doesn't.</h1>
+			<h1 class="font-xl font-semibold uppercase">The technology works. The story doesn't.</h1>
 			<div aria-label="Scroll down">
 				<ChevronDown size={24} strokeWidth={1.5} aria-hidden="true" />
 			</div>
