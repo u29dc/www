@@ -12,19 +12,36 @@
 ├── src
 │   ├── app.css
 │   ├── app.html
-│   ├── content/
+│   ├── content/                  # MDX content files
 │   ├── hooks.server.ts
 │   ├── lib/
 │   │   ├── components/
+│   │   │   ├── atomic/           # AtomicBrandLogo, AtomicGradientBlur
+│   │   │   ├── core/             # CoreHeader, CorePageTransition, CoreScrollLine, CoreSmoothScroll, CoreGrainOverlay, CoreViewportFix
+│   │   │   ├── mdx/              # MdxMedia, MdxMediaItem, MdxMediaEnhancer, MdxParagraph, mdx-context.ts
+│   │   │   └── sections/         # Hero, Signal, Protocols, Artifacts, Axioms, Founder, Threshold
 │   │   ├── server/
-│   │   └── constants.ts
+│   │   │   ├── content.ts        # MDX parsing with unified pipeline
+│   │   │   ├── metadata.ts       # Meta tag generation
+│   │   │   ├── raw.ts            # Raw response handlers
+│   │   │   └── validators.ts     # Zod input validation
+│   │   ├── content-types.ts      # Zod schemas (study|fragment|signal|meta)
+│   │   ├── constants.ts          # Site config, CDN URLs
+│   │   ├── errors.ts
+│   │   ├── logger.ts             # Pino logging
+│   │   ├── raf.ts                # RAF task coordination
+│   │   ├── scroll.ts             # Lenis scroll utilities
+│   │   └── transition.ts         # Page transition timing
 │   ├── routes/
 │   │   ├── +layout.svelte
 │   │   ├── +layout.server.ts
 │   │   ├── [slug]/
 │   │   ├── [slug].md/
 │   │   ├── [slug].txt/
-│   │   └── api/
+│   │   ├── api/
+│   │   ├── manifest.json/
+│   │   ├── robots.txt/
+│   │   └── sitemap.xml/
 │   └── styles/
 ├── static/
 │   ├── fonts/
@@ -35,42 +52,54 @@
 ├── package.json
 ├── svelte.config.js
 ├── tsconfig.json
+├── tsconfig.svelte.json
 └── vite.config.ts
 ```
 
 ## 3. Stack
 
-| Layer      | Choice         | Notes                                                        |
-| ---------- | -------------- | ------------------------------------------------------------ |
-| Framework  | SvelteKit 2    | Svelte 5 runes, prefer runes over stores                     |
-| Bundler    | Vite           | Via @sveltejs/vite-plugin-svelte                             |
-| Styling    | Tailwind CSS 4 | Class order sorted per Biome useSortedClasses                |
-| Content    | MDsveX         | MDX in `src/content/`, parsed in `src/lib/server/content.ts` |
-| Runtime    | Bun            | Package manager and script runner                            |
-| Linting    | Biome          | Format + lint, replaces ESLint/Prettier                      |
-| Deployment | Cloudflare     | Via @sveltejs/adapter-cloudflare                             |
+| Layer      | Choice                 | Notes                                                            |
+| ---------- | ---------------------- | ---------------------------------------------------------------- |
+| Framework  | SvelteKit 2            | Svelte 5 runes, prefer runes over stores                         |
+| Bundler    | Vite 7                 | Via @sveltejs/vite-plugin-svelte                                 |
+| Styling    | Tailwind CSS 4         | Class order sorted per Biome useSortedClasses                    |
+| Content    | MDsveX                 | MDX in `src/content/`, Zod schemas in `content-types.ts`         |
+| Runtime    | Bun                    | Package manager and script runner                                |
+| Linting    | Biome                  | Format + lint, replaces ESLint/Prettier                          |
+| Types      | tsgo + svelte-check-rs | Triple-layer type checking (tsgo, svelte-check-rs, zvelte-check) |
+| Animation  | Lenis                  | Smooth scroll, RAF coordination in `raf.ts`                      |
+| Logging    | Pino                   | Structured logging in `logger.ts`                                |
+| Validation | Zod                    | Content schemas, input validation                                |
+| Deployment | Cloudflare             | Via @sveltejs/adapter-cloudflare                                 |
 
 ## 4. Commands
 
 - `bun run dev` - Start dev server
 - `bun run build` - Production build
 - `bun run preview` - Preview build
-- `bun run util:check` - Format, lint, types
+- `bun run util:check` - Format, lint, types (5-stage: format, lint, tsgo, svelte-check-rs, zvelte-check)
 - `bun run util:lint:fix` - Auto-fix lint
-- `bun run util:types` - Typecheck
+- `bun run util:types` - Typecheck (svelte-kit sync + tsgo)
+- `bun run util:types:svelte` - Svelte-specific types (svelte-check-rs)
+- `bun run util:types:zvelte` - Zvelte checker
 - `bun run util:clean` - Remove build and cache outputs
 
 ## 5. Architecture
 
 - Page shells in `src/routes`, slug pages in `src/routes/[slug]`, raw endpoints in `src/routes/[slug].md`, `src/routes/[slug].txt`, and `src/routes/api/raw/[format]/[slug]`
-- Site and CDN configuration in `src/lib/constants.ts`, logging and error helpers in `src/lib/logger.ts` and `src/lib/errors.ts`
+- Site and CDN configuration in `src/lib/constants.ts`, logging in `src/lib/logger.ts`, error helpers in `src/lib/errors.ts`
 - Global styles in `src/app.css` and `src/styles/*`, fonts in `src/styles/fonts.css`, static files under `static/`, media URLs from `CDN` in `src/lib/constants.ts`
+- **Content types**: 4 discriminated types in `content-types.ts` (study for client work, fragment for written pieces, signal for external links, meta for metadata pages) with Zod validation
+- **Animation system**: Centralized RAF task coordination in `raf.ts`, Lenis smooth scroll in `scroll.ts`, page transitions (650ms) in `transition.ts`
+- **Agent detection**: `hooks.server.ts` detects LLM bots (ClaudeBot, GPTBot, Perplexity, etc.) and redirects to plain text endpoints
 
 ## 6. Conventions
 
 - Use aliases `$lib`, `$app`, and `@` for `src`; relative imports only for CSS and scripts
 - TypeScript strict mode, no `any`, no `console`
 - No emojis in code, docs, or commits
+- **Component naming**: Prefix matches directory (Atomic*, Core*, Mdx\*, section names unprefixed)
+- **Animation**: 650ms page transitions, spring physics for parallax (stiffness 25, damping 12), respect `prefers-reduced-motion`, transform/opacity only, will-change managed dynamically
 - **Security**: Preserve CSP nonce generation and `<script>` nonce injection in `src/hooks.server.ts`, keep `csp-nonce` meta and `/empty.js` nonce script in `src/routes/+layout.svelte` with `src/routes/+layout.server.ts` data
 - **Headers**: Security headers (HSTS, permissions-policy, x-frame-options, referrer-policy) set in `src/hooks.server.ts`, do not weaken; 404 redirect rules for non-file paths live in `src/hooks.server.ts`
 - **Raw responses**: Raw text and markdown responses must keep `X-Robots-Tag: noindex` and cache headers in `src/lib/server/raw.ts`
@@ -78,9 +107,10 @@
 ## 7. Quality
 
 - No automated tests; manual QA required
-- Run `bun run dev` and load the home page; verify animations, overlays, and theme with no console errors
+- Run `bun run dev` and load the home page; verify animations, overlays, page transitions, and theme with no console errors
 - Visit a content page like `/patterns`; verify scroll CTA, overlays, and metadata
 - Request `/llms.txt` and one slug `.md` or `.txt`; confirm raw output, headers, and artifact injection
+- Test agent detection: `curl -A "ClaudeBot" https://u29dc.com/` should redirect to plain text
 - Check the head for `csp-nonce` and confirm scripts and styles receive the nonce; verify permissions-policy and HSTS headers
-- Finish with `bun run util:check`
-- Commits: Always use Conventional Commits format `type(scope): description` with body required, format as `type(scope): description` then newline then body with `- Item` bullets explaining the "why"; if commitlint.config.js exists read allowed types/scopes from there, otherwise use logical types (feat/fix/refactor/docs/chore/test) and derive scope from the area being modified
+- Finish with `bun run util:check` (must pass all 5 stages)
+- Commits: Conventional Commits format `type(scope): description` with body required; types [feat|fix|refactor|docs|style|chore|test|build|ci|perf|revert], scopes [core|ui|api|config|deps|types|utils|docs|ci|release]
