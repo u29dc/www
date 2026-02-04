@@ -24,7 +24,7 @@
 			number: "03",
 			title: "We work on what matters.",
 			description:
-				"Climate, infrastructure, advanced materials. Problems worth solving.",
+				"Climate, infrastructure, deeptech, advanced materials. Problems worth solving.",
 		},
 	];
 
@@ -93,7 +93,9 @@
 					>{axiom.number}</span
 				>
 				<div>
-					<h3 class="font-serif font-lg font-semibold">{axiom.title}</h3>
+					<h3 class="font-serif font-lg bold">
+						{axiom.title}
+					</h3>
 					<p class="mt-2 text-muted">{axiom.description}</p>
 				</div>
 			</article>

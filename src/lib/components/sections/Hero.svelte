@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { ChevronDown } from '@lucide/svelte';
-	import { onMount } from 'svelte';
-	import { CDN } from '$lib/constants';
+	import { ChevronDown } from "@lucide/svelte";
+	import { onMount } from "svelte";
+	import { CDN } from "$lib/constants";
 
 	const PARALLAX_FACTOR = 0.5; // image moves at half scroll speed
 
@@ -45,21 +45,21 @@
 			viewportHeight = window.innerHeight;
 		};
 
-		window.addEventListener('scroll', onScroll, { passive: true });
-		window.addEventListener('resize', onResize, { passive: true });
+		window.addEventListener("scroll", onScroll, { passive: true });
+		window.addEventListener("resize", onResize, { passive: true });
 		onScroll();
 		onResize();
 
 		return () => {
-			window.removeEventListener('scroll', onScroll);
-			window.removeEventListener('resize', onResize);
+			window.removeEventListener("scroll", onScroll);
+			window.removeEventListener("resize", onResize);
 		};
 	});
 </script>
 
 <!-- Fixed hero container -->
 <div class="fixed inset-0 z-0 h-screen overflow-hidden">
-	<!-- Parallax video (commented out for style testing) -->
+	<!-- Parallax video-->
 	<!-- <video
 		bind:this={videoRef}
 		src="{CDN.mediaUrl}_HERO.webm"
@@ -73,7 +73,6 @@
 		style="transform: translateY(-{parallaxY}px)"
 	></video> -->
 
-	<!-- Temporary image for style testing -->
 	<img
 		src="{CDN.mediaUrl}_HERO.webp"
 		alt=""
@@ -82,15 +81,22 @@
 	/>
 
 	<!-- White overlay that fades in as user scrolls -->
-	<div class="absolute inset-0 bg-white will-change-[opacity]" style="opacity: {overlayOpacity}" aria-hidden="true"></div>
+	<div
+		class="absolute inset-0 bg-white will-change-[opacity]"
+		style="opacity: {overlayOpacity}"
+		aria-hidden="true"
+	></div>
 
 	<!-- Content grid matching page layout -->
 	<div
 		class="relative z-10 grid-page h-full will-change-[opacity,transform]"
-		style="opacity: {contentOpacity}; transform: translateY(-{parallaxY * 0.3}px)"
+		style="opacity: {contentOpacity}; transform: translateY(-{parallaxY *
+			0.3}px)"
 	>
 		<div class="col-content flex h-full flex-col justify-center text-white">
-			<h1 class="font-serif font-2xl font-semibold">The technology works.<br class="sm:hidden" /> The story doesn't.</h1>
+			<h1 class="font-serif font-2xl bold">
+				The technology works.<br class="sm:hidden" /> The story doesn't.
+			</h1>
 		</div>
 	</div>
 
