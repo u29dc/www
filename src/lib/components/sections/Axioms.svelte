@@ -53,7 +53,7 @@
 
 <section id="axioms" class="col-content py-44">
 	<header class="mb-16">
-		<h2 class="font-mono text-muted">[ 04 AXIOMS ]</h2>
+		<p class="font-mono text-muted">[ 04 AXIOMS ]</p>
 	</header>
 
 	<div class="flex flex-col">
@@ -78,9 +78,9 @@
 					>{axiom.number}</span
 				>
 				<div>
-					<h3 class="font-serif font-lg font-bold">
+					<h2 class="font-serif font-lg font-bold">
 						{axiom.title}
-					</h3>
+					</h2>
 					<p class="mt-2 text-muted">{axiom.description}</p>
 				</div>
 			</article>

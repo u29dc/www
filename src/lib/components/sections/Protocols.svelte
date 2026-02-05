@@ -49,7 +49,7 @@
 
 <section id="protocols" class="col-content-wide py-44 content-visibility-auto">
 	<header class="mb-16">
-		<h2 class="font-mono text-muted">[ 02 PROTOCOLS ]</h2>
+		<p class="font-mono text-muted">[ 02 PROTOCOLS ]</p>
 	</header>
 
 	<div class="grid gap-4 md:grid-cols-3">
@@ -68,7 +68,7 @@
 					>
 						{protocol.subtitle}
 					</p>
-					<h3 class="font-subtitle mt-2">{protocol.title}</h3>
+					<h2 class="font-subtitle mt-2">{protocol.title}</h2>
 				</div>
 
 				<!-- Price -->

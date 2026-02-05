@@ -1,14 +1,14 @@
 <section id="signal" class="col-content py-44 content-visibility-auto">
 	<header class="mb-16">
-		<h2 class="font-mono text-muted">[ 01 SIGNAL ]</h2>
+		<p class="font-mono text-muted">[ 01 SIGNAL ]</p>
 	</header>
 
 	<div class="font-xl font-medium space-y-8">
-		<p class="font-serif font-2xl font-bold underline decoration-1 underline-offset-4">
+		<h2 class="font-serif font-2xl font-bold underline decoration-1 underline-offset-4">
 			Most companies building complex technology can explain what
 			they do.<br />
 			Fewer can make anyone feel why it matters.
-		</p>
+		</h2>
 
 		<p>
 			The explanation is fluent — the team is credible, the market is real.

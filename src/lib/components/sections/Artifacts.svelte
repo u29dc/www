@@ -71,7 +71,7 @@
 
 <section id="artifacts" class="col-content py-44">
 	<header class="mb-16">
-		<h2 class="font-mono text-muted">[ 03 ARTIFACTS ]</h2>
+		<p class="font-mono text-muted">[ 03 ARTIFACTS ]</p>
 	</header>
 
 	<div class="flex flex-col">
@@ -102,9 +102,9 @@
 							<span class="font-mono text-muted shrink-0"
 								>{formatYear(artifact.date)}</span
 							>
-							<h3 class="font-subtitle text-muted">
+							<h2 class="font-subtitle text-muted">
 								{artifact.title}
-							</h3>
+							</h2>
 							<span
 								class="font-mono text-muted/50 ml-auto shrink-0"
 								>{formatDate(artifact.date)}</span
@@ -119,7 +119,7 @@
 							<span class="font-mono text-muted shrink-0"
 								>{formatYear(artifact.date)}</span
 							>
-							<h3 class="font-subtitle">{artifact.title}</h3>
+							<h2 class="font-subtitle">{artifact.title}</h2>
 							<span
 								class="font-mono text-muted ml-auto shrink-0 hidden sm:inline"
 								>{formatDate(artifact.date)}</span
@@ -140,6 +140,8 @@
 									>
 										<img
 											src="{CDN.mediaUrl}{thumb.filename}"
+											width={Math.min(Math.round(THUMB_HEIGHT * thumb.ratio), 96)}
+											height={THUMB_HEIGHT}
 											alt="{artifact.title} preview"
 											loading="lazy"
 											decoding="async"

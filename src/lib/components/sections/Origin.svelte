@@ -90,7 +90,7 @@
 
 <section id="origin" class="col-content py-44">
 	<header class="mb-16">
-		<h2 class="font-mono text-muted">[ 05 ORIGIN ]</h2>
+		<p class="font-mono text-muted">[ 05 ORIGIN ]</p>
 	</header>
 
 	<div class="grid gap-8 md:grid-cols-[auto_1fr] md:gap-12">
@@ -115,7 +115,7 @@
 		</div>
 
 		<div class="flex flex-col gap-4">
-			<h3 class="font-subtitle">Han</h3>
+			<h2 class="font-subtitle">Han</h2>
 
 			<div class="space-y-4 leading-relaxed text-muted">
 				<p>
