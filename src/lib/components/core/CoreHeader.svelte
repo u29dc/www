@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import { page } from "$app/state";
-	import { ArrowLeft } from "@lucide/svelte";
+	import ArrowLeft from "@lucide/svelte/icons/arrow-left";
 	import AtomicBrandLogo from "$lib/components/atomic/AtomicBrandLogo.svelte";
 	import AtomicHeaderButton from "$lib/components/atomic/AtomicHeaderButton.svelte";
+	import { createActiveTracker } from "$lib/observe";
 
 	const sections = [
 		{ id: "signal", num: "01", name: "Signal" },
@@ -19,37 +20,57 @@
 	);
 
 	let activeSection = $state<string | null>(null);
+	let navRefs: HTMLAnchorElement[] = [];
+	let navContainer: HTMLElement | null = $state(null);
+	let lastLeft = $state('0px');
+	let lastWidth = $state('0px');
+
+	// Track position with effect (runs when activeSection changes)
+	$effect(() => {
+		if (!activeSection || !navContainer) return;
+
+		const index = sections.findIndex((s) => s.id === activeSection);
+		const el = navRefs[index];
+		if (!el) return;
+
+		const navRect = navContainer.getBoundingClientRect();
+		const elRect = el.getBoundingClientRect();
+		lastLeft = `${elRect.left - navRect.left}px`;
+		lastWidth = `${elRect.width}px`;
+	});
+
+	// Pure derived - no mutations
+	const indicatorStyle = $derived.by(() => {
+		if (!activeSection) {
+			return { opacity: 0, transform: 'scaleX(0)', left: lastLeft, width: lastWidth };
+		}
+		return {
+			opacity: 1,
+			transform: 'scaleX(1)',
+			left: lastLeft,
+			width: lastWidth,
+		};
+	});
 
 	onMount(() => {
 		if (isSlugPage) return;
 
-		const sectionElements = sections
-			.map(({ id }) => document.getElementById(id))
-			.filter((el): el is HTMLElement => el !== null);
-
-		const observer = new IntersectionObserver(
-			(entries) => {
-				for (const entry of entries) {
-					if (entry.isIntersecting) {
-						activeSection = entry.target.id;
-					}
-				}
+		const tracker = createActiveTracker(
+			sections.map(({ id }) => id),
+			(activeId) => {
+				activeSection = activeId;
 			},
-			{ threshold: 0.3, rootMargin: "-100px 0px -50% 0px" },
 		);
 
-		for (const el of sectionElements) {
-			observer.observe(el);
-		}
-
-		return () => observer.disconnect();
+		return () => tracker.disconnect();
 	});
 </script>
 
 <header class="fixed top-4 left-0 right-0 z-50 grid-page">
 	<nav
+		bind:this={navContainer}
 		aria-label="Main navigation"
-		class="col-content flex w-fit select-none items-center gap-2 rounded-lg bg-white/80 p-[5px] shadow-sm ring-1 ring-black/5 backdrop-blur-xl transition-all duration-300"
+		class="relative col-content flex w-fit select-none items-center gap-2 rounded-lg bg-white/80 p-[5px] shadow-sm ring-1 ring-black/5 backdrop-blur-xl transition-all duration-300"
 	>
 		{#if isSlugPage}
 			<!-- Back button -->
@@ -95,18 +116,24 @@
 				aria-hidden="true"
 			></div>
 
+			<!-- Sliding indicator -->
+			<div
+				class="pointer-events-none absolute top-[5px] h-[30px] rounded-md bg-black/5 transition-all duration-[var(--duration-breath)] ease-[var(--ease-settle)]"
+				style="left: {indicatorStyle.left}; width: {indicatorStyle.width}; opacity: {indicatorStyle.opacity}; transform: {indicatorStyle.transform};"
+				aria-hidden="true"
+			></div>
+
 			<!-- Section links -->
-			{#each sections as section}
-				<AtomicHeaderButton
+			{#each sections as section, i}
+				<a
+					bind:this={navRefs[i]}
 					href="#{section.id}"
-					class="hidden sm:inline-flex"
-					aria-current={activeSection === section.id
-						? "page"
-						: undefined}
+					class="z-10 hidden min-h-[30px] items-center rounded-md px-3 font-mono font-xs text-black/60 transition-colors focus-ring pressed-state hover:text-black sm:inline-flex {activeSection === section.id ? 'text-black' : ''}"
+					aria-current={activeSection === section.id ? "page" : undefined}
 				>
 					{section.num}
 					{section.name}
-				</AtomicHeaderButton>
+				</a>
 			{/each}
 		{/if}
 	</nav>
