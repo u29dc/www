@@ -45,8 +45,8 @@
 			document.documentElement.classList.remove("loader-active");
 		});
 
-		// Hold loader for 2 seconds + 500ms breathing space after progress completes
-		const holdDuration = 2500;
+		// Hold loader for 2.5s progress + 0.5s breathing space after progress completes
+		const holdDuration = 3000;
 
 		const timer = setTimeout(() => {
 			loader.complete();

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte";
+	import { page } from "$app/stores";
 	import { prefersReducedMotion } from "svelte/motion";
 	import { loader } from "$lib/loader.svelte";
 	import { registerRafTask } from "$lib/raf";
@@ -8,8 +9,8 @@
 	// Reactive opacity based on loader state
 	const opacity = $derived(loader.isActive ? 1 : 0);
 
-	// Duration matches page transition
-	const duration = TRANSITION.enterDuration;
+	// Loader fade-out duration: slower on home for dramatic effect, faster on slug pages
+	const duration = $derived($page.url.pathname === "/" ? 2000 : TRANSITION.enterDuration);
 
 	// Easing matches page transitions
 	const easing = "var(--ease-settle)";
@@ -17,14 +18,20 @@
 	// Skip animations for reduced motion users
 	const skipAnimation = $derived(prefersReducedMotion.current);
 
+	// Reveal animation version: 1 = blur+brightness only, 2 = scale+blur
+	const REVEAL_VERSION: 1 | 2 = 1;
+
+	// Tip opacity: visible during progress, fades out at completion
+	const tipOpacity = $derived(skipAnimation ? 0 : loader.progress >= 1 ? 0 : 1);
+
 	// Only use will-change during active state
 	const willChange = $derived(loader.isActive ? "opacity" : "auto");
 
 	// Pointer events: none after fade starts to not block interactions
 	const pointerEvents = $derived(loader.isActive ? "auto" : "none");
 
-	// Progress bar duration (matches hold duration in layout)
-	const progressDuration = 2000;
+	// Progress bar duration (2.5s progress + 0.5s hold = 3s total in layout)
+	const progressDuration = 2500;
 
 	// Text animation configuration
 	// Phase 1: 0-0.1 - fade in to initial squished/blurred state
@@ -83,11 +90,49 @@
 		// Phase 2: Reveal animation (0.1 to 0.5)
 		const p = getCharProgress(charIndex, progress);
 
-		// Scale: 0.1 -> 1 (scaleY), 1.5 -> 1 (scaleX)
+		if (REVEAL_VERSION === 1) {
+			// Effect 1: Blur + Brightness with lookahead window
+			const blur = 10 * (1 - p);
+			const brightness = p * 100;
+
+			// Lookahead: chars become visible only when near their animation start
+			const LOOKAHEAD_CHARS = 2;
+			const lookaheadWindow = LOOKAHEAD_CHARS * STAGGER_PER_CHAR;
+
+			let charOpacity: number;
+			if (progress < REVEAL_START) {
+				// During initial fade, only first few chars visible
+				const charStart = charIndex * STAGGER_PER_CHAR;
+				if (charStart > lookaheadWindow) {
+					charOpacity = 0;
+				} else {
+					charOpacity = fadeProgress * 0.3 * (1 - charStart / lookaheadWindow);
+				}
+			} else if (p === 0) {
+				// Not yet animating - check if within lookahead window
+				const revealProgress = (progress - REVEAL_START) / (REVEAL_END - REVEAL_START);
+				const charStart = charIndex * STAGGER_PER_CHAR;
+				const distance = charStart - revealProgress;
+
+				if (distance > lookaheadWindow) {
+					charOpacity = 0; // Too far ahead, invisible
+				} else if (distance > 0) {
+					// Within lookahead - fade in based on proximity
+					charOpacity = 0.3 * (1 - distance / lookaheadWindow);
+				} else {
+					charOpacity = 0.3; // At or past start point
+				}
+			} else {
+				// Animating - normal reveal
+				charOpacity = 0.3 + p * 0.7;
+			}
+
+			return `filter: blur(${blur}px) brightness(${brightness}%); opacity: ${charOpacity};`;
+		}
+
+		// Effect 2 (default): Scale + Blur - squished/stretched emergence
 		const scaleY = 0.1 + p * 0.9;
 		const scaleX = 1.5 - p * 0.5;
-
-		// Blur: 8px -> 0
 		const blur = 8 * (1 - p);
 
 		// Opacity: during fade phase go 0->0.5, during reveal go 0.5->1
@@ -156,6 +201,12 @@
 					style="transform: scaleX({loader.progress});"
 					aria-hidden="true"
 				></span>
+				<!-- Blurred leading edge tip for soft "painting" effect -->
+				<span
+					class="progress-tip absolute top-[calc(100%+0.5em)] h-px"
+					style="left: {loader.progress * 100}%; opacity: {tipOpacity};"
+					aria-hidden="true"
+				></span>
 			</h1>
 		</div>
 	</div>
@@ -168,11 +219,24 @@
 		transform-origin: center center;
 	}
 
+	.progress-tip {
+		width: 8px;
+		background: linear-gradient(to right, black, transparent);
+		filter: blur(2.5px);
+		transform: translateX(-100%);
+		transition: opacity 150ms ease-out;
+		pointer-events: none;
+	}
+
 	@media (prefers-reduced-motion: reduce) {
 		.char {
 			transform: none !important;
 			filter: none !important;
 			opacity: 1 !important;
+		}
+
+		.progress-tip {
+			display: none;
 		}
 	}
 </style>
