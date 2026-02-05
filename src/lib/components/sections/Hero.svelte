@@ -3,6 +3,7 @@
 	import { onMount } from "svelte";
 	import { prefersReducedMotion } from "svelte/motion";
 	import { CDN } from "$lib/constants";
+	import { loader } from "$lib/loader.svelte";
 	import { PARALLAX, SCROLL } from "$lib/motion";
 	import { registerRafTask } from "$lib/raf";
 	import { getInterpolatedScrollY } from "$lib/scroll";
@@ -60,6 +61,13 @@
 		window.addEventListener("resize", onResize, { passive: true });
 		onResize();
 
+		// Reset video to start when loader completes
+		loader.onComplete(() => {
+			if (videoRef) {
+				videoRef.currentTime = 0;
+			}
+		});
+
 		return () => {
 			rafTask.dispose();
 			window.removeEventListener("resize", onResize);
@@ -70,7 +78,7 @@
 <!-- Fixed hero container -->
 <div class="fixed inset-0 z-base h-screen overflow-hidden bg-black">
 	<!-- Parallax video-->
-	<!-- <video
+	<video
 		bind:this={videoRef}
 		src="{CDN.mediaUrl}_HERO.webm"
 		autoplay
@@ -79,29 +87,36 @@
 		playsinline
 		disablepictureinpicture
 		preload="auto"
-		class="pointer-events-none absolute inset-0 h-[calc(100%+25vh)] w-full object-cover grayscale will-change-transform"
-		style="transform: translateY(-{parallaxY}px)"
-	></video> -->
+		class="pointer-events-none absolute inset-0 h-[calc(100%+25vh)] w-full object-cover grayscale transform-gpu"
+		style="transform: translateY(-{parallaxY}px); will-change: {willChangeActive
+			? 'transform'
+			: 'auto'}"
+	></video>
 
-	<img
+	<!-- <img
 		src="{CDN.mediaUrl}_HERO.webp"
 		alt=""
 		fetchpriority="high"
 		class="pointer-events-none absolute inset-0 h-[calc(100%+25vh)] w-full object-cover grayscale transform-gpu"
 		style="transform: translateY(-{parallaxY}px); will-change: {willChangeActive ? 'transform' : 'auto'}"
-	/>
+	/> -->
 
 	<!-- White overlay that fades in as user scrolls -->
 	<div
 		class="absolute inset-0 bg-white"
-		style="opacity: {overlayOpacity}; will-change: {willChangeActive ? 'opacity' : 'auto'}"
+		style="opacity: {overlayOpacity}; will-change: {willChangeActive
+			? 'opacity'
+			: 'auto'}"
 		aria-hidden="true"
 	></div>
 
 	<!-- Content grid matching page layout -->
 	<div
 		class="relative z-content grid-page h-full"
-		style="opacity: {contentOpacity}; transform: translateY(-{scrollY * PARALLAX.heroContent}px); will-change: {willChangeActive ? 'opacity, transform' : 'auto'}"
+		style="opacity: {contentOpacity}; transform: translateY(-{scrollY *
+			PARALLAX.heroContent}px); will-change: {willChangeActive
+			? 'opacity, transform'
+			: 'auto'}"
 	>
 		<div class="col-content flex h-full flex-col justify-center text-white">
 			<h1 class="font-serif font-2xl bold">
@@ -115,7 +130,10 @@
 		type="button"
 		onclick={scrollToSignal}
 		class="absolute inset-x-0 bottom-8 z-content flex cursor-pointer justify-center rounded-full text-white focus-ring md:bottom-[120px] md:grid-page md:justify-start"
-		style="opacity: {Math.max(0, 1 - progress * 3)}; will-change: {willChangeActive ? 'opacity' : 'auto'}"
+		style="opacity: {Math.max(
+			0,
+			1 - progress * 3,
+		)}; will-change: {willChangeActive ? 'opacity' : 'auto'}"
 		aria-label="Scroll to next section"
 	>
 		<div class="md:col-content">

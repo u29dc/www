@@ -147,6 +147,12 @@
 		@apply scrollbar-hidden;
 	}
 
+	/* Block scroll during initial loader */
+	html.loader-active,
+	html.loader-active body {
+		overflow: hidden;
+	}
+
 	img,
 	video {
 		@apply pointer-events-none;

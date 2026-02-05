@@ -2,14 +2,25 @@
 	import type { Snippet } from "svelte";
 	import { goto, beforeNavigate, afterNavigate } from "$app/navigation";
 	import { prefersReducedMotion } from "svelte/motion";
-	import { TRANSITION } from "$lib/transition";
+	import { loader } from "$lib/loader.svelte";
 	import { resetScroll } from "$lib/scroll";
+	import { TRANSITION } from "$lib/transition";
 
 	let { children }: { children: Snippet } = $props();
 
 	type Phase = "idle" | "exiting" | "entering";
 	let phase = $state<Phase>("idle");
 	let pendingUrl: string | null = $state(null);
+
+	// Track initial load state: content starts hidden until loader completes
+	let initialRevealComplete = $state(loader.hasCompleted);
+
+	// Listen for loader completion
+	$effect(() => {
+		if (!initialRevealComplete && loader.hasCompleted) {
+			initialRevealComplete = true;
+		}
+	});
 
 	beforeNavigate(({ to, cancel, willUnload }) => {
 		// Skip for external links, reduced motion, or if already exiting
@@ -53,7 +64,9 @@
 	});
 
 	// Opacity-only transition (no transform to preserve fixed positioning)
-	const opacity = $derived(phase === "exiting" ? 0 : 1);
+	// Initial load: wait for loader to complete before showing content
+	// Page transitions: existing exiting/entering logic
+	const opacity = $derived(!initialRevealComplete ? 0 : phase === "exiting" ? 0 : 1);
 	const duration = $derived(
 		phase === "exiting"
 			? TRANSITION.exitDuration
@@ -63,7 +76,8 @@
 	// Exit: quickly begins fading, gently disappears (no lingering)
 	// Enter: quickly appears, gently settles (immediate feedback)
 	const easing = "var(--ease-settle)";
-	const willChange = $derived(phase !== "idle" ? "opacity" : "auto");
+	// Apply will-change during transitions or initial reveal
+	const willChange = $derived(phase !== "idle" || !initialRevealComplete ? "opacity" : "auto");
 </script>
 
 <div

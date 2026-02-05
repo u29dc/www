@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from "svelte";
 	import type { Snippet } from "svelte";
 	import { observeVisibility } from "$lib/observe";
 
@@ -35,7 +36,7 @@
 		children,
 	}: Props = $props();
 
-	let isVisible = $state(!animated);
+	let isVisible = $state(untrack(() => !animated));
 
 	const applyCurve = (progress: number, selected: BlurCurve): number => {
 		switch (selected) {
