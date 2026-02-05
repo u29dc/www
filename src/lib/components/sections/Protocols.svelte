@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { ArrowRight, Lock } from "@lucide/svelte";
+	import ArrowRight from "@lucide/svelte/icons/arrow-right";
+	import Lock from "@lucide/svelte/icons/lock";
 
 	interface Protocol {
 		title: string;
