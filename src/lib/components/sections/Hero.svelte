@@ -68,7 +68,7 @@
 </script>
 
 <!-- Fixed hero container -->
-<div class="fixed inset-0 z-base h-screen overflow-hidden">
+<div class="fixed inset-0 z-base h-screen overflow-hidden bg-black">
 	<!-- Parallax video-->
 	<!-- <video
 		bind:this={videoRef}
