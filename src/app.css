@@ -52,6 +52,20 @@
 	--duration-pulse: 100ms;
 	--duration-breath: 200ms;
 	--duration-passage: 400ms;
+
+	/*
+	 * Z-index semantic scale
+	 * --z-base: backgrounds and base content (hero bg)
+	 * --z-content: primary content and hero elements
+	 * --z-overlay: scroll indicators, floating UI
+	 * --z-blur: gradient blur effects
+	 * --z-chrome: fixed header, grain overlay, skip links
+	 */
+	--z-base: 0;
+	--z-content: 10;
+	--z-overlay: 20;
+	--z-blur: 40;
+	--z-chrome: 50;
 }
 
 :root {
@@ -117,6 +131,20 @@
 /* ================================================== */
 /* TYPOGRAPHY */
 /* ================================================== */
+
+/*
+ * Typography scale (base: 10px for rem math)
+ * Practical scale optimized for readability at each step
+ *
+ * | Step     | Size     | Computed | Use case              |
+ * |----------|----------|----------|-----------------------|
+ * | font-xs  | 0.9rem   | 9px      | Labels, captions      |
+ * | font-sm  | 1.2rem   | 12px     | Body text (default)   |
+ * | font-md  | 1.3rem   | 13px     | Subheadings           |
+ * | font-lg  | 1.5rem   | 15px     | Section headers       |
+ * | font-xl  | 2.0rem   | 20px     | Page titles           |
+ * | font-2xl | 2.5rem   | 25px     | Hero text             |
+ */
 
 @utility font-2xl {
 	font-size: 2.5rem;
