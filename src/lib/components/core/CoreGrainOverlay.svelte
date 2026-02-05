@@ -4,6 +4,7 @@
 	import { logEvent } from "$lib/logger";
 	import { observeVisibility } from "$lib/observe";
 	import { registerRafTask } from "$lib/raf";
+	import { shouldDisableGrainOverlay } from "$lib/webgl";
 
 	export interface CoreGrainOverlayProps {
 		/** Grain intensity (0-1 range, default 0.25) */
@@ -57,6 +58,24 @@
 		dispose(): void;
 	}
 
+	/**
+	 * Shader uniform names for the grain overlay WebGL renderer.
+	 *
+	 * Resolution/timing uniforms:
+	 * - u_resolution: Canvas size in physical pixels
+	 * - u_time: Animation time for temporal variation (multiplied by animationSpeed)
+	 *
+	 * Grain control uniforms:
+	 * - u_intensity: Overall grain visibility (0-1 range, theme-adjusted)
+	 * - u_exposure: Alpha multiplier for final grain opacity
+	 * - u_grainRepeat: How many times blue noise texture tiles across canvas
+	 * - u_scrambleOffset: Per-frame UV offset using golden angle sequence
+	 * - u_lowFreqSeed: Random seed for low-frequency temporal variation
+	 * - u_chromaticVariance: Per-channel color jitter amount
+	 *
+	 * Texture uniforms:
+	 * - u_blueNoise: 64x64 RGBA blue noise texture for high-quality grain
+	 */
 	const UNIFORM_NAMES = [
 		"u_resolution",
 		"u_time",
@@ -94,49 +113,74 @@ uniform float u_lowFreqSeed;
 
 out vec4 fragColor;
 
+// -----------------------------------------------------------------
+// Hash function: pseudo-random scalar from 2D input.
+// Used for temporal jitter generation. Output range [0, 1].
+// -----------------------------------------------------------------
 float hash(vec2 p) {
 	vec3 p3 = fract(vec3(p.xyx) * 0.1031);
 	p3 += dot(p3, p3.yzx + 33.33);
 	return fract((p3.x + p3.y) * p3.z);
 }
 
+// -----------------------------------------------------------------
+// Blue noise sampling: reads from precomputed 64x64 texture.
+// Blue noise has better spectral properties than white noise,
+// producing visually pleasing, non-clumping grain patterns.
+// Output remapped from [0,1] to [-1,1] for signed grain values.
+// -----------------------------------------------------------------
 float sampleBlueNoise(vec2 uv) {
 	return texture(u_blueNoise, uv).r * 2.0 - 1.0;
 }
 
 void main() {
+	// --- UV COORDINATE SETUP ---
 	vec2 pixelUV = gl_FragCoord.xy / u_resolution;
 	vec2 repeat = u_grainRepeat;
 	vec2 grainUV = pixelUV * repeat + u_scrambleOffset;
 
+	// --- TEMPORAL JITTER ---
+	// Low-frequency hash values create smooth frame-to-frame variation.
+	// Different time multipliers prevent synchronized patterns.
 	float timeHashA = hash(vec2(u_time * 0.0003, u_lowFreqSeed * 1.37));
 	float timeHashB = hash(vec2(u_time * 0.0005, u_lowFreqSeed * 3.11));
 	vec2 temporalJitter = vec2(timeHashA, timeHashB) * 2.0 - 1.0;
 
+	// --- MULTI-OCTAVE GRAIN SAMPLING ---
+	// Four samples at different scales create organic grain texture.
+	// Irrational multipliers (1.231, 1.613, 2.233) avoid tiling artifacts.
 	float grainA = sampleBlueNoise(grainUV);
 	float grainB = sampleBlueNoise(grainUV * 1.231 + temporalJitter);
 	float grainC = sampleBlueNoise(grainUV * 1.613 - temporalJitter.yx);
 	float grainD = sampleBlueNoise(grainUV * 2.233 + temporalJitter.xx * 3.7);
-	float grain = (grainA + grainB + grainC + grainD) * 0.25;
+	float grain = (grainA + grainB + grainC + grainD) * 0.25;  // Average
 
+	// --- MICRO DETAIL LAYER ---
+	// High-frequency sample adds fine texture, mixed at 50% blend.
 	float microDetail = sampleBlueNoise(grainUV * 3.97 + vec2(temporalJitter.y, temporalJitter.x) * 4.3);
 	grain = mix(grain, grain + microDetail * 0.18, 0.5);
 	grain = clamp(grain, -1.0, 1.0);
 
+	// --- CHROMATIC VARIANCE ---
+	// Per-channel noise creates subtle RGB separation (film-like).
+	// Prime-like UV offsets ensure channels are uncorrelated.
 	vec3 chromaticGrain = vec3(grain);
 	vec3 chromaJitter = vec3(
-		sampleBlueNoise(grainUV + vec2(13.37, 7.11)),
-		sampleBlueNoise(grainUV * 1.389 - vec2(11.71, 3.57)),
-		sampleBlueNoise(grainUV * 0.923 + vec2(-5.97, 9.61))
+		sampleBlueNoise(grainUV + vec2(13.37, 7.11)),      // R channel
+		sampleBlueNoise(grainUV * 1.389 - vec2(11.71, 3.57)),  // G channel
+		sampleBlueNoise(grainUV * 0.923 + vec2(-5.97, 9.61))   // B channel
 	);
 	chromaticGrain += (chromaJitter * 0.5) * u_chromaticVariance;
 	chromaticGrain = clamp(chromaticGrain, -1.0, 1.0);
 
+	// --- INTENSITY & EXPOSURE ---
 	float intensity = clamp(u_intensity, 0.0, 1.0);
 	chromaticGrain *= intensity;
 
+	// Remap signed grain [-1,1] to color space [0,1]
 	vec3 finalColor = chromaticGrain * 0.5 + 0.5;
 
+	// Alpha derived from grain amplitude (brighter grain = more visible)
 	float amplitude = dot(abs(chromaticGrain), vec3(1.0 / 3.0));
 	float alpha = clamp(amplitude * mix(0.85, 1.35, clamp(u_exposure, 0.0, 1.0)), 0.0, 0.9);
 
@@ -799,6 +843,16 @@ void main() {
 	onMount(() => {
 		deviceTier = detectDeviceTier();
 
+		// Skip grain overlay entirely on low-tier devices to reduce GPU pressure
+		// from dual WebGL contexts (logo + grain). Logo is essential; grain is not.
+		if (shouldDisableGrainOverlay()) {
+			webglFailed = true;
+			logEvent("grain-overlay", "skip", "LOW_TIER", {
+				reason: "Disabled on low-tier device to reduce GPU pressure",
+			});
+			return () => {};
+		}
+
 		const motionQuery = window.matchMedia(
 			"(prefers-reduced-motion: reduce)",
 		);
@@ -915,7 +969,7 @@ void main() {
 {#if !webglFailed}
 	<canvas
 		bind:this={canvasRef}
-		class={`pointer-events-none fixed inset-0 z-50 ${classValue}`}
+		class={`pointer-events-none fixed inset-0 z-chrome ${classValue}`}
 		style={canvasStyle}
 		data-animate
 		aria-hidden="true"

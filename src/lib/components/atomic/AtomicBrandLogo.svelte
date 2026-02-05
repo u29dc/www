@@ -61,6 +61,31 @@
 		dispose(): void;
 	}
 
+	/**
+	 * Shader uniform names for the brand logo WebGL renderer.
+	 *
+	 * Geometry uniforms:
+	 * - u_resolution: Canvas size in physical pixels
+	 * - u_pixelRatio: Device pixel ratio for coordinate scaling
+	 * - u_rectWidth, u_rectHeight: Logo rectangle dimensions in normalized coordinates
+	 * - u_roundness: Corner radius for the right side of the rectangle (SDF parameter)
+	 *
+	 * Blur/glow uniforms:
+	 * - u_blurStart: X-coordinate threshold where left-side blur begins (0-1 range)
+	 * - u_defaultBlurIntensity: Base blur amount for left gradient
+	 * - u_mouseBlurSize: Radius of mouse-influenced blur circle
+	 * - u_mouseBlurIntensity: Strength of mouse-influenced blur
+	 * - u_widthSpreadMultiplier, u_heightSpreadMultiplier: Halo expansion factors
+	 *
+	 * Interaction uniforms:
+	 * - u_mouse: Cursor position in CSS pixels (damped)
+	 *
+	 * Visual uniforms:
+	 * - u_color: RGB fill color (theme-dependent)
+	 * - u_noiseIntensity: Grain amplitude
+	 * - u_noiseScale: Grain size in pixels
+	 * - u_time: Animation time for animated noise
+	 */
 	const UNIFORM_NAMES = [
 		"u_mouse",
 		"u_resolution",
@@ -112,27 +137,45 @@ uniform float u_noiseIntensity;
 uniform float u_noiseScale;
 uniform float u_time;
 
+// -----------------------------------------------------------------
+// Hash function: converts 2D input to pseudo-random scalar
+// Uses fract-based scrambling with prime-like multipliers for
+// good distribution. Output range [0, 1].
+// -----------------------------------------------------------------
 float hash(vec2 p) {
 	vec3 p3 = fract(vec3(p.xyx) * 0.1031);
 	p3 += dot(p3, p3.yzx + 33.33);
 	return fract((p3.x + p3.y) * p3.z);
 }
 
+// -----------------------------------------------------------------
+// Value noise: smooth interpolation of hash values at grid corners.
+// Uses Hermite smoothing (3t^2 - 2t^3) for C1 continuity.
+// Output range [0, 1].
+// -----------------------------------------------------------------
 float noise(vec2 p) {
-	vec2 i = floor(p);
-	vec2 f = fract(p);
-	vec2 u = f * f * (3.0 - 2.0 * f);
+	vec2 i = floor(p);          // Integer grid cell
+	vec2 f = fract(p);          // Fractional position within cell
+	vec2 u = f * f * (3.0 - 2.0 * f);  // Hermite smoothstep
 
+	// Sample hash at four grid corners
 	float a = hash(i);
 	float b = hash(i + vec2(1.0, 0.0));
 	float c = hash(i + vec2(0.0, 1.0));
 	float d = hash(i + vec2(1.0, 1.0));
 
+	// Bilinear interpolation
 	return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
 }
 
+// -----------------------------------------------------------------
+// Coordinate normalization: maps pixel coordinates to normalized
+// space with aspect ratio correction. Centers origin and flips X
+// for left-to-right blur gradient direction.
+// -----------------------------------------------------------------
 vec2 coord(in vec2 p) {
 	p = p / u_resolution.xy;
+	// Aspect ratio correction: expand shorter axis to fill [0,1]
 	if (u_resolution.x > u_resolution.y) {
 		p.x *= u_resolution.x / u_resolution.y;
 		p.x += (u_resolution.y - u_resolution.x) / u_resolution.y / 2.0;
@@ -140,32 +183,52 @@ vec2 coord(in vec2 p) {
 		p.y *= u_resolution.y / u_resolution.x;
 		p.y += (u_resolution.x - u_resolution.y) / u_resolution.x / 2.0;
 	}
-	p -= 0.5;
-	p *= vec2(-1.0, 1.0);
+	p -= 0.5;              // Center origin
+	p *= vec2(-1.0, 1.0);  // Flip X for blur gradient direction
 	return p;
 }
 
+// -----------------------------------------------------------------
+// Signed Distance Function: rounded rectangle with asymmetric corners.
+// Right side has rounded corners (radius = rightRadius), left is sharp.
+// Scale factor 4.2 maps normalized coords to logo proportions.
+// Returns: negative inside, zero on edge, positive outside.
+// -----------------------------------------------------------------
 float sdRoundRectCorners(vec2 p, vec2 b, float rightRadius) {
-	vec2 centered = (p - 0.5) * 4.2;
+	vec2 centered = (p - 0.5) * 4.2;  // Scale to logo coordinate space
 
+	// Apply radius only to left side (centered.x < 0 after flip)
 	float r = 0.0;
 	if (centered.x < 0.0) {
 		r = rightRadius;
 	}
 
+	// Standard rounded box SDF formula
 	vec2 d = abs(centered) - b + vec2(r);
 	return min(max(d.x, d.y), 0.0) + length(max(d, 0.0)) - r;
 }
 
+// -----------------------------------------------------------------
+// Circle SDF for mouse blur effect: simple distance from center.
+// -----------------------------------------------------------------
 float sdCircle(in vec2 st, in vec2 center) {
 	return length(st - center) * 2.0;
 }
 
+// -----------------------------------------------------------------
+// Anti-aliased step: uses screen-space derivatives for smooth edges.
+// The magic number 0.707... is 1/sqrt(2) for diagonal gradient length.
+// -----------------------------------------------------------------
 float aastep(float threshold, float value) {
 	float afwidth = length(vec2(dFdx(value), dFdy(value))) * 0.70710678118654757;
 	return smoothstep(threshold - afwidth, threshold + afwidth, value);
 }
 
+// -----------------------------------------------------------------
+// Fill functions: convert SDF to alpha mask.
+// - fill(x): hard fill with anti-aliasing
+// - fill(x, size, edge): soft fill with controllable blur edge
+// -----------------------------------------------------------------
 float fill(in float x) {
 	return 1.0 - aastep(0.0, x);
 }
@@ -178,24 +241,32 @@ void main() {
 	vec2 st = coord(gl_FragCoord.xy) + 0.5;
 	vec2 posMouse = coord(u_mouse * u_pixelRatio) * vec2(1.0, -1.0) + 0.5;
 
+	// --- LEFT-SIDE BLUR GRADIENT ---
+	// Creates blur that increases toward left edge (low st.x values)
 	float horizontalBlur = 0.0;
 	float rightGradient = 0.0;
 	if (st.x < u_blurStart) {
 		float gradient = smoothstep(u_blurStart, 0.0, st.x);
-		horizontalBlur = pow(gradient, 2.0) * u_defaultBlurIntensity;
-		rightGradient = gradient;
+		horizontalBlur = pow(gradient, 2.0) * u_defaultBlurIntensity;  // Quadratic falloff
+		rightGradient = gradient;  // Used for halo spread calculation
 	}
 
+	// --- MOUSE-INFLUENCED BLUR ---
+	// Circular blur region follows cursor, modulated by position in blur zone
 	float mouseBlurBase = fill(sdCircle(st, posMouse), u_mouseBlurSize, 1.0) * u_mouseBlurIntensity;
 	float mouseBlurModulated = mouseBlurBase * mix(0.1, 1.0, rightGradient);
 
+	// --- COMBINED BLUR & SPREAD ---
 	float combinedBlur = clamp(horizontalBlur + mouseBlurModulated, 0.0, 1.0);
-	float spreadFactor = pow(combinedBlur * rightGradient, 1.0);
+	float spreadFactor = pow(combinedBlur * rightGradient, 1.0);  // Halo expansion amount
 
+	// --- BASE LOGO SDF ---
 	vec2 rectSize = vec2(u_rectWidth, u_rectHeight);
 	float baseSdf = sdRoundRectCorners(st, rectSize, u_roundness);
 	float baseAlpha = fill(baseSdf, 0.0, combinedBlur);
 
+	// --- EXPANDED HALO ---
+	// Larger, more rounded rectangle for glow effect
 	float widthSpread = spreadFactor * u_widthSpreadMultiplier;
 	float heightSpread = spreadFactor * u_heightSpreadMultiplier;
 	vec2 expandedSize = vec2(u_rectWidth + widthSpread, u_rectHeight + heightSpread);
@@ -205,12 +276,16 @@ void main() {
 	float haloEdge = clamp(combinedBlur + spreadFactor * 0.35, 0.0, 1.3);
 	float haloAlpha = fill(expandedSdf, 0.0, haloEdge);
 
+	// --- FINAL ALPHA ---
+	// Blend base and halo, weighted by position in blur zone
 	float alphaCombined = max(baseAlpha, haloAlpha);
 	float alpha = mix(baseAlpha, alphaCombined, clamp(rightGradient, 0.0, 1.0));
 
+	// --- GRAIN OVERLAY ---
+	// Value noise scaled to pixel coordinates for film-like texture
 	vec2 noiseCoord = gl_FragCoord.xy / u_noiseScale;
 	float grainValue = noise(noiseCoord);
-	grainValue = (grainValue - 0.5) * 2.0;
+	grainValue = (grainValue - 0.5) * 2.0;  // Remap [0,1] to [-1,1]
 	float grain = grainValue * u_noiseIntensity;
 
 	vec3 noisyColor = clamp(u_color + vec3(grain), 0.0, 1.0);
