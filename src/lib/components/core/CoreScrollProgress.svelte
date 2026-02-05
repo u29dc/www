@@ -2,7 +2,7 @@
 	import { onMount } from "svelte";
 	import { prefersReducedMotion } from "svelte/motion";
 	import { registerRafTask } from "$lib/raf";
-	import { getInterpolatedScrollY, resetScroll } from "$lib/scroll";
+	import { getInterpolatedScrollY, smoothScrollToTop } from "$lib/scroll";
 	import { type SpringState, SPRING_UI, spring } from "$lib/springs";
 
 	export interface CoreScrollProgressProps {
@@ -28,7 +28,7 @@
 	);
 
 	const handleBackToTop = () => {
-		resetScroll();
+		smoothScrollToTop();
 	};
 
 	onMount(() => {
@@ -83,7 +83,7 @@
 		<button
 			type="button"
 			onclick={handleBackToTop}
-			class="pointer-events-auto -m-2 p-2 font-mono text-[10px] tracking-wider text-black/60 transition-colors duration-150 hover:text-black focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
+			class="pointer-events-auto -m-2 cursor-pointer p-2 font-mono text-[10px] tracking-wider text-black/60 transition-colors duration-150 hover:text-black focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
 			aria-label="Scroll to top"
 		>
 			TOP

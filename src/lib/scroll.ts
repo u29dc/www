@@ -35,3 +35,29 @@ export const resetScroll = () => {
 		window.scrollTo(0, 0);
 	}
 };
+
+/**
+ * Smooth scroll to top with Lenis animation.
+ * Used for user-initiated scroll-to-top actions.
+ */
+export const smoothScrollToTop = () => {
+	if (instance) {
+		instance.scrollTo(0);
+	} else {
+		window.scrollTo({ top: 0, behavior: 'smooth' });
+	}
+};
+
+/**
+ * Stop/pause scroll. Used during initial loader to prevent scrolling.
+ */
+export const stopScroll = () => {
+	instance?.stop();
+};
+
+/**
+ * Start/resume scroll. Called when loader completes.
+ */
+export const startScroll = () => {
+	instance?.start();
+};
