@@ -1,8 +1,8 @@
 import { SITE } from '$lib/constants';
 import { isStudy } from '$lib/content-types';
 import { createErrorResponse, ForbiddenError, NotFoundError, ProcessingError, ValidationError } from '$lib/errors';
-import { logEvent } from '$lib/logger';
 import { formatStudyArtifactsAsMarkdown, getContentBySlug, getStudyArtifacts, injectArtifactsIntoLlms, toMarkdown } from '$lib/server/content';
+import { logEvent } from '$lib/server/logger';
 import { validateSlug } from '$lib/server/validators';
 
 export async function handleRawContentRequest(format: string, rawSlug: string): Promise<Response> {

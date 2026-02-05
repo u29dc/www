@@ -1,5 +1,5 @@
 import { ValidationError } from '$lib/errors';
-import { logEvent } from '$lib/logger';
+import { logEvent } from '$lib/server/logger';
 
 const SLUG_PATTERN = /^[a-z0-9-]+$/;
 

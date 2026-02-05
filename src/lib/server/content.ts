@@ -13,7 +13,7 @@ import { unified } from 'unified';
 import { CDN } from '$lib/constants';
 import { type ContentItem, ContentSchema, isStudy, type ParsedContent } from '$lib/content-types';
 import { NotFoundError } from '$lib/errors';
-import { logEvent } from '$lib/logger';
+import { logEvent } from '$lib/server/logger';
 
 type MdxEntry = {
 	filePath: string;

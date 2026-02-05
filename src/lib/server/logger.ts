@@ -1,4 +1,5 @@
-import { browser, dev } from '$app/environment';
+import pino from 'pino';
+import { dev } from '$app/environment';
 
 export type LogMeta = Record<string, unknown>;
 
@@ -9,39 +10,40 @@ export interface LoggerInstance {
 	child(bindings: LogMeta): LoggerInstance;
 }
 
-/** Client-safe logger stub - console in dev, silent in prod */
-class ClientLoggerStub implements LoggerInstance {
-	private bindings: LogMeta;
+class PinoLoggerWrapper implements LoggerInstance {
+	private pinoLogger: pino.Logger;
 
-	constructor(bindings: LogMeta = {}) {
-		this.bindings = bindings;
-	}
-
-	private shouldLog(): boolean {
-		return dev && browser;
+	constructor(pinoLogger: pino.Logger) {
+		this.pinoLogger = pinoLogger;
 	}
 
 	info(message: string, meta?: LogMeta): void {
-		// biome-ignore lint/suspicious/noConsole: intentional logging for dev debugging
-		if (this.shouldLog()) console.info(message, { ...this.bindings, ...meta });
+		this.pinoLogger.info(meta, message);
 	}
 
 	warn(message: string, meta?: LogMeta): void {
-		// biome-ignore lint/suspicious/noConsole: intentional logging for dev debugging
-		if (this.shouldLog()) console.warn(message, { ...this.bindings, ...meta });
+		this.pinoLogger.warn(meta, message);
 	}
 
 	error(message: string, error?: unknown, meta?: LogMeta): void {
-		// biome-ignore lint/suspicious/noConsole: intentional logging for dev debugging
-		if (this.shouldLog()) console.error(message, error, { ...this.bindings, ...meta });
+		const errorData =
+			error instanceof Error
+				? {
+						name: error.name,
+						message: error.message,
+						stack: error.stack,
+					}
+				: { message: String(error) };
+
+		this.pinoLogger.error({ ...meta, error: errorData }, message);
 	}
 
 	child(bindings: LogMeta): LoggerInstance {
-		return new ClientLoggerStub({ ...this.bindings, ...bindings });
+		return new PinoLoggerWrapper(this.pinoLogger.child(bindings));
 	}
 }
 
-export const logger = new ClientLoggerStub();
+export const logger = new PinoLoggerWrapper(pino({ level: dev ? 'debug' : 'info' }));
 
 export function logEvent(domain: string, action: string, result: string, data?: LogMeta): void {
 	const message = `[${domain}|${action}|${result}]`;

@@ -1,4 +1,4 @@
-import { logEvent } from '$lib/logger';
+import { logEvent } from '$lib/server/logger';
 
 export interface ErrorResponseOptions {
 	format?: 'json' | 'text';

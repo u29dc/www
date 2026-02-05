@@ -1,7 +1,7 @@
 import { SITE } from '$lib/constants';
 import { isStudy } from '$lib/content-types';
-import { logEvent } from '$lib/logger';
 import { getAllContent } from '$lib/server/content';
+import { logEvent } from '$lib/server/logger';
 
 type ManifestIcon = {
 	src: string;
