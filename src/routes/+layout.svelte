@@ -6,6 +6,7 @@
 	import CoreHeader from "$lib/components/core/CoreHeader.svelte";
 	import CorePageTransition from "$lib/components/core/CorePageTransition.svelte";
 	import CoreScrollLine from "$lib/components/core/CoreScrollLine.svelte";
+	import CoreScrollProgress from "$lib/components/core/CoreScrollProgress.svelte";
 	import CoreSmoothScroll from "$lib/components/core/CoreSmoothScroll.svelte";
 	import CoreViewportFix from "$lib/components/core/CoreViewportFix.svelte";
 	import { CDN, SITE } from "$lib/constants";
@@ -54,7 +55,7 @@
 
 <a
 	href="#main-content"
-	class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:rounded focus:bg-surface focus:px-4 focus:py-2 focus:text-ink focus:ring-2 focus:ring-ink"
+	class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-chrome focus:rounded focus:bg-surface focus:px-4 focus:py-2 focus:text-ink focus:ring-2 focus:ring-ink"
 >
 	Skip to main content
 </a>
@@ -78,6 +79,7 @@
 	/>
 	<CoreHeader />
 	<CoreScrollLine />
+	<CoreScrollProgress />
 	<CoreGrainOverlay
 		intensity={0.5}
 		grainScale={10.0}

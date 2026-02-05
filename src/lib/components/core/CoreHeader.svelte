@@ -66,7 +66,7 @@
 	});
 </script>
 
-<header class="fixed top-4 left-0 right-0 z-50 grid-page">
+<header class="fixed top-4 left-0 right-0 z-chrome grid-page">
 	<nav
 		bind:this={navContainer}
 		aria-label="Main navigation"
@@ -128,7 +128,7 @@
 				<a
 					bind:this={navRefs[i]}
 					href="#{section.id}"
-					class="z-10 hidden min-h-[30px] items-center rounded-md px-3 font-mono font-xs text-black/60 transition-colors focus-ring pressed-state hover:text-black sm:inline-flex {activeSection === section.id ? 'text-black' : ''}"
+					class="z-content hidden min-h-[30px] items-center rounded-md px-3 font-mono font-xs text-black/60 transition-colors focus-ring pressed-state hover:text-black sm:inline-flex {activeSection === section.id ? 'text-black' : ''}"
 					aria-current={activeSection === section.id ? "page" : undefined}
 				>
 					{section.num}

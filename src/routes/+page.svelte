@@ -20,7 +20,7 @@
 <Hero />
 
 <!-- Content wrapper: establishes stacking context above fixed hero -->
-<div class="relative z-10 grid-section-full">
+<div class="relative z-content grid-section-full">
 	<Signal />
 	<Protocols />
 	<Artifacts artifacts={data.artifacts} />

@@ -68,7 +68,7 @@
 </script>
 
 <!-- Fixed hero container -->
-<div class="fixed inset-0 z-0 h-screen overflow-hidden">
+<div class="fixed inset-0 z-base h-screen overflow-hidden">
 	<!-- Parallax video-->
 	<!-- <video
 		bind:this={videoRef}
@@ -100,7 +100,7 @@
 
 	<!-- Content grid matching page layout -->
 	<div
-		class="relative z-10 grid-page h-full"
+		class="relative z-content grid-page h-full"
 		style="opacity: {contentOpacity}; transform: translateY(-{scrollY * PARALLAX.heroContent}px); will-change: {willChangeActive ? 'opacity, transform' : 'auto'}"
 	>
 		<div class="col-content flex h-full flex-col justify-center text-white">
@@ -114,7 +114,7 @@
 	<button
 		type="button"
 		onclick={scrollToSignal}
-		class="absolute inset-x-0 bottom-8 z-10 flex cursor-pointer justify-center rounded-full text-white focus-ring md:bottom-[120px] md:grid-page md:justify-start"
+		class="absolute inset-x-0 bottom-8 z-content flex cursor-pointer justify-center rounded-full text-white focus-ring md:bottom-[120px] md:grid-page md:justify-start"
 		style="opacity: {Math.max(0, 1 - progress * 3)}; will-change: {willChangeActive ? 'opacity' : 'auto'}"
 		aria-label="Scroll to next section"
 	>

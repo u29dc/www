@@ -176,7 +176,7 @@
 
 <div
 	use:attachOverlay
-	class="pointer-events-none fixed top-1/2 left-0 z-20 h-[400px] w-full -translate-y-[250px] select-none transition-opacity duration-300"
+	class="pointer-events-none fixed top-1/2 left-0 z-overlay h-[400px] w-full -translate-y-[250px] select-none transition-opacity duration-300"
 	style:opacity={isVisible ? 1 : 0}
 >
 	<div

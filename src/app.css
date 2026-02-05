@@ -324,6 +324,27 @@
 	}
 }
 
+/* Z-index utilities using semantic tokens */
+@utility z-base {
+	z-index: var(--z-base);
+}
+
+@utility z-content {
+	z-index: var(--z-content);
+}
+
+@utility z-overlay {
+	z-index: var(--z-overlay);
+}
+
+@utility z-blur {
+	z-index: var(--z-blur);
+}
+
+@utility z-chrome {
+	z-index: var(--z-chrome);
+}
+
 /* Focus ring using box-shadow (respects border-radius, unlike outline) */
 @utility focus-ring {
 	&:focus-visible {
