@@ -1,18 +1,59 @@
 <script lang="ts">
 	import "../app.css";
 	import type { Snippet } from "svelte";
+	import { onMount } from "svelte";
 	import AtomicGradientBlur from "$lib/components/atomic/AtomicGradientBlur.svelte";
 	import CoreGrainOverlay from "$lib/components/core/CoreGrainOverlay.svelte";
 	import CoreHeader from "$lib/components/core/CoreHeader.svelte";
+	import CoreLoader from "$lib/components/core/CoreLoader.svelte";
 	import CorePageTransition from "$lib/components/core/CorePageTransition.svelte";
 	import CoreScrollLine from "$lib/components/core/CoreScrollLine.svelte";
 	import CoreScrollProgress from "$lib/components/core/CoreScrollProgress.svelte";
 	import CoreSmoothScroll from "$lib/components/core/CoreSmoothScroll.svelte";
 	import CoreViewportFix from "$lib/components/core/CoreViewportFix.svelte";
 	import { CDN, SITE } from "$lib/constants";
+	import { loader } from "$lib/loader.svelte";
+	import { resetScroll, startScroll, stopScroll } from "$lib/scroll";
 	import type { LayoutData } from "./$types";
 
 	let { data, children }: { data: LayoutData; children: Snippet } = $props();
+
+	// Loader timing orchestration
+	// onMount only fires on fresh loads (layout mounts once per session)
+	onMount(() => {
+		// Disable browser's automatic scroll restoration on refresh
+		// Must happen before any scroll operations
+		if ("scrollRestoration" in history) {
+			history.scrollRestoration = "manual";
+		}
+
+		// Reset scroll immediately on page load (before Lenis initializes)
+		// This handles browser scroll restoration that happens before JS
+		window.scrollTo(0, 0);
+
+		// Skip if loader already completed (defensive)
+		if (loader.hasCompleted) return;
+
+		// Block scrolling while loader is active (Lenis + native CSS fallback)
+		stopScroll();
+		document.documentElement.classList.add("loader-active");
+
+		// When loader completes: reset scroll to top and resume scrolling
+		loader.onComplete(() => {
+			resetScroll();
+			startScroll();
+			document.documentElement.classList.remove("loader-active");
+		});
+
+		// Hold loader for 2 seconds + 500ms breathing space after progress completes
+		const holdDuration = 2500;
+
+		const timer = setTimeout(() => {
+			loader.complete();
+		}, holdDuration);
+
+		return () => clearTimeout(timer);
+	});
 </script>
 
 <svelte:head>
@@ -62,6 +103,9 @@
 
 <CoreViewportFix />
 <CoreSmoothScroll />
+
+<!-- Initial page loader (above everything) -->
+<CoreLoader />
 
 <CorePageTransition>
 	<AtomicGradientBlur
