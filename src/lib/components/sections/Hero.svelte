@@ -119,7 +119,7 @@
 			: 'auto'}"
 	>
 		<div class="col-content flex h-full flex-col justify-center text-white">
-			<h1 class="font-serif font-2xl bold">
+			<h1 class="font-serif font-2xl font-bold">
 				The technology works.<br class="sm:hidden" /> The story doesn't.
 			</h1>
 		</div>

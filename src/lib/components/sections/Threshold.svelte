@@ -55,8 +55,10 @@
 	<div class="col-content flex flex-col justify-between gap-16 pb-16 pt-64">
 		<!-- Top: Headline + Pricing + Grid Links -->
 		<div class="w-full">
-			<h2 class="font-serif font-2xl bold">
-				<span class="block sm:inline">Stories that hold aren't written.</span>
+			<h2 class="font-serif font-2xl font-bold">
+				<span class="block sm:inline"
+					>Stories that hold aren't written.</span
+				>
 				<span class="block sm:inline">They're built.</span>
 			</h2>
 
@@ -102,7 +104,9 @@
 
 		<!-- Middle: Large Logo -->
 		<AtomicBrandLogo
-			className={isMobile ? "-translate-x-[225px]" : "-translate-x-[375px]"}
+			className={isMobile
+				? "-translate-x-[225px]"
+				: "-translate-x-[375px]"}
 			width={isMobile ? 600 : 1000}
 			defaultBlurIntensity={0.25}
 			mouseBlurIntensity={0.4}

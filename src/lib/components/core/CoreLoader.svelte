@@ -10,7 +10,9 @@
 	const opacity = $derived(loader.isActive ? 1 : 0);
 
 	// Loader fade-out duration: slower on home for dramatic effect, faster on slug pages
-	const duration = $derived($page.url.pathname === "/" ? 2000 : TRANSITION.enterDuration);
+	const duration = $derived(
+		$page.url.pathname === "/" ? 2000 : TRANSITION.enterDuration,
+	);
 
 	// Easing matches page transitions
 	const easing = "var(--ease-settle)";
@@ -22,7 +24,9 @@
 	const REVEAL_VERSION: 1 | 2 = 1;
 
 	// Tip opacity: visible during progress, fades out at completion
-	const tipOpacity = $derived(skipAnimation ? 0 : loader.progress >= 1 ? 0 : 1);
+	const tipOpacity = $derived(
+		skipAnimation ? 0 : loader.progress >= 1 ? 0 : 1,
+	);
 
 	// Only use will-change during active state
 	const willChange = $derived(loader.isActive ? "opacity" : "auto");
@@ -62,12 +66,16 @@
 	}
 
 	// Calculate per-character animation progress within the reveal phase (0.1-0.5)
-	function getCharProgress(globalIndex: number, globalProgress: number): number {
+	function getCharProgress(
+		globalIndex: number,
+		globalProgress: number,
+	): number {
 		if (globalProgress < REVEAL_START) return 0;
 		if (globalProgress >= REVEAL_END) return 1;
 
 		// Normalize global progress to 0-1 within reveal phase
-		const revealProgress = (globalProgress - REVEAL_START) / (REVEAL_END - REVEAL_START);
+		const revealProgress =
+			(globalProgress - REVEAL_START) / (REVEAL_END - REVEAL_START);
 
 		// Each char starts at staggered offset, last char ends exactly at 1.0
 		const charStart = globalIndex * STAGGER_PER_CHAR;
@@ -106,11 +114,13 @@
 				if (charStart > lookaheadWindow) {
 					charOpacity = 0;
 				} else {
-					charOpacity = fadeProgress * 0.3 * (1 - charStart / lookaheadWindow);
+					charOpacity =
+						fadeProgress * 0.3 * (1 - charStart / lookaheadWindow);
 				}
 			} else if (p === 0) {
 				// Not yet animating - check if within lookahead window
-				const revealProgress = (progress - REVEAL_START) / (REVEAL_END - REVEAL_START);
+				const revealProgress =
+					(progress - REVEAL_START) / (REVEAL_END - REVEAL_START);
 				const charStart = charIndex * STAGGER_PER_CHAR;
 				const distance = charStart - revealProgress;
 
@@ -179,21 +189,27 @@
 -->
 <div
 	class="fixed inset-0 z-chrome bg-white"
-	style="opacity: {opacity}; transition: {skipAnimation ? 'none' : `opacity ${duration}ms ${easing}`}; will-change: {willChange}; pointer-events: {pointerEvents};"
+	style="opacity: {opacity}; transition: {skipAnimation
+		? 'none'
+		: `opacity ${duration}ms ${easing}`}; will-change: {willChange}; pointer-events: {pointerEvents};"
 	aria-hidden={!loader.isActive}
 	data-loader
 >
 	<!-- Grid matches Hero.svelte exactly for seamless visual handoff -->
 	<div class="grid-page h-full">
 		<div class="col-content flex h-full flex-col justify-center text-black">
-			<h1 class="relative w-fit font-serif font-2xl bold">
+			<h1 class="relative w-fit font-serif font-2xl font-bold">
 				{#each words as word, wordIndex}
 					<span class="inline-block whitespace-nowrap"
 						>{#each word.split("") as char, charIndex}<span
 								class="char"
-								style={getCharStyle(getGlobalIndex(wordIndex, charIndex))}>{char}</span
+								style={getCharStyle(
+									getGlobalIndex(wordIndex, charIndex),
+								)}>{char}</span
 							>{/each}</span
-					>{#if wordIndex < words.length - 1}&nbsp;{/if}{#if word === "works."}<br class="sm:hidden" />{/if}
+					>{#if wordIndex < words.length - 1}&nbsp;{/if}{#if word === "works."}<br
+							class="sm:hidden"
+						/>{/if}
 				{/each}
 				<!-- Progress bar: 1px, animates width via scaleX for performance -->
 				<span
@@ -204,7 +220,8 @@
 				<!-- Blurred leading edge tip for soft "painting" effect -->
 				<span
 					class="progress-tip absolute top-[calc(100%+0.5em)] h-px"
-					style="left: {loader.progress * 100}%; opacity: {tipOpacity};"
+					style="left: {loader.progress *
+						100}%; opacity: {tipOpacity};"
 					aria-hidden="true"
 				></span>
 			</h1>

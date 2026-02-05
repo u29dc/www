@@ -78,7 +78,7 @@
 					>{axiom.number}</span
 				>
 				<div>
-					<h3 class="font-serif font-lg bold">
+					<h3 class="font-serif font-lg font-bold">
 						{axiom.title}
 					</h3>
 					<p class="mt-2 text-muted">{axiom.description}</p>
