@@ -2,6 +2,7 @@
 	import { onMount } from "svelte";
 	import { prefersReducedMotion } from "svelte/motion";
 	import { CDN } from "$lib/constants";
+	import { createStaggerObserver } from "$lib/observe";
 
 	interface Artifact {
 		slug: string;
@@ -56,27 +57,15 @@
 			return;
 		}
 
-		const observer = new IntersectionObserver(
-			(entries) => {
-				for (const entry of entries) {
-					if (entry.isIntersecting) {
-						const index = items.indexOf(
-							entry.target as HTMLElement,
-						);
-						if (index !== -1) {
-							visibleItems = new Set([...visibleItems, index]);
-						}
-					}
-				}
+		const stagger = createStaggerObserver(
+			items,
+			(index) => {
+				visibleItems = new Set([...visibleItems, index]);
 			},
 			{ threshold: 0.1, rootMargin: "-30px" },
 		);
 
-		for (const item of items) {
-			if (item) observer.observe(item);
-		}
-
-		return () => observer.disconnect();
+		return () => stagger.disconnect();
 	});
 </script>
 

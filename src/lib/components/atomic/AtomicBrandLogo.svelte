@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import { logEvent } from "$lib/logger";
+	import { observeVisibility } from "$lib/observe";
 	import { registerRafTask } from "$lib/raf";
 
 	export interface AtomicBrandLogoProps {
@@ -15,7 +16,7 @@
 		animateNoise?: boolean;
 		className?: string;
 		theme?: "light" | "dark" | "system";
-		observeVisibility?: boolean;
+		enableObservation?: boolean;
 	}
 
 	type ThemeVariant = "light" | "dark";
@@ -884,7 +885,7 @@ void main() {
 		animateNoise = false,
 		className = "",
 		theme = "system",
-		observeVisibility = true,
+		enableObservation = true,
 	}: AtomicBrandLogoProps = $props();
 
 	const height = $derived(width / 4);
@@ -907,7 +908,7 @@ void main() {
 		deviceTier !== "low" &&
 			isPageVisible &&
 			!prefersReducedMotion &&
-			(observeVisibility ? isInView : true),
+			(enableObservation ? isInView : true),
 	);
 
 	$effect(() => {
@@ -1011,26 +1012,16 @@ void main() {
 		};
 	});
 
-	$effect(() => {
-		if (!observeVisibility) {
+	const visibilityOptions = $derived({
+		onEnter: () => {
 			isInView = true;
-			return;
-		}
-		if (!canvasRef) return;
-		if (typeof IntersectionObserver === "undefined") {
-			isInView = true;
-			return;
-		}
-		const observer = new IntersectionObserver(
-			([entry]) => {
-				isInView = entry?.isIntersecting ?? true;
-			},
-			{ rootMargin: "200px" },
-		);
-		observer.observe(canvasRef);
-		return () => {
-			observer.disconnect();
-		};
+		},
+		onLeave: () => {
+			isInView = false;
+		},
+		once: false,
+		rootMargin: "200px",
+		disabled: !enableObservation,
 	});
 
 	$effect(() => {
@@ -1064,6 +1055,7 @@ void main() {
 		<!-- svelte-ignore a11y_no_interactive_element_to_noninteractive_role -->
 		<canvas
 			bind:this={canvasRef}
+			use:observeVisibility={visibilityOptions}
 			style={canvasStyle}
 			data-animate
 			aria-label="u29dc logo"

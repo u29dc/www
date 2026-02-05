@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import { CDN } from "$lib/constants";
+	import { observeVisibility } from "$lib/observe";
 
 	type Props = {
 		src: string;
@@ -18,7 +19,6 @@
 
 	let imageRef = $state<HTMLImageElement | null>(null);
 	let videoRef = $state<HTMLVideoElement | null>(null);
-	let wrapperRef = $state<HTMLDivElement | null>(null);
 	let prefersReducedMotion = $state(false);
 	let isIntersecting = $state(false);
 	let shouldLoadVideo = $state(false);
@@ -32,8 +32,6 @@
 
 		if (!isVideo) return;
 
-		if (!wrapperRef) return;
-
 		const motionQuery = window.matchMedia(
 			"(prefers-reduced-motion: reduce)",
 		);
@@ -43,27 +41,8 @@
 		updateMotionPreference();
 		motionQuery.addEventListener("change", updateMotionPreference);
 
-		let observer: IntersectionObserver | null = null;
-		if (typeof IntersectionObserver === "undefined") {
-			isIntersecting = true;
-			shouldLoadVideo = true;
-		} else {
-			observer = new IntersectionObserver(
-				([entry]) => {
-					const inView = entry?.isIntersecting ?? true;
-					isIntersecting = inView;
-					if (inView) {
-						shouldLoadVideo = true;
-					}
-				},
-				{ rootMargin: "200px", threshold: 0.1 },
-			);
-			observer.observe(wrapperRef);
-		}
-
 		return () => {
 			motionQuery.removeEventListener("change", updateMotionPreference);
-			observer?.disconnect();
 		};
 	});
 
@@ -94,7 +73,19 @@
 	style:aspect-ratio={ratio}
 >
 	{#if isVideo}
-		<div bind:this={wrapperRef} class="h-full w-full">
+		<div
+			class="h-full w-full"
+			use:observeVisibility={{
+				onEnter: () => {
+					isIntersecting = true;
+					shouldLoadVideo = true;
+				},
+				onLeave: () => { isIntersecting = false; },
+				once: false,
+				rootMargin: '200px',
+				threshold: 0.1,
+			}}
+		>
 			{#if shouldLoadVideo}
 				<video
 					bind:this={videoRef}

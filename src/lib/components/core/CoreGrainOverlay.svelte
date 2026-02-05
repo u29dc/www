@@ -2,6 +2,7 @@
 	import { onMount } from "svelte";
 	import { base } from "$app/paths";
 	import { logEvent } from "$lib/logger";
+	import { observeVisibility } from "$lib/observe";
 	import { registerRafTask } from "$lib/raf";
 
 	export interface CoreGrainOverlayProps {
@@ -833,7 +834,6 @@ void main() {
 		};
 		themeQuery.addEventListener("change", handleThemeChange);
 
-		let intersectionObserver: IntersectionObserver | null = null;
 		const cleanup = () => {
 			motionQuery.removeEventListener("change", updateMotionPreference);
 			document.removeEventListener(
@@ -842,26 +842,10 @@ void main() {
 			);
 			themeObserver.disconnect();
 			themeQuery.removeEventListener("change", handleThemeChange);
-			if (intersectionObserver) {
-				intersectionObserver.disconnect();
-				intersectionObserver = null;
-			}
 		};
 
 		if (!canvasRef) {
 			return cleanup;
-		}
-
-		if (typeof IntersectionObserver === "undefined") {
-			isInView = true;
-		} else {
-			intersectionObserver = new IntersectionObserver(
-				([entry]) => {
-					isInView = entry?.isIntersecting ?? true;
-				},
-				{ rootMargin: "0px", threshold: 0 },
-			);
-			intersectionObserver.observe(canvasRef);
 		}
 
 		let isDisposed = false;
@@ -935,5 +919,12 @@ void main() {
 		style={canvasStyle}
 		data-animate
 		aria-hidden="true"
+		use:observeVisibility={{
+			onEnter: () => { isInView = true; },
+			onLeave: () => { isInView = false; },
+			once: false,
+			rootMargin: '0px',
+			threshold: 0,
+		}}
 	></canvas>
 {/if}

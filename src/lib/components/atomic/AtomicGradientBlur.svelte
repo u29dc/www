@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from "svelte";
-	import { onMount } from "svelte";
+	import { observeVisibility } from "$lib/observe";
 
 	export type BlurPosition = "top" | "bottom" | "left" | "right";
 	export type BlurCurve = "linear" | "ease-in" | "ease-out" | "bezier";
@@ -35,12 +35,7 @@
 		children,
 	}: Props = $props();
 
-	let container = $state<HTMLDivElement | null>(null);
-	let isVisible = $state(true);
-
-	$effect(() => {
-		isVisible = !animated;
-	});
+	let isVisible = $state(!animated);
 
 	const applyCurve = (progress: number, selected: BlurCurve): number => {
 		switch (selected) {
@@ -140,30 +135,19 @@
 		].join("; "),
 	);
 
-	onMount(() => {
-		if (!animated || !container) return;
-
-		const observer = new IntersectionObserver(
-			([entry]) => {
-				if (entry) {
-					isVisible = entry.isIntersecting;
-				}
-			},
-			{ threshold: 0.1 },
-		);
-
-		observer.observe(container);
-
-		return () => {
-			observer.disconnect();
-		};
-	});
 </script>
 
 <div
-	bind:this={container}
 	class={`relative isolate hidden md:block ${className}`}
 	style={containerStyle}
+	use:observeVisibility={{
+		onEnter: () => { isVisible = true; },
+		onLeave: () => { isVisible = false; },
+		once: false,
+		rootMargin: '0px',
+		threshold: 0.1,
+		disabled: !animated,
+	}}
 >
 	<div class="full-container relative">
 		{#each layerStyles as layerStyle}
