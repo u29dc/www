@@ -771,6 +771,7 @@ void main() {
 	let isPageVisible = $state(true);
 	let deviceTier = $state<DeviceTier>("high");
 	let isInView = $state(true);
+	let webglFailed = $state(false);
 	let hasRenderedStatic = false;
 
 	const adjustedIntensity = $derived(
@@ -880,6 +881,7 @@ void main() {
 					theme: resolvedTheme,
 				});
 			} catch (error) {
+				webglFailed = true;
 				logEvent("grain-overlay", "mount", "FAIL", {
 					message:
 						error instanceof Error ? error.message : String(error),
@@ -926,10 +928,12 @@ void main() {
 	});
 </script>
 
-<canvas
-	bind:this={canvasRef}
-	class={`pointer-events-none fixed inset-0 z-50 ${classValue}`}
-	style={canvasStyle}
-	data-animate
-	aria-hidden="true"
-></canvas>
+{#if !webglFailed}
+	<canvas
+		bind:this={canvasRef}
+		class={`pointer-events-none fixed inset-0 z-50 ${classValue}`}
+		style={canvasStyle}
+		data-animate
+		aria-hidden="true"
+	></canvas>
+{/if}

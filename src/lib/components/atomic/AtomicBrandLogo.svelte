@@ -900,6 +900,7 @@ void main() {
 	let isPageVisible = $state(true);
 	let prefersReducedMotion = $state(false);
 	let deviceTier = $state<DeviceTier>("high");
+	let webglFailed = $state(false);
 	let hasRenderedStatic = false;
 
 	const isActive = $derived(
@@ -975,6 +976,7 @@ void main() {
 		try {
 			renderer = createAtomicBrandLogoRenderer(canvasRef, state);
 		} catch (error) {
+			webglFailed = true;
 			logEvent("WEBGL", "ATOMIC-LOGO", "INIT-FAIL", {
 				message: error instanceof Error ? error.message : String(error),
 			});
@@ -1058,12 +1060,14 @@ void main() {
 </script>
 
 <div class={classValue} style={containerStyle}>
-	<!-- svelte-ignore a11y_no_interactive_element_to_noninteractive_role -->
-	<canvas
-		bind:this={canvasRef}
-		style={canvasStyle}
-		data-animate
-		aria-label="u29dc logo"
-		role="img"
-	></canvas>
+	{#if !webglFailed}
+		<!-- svelte-ignore a11y_no_interactive_element_to_noninteractive_role -->
+		<canvas
+			bind:this={canvasRef}
+			style={canvasStyle}
+			data-animate
+			aria-label="u29dc logo"
+			role="img"
+		>U29DC</canvas>
+	{/if}
 </div>

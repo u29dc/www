@@ -3,28 +3,11 @@
 	import { prefersReducedMotion } from "svelte/motion";
 	import ArrowUpRight from "@lucide/svelte/icons/arrow-up-right";
 	import { CDN } from "$lib/constants";
+	import { MAGNETIC } from "$lib/motion";
 	import { registerRafTask } from "$lib/raf";
+	import { type SpringState, SPRING_PARALLAX, spring } from "$lib/springs";
 
-	// Physics constants tuned for weighted, graceful motion
-	const SPRING = { stiffness: 25, damping: 12 };
-	const MAGNET_RADIUS = 800;
-	const MAX_OFFSET = 10;
 	const PHOTO_SCALE = 1.06;
-
-	type SpringState = { value: number; velocity: number };
-
-	const spring = (
-		current: SpringState,
-		target: number,
-		stiffness: number,
-		damping: number,
-		delta: number,
-	) => {
-		const force = (target - current.value) * stiffness;
-		const accel = force - current.velocity * damping;
-		current.velocity += accel * delta;
-		current.value += current.velocity * delta;
-	};
 
 	let photoRef = $state<HTMLDivElement | null>(null);
 	let offsetX = $state(0);
@@ -32,6 +15,11 @@
 
 	onMount(() => {
 		if (prefersReducedMotion.current) return;
+
+		// Only run magnetic parallax on devices with precise pointer (mouse/trackpad)
+		// Touch devices never fire mousemove, so RAF task would run 60fps for nothing
+		const hasFinePointer = window.matchMedia('(pointer: fine)').matches;
+		if (!hasFinePointer) return;
 
 		let photoRect: DOMRect | null = null;
 		let pointerX = 0;
@@ -62,23 +50,23 @@
 			const distance = Math.hypot(dx, dy);
 
 			// Strength falls off with smooth cubic ease (no harsh boundary)
-			const t = Math.min(1, distance / MAGNET_RADIUS);
+			const t = Math.min(1, distance / MAGNETIC.founderRadius);
 			const strength = 1 - t * t * (3 - 2 * t); // smoothstep for gradual fade
 
 			// Gentle targets with soft directional bias
 			const targetX =
 				(dx / Math.max(distance, 1)) *
-				MAX_OFFSET *
+				MAGNETIC.founderMaxOffset *
 				strength *
 				Math.min(1, distance * 0.005);
 			const targetY =
 				(dy / Math.max(distance, 1)) *
-				MAX_OFFSET *
+				MAGNETIC.founderMaxOffset *
 				strength *
 				Math.min(1, distance * 0.005);
 
-			spring(springX, targetX, SPRING.stiffness, SPRING.damping, d);
-			spring(springY, targetY, SPRING.stiffness, SPRING.damping, d);
+			spring(springX, targetX, SPRING_PARALLAX.heavy, d);
+			spring(springY, targetY, SPRING_PARALLAX.heavy, d);
 
 			offsetX = springX.value;
 			offsetY = springY.value;

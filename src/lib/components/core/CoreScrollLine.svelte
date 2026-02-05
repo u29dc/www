@@ -2,42 +2,19 @@
 	import { onMount } from "svelte";
 	import { prefersReducedMotion } from "svelte/motion";
 	import { page } from "$app/state";
+	import { MAGNETIC, SCROLL } from "$lib/motion";
 	import { registerRafTask } from "$lib/raf";
 	import { getScrollY } from "$lib/scroll";
+	import { type SpringState, SPRING_UI, spring } from "$lib/springs";
 
 	const isSlugPage = $derived(page.route.id === "/[slug]");
-
-	type SpringState = {
-		value: number;
-		velocity: number;
-	};
-
-	const SPRING_LINE = { stiffness: 100, damping: 30 };
-	const SPRING_BASE = { stiffness: 60, damping: 30 };
-	const SPRING_MAGNET = { stiffness: 80, damping: 18 };
 
 	const LINE_HEIGHT = 600;
 	const BASE_RANGE = 50;
 	const BASE_TANH_SCALE = 0.003;
-	const MAGNET_RADIUS = 150;
-	const MAGNET_X_RANGE = 50;
-	const MAGNET_Y_RANGE = 20;
 
 	const clamp = (min: number, value: number, max: number) =>
 		Math.max(min, Math.min(value, max));
-
-	const spring = (
-		current: SpringState,
-		target: number,
-		stiffness: number,
-		damping: number,
-		delta: number,
-	) => {
-		const force = (target - current.value) * stiffness;
-		const accel = force - current.velocity * damping;
-		current.velocity += accel * delta;
-		current.value += current.velocity * delta;
-	};
 
 	let overlayRef = $state<HTMLDivElement | null>(null);
 	let isMdUp = $state(false);
@@ -98,7 +75,7 @@
 			const winHeight = window.innerHeight;
 
 			// Scroll range excludes hero (starts when hero is half-scrolled)
-			scrollStart = winHeight * 0.5;
+			scrollStart = winHeight * SCROLL.lineScrollStart;
 			maxScroll = Math.max(
 				docHeight - winHeight - footerHeight - scrollStart,
 				1,
@@ -139,19 +116,13 @@
 
 			// Line visibility: immediate on slug pages, fade in after hero on homepage
 			const scrollY = getScrollY();
-			isVisible = isSlugPage || scrollY > winHeight * 0.3;
+			isVisible = isSlugPage || scrollY > winHeight * SCROLL.lineVisibleThreshold;
 
 			// Scroll progress mapped from after hero to footer
 			const adjustedScroll = Math.max(0, scrollY - scrollStart);
 			const progress = clamp(0, adjustedScroll / maxScroll, 1);
 			const lineTarget = progress * LINE_HEIGHT;
-			spring(
-				line,
-				lineTarget,
-				SPRING_LINE.stiffness,
-				SPRING_LINE.damping,
-				delta,
-			);
+			spring(line, lineTarget, SPRING_UI.line, delta);
 
 			const anchorX = overlayRect
 				? isMdUp
@@ -170,40 +141,22 @@
 			const baseTarget = isMdUp
 				? Math.tanh(baseDiff * BASE_TANH_SCALE) * BASE_RANGE
 				: 0;
-			spring(
-				base,
-				baseTarget,
-				SPRING_BASE.stiffness,
-				SPRING_BASE.damping,
-				delta,
-			);
+			spring(base, baseTarget, SPRING_UI.base, delta);
 
 			const dx = pointerX - anchorX;
 			const dy = pointerY - anchorY;
 			const distance = Math.hypot(dx, dy);
-			const strength = Math.max(0, 1 - distance / MAGNET_RADIUS);
+			const strength = Math.max(0, 1 - distance / MAGNETIC.lineRadius);
 			const magnetTargetX =
 				Math.tanh((dx / Math.max(distance, 1)) * 2) *
-				MAGNET_X_RANGE *
+				MAGNETIC.lineXRange *
 				strength;
 			const magnetTargetY =
 				Math.tanh((dy / Math.max(distance, 1)) * 2) *
-				MAGNET_Y_RANGE *
+				MAGNETIC.lineYRange *
 				strength;
-			spring(
-				magnetX,
-				magnetTargetX,
-				SPRING_MAGNET.stiffness,
-				SPRING_MAGNET.damping,
-				delta,
-			);
-			spring(
-				magnetY,
-				magnetTargetY,
-				SPRING_MAGNET.stiffness,
-				SPRING_MAGNET.damping,
-				delta,
-			);
+			spring(magnetX, magnetTargetX, SPRING_UI.magnet, delta);
+			spring(magnetY, magnetTargetY, SPRING_UI.magnet, delta);
 
 			lineOffset = line.value + magnetY.value;
 			ctaOffset = (isMdUp ? base.value : 0) + magnetX.value;
@@ -223,7 +176,7 @@
 
 <div
 	use:attachOverlay
-	class="padding-standard pointer-events-none fixed top-1/2 left-0 z-20 h-[400px] w-full -translate-y-[250px] select-none transition-opacity duration-300"
+	class="pointer-events-none fixed top-1/2 left-0 z-20 h-[400px] w-full -translate-y-[250px] select-none transition-opacity duration-300"
 	style:opacity={isVisible ? 1 : 0}
 >
 	<div
