@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount, setContext } from "svelte";
+	import { setContext } from "svelte";
 	import MdxMediaItem from "$lib/components/mdx/MdxMediaItem.svelte";
 	import {
 		MEDIA_LAYOUT_CONTEXT,
@@ -13,79 +13,49 @@
 
 	let { src, alt = "" }: Props = $props();
 
-	let container = $state<HTMLDivElement | null>(null);
-	let containerWidth = $state(0);
-	let aspectRatios = $state(new Map<string, number>());
+	const DEFAULT_RATIO = 2; // 2:1 aspect ratio (width/height)
 
-	const registerItem = (id: string, aspectRatio: number) => {
-		aspectRatios = new Map(aspectRatios);
-		aspectRatios.set(id, aspectRatio);
+	type ParsedSource = {
+		filename: string;
+		ratio: number;
 	};
 
-	const getFlexBasis = (id: string): string => {
-		const ratio = aspectRatios.get(id);
-		if (!ratio || aspectRatios.size === 0) {
-			return "1";
+	function parseMediaSrc(srcString: string): ParsedSource {
+		const match = srcString.match(/^(.+)@([\d.]+)$/);
+		if (match && match[1] && match[2]) {
+			return { filename: match[1], ratio: parseFloat(match[2]) };
 		}
+		return { filename: srcString, ratio: DEFAULT_RATIO };
+	}
 
-		const totalRatio = Array.from(aspectRatios.values()).reduce(
-			(sum, value) => sum + value,
-			0,
-		);
-		const percentage = (ratio / totalRatio) * 100;
+	const parsedSources = $derived(src.map(parseMediaSrc));
+	const totalRatio = $derived(
+		parsedSources.reduce((sum, s) => sum + s.ratio, 0),
+	);
+
+	// Calculate flex basis for each item based on pre-declared ratios
+	const getFlexBasis = (index: number): string => {
+		if (totalRatio === 0) return "1";
+		const source = parsedSources[index];
+		if (!source) return "1";
+		const percentage = (source.ratio / totalRatio) * 100;
 		return `${percentage}%`;
 	};
 
+	// Provide context for MdxMediaItem (simplified - no registration needed)
 	setContext<MediaLayoutContextValue>(MEDIA_LAYOUT_CONTEXT, {
-		registerItem,
-		getFlexBasis,
-	});
-
-	const totalRatio = $derived(
-		Array.from(aspectRatios.values()).reduce(
-			(sum, value) => sum + value,
-			0,
-		),
-	);
-	const calculatedHeight = $derived(
-		containerWidth > 0 && totalRatio > 0 ? containerWidth / totalRatio : 0,
-	);
-	const isLayoutReady = $derived(
-		containerWidth > 0 && totalRatio > 0 && calculatedHeight > 0,
-	);
-
-	onMount(() => {
-		if (!container) return;
-
-		const updateWidth = () => {
-			containerWidth = container?.offsetWidth ?? 0;
-		};
-
-		updateWidth();
-
-		const resizeObserver = new ResizeObserver((entries) => {
-			for (const entry of entries) {
-				const width =
-					entry.contentBoxSize?.[0]?.inlineSize ??
-					entry.contentRect.width;
-				containerWidth = width;
-			}
-		});
-
-		resizeObserver.observe(container);
-
-		return () => {
-			resizeObserver.disconnect();
-		};
+		registerItem: () => {}, // No-op, ratios are pre-declared
+		getFlexBasis: () => "1", // Not used, we pass flex basis directly
 	});
 </script>
 
-<div
-	bind:this={container}
-	class={`w-full flex transition-opacity duration-300 ${isLayoutReady ? "opacity-100" : "opacity-0"}`}
-	style={calculatedHeight > 0 ? `height: ${calculatedHeight}px;` : ""}
->
-	{#each src as source (source)}
-		<MdxMediaItem src={source} {alt} />
+<div class="flex w-full" style:aspect-ratio={totalRatio}>
+	{#each parsedSources as source, index (source.filename)}
+		<MdxMediaItem
+			src={source.filename}
+			ratio={source.ratio}
+			flexBasis={getFlexBasis(index)}
+			{alt}
+		/>
 	{/each}
 </div>

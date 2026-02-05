@@ -1,24 +1,19 @@
 <script lang="ts">
-	import { getContext, onMount } from "svelte";
-	import {
-		MEDIA_LAYOUT_CONTEXT,
-		type MediaLayoutContextValue,
-	} from "$lib/components/mdx/mdx-context";
+	import { onMount } from "svelte";
 	import { CDN } from "$lib/constants";
 
 	type Props = {
 		src: string;
+		ratio: number;
+		flexBasis: string;
 		alt?: string;
 	};
 
-	let { src, alt = "" }: Props = $props();
+	let { src, ratio, flexBasis, alt = "" }: Props = $props();
 
-	const context = getContext<MediaLayoutContextValue>(MEDIA_LAYOUT_CONTEXT);
-	const id = Math.random().toString(36).slice(2);
 	const fullUrl = $derived(`${CDN.mediaUrl}${src}`);
 	const isVideo = $derived(
-		src.toLowerCase().includes(".webm") ||
-			src.toLowerCase().includes(".mp4"),
+		src.toLowerCase().includes(".webm") || src.toLowerCase().includes(".mp4"),
 	);
 
 	let imageRef = $state<HTMLImageElement | null>(null);
@@ -27,32 +22,15 @@
 	let prefersReducedMotion = $state(false);
 	let isIntersecting = $state(false);
 	let shouldLoadVideo = $state(false);
-
-	const register = (aspectRatio: number) => {
-		if (context && Number.isFinite(aspectRatio) && aspectRatio > 0) {
-			context.registerItem(id, aspectRatio);
-		}
-	};
-
-	const handleImageLoad = () => {
-		if (!imageRef) return;
-		const aspectRatio = imageRef.naturalWidth / imageRef.naturalHeight;
-		register(aspectRatio);
-	};
-
-	const handleVideoMetadata = () => {
-		if (!videoRef) return;
-		const aspectRatio = videoRef.videoWidth / videoRef.videoHeight;
-		register(aspectRatio);
-	};
+	let loaded = $state(false);
 
 	onMount(() => {
-		if (!isVideo) {
-			if (imageRef?.complete && imageRef.naturalWidth > 0) {
-				register(imageRef.naturalWidth / imageRef.naturalHeight);
-			}
-			return;
+		// Check for images that may have loaded from cache
+		if (!isVideo && imageRef?.complete && imageRef.naturalWidth > 0) {
+			loaded = true;
 		}
+
+		if (!isVideo) return;
 
 		if (!wrapperRef) return;
 
@@ -89,8 +67,6 @@
 		};
 	});
 
-	const flexBasis = $derived(context ? context.getFlexBasis(id) : "1");
-
 	$effect(() => {
 		if (!isVideo || !videoRef) return;
 		if (prefersReducedMotion || !isIntersecting) {
@@ -101,15 +77,28 @@
 			// autoplay may be blocked
 		});
 	});
+
+	const handleImageLoad = () => {
+		loaded = true;
+	};
+
+	const handleVideoMetadata = () => {
+		loaded = true;
+	};
 </script>
 
-<div class="h-full" style={`flex-basis: ${flexBasis}; flex-shrink: 0;`}>
+<div
+	class="h-full"
+	style:flex-basis={flexBasis}
+	style:flex-shrink="0"
+	style:aspect-ratio={ratio}
+>
 	{#if isVideo}
 		<div bind:this={wrapperRef} class="h-full w-full">
 			{#if shouldLoadVideo}
 				<video
 					bind:this={videoRef}
-					class="media-fill"
+					class="media-fill transition-opacity duration-200 {loaded ? 'opacity-100' : 'opacity-0'}"
 					src={fullUrl}
 					muted
 					loop
@@ -124,7 +113,7 @@
 	{:else}
 		<img
 			bind:this={imageRef}
-			class="media-fill"
+			class="media-fill transition-opacity duration-200 {loaded ? 'opacity-100' : 'opacity-0'}"
 			src={fullUrl}
 			{alt}
 			loading="lazy"
