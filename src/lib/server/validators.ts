@@ -1,3 +1,30 @@
+/**
+ * Input validation utilities for content routing.
+ *
+ * ## Security: Confidentiality Checks
+ *
+ * Content items may be marked confidential in their frontmatter. The following
+ * locations enforce confidentiality:
+ *
+ * 1. **Page routes** (`src/routes/[slug]/+page.server.ts`):
+ *    - Checks `frontmatter.confidential` before serving HTML pages
+ *    - Returns 404 for confidential content
+ *
+ * 2. **Raw endpoints** (`src/lib/server/raw.ts`):
+ *    - `isConfidentialContent()` filters confidential items from raw output
+ *    - Returns 403 for direct confidential slug access
+ *
+ * 3. **Sitemap** (`src/lib/server/metadata.ts`):
+ *    - Excludes confidential slugs from sitemap.xml
+ *
+ * ## Adding New Routes
+ *
+ * When creating new routes that serve content:
+ * 1. Import content via `getContent()` or `getContentBySlug()`
+ * 2. Check `frontmatter.confidential === true` before serving
+ * 3. Return appropriate error (404/403) for confidential items
+ * 4. Test: request a known confidential slug and verify rejection
+ */
 import { ValidationError } from '$lib/errors';
 import { logEvent } from '$lib/server/logger';
 
