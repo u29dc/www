@@ -18,6 +18,21 @@
 	<meta name="theme-color" content={SITE.themeColor} />
 	<meta name="color-scheme" content="light dark" />
 	<link rel="preconnect" href={CDN.baseUrl} crossorigin="anonymous" />
+	<!-- Critical font preloads for LCP -->
+	<link
+		rel="preload"
+		href="/fonts/acumin-pro-600-normal.woff2"
+		as="font"
+		type="font/woff2"
+		crossorigin="anonymous"
+	/>
+	<link
+		rel="preload"
+		href="/fonts/meno-display-700-italic.woff2"
+		as="font"
+		type="font/woff2"
+		crossorigin="anonymous"
+	/>
 	<link rel="manifest" href="/manifest.json" />
 	<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 	<link rel="icon" href="/favicon.ico" sizes="any" type="image/x-icon" />
@@ -36,6 +51,13 @@
 		<script src="/empty.js" nonce={data.nonce} defer></script>
 	{/if}
 </svelte:head>
+
+<a
+	href="#main-content"
+	class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:rounded focus:bg-surface focus:px-4 focus:py-2 focus:text-ink focus:ring-2 focus:ring-ink"
+>
+	Skip to main content
+</a>
 
 <CoreViewportFix />
 <CoreSmoothScroll />
@@ -63,7 +85,7 @@
 		exposure={0.01}
 	/>
 
-	<main class="grid-page">
+	<main id="main-content" tabindex="-1" class="grid-page">
 		{@render children()}
 	</main>
 </CorePageTransition>

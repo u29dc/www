@@ -101,7 +101,7 @@
 					href="#{section.id}"
 					class="hidden sm:inline-flex"
 					aria-current={activeSection === section.id
-						? "true"
+						? "page"
 						: undefined}
 				>
 					{section.num}

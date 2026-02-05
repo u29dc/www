@@ -35,6 +35,12 @@
 	afterNavigate(() => {
 		resetScroll();
 
+		// Focus main content for keyboard/screen reader users
+		requestAnimationFrame(() => {
+			const main = document.getElementById("main-content");
+			main?.focus({ preventScroll: true });
+		});
+
 		if (prefersReducedMotion.current) {
 			phase = "idle";
 			return;
@@ -53,12 +59,16 @@
 			? TRANSITION.exitDuration
 			: TRANSITION.enterDuration,
 	);
+	// Use ease-settle (deceleration) for both phases:
+	// Exit: quickly begins fading, gently disappears (no lingering)
+	// Enter: quickly appears, gently settles (immediate feedback)
+	const easing = "var(--ease-settle)";
 	const willChange = $derived(phase !== "idle" ? "opacity" : "auto");
 </script>
 
 <div
 	style:opacity
-	style:transition="opacity {duration}ms var(--ease-out)"
+	style:transition="opacity {duration}ms {easing}"
 	style:will-change={willChange}
 >
 	{@render children()}

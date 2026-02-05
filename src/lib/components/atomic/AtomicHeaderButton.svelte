@@ -5,7 +5,7 @@
 		href: string;
 		variant?: "ghost" | "solid";
 		class?: string;
-		"aria-current"?: "true" | "page" | "step" | "location" | "date" | "time" | undefined;
+		"aria-current"?: "page" | "step" | "location" | "date" | "time" | undefined;
 		children: Snippet;
 	}
 
@@ -26,7 +26,7 @@
 
 <a
 	{href}
-	class="min-h-[30px] items-center rounded-md px-3 font-mono font-xs transition-colors focus-ring {variantClasses} {className}"
+	class="inline-flex min-h-[30px] items-center rounded-md px-3 font-mono font-xs transition-colors focus-ring pressed-state {variantClasses} {className}"
 	aria-current={ariaCurrent}
 >
 	{@render children()}

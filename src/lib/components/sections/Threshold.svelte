@@ -35,9 +35,8 @@
 	];
 </script>
 
-<section
+<footer
 	id="threshold"
-	data-section="footer"
 	class="mt-96 grid-section-full min-h-screen-safe bg-black/5 -mx-[var(--grid-margin)] px-[var(--grid-margin)] md:-mx-[var(--grid-margin-md)] md:px-[var(--grid-margin-md)] lg:mx-0 lg:px-0"
 >
 	<div class="col-content flex flex-col justify-between gap-16 pb-16 pt-64">
@@ -104,4 +103,4 @@
 			After all, isn't true infinity always incomplete?
 		</div>
 	</div>
-</section>
+</footer>
