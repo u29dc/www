@@ -20,7 +20,7 @@
 	const variantClasses = $derived(
 		variant === "solid"
 			? "bg-black text-white hover:bg-black/80"
-			: "text-black/60 hover:bg-black/5 hover:text-black",
+			: "text-black/60 hover-bg-subtle hover-text-solid",
 	);
 </script>
 

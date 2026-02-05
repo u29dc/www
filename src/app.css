@@ -92,6 +92,13 @@
 	--radius-sm: 0.375rem;
 	--radius-md: 0.5rem;
 	--radius-full: 9999px;
+
+	/* Elevation tokens - use progressively for depth hierarchy */
+	--shadow-xs: 0 1px 2px oklch(0% 0 0 / 0.05);
+	--shadow-sm: 0 1px 3px oklch(0% 0 0 / 0.1), 0 1px 2px oklch(0% 0 0 / 0.06);
+	--shadow-md: 0 4px 6px oklch(0% 0 0 / 0.1), 0 2px 4px oklch(0% 0 0 / 0.06);
+	--shadow-lg: 0 10px 15px oklch(0% 0 0 / 0.1), 0 4px 6px oklch(0% 0 0 / 0.05);
+	--shadow-xl: 0 20px 25px oklch(0% 0 0 / 0.1), 0 8px 10px oklch(0% 0 0 / 0.04);
 }
 
 :root {
@@ -134,7 +141,7 @@
 	}
 
 	h1 {
-		@apply font-xl;
+		@apply font-2xl;
 	}
 
 	h2,
@@ -355,7 +362,24 @@
 @utility focus-ring {
 	&:focus-visible {
 		outline: none;
-		box-shadow: 0 0 0 2px var(--ground), 0 0 0 4px currentColor;
+		box-shadow: 0 0 0 2px var(--ground), 0 0 0 4px oklch(50% 0 0);
+	}
+}
+
+/* Touch-safe hover utilities - wrap hover states in @media (hover: hover) to prevent flash on touch devices */
+@utility hover-bg-subtle {
+	@media (hover: hover) {
+		&:hover {
+			background-color: oklch(0% 0 0 / 0.05);
+		}
+	}
+}
+
+@utility hover-text-solid {
+	@media (hover: hover) {
+		&:hover {
+			color: var(--ink);
+		}
 	}
 }
 
