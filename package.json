@@ -41,7 +41,7 @@
 		"lint-staged": "^16.2.7",
 		"mdsvex": "^0.12.6",
 		"svelte": "^5.49.2",
-		"svelte-check-rs": "^0.8.2",
+		"svelte-check-rs": "^0.9.0",
 		"tailwindcss": "^4.1.18",
 		"vite": "^7.3.1"
 	},
