@@ -750,8 +750,8 @@ void main() {
 
 		const handlePointerEnter = () => {
 			if (!isTracking) {
-				canvas.addEventListener("pointermove", handlePointerMove);
-				canvas.addEventListener("mousemove", handlePointerMove);
+				canvas.addEventListener("pointermove", handlePointerMove, { passive: true });
+				canvas.addEventListener("mousemove", handlePointerMove, { passive: true });
 				isTracking = true;
 			}
 		};
@@ -764,8 +764,8 @@ void main() {
 			}
 		};
 
-		canvas.addEventListener("pointerenter", handlePointerEnter);
-		canvas.addEventListener("pointerleave", handlePointerLeave);
+		canvas.addEventListener("pointerenter", handlePointerEnter, { passive: true });
+		canvas.addEventListener("pointerleave", handlePointerLeave, { passive: true });
 
 		applyStaticUniforms(state);
 		applyThemeUniforms(state.theme);

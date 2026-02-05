@@ -75,6 +75,20 @@
 		type="font/woff2"
 		crossorigin="anonymous"
 	/>
+	<link
+		rel="preload"
+		href="/fonts/acumin-pro-400-normal.woff2"
+		as="font"
+		type="font/woff2"
+		crossorigin="anonymous"
+	/>
+	<link
+		rel="preload"
+		href="/fonts/fira-code-variable-normal.woff2"
+		as="font"
+		type="font/woff2"
+		crossorigin="anonymous"
+	/>
 	<link rel="manifest" href="/manifest.json" />
 	<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 	<link rel="icon" href="/favicon.ico" sizes="any" type="image/x-icon" />

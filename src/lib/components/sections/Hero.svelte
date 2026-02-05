@@ -18,8 +18,13 @@
 	// Progress from 0 to 1 over scroll range
 	let progress = $derived(Math.min(Math.max(scrollY / scrollRange, 0), 1));
 
-	// Parallax offset (image moves slower than scroll)
-	let parallaxY = $derived(scrollY * PARALLAX.hero);
+	// Parallax offsets (disabled under reduced motion)
+	let parallaxY = $derived(
+		prefersReducedMotion.current ? 0 : scrollY * PARALLAX.hero,
+	);
+	let contentParallaxY = $derived(
+		prefersReducedMotion.current ? 0 : scrollY * PARALLAX.heroContent,
+	);
 
 	// Opacity values
 	let contentOpacity = $derived(1 - progress);
@@ -28,8 +33,10 @@
 	// Video should play when not fully faded out (progress < 1)
 	let shouldPlay = $derived(progress < 1);
 
-	// will-change cleanup: only apply during active animation (progress < 1 means hero visible)
-	const willChangeActive = $derived(progress < 1);
+	// will-change cleanup: only apply during active animation (disabled under reduced motion)
+	const willChangeActive = $derived(
+		progress < 1 && !prefersReducedMotion.current,
+	);
 
 	$effect(() => {
 		if (!videoRef) return;
@@ -48,8 +55,6 @@
 	};
 
 	onMount(() => {
-		if (prefersReducedMotion.current) return;
-
 		const rafTask = registerRafTask(() => {
 			scrollY = getInterpolatedScrollY();
 		});
@@ -78,28 +83,31 @@
 <!-- Fixed hero container -->
 <div class="fixed inset-0 z-base h-screen overflow-hidden bg-black">
 	<!-- Parallax video-->
-	<video
+	<!-- <video
 		bind:this={videoRef}
 		src="{CDN.mediaUrl}_HERO.webm"
+		poster="{CDN.mediaUrl}_HERO.webp"
 		autoplay
 		muted
 		loop
 		playsinline
 		disablepictureinpicture
-		preload="auto"
+		preload="metadata"
 		class="pointer-events-none absolute inset-0 h-[calc(100%+25vh)] w-full object-cover grayscale transform-gpu"
 		style="transform: translateY(-{parallaxY}px); will-change: {willChangeActive
 			? 'transform'
 			: 'auto'}"
-	></video>
+	></video> -->
 
-	<!-- <img
+	<img
 		src="{CDN.mediaUrl}_HERO.webp"
 		alt=""
 		fetchpriority="high"
 		class="pointer-events-none absolute inset-0 h-[calc(100%+25vh)] w-full object-cover grayscale transform-gpu"
-		style="transform: translateY(-{parallaxY}px); will-change: {willChangeActive ? 'transform' : 'auto'}"
-	/> -->
+		style="transform: translateY(-{parallaxY}px); will-change: {willChangeActive
+			? 'transform'
+			: 'auto'}"
+	/>
 
 	<!-- White overlay that fades in as user scrolls -->
 	<div
@@ -113,8 +121,7 @@
 	<!-- Content grid matching page layout -->
 	<div
 		class="relative z-content grid-page h-full"
-		style="opacity: {contentOpacity}; transform: translateY(-{scrollY *
-			PARALLAX.heroContent}px); will-change: {willChangeActive
+		style="opacity: {contentOpacity}; transform: translateY(-{contentParallaxY}px); will-change: {willChangeActive
 			? 'opacity, transform'
 			: 'auto'}"
 	>

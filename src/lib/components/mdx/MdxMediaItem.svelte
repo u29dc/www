@@ -91,10 +91,12 @@
 					bind:this={videoRef}
 					class="media-fill transition-opacity duration-200 {loaded ? 'opacity-100' : 'opacity-0'}"
 					src={fullUrl}
+					width={Math.round(100 * ratio)}
+					height={100}
 					muted
 					loop
 					playsinline
-					preload="none"
+					preload="metadata"
 					crossorigin="anonymous"
 					{...{ referrerpolicy: "origin" }}
 					onloadedmetadata={handleVideoMetadata}
@@ -106,6 +108,8 @@
 			bind:this={imageRef}
 			class="media-fill transition-opacity duration-200 {loaded ? 'opacity-100' : 'opacity-0'}"
 			src={fullUrl}
+			width={Math.round(100 * ratio)}
+			height={100}
 			{alt}
 			loading="lazy"
 			decoding="async"
