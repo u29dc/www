@@ -1,7 +1,7 @@
 import { SITE } from '$lib/constants';
 import { isStudy } from '$lib/content-types';
-import { createErrorResponse, ForbiddenError, NotFoundError, ProcessingError, ValidationError } from '$lib/errors';
 import { formatStudyArtifactsAsMarkdown, getContentBySlug, getStudyArtifacts, injectArtifactsIntoLlms, toMarkdown } from '$lib/server/content';
+import { createErrorResponse, ForbiddenError, NotFoundError, ProcessingError, ValidationError } from '$lib/server/errors';
 import { logEvent } from '$lib/server/logger';
 import { validateSlug } from '$lib/server/validators';
 
