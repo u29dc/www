@@ -1,6 +1,5 @@
 @import "./styles/fonts.css";
 @import "tailwindcss";
-@custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
 	--font-sans: var(--font-acumin);
@@ -29,13 +28,6 @@
 	--color-ink: var(--ink);
 	--color-trace: var(--trace);
 
-	/* Legacy aliases for compatibility */
-	--color-bg: var(--ground);
-	--color-panel: var(--surface);
-	--color-border: var(--edge);
-	--color-text: var(--ink);
-	--color-muted: var(--trace);
-
 	/* Grid system tokens */
 	--grid-gap: 1rem;
 	--grid-margin: 1rem;
@@ -51,9 +43,15 @@
 	--ease-tension: cubic-bezier(0.34, 1.56, 0.64, 1);
 	--ease-exit: cubic-bezier(0.55, 0, 1, 0.45);
 
-	/* Legacy aliases */
-	--ease-out: var(--ease-settle);
-	--ease-spring: var(--ease-tension);
+	/*
+	 * Duration scale
+	 * --duration-pulse: briefest perceptible moment (micro-feedback, button press)
+	 * --duration-breath: natural interaction rhythm (hovers, dropdowns)
+	 * --duration-passage: deliberate movement through states (panels, reveals)
+	 */
+	--duration-pulse: 100ms;
+	--duration-breath: 200ms;
+	--duration-passage: 400ms;
 }
 
 :root {
@@ -62,23 +60,7 @@
 	--surface: #ffffff;
 	--edge: #e5e7eb;
 	--ink: #1f2937;
-	--trace: #9ca3af;
-
-	/* Legacy aliases */
-	--bg: var(--ground);
-	--panel: var(--surface);
-	--border: var(--edge);
-	--text: var(--ink);
-	--muted: var(--trace);
-}
-
-.dark {
-	--ground: #0d0f10;
-	--surface: #1a1d1f;
-	--edge: #3a3f43;
-	--ink: #e6e6e8;
-	/* Lighter in dark mode for ~4.5:1 contrast against #0d0f10 */
-	--trace: #a8a8b3;
+	--trace: #6b7280;
 }
 
 /* ================================================== */
@@ -300,84 +282,17 @@
 	}
 }
 
+/* Pressed/active state for tactile button feedback */
+@utility pressed-state {
+	&:active:not(:disabled) {
+		transform: scale(0.97);
+		transition: transform 100ms var(--ease-settle);
+	}
+}
+
 /* ================================================== */
 /* THEME SYSTEM */
 /* ================================================== */
-
-@utility theme-system {
-	color-scheme: light;
-
-	& ::selection {
-		background: var(--color-selection-light);
-		color: var(--color-black);
-	}
-
-	@media (prefers-color-scheme: dark) {
-		&:not(.light) {
-			color-scheme: dark;
-			background: var(--color-black);
-			color: var(--color-white);
-		}
-
-		&:not(.light) body {
-			background: var(--color-black);
-			color: var(--color-white);
-		}
-
-		&:not(.light) ::selection {
-			background: var(--color-selection-dark);
-			color: var(--color-white);
-		}
-	}
-
-	@media (prefers-color-scheme: light) {
-		&:not(.dark) {
-			background: var(--color-white);
-			color: var(--color-black);
-		}
-
-		&:not(.dark) body {
-			background: var(--color-white);
-			color: var(--color-black);
-		}
-
-		&:not(.dark) ::selection {
-			background: var(--color-selection-light);
-			color: var(--color-black);
-		}
-	}
-
-	&.dark {
-		color-scheme: dark;
-	}
-
-	&.dark,
-	&.dark body {
-		background: var(--color-black);
-		color: var(--color-white);
-	}
-
-	&.dark ::selection {
-		background: var(--color-white);
-		color: var(--color-black);
-	}
-}
-
-@utility theme-dark {
-	color-scheme: dark;
-	background: var(--color-black);
-	color: var(--color-white);
-
-	& body {
-		background: var(--color-black);
-		color: var(--color-white);
-	}
-
-	& ::selection {
-		background: var(--color-selection-dark);
-		color: var(--color-white);
-	}
-}
 
 @utility theme-light {
 	color-scheme: light;
@@ -427,14 +342,6 @@
 	background-repeat: no-repeat;
 }
 
-html.dark .marker-all {
-	background-image:
-		linear-gradient(to bottom, var(--color-white-faded), var(--color-white-faded)), linear-gradient(to right, var(--color-white-faded), var(--color-white-faded)),
-		linear-gradient(to bottom, var(--color-white-faded), var(--color-white-faded)), linear-gradient(to left, var(--color-white-faded), var(--color-white-faded)),
-		linear-gradient(to top, var(--color-white-faded), var(--color-white-faded)), linear-gradient(to right, var(--color-white-faded), var(--color-white-faded)),
-		linear-gradient(to top, var(--color-white-faded), var(--color-white-faded)), linear-gradient(to left, var(--color-white-faded), var(--color-white-faded));
-}
-
 /* ================================================== */
 /* LENIS SMOOTH SCROLL */
 /* ================================================== */
@@ -469,40 +376,16 @@ html.lenis.lenis-stopped {
 	opacity: 1;
 	transform: translateY(0);
 	transition:
-		opacity 500ms var(--ease-out),
-		transform 500ms var(--ease-out);
+		opacity 500ms var(--ease-settle),
+		transform 500ms var(--ease-settle);
 }
 
-/* Staggered reveal delays for list items (supports up to 10 items) */
-.reveal-visible:nth-child(1) {
-	transition-delay: 0ms;
-}
-.reveal-visible:nth-child(2) {
-	transition-delay: 50ms;
-}
-.reveal-visible:nth-child(3) {
-	transition-delay: 100ms;
-}
-.reveal-visible:nth-child(4) {
-	transition-delay: 150ms;
-}
-.reveal-visible:nth-child(5) {
-	transition-delay: 200ms;
-}
-.reveal-visible:nth-child(6) {
-	transition-delay: 250ms;
-}
-.reveal-visible:nth-child(7) {
-	transition-delay: 300ms;
-}
-.reveal-visible:nth-child(8) {
-	transition-delay: 350ms;
-}
-.reveal-visible:nth-child(9) {
-	transition-delay: 400ms;
-}
-.reveal-visible:nth-child(10) {
-	transition-delay: 450ms;
+/* Staggered reveal delays via CSS custom property
+ * Set --stagger-index via inline style: style="--stagger-index: {index}"
+ * Delay = index * 50ms
+ */
+.reveal-visible {
+	transition-delay: calc(var(--stagger-index, 0) * 50ms);
 }
 
 /* Respect reduced motion preference */
