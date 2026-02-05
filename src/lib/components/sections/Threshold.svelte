@@ -62,7 +62,7 @@
 						rel={link.href.startsWith("mailto:")
 							? undefined
 							: "noopener noreferrer"}
-						class="group -mx-3 flex flex-row justify-between gap-2 border-b border-black/10 px-3 py-6 transition duration-200 hover:bg-black hover:text-white focus-ring"
+						class="group -mx-3 flex flex-row justify-between gap-2 border-b border-black/10 px-3 py-6 transition duration-200 hover:bg-black hover:text-white focus-ring external-link-feedback"
 					>
 						<div>
 							<div class="uppercase">{link.title}</div>
@@ -80,7 +80,7 @@
 						<div
 							class="transition-all duration-200 group-hover:mr-2"
 						>
-							<ArrowUpRight size={12} />
+							<ArrowUpRight size={16} />
 						</div>
 					</a>
 				{/each}

@@ -27,6 +27,9 @@
 	// Video should play when not fully faded out (progress < 1)
 	let shouldPlay = $derived(progress < 1);
 
+	// will-change cleanup: only apply during active animation (progress < 1 means hero visible)
+	const willChangeActive = $derived(progress < 1);
+
 	$effect(() => {
 		if (!videoRef) return;
 		if (shouldPlay) {
@@ -84,22 +87,21 @@
 		src="{CDN.mediaUrl}_HERO.webp"
 		alt=""
 		fetchpriority="high"
-		class="pointer-events-none absolute inset-0 h-[calc(100%+25vh)] w-full object-cover grayscale will-change-transform"
-		style="transform: translateY(-{parallaxY}px)"
+		class="pointer-events-none absolute inset-0 h-[calc(100%+25vh)] w-full object-cover grayscale transform-gpu"
+		style="transform: translateY(-{parallaxY}px); will-change: {willChangeActive ? 'transform' : 'auto'}"
 	/>
 
 	<!-- White overlay that fades in as user scrolls -->
 	<div
-		class="absolute inset-0 bg-white will-change-[opacity]"
-		style="opacity: {overlayOpacity}"
+		class="absolute inset-0 bg-white"
+		style="opacity: {overlayOpacity}; will-change: {willChangeActive ? 'opacity' : 'auto'}"
 		aria-hidden="true"
 	></div>
 
 	<!-- Content grid matching page layout -->
 	<div
-		class="relative z-10 grid-page h-full will-change-[opacity,transform]"
-		style="opacity: {contentOpacity}; transform: translateY(-{scrollY *
-			PARALLAX.heroContent}px)"
+		class="relative z-10 grid-page h-full"
+		style="opacity: {contentOpacity}; transform: translateY(-{scrollY * PARALLAX.heroContent}px); will-change: {willChangeActive ? 'opacity, transform' : 'auto'}"
 	>
 		<div class="col-content flex h-full flex-col justify-center text-white">
 			<h1 class="font-serif font-2xl bold">
@@ -112,8 +114,8 @@
 	<button
 		type="button"
 		onclick={scrollToSignal}
-		class="absolute inset-x-0 bottom-8 z-10 flex cursor-pointer justify-center rounded-full text-white will-change-[opacity] focus-ring md:bottom-[120px] md:grid-page md:justify-start"
-		style="opacity: {Math.max(0, 1 - progress * 3)}"
+		class="absolute inset-x-0 bottom-8 z-10 flex cursor-pointer justify-center rounded-full text-white focus-ring md:bottom-[120px] md:grid-page md:justify-start"
+		style="opacity: {Math.max(0, 1 - progress * 3)}; will-change: {willChangeActive ? 'opacity' : 'auto'}"
 		aria-label="Scroll to next section"
 	>
 		<div class="md:col-content">

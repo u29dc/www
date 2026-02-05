@@ -66,6 +66,32 @@
 	--z-overlay: 20;
 	--z-blur: 40;
 	--z-chrome: 50;
+
+	/*
+	 * Spacing scale
+	 * --space-xs: tight gaps, icon-text pairs (8px)
+	 * --space-sm: component internal spacing (16px)
+	 * --space-md: between related elements (32px)
+	 * --space-lg: section header margins (48px)
+	 * --space-xl: between content blocks (64px)
+	 * --space-2xl: section vertical padding (176px)
+	 */
+	--space-xs: 0.5rem;
+	--space-sm: 1rem;
+	--space-md: 2rem;
+	--space-lg: 3rem;
+	--space-xl: 4rem;
+	--space-2xl: 11rem;
+
+	/*
+	 * Border radius scale
+	 * --radius-sm: buttons, inputs (6px)
+	 * --radius-md: cards, panels (8px)
+	 * --radius-full: circular elements (9999px)
+	 */
+	--radius-sm: 0.375rem;
+	--radius-md: 0.5rem;
+	--radius-full: 9999px;
 }
 
 :root {
@@ -134,16 +160,12 @@
 
 /*
  * Typography scale (base: 10px for rem math)
- * Practical scale optimized for readability at each step
- *
- * | Step     | Size     | Computed | Use case              |
- * |----------|----------|----------|-----------------------|
- * | font-xs  | 0.9rem   | 9px      | Labels, captions      |
- * | font-sm  | 1.2rem   | 12px     | Body text (default)   |
- * | font-md  | 1.3rem   | 13px     | Subheadings           |
- * | font-lg  | 1.5rem   | 15px     | Section headers       |
- * | font-xl  | 2.0rem   | 20px     | Page titles           |
- * | font-2xl | 2.5rem   | 25px     | Hero text             |
+ * font-xs: labels, captions (9px)
+ * font-sm: body text, default (12px)
+ * font-md: subheadings (13px)
+ * font-lg: section headers (15px)
+ * font-xl: page titles (20px)
+ * font-2xl: hero text (25px)
  */
 
 @utility font-2xl {
@@ -315,6 +337,17 @@
 	&:active:not(:disabled) {
 		transform: scale(0.97);
 		transition: transform 100ms var(--ease-settle);
+	}
+}
+
+/* External link feedback states */
+@utility external-link-feedback {
+	&:visited {
+		opacity: 0.9;
+	}
+	&:active:not(:disabled) {
+		transform: scale(0.98);
+		transition: transform var(--duration-pulse) var(--ease-settle);
 	}
 }
 

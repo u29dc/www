@@ -118,10 +118,12 @@
 				`backdrop-filter: blur(${blurValue.toFixed(3)}rem)`,
 				`opacity: ${opacity}`,
 				"transform: translateZ(0)",
-				"will-change: transform",
 			].join("; ");
 		}),
 	);
+
+	// will-change cleanup: only apply when visible
+	const layerWillChange = $derived(isVisible ? "transform" : "auto");
 
 	const containerStyle = $derived(
 		[
@@ -165,7 +167,7 @@
 >
 	<div class="full-container relative">
 		{#each layerStyles as layerStyle}
-			<div class="absolute inset-0" style={layerStyle}></div>
+			<div class="absolute inset-0" style="{layerStyle}; will-change: {layerWillChange}"></div>
 		{/each}
 	</div>
 	{#if children}
