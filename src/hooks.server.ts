@@ -123,7 +123,9 @@ export const handle: Handle = async ({ event, resolve }) => {
 	}
 
 	const nonce = createNonce();
+	const requestId = crypto.randomUUID();
 	event.locals.nonce = nonce;
+	event.locals.requestId = requestId;
 
 	const response = await resolve(event, {
 		transformPageChunk: ({ html }) => html.replace(/<script(?![^>]*nonce=)/g, `<script nonce="${nonce}"`),
