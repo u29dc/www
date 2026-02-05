@@ -19,6 +19,18 @@
 	let visibleItems = $state(new Set<number>());
 
 	const MAX_THUMBNAILS = 6;
+	const DEFAULT_RATIO = 2;
+	const THUMB_HEIGHT = 64; // h-16 = 64px
+
+	type ParsedThumb = { filename: string; ratio: number };
+
+	const parseMediaSrc = (src: string): ParsedThumb => {
+		const match = src.match(/^(.+)@([\d.]+)$/);
+		if (match && match[1] && match[2]) {
+			return { filename: match[1], ratio: parseFloat(match[2]) };
+		}
+		return { filename: src, ratio: DEFAULT_RATIO };
+	};
 
 	const formatYear = (date: string): string => {
 		return new Date(date).getFullYear().toString();
@@ -29,12 +41,13 @@
 	};
 
 	const isImage = (filename: string): boolean => {
-		const ext = filename.toLowerCase().split(".").pop() ?? "";
+		const clean = filename.replace(/@[\d.]+$/, "");
+		const ext = clean.toLowerCase().split(".").pop() ?? "";
 		return ["webp", "jpg", "jpeg", "png", "gif", "avif"].includes(ext);
 	};
 
-	const getThumbnails = (media: string[]): string[] => {
-		return media.filter(isImage).slice(0, MAX_THUMBNAILS);
+	const getThumbnails = (media: string[]): ParsedThumb[] => {
+		return media.filter(isImage).slice(0, MAX_THUMBNAILS).map(parseMediaSrc);
 	};
 
 	onMount(() => {
@@ -76,7 +89,9 @@
 		{#each artifacts as artifact, index}
 			<article
 				bind:this={items[index]}
-				class="group relative cursor-pointer py-6 transition-all duration-500 [transition-timing-function:var(--ease-out)] [&+article]:border-t [&+article]:border-current/10"
+				class="relative py-6 transition-all duration-500 [transition-timing-function:var(--ease-settle)] [&+article]:border-t [&+article]:border-current/10"
+				class:group={!artifact.isConfidential}
+				class:cursor-pointer={!artifact.isConfidential}
 				class:opacity-0={!visibleItems.has(index)}
 				class:translate-y-5={!visibleItems.has(index)}
 				class:opacity-100={visibleItems.has(index)}
@@ -85,13 +100,15 @@
 					? "0ms"
 					: `${index * 90}ms`}
 			>
-				<div
-					class="pointer-events-none absolute left-0 top-0 h-full w-0.5 bg-transparent transition-colors duration-200 group-hover:bg-current/40"
-					aria-hidden="true"
-				></div>
+				{#if !artifact.isConfidential}
+					<div
+						class="pointer-events-none absolute left-0 top-0 h-full w-0.5 bg-transparent transition-colors duration-200 group-hover:bg-current/40"
+						aria-hidden="true"
+					></div>
+				{/if}
 
 				{#if artifact.isConfidential}
-					<div class="cursor-not-allowed pl-4">
+					<div class="pl-4 opacity-60">
 						<div class="flex items-baseline gap-4">
 							<span class="font-mono text-muted shrink-0"
 								>{formatYear(artifact.date)}</span
@@ -126,13 +143,20 @@
 						{#if thumbnails.length > 0}
 							<div class="mt-4 flex gap-1 overflow-hidden pl-12">
 								{#each thumbnails as thumb}
-									<img
-										src="{CDN.mediaUrl}{thumb}"
-										alt=""
-										loading="lazy"
-										decoding="async"
-										class="h-16 w-auto max-w-24 object-cover opacity-80 grayscale transition-all duration-300 group-hover:opacity-100 group-hover:grayscale-0"
-									/>
+									{@const width = THUMB_HEIGHT * thumb.ratio}
+									<div
+										class="h-16 shrink-0"
+										style:width="{width}px"
+										style:max-width="96px"
+									>
+										<img
+											src="{CDN.mediaUrl}{thumb.filename}"
+											alt="{artifact.title} preview"
+											loading="lazy"
+											decoding="async"
+											class="h-full w-full object-cover opacity-80 grayscale transition-all duration-300 group-hover:opacity-100 group-hover:grayscale-0"
+										/>
+									</div>
 								{/each}
 							</div>
 						{/if}

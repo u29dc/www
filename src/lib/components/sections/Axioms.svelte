@@ -71,7 +71,7 @@
 		{#each axioms as axiom, index}
 			<article
 				bind:this={items[index]}
-				class="group relative flex cursor-default gap-6 py-6 transition-all duration-500 [transition-timing-function:var(--ease-out)]"
+				class="group relative flex cursor-default gap-6 py-6 transition-all duration-500 [transition-timing-function:var(--ease-settle)]"
 				class:opacity-0={!visibleItems.has(index)}
 				class:translate-y-5={!visibleItems.has(index)}
 				class:opacity-100={visibleItems.has(index)}

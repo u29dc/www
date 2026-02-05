@@ -46,7 +46,7 @@
 	];
 </script>
 
-<section id="protocols" class="col-content-wide py-44">
+<section id="protocols" class="col-content-wide py-44 content-visibility-auto">
 	<header class="mb-16">
 		<h2 class="font-mono text-muted">[ 02 PROTOCOLS ]</h2>
 	</header>
@@ -95,13 +95,14 @@
 
 				<!-- CTA -->
 				{#if protocol.requires}
-					<div
-						class="mt-8 flex w-full items-center justify-between rounded-md px-4 py-3 font-medium bg-black/5 text-muted cursor-not-allowed"
-						aria-disabled="true"
+					<button
+						type="button"
+						disabled
+						class="mt-8 flex w-full items-center justify-between rounded-md px-4 py-3 font-medium bg-black/5 text-muted/60 cursor-not-allowed"
 					>
 						<span>{protocol.cta}</span>
 						<Lock size={16} aria-hidden="true" />
-					</div>
+					</button>
 				{:else}
 					<a
 						href="https://cal.com/u29dc"
