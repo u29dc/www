@@ -1,39 +1,13 @@
 /**
  * Page transition timing constants and utilities.
- * Coordinates with Lenis smooth scroll for seamless navigation experiences.
+ * Scroll utilities are in src/lib/scroll.ts
  */
-
-import type Lenis from 'lenis';
 
 // Transition timing constants (in milliseconds)
 export const TRANSITION = {
-	exitDuration: 650,
-	enterDuration: 650,
+	exitDuration: 400,
+	enterDuration: 400,
 } as const;
-
-// Reference to Lenis instance (set by CoreSmoothScroll)
-let lenisInstance: Lenis | null = null;
-
-/**
- * Set the Lenis instance for scroll reset coordination.
- * Called by CoreSmoothScroll on mount/unmount.
- */
-export const setTransitionLenis = (lenis: Lenis | null) => {
-	lenisInstance = lenis;
-};
-
-/**
- * Reset scroll position to top.
- * Uses Lenis scrollTo when available for smooth coordination,
- * falls back to native window.scrollTo otherwise.
- */
-export const resetScroll = () => {
-	if (lenisInstance) {
-		lenisInstance.scrollTo(0, { immediate: true });
-	} else {
-		window.scrollTo(0, 0);
-	}
-};
 
 /**
  * Factory for creating scroll-reveal intersection observers.
