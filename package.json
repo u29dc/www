@@ -22,7 +22,7 @@
 		"util:types": "bunx --bun svelte-kit sync && bunx --bun tsgo --noEmit",
 		"util:types:svelte": "bunx svelte-check-rs --tsconfig ./tsconfig.svelte.json",
 		"util:types:zvelte": "zvelte-check --workspace ./src --tsconfig ./tsconfig.json",
-		"util:clean": "rm -rf .svelte-kit build node_modules/.vite .turbo *.tsbuildinfo",
+		"util:clean": "rm -rf .svelte-kit build node_modules/.vite .wrangler *.tsbuildinfo",
 		"util:check": "STATUS=0; bun run util:format || STATUS=1; bun run util:lint || STATUS=1; bun run util:types || STATUS=1; bun run util:types:svelte || STATUS=1; bun run util:types:zvelte || STATUS=1; exit $STATUS"
 	},
 	"devDependencies": {
