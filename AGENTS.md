@@ -16,22 +16,29 @@
 │   ├── hooks.server.ts
 │   ├── lib/
 │   │   ├── components/
-│   │   │   ├── atomic/           # AtomicBrandLogo, AtomicGradientBlur
-│   │   │   ├── core/             # CoreHeader, CorePageTransition, CoreScrollLine, CoreSmoothScroll, CoreGrainOverlay, CoreViewportFix
-│   │   │   ├── mdx/              # MdxMedia, MdxMediaItem, MdxMediaEnhancer, MdxParagraph, mdx-context.ts
-│   │   │   └── sections/         # Hero, Signal, Protocols, Artifacts, Axioms, Founder, Threshold
+│   │   │   ├── atomic/           # AtomicBrandLogo, AtomicGradientBlur, AtomicHeaderButton
+│   │   │   ├── core/             # CoreHeader, CoreLoader, CorePageTransition, CoreScrollLine, CoreScrollProgress, CoreSmoothScroll, CoreGrainOverlay, CoreViewportFix
+│   │   │   ├── mdx/              # MdxMedia, MdxMediaItem, MdxMediaEnhancer, MdxParagraph, MdxSpacer, mdx-context.ts
+│   │   │   └── sections/         # Hero, Signal, Protocols, Artifacts, Axioms, Origin, Threshold
 │   │   ├── server/
 │   │   │   ├── content.ts        # MDX parsing with unified pipeline
+│   │   │   ├── logger.ts         # Server-side Pino logging
 │   │   │   ├── metadata.ts       # Meta tag generation
+│   │   │   ├── mdx-modules.ts    # MDX module exports
 │   │   │   ├── raw.ts            # Raw response handlers
 │   │   │   └── validators.ts     # Zod input validation
-│   │   ├── content-types.ts      # Zod schemas (study|fragment|signal|meta)
 │   │   ├── constants.ts          # Site config, CDN URLs
+│   │   ├── content-types.ts      # Zod schemas (study|fragment|signal|meta)
 │   │   ├── errors.ts
-│   │   ├── logger.ts             # Pino logging
+│   │   ├── loader.svelte.ts      # Loader state store (Svelte 5 runes)
+│   │   ├── logger.ts             # Client-side Pino logging
+│   │   ├── motion.ts             # Animation constants (parallax, thresholds, magnetic)
+│   │   ├── observe.ts            # IntersectionObserver utilities
 │   │   ├── raf.ts                # RAF task coordination
 │   │   ├── scroll.ts             # Lenis scroll utilities
-│   │   └── transition.ts         # Page transition timing
+│   │   ├── springs.ts            # Spring physics presets
+│   │   ├── transition.ts         # Page transition timing
+│   │   └── webgl.ts              # WebGL device tier detection
 │   ├── routes/
 │   │   ├── +layout.svelte
 │   │   ├── +layout.server.ts
@@ -92,6 +99,11 @@
 - **Content types**: 4 discriminated types in `content-types.ts` (study for client work, fragment for written pieces, signal for external links, meta for metadata pages) with Zod validation
 - **Animation system**: Centralized RAF task coordination in `raf.ts`, Lenis smooth scroll in `scroll.ts`, page transitions (650ms) in `transition.ts`
 - **Agent detection**: `hooks.server.ts` detects LLM bots (ClaudeBot, GPTBot, Perplexity, etc.) and redirects to plain text endpoints
+- **Observation system**: Visibility detection, active section tracking, and staggered reveals via IntersectionObserver utilities in `observe.ts`
+- **Device optimization**: WebGL tier detection in `webgl.ts` manages GPU load (grain overlay, DPR capping) based on device capabilities
+- **Loader state**: Initial page loader controlled via Svelte 5 runes store in `loader.svelte.ts`
+- **Motion constants**: Centralized parallax factors, scroll thresholds, and magnetic cursor parameters in `motion.ts`
+- **Spring physics**: Configurable spring presets (SPRING_UI, SPRING_PARALLAX) in `springs.ts`
 
 ## 6. Conventions
 
@@ -99,7 +111,7 @@
 - TypeScript strict mode, no `any`, no `console`
 - No emojis in code, docs, or commits
 - **Component naming**: Prefix matches directory (Atomic*, Core*, Mdx\*, section names unprefixed)
-- **Animation**: 650ms page transitions, spring physics for parallax (stiffness 25, damping 12), respect `prefers-reduced-motion`, transform/opacity only, will-change managed dynamically
+- **Animation**: 650ms page transitions, spring physics via presets in `springs.ts` (SPRING_PARALLAX: stiffness 25, damping 12), motion constants in `motion.ts`, respect `prefers-reduced-motion`, transform/opacity only, will-change managed dynamically
 - **Security**: Preserve CSP nonce generation and `<script>` nonce injection in `src/hooks.server.ts`, keep `csp-nonce` meta and `/empty.js` nonce script in `src/routes/+layout.svelte` with `src/routes/+layout.server.ts` data
 - **Headers**: Security headers (HSTS, permissions-policy, x-frame-options, referrer-policy) set in `src/hooks.server.ts`, do not weaken; 404 redirect rules for non-file paths live in `src/hooks.server.ts`
 - **Raw responses**: Raw text and markdown responses must keep `X-Robots-Tag: noindex` and cache headers in `src/lib/server/raw.ts`
