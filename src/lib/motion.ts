@@ -28,8 +28,8 @@ export const MAGNETIC = {
 	lineXRange: 50,
 	/** CoreScrollLine Y range (px) */
 	lineYRange: 20,
-	/** Founder photo magnet radius (px) */
-	founderRadius: 800,
-	/** Founder photo max offset (px) */
-	founderMaxOffset: 10,
+	/** Origin photo magnet radius (px) */
+	originRadius: 800,
+	/** Origin photo max offset (px) */
+	originMaxOffset: 10,
 } as const;

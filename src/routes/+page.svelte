@@ -5,7 +5,7 @@
 	import Protocols from "$lib/components/sections/Protocols.svelte";
 	import Artifacts from "$lib/components/sections/Artifacts.svelte";
 	import Axioms from "$lib/components/sections/Axioms.svelte";
-	import Founder from "$lib/components/sections/Founder.svelte";
+	import Origin from "$lib/components/sections/Origin.svelte";
 	import Threshold from "$lib/components/sections/Threshold.svelte";
 	import type { PageData } from "./$types";
 
@@ -25,6 +25,6 @@
 	<Protocols />
 	<Artifacts artifacts={data.artifacts} />
 	<Axioms />
-	<Founder />
+	<Origin />
 	<Threshold />
 </div>

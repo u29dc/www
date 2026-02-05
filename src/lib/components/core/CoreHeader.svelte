@@ -11,7 +11,7 @@
 		{ id: "protocols", num: "02", name: "Protocols" },
 		{ id: "artifacts", num: "03", name: "Artifacts" },
 		{ id: "axioms", num: "04", name: "Axioms" },
-		{ id: "founder", num: "05", name: "Founder" },
+		{ id: "origin", num: "05", name: "Origin" },
 	];
 
 	const isSlugPage = $derived(page.route.id === "/[slug]");
