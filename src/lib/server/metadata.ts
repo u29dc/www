@@ -126,6 +126,8 @@ export async function generateSitemapXml(): Promise<string> {
 		logEvent('SITEMAP', 'GENERATE', 'FAIL', {
 			error: error instanceof Error ? error.message : String(error),
 			fallback: 'homepage-only',
+			severity: 'degraded-service',
+			impact: 'sitemap-incomplete',
 		});
 
 		return buildSitemapXml([
