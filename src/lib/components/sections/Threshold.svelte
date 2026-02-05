@@ -1,6 +1,19 @@
 <script lang="ts">
+	import { onMount } from "svelte";
 	import ArrowUpRight from "@lucide/svelte/icons/arrow-up-right";
 	import AtomicBrandLogo from "$lib/components/atomic/AtomicBrandLogo.svelte";
+
+	let isMobile = $state(false);
+
+	onMount(() => {
+		const mq = window.matchMedia("(max-width: 767px)");
+		isMobile = mq.matches;
+		const handler = (e: MediaQueryListEvent) => {
+			isMobile = e.matches;
+		};
+		mq.addEventListener("change", handler);
+		return () => mq.removeEventListener("change", handler);
+	});
 
 	interface FooterLink {
 		title: string;
@@ -89,8 +102,8 @@
 
 		<!-- Middle: Large Logo -->
 		<AtomicBrandLogo
-			className="-translate-x-[375px]"
-			width={1000}
+			className={isMobile ? "-translate-x-[225px]" : "-translate-x-[375px]"}
+			width={isMobile ? 600 : 1000}
 			defaultBlurIntensity={0.25}
 			mouseBlurIntensity={0.4}
 			noiseIntensity={0.1}
