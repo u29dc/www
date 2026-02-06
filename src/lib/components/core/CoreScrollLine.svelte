@@ -193,7 +193,7 @@
 		>
 			<a
 				class="-m-2.5 inline-block p-2.5"
-				href="https://cal.com/u29dc"
+				href="https://cal.com/u29dc/hey"
 				target="_blank"
 				rel="noopener noreferrer"
 			>
