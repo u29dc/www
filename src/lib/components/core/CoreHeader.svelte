@@ -22,8 +22,8 @@
 	let activeSection = $state<string | null>(null);
 	let navRefs: HTMLAnchorElement[] = [];
 	let navContainer: HTMLElement | null = $state(null);
-	let lastLeft = $state('0px');
-	let lastWidth = $state('0px');
+	let lastLeft = $state("0px");
+	let lastWidth = $state("0px");
 
 	// Track position with effect (runs when activeSection changes)
 	$effect(() => {
@@ -42,11 +42,16 @@
 	// Pure derived - no mutations
 	const indicatorStyle = $derived.by(() => {
 		if (!activeSection) {
-			return { opacity: 0, transform: 'scaleX(0)', left: lastLeft, width: lastWidth };
+			return {
+				opacity: 0,
+				transform: "scaleX(0)",
+				left: lastLeft,
+				width: lastWidth,
+			};
 		}
 		return {
 			opacity: 1,
-			transform: 'scaleX(1)',
+			transform: "scaleX(1)",
 			left: lastLeft,
 			width: lastWidth,
 		};
@@ -83,12 +88,17 @@
 			<div class="h-4 w-px bg-black/10" aria-hidden="true"></div>
 
 			<!-- Brand name -->
-			<span class="hidden font-mono text-[9px] text-black/60 uppercase sm:inline">
+			<span
+				class="hidden font-mono text-[9px] text-black/60 uppercase sm:inline"
+			>
 				Incomplete Infinity
 			</span>
 
 			<!-- Divider -->
-			<div class="hidden h-4 w-px bg-black/10 sm:block" aria-hidden="true"></div>
+			<div
+				class="hidden h-4 w-px bg-black/10 sm:block"
+				aria-hidden="true"
+			></div>
 
 			<!-- Article title -->
 			{#if articleTitle}
@@ -103,8 +113,12 @@
 					class="absolute top-1/2 left-1/2 w-0 -translate-x-1/2 -translate-y-1/2 overflow-visible"
 				>
 					<AtomicBrandLogo
-						width={180}
+						width={60}
 						noiseIntensity={0.1}
+						blurStart={1.5}
+						defaultBlurIntensity={0.2}
+						mouseBlurIntensity={0.4}
+						mouseBlurSize={0.2}
 						className="-translate-x-1/2"
 					/>
 				</div>
@@ -128,8 +142,13 @@
 				<a
 					bind:this={navRefs[i]}
 					href="#{section.id}"
-					class="z-content hidden min-h-[30px] items-center rounded-md px-3 font-mono font-xs text-black/60 transition-colors focus-ring pressed-state hover-text-solid sm:inline-flex {activeSection === section.id ? 'text-black' : ''}"
-					aria-current={activeSection === section.id ? "page" : undefined}
+					class="z-content hidden min-h-[30px] items-center rounded-md px-3 font-mono font-xs text-black/60 transition-colors focus-ring pressed-state hover-text-solid sm:inline-flex {activeSection ===
+					section.id
+						? 'text-black'
+						: ''}"
+					aria-current={activeSection === section.id
+						? "page"
+						: undefined}
 				>
 					{section.num}
 					{section.name}

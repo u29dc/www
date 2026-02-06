@@ -17,6 +17,7 @@
 		className?: string;
 		theme?: "light" | "dark" | "system";
 		enableObservation?: boolean;
+		debug?: boolean;
 	}
 
 	type ThemeVariant = "light" | "dark";
@@ -191,11 +192,11 @@ vec2 coord(in vec2 p) {
 // -----------------------------------------------------------------
 // Signed Distance Function: rounded rectangle with asymmetric corners.
 // Right side has rounded corners (radius = rightRadius), left is sharp.
-// Scale factor 4.2 maps normalized coords to logo proportions.
+// Scale factor 2.3 maps normalized coords to logo proportions (scaled for 2:1 canvas, slightly smaller).
 // Returns: negative inside, zero on edge, positive outside.
 // -----------------------------------------------------------------
 float sdRoundRectCorners(vec2 p, vec2 b, float rightRadius) {
-	vec2 centered = (p - 0.5) * 4.2;  // Scale to logo coordinate space
+	vec2 centered = (p - vec2(0.65, 0.5)) * 2.3;  // Offset X to shift logo left (X is flipped in coord())
 
 	// Apply radius only to left side (centered.x < 0 after flip)
 	float r = 0.0;
@@ -404,17 +405,14 @@ void main() {
 		height: number,
 		dprCap: number,
 	): CanvasDimensions {
-		const rect = canvas.getBoundingClientRect();
 		const dpr = Math.min(window.devicePixelRatio || 1, dprCap);
-		const resolvedWidth = rect.width || width;
-		const resolvedHeight = rect.height || height;
 
 		return {
-			width: resolvedWidth,
-			height: resolvedHeight,
+			width,
+			height,
 			dpr,
-			pixelWidth: Math.floor(resolvedWidth * dpr),
-			pixelHeight: Math.floor(resolvedHeight * dpr),
+			pixelWidth: Math.floor(width * dpr),
+			pixelHeight: Math.floor(height * dpr),
 		};
 	}
 
@@ -961,13 +959,15 @@ void main() {
 		className = "",
 		theme = "system",
 		enableObservation = true,
+		debug = false,
 	}: AtomicBrandLogoProps = $props();
 
-	const height = $derived(width / 4);
+	const height = $derived(width / 2);
 	const classValue = $derived(className);
 	const containerStyle = $derived(`width: ${width}px; height: ${height}px;`);
-	const canvasStyle =
-		"width: 100%; height: 100%; display: block; --animate-duration: 600ms; --animate-delay: 0ms; --animate-y: 0px; --animate-blur: 0px;";
+	const canvasStyle = $derived(
+		`width: 100%; height: 100%; display: block; --animate-duration: 600ms; --animate-delay: 0ms; --animate-y: 0px; --animate-blur: 0px;${debug ? " outline: 2px solid red;" : ""}`,
+	);
 
 	let canvasRef = $state<HTMLCanvasElement | null>(null);
 	let renderer = $state<AtomicBrandLogoRenderer | null>(null);

@@ -26,7 +26,7 @@
 		{
 			title: "Calendar",
 			description: "Let's meet",
-			href: "https://u29dc.co/hey",
+			href: "https://cal.com/u29dc/hey",
 			note: "Always open to conversations that question premises, not just solve within them",
 		},
 		{
@@ -104,15 +104,13 @@
 
 		<!-- Middle: Large Logo -->
 		<AtomicBrandLogo
-			className={isMobile
-				? "-translate-x-[225px]"
-				: "-translate-x-[375px]"}
-			width={isMobile ? 600 : 1000}
-			defaultBlurIntensity={0.25}
-			mouseBlurIntensity={0.4}
+			width={isMobile ? 250 : 400}
 			noiseIntensity={0.1}
 			noiseScale={0.5}
-			theme="light"
+			defaultBlurIntensity={0.25}
+			blurStart={1.5}
+			mouseBlurIntensity={isMobile ? 0.2 : 0.25}
+			mouseBlurSize={isMobile ? 0.2 : 0.4}
 		/>
 
 		<!-- Bottom: Handwritten Signature -->
