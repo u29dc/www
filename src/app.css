@@ -223,6 +223,13 @@
 	@apply font-lg font-semibold uppercase;
 }
 
+@utility mdx-paragraph {
+	font-size: 1.4rem;
+	font-weight: 500;
+	line-height: 1.6;
+	text-wrap: pretty;
+}
+
 /* ================================================== */
 /* GRID SYSTEM */
 /* ================================================== */
