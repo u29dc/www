@@ -9,13 +9,15 @@
 	// Reactive opacity based on loader state
 	const opacity = $derived(loader.isActive ? 1 : 0);
 
-	// Loader fade-out duration: slower on home for dramatic effect, faster on slug pages
+	// Loader fade-out duration: slower on home for dramatic effect, slug pages match page transition
 	const duration = $derived(
-		$page.url.pathname === "/" ? 2000 : TRANSITION.enterDuration,
+		$page.url.pathname === "/"
+			? TRANSITION.exitDuration * 2
+			: TRANSITION.exitDuration,
 	);
 
-	// Easing matches page transitions
-	const easing = "var(--ease-settle)";
+	// Smooth easing for perceptible fade-out (ease-settle is too aggressive, reaches 90% in first 10%)
+	const easing = "var(--ease-smooth)";
 
 	// Skip animations for reduced motion users
 	const skipAnimation = $derived(prefersReducedMotion.current);
