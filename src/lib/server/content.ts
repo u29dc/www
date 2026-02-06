@@ -11,7 +11,7 @@ import remarkParse from 'remark-parse';
 import remarkRehype from 'remark-rehype';
 import { unified } from 'unified';
 import { CDN } from '$lib/constants';
-import { type ContentItem, ContentSchema, isStudy, type ParsedContent } from '$lib/content-types';
+import { type ContentItem, ContentSchema, type ParsedContent } from '$lib/content-types';
 import { NotFoundError } from '$lib/errors';
 import { logEvent } from '$lib/server/logger';
 
@@ -141,22 +141,22 @@ export async function getArtifactsContent(): Promise<ParsedContent[]> {
 	return allContent.filter((item) => item.frontmatter.isArtifactItem === true);
 }
 
-export async function getStudyArtifacts(): Promise<ParsedContent[]> {
+export async function getDisplayableArtifacts(): Promise<ParsedContent[]> {
 	const artifacts = await getArtifactsContent();
-	return artifacts.filter((item) => isStudy(item.frontmatter) && !(item.frontmatter.isConfidential ?? false));
+	return artifacts.filter((item) => !('isConfidential' in item.frontmatter && item.frontmatter.isConfidential));
 }
 
-export function formatStudyArtifactsAsMarkdown(studies: ParsedContent[], maxCount?: number): string {
-	if (studies.length === 0) {
-		return '<!-- No study artifacts currently available -->\n';
+export function formatArtifactsAsMarkdown(artifacts: ParsedContent[], maxCount?: number): string {
+	if (artifacts.length === 0) {
+		return '<!-- No artifacts currently available -->\n';
 	}
 
-	const limitedStudies = maxCount ? studies.slice(0, maxCount) : studies;
+	const limited = maxCount ? artifacts.slice(0, maxCount) : artifacts;
 
-	const sections = limitedStudies.map((study) => {
-		const { title } = study.frontmatter;
-		const bodyMarkdown = toMarkdownBody(study.frontmatter, study.content, { stripMedia: true });
-		return `### ${title}\n\n${bodyMarkdown}`;
+	const sections = limited.map((artifact) => {
+		const { title, type } = artifact.frontmatter;
+		const bodyMarkdown = toMarkdownBody(artifact.frontmatter, artifact.content, { stripMedia: true });
+		return `### ${title} [${type}]\n\n${bodyMarkdown}`;
 	});
 
 	return sections.join('\n\n');
@@ -175,7 +175,7 @@ export function injectArtifactsIntoLlms(llmsContent: string, artifactsMarkdown: 
 	const injected = llmsContent.replace(PLACEHOLDER, artifactsMarkdown);
 
 	logEvent('MDX', 'INJECT_ARTIFACTS', 'SUCCESS', {
-		studyCount: artifactsMarkdown.split('###').length - 1,
+		artifactCount: artifactsMarkdown.split('###').length - 1,
 	});
 
 	return injected;

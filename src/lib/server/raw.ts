@@ -1,6 +1,6 @@
 import { SITE } from '$lib/constants';
 import { isStudy } from '$lib/content-types';
-import { formatStudyArtifactsAsMarkdown, getContentBySlug, getStudyArtifacts, injectArtifactsIntoLlms, toMarkdown } from '$lib/server/content';
+import { formatArtifactsAsMarkdown, getContentBySlug, getDisplayableArtifacts, injectArtifactsIntoLlms, toMarkdown } from '$lib/server/content';
 import { createErrorResponse, ForbiddenError, NotFoundError, ProcessingError, ValidationError } from '$lib/server/errors';
 import { logEvent } from '$lib/server/logger';
 import { validateSlug } from '$lib/server/validators';
@@ -38,12 +38,12 @@ export async function handleRawContentRequest(format: string, rawSlug: string): 
 		let output = toMarkdown(content.frontmatter, content.content);
 
 		if (slug === 'llms') {
-			const studies = await getStudyArtifacts();
-			const artifactsMarkdown = formatStudyArtifactsAsMarkdown(studies);
+			const artifacts = await getDisplayableArtifacts();
+			const artifactsMarkdown = formatArtifactsAsMarkdown(artifacts);
 			output = injectArtifactsIntoLlms(output, artifactsMarkdown);
 
 			logEvent('RAW', 'INJECT_LLMS_ARTIFACTS', 'SUCCESS', {
-				studyCount: studies.length,
+				artifactCount: artifacts.length,
 			});
 		}
 
