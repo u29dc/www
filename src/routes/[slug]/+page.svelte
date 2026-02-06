@@ -26,11 +26,16 @@
 			{#if data.frontmatter.description}
 				<p class="mt-4 text-muted">{data.frontmatter.description}</p>
 			{/if}
+			<time class="mt-6 block font-mono opacity-50" datetime={data.frontmatter.date}>
+				{new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(data.frontmatter.date))}
+			</time>
 		</header>
 
 		<div class="prose space-y-6">
 			{@html data.contentHtml}
 		</div>
+
+		<p class="mt-16 font-handwritten text-muted">Han</p>
 
 		<MdxMediaEnhancer />
 	</div>

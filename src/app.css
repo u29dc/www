@@ -216,7 +216,7 @@
 @utility font-handwritten {
 	font-family: var(--font-handwritten);
 	font-weight: 400;
-	@apply text-left font-md normal-case;
+	@apply text-left font-xl normal-case;
 }
 
 @utility font-subtitle {
@@ -268,7 +268,7 @@
 	}
 	/* Ultra-wide: 2560px+ (4K/5K monitors) - shifted right for asymmetry */
 	@media (width >= 160rem) {
-		grid-column: 6 / 9;
+		grid-column: 6 / 8;
 	}
 }
 
@@ -287,7 +287,7 @@
 	}
 	/* Ultra-wide: 2560px+ (4K/5K monitors) - shifted right for asymmetry */
 	@media (width >= 160rem) {
-		grid-column: 6 / 10;
+		grid-column:  6/ 10;
 	}
 }
 
@@ -299,11 +299,11 @@
 		grid-column: 2 / 11;
 	}
 	@media (width >= 80rem) {
-		grid-column: 3 / 10;
+		grid-column: 4 / 10;
 	}
 	/* Ultra-wide: 2560px+ (4K/5K monitors) - shifted right for asymmetry */
 	@media (width >= 160rem) {
-		grid-column: 5 / 10;
+		grid-column: 5 / 9;
 	}
 }
 
