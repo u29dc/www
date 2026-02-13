@@ -70,7 +70,7 @@
 	/>
 	<link
 		rel="preload"
-		href="/fonts/meno-display-700-italic.woff2"
+		href="/fonts/instrument-serif-400-italic.woff2"
 		as="font"
 		type="font/woff2"
 		crossorigin="anonymous"
