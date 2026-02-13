@@ -5,6 +5,7 @@
 	import { MAGNETIC, SCROLL } from "$lib/motion";
 	import { registerRafTask } from "$lib/raf";
 	import { getScrollY } from "$lib/scroll";
+	import { scrollLine } from "$lib/scrollline.svelte";
 	import { type SpringState, SPRING_UI, spring } from "$lib/springs";
 
 	const isSlugPage = $derived(page.route.id === "/[slug]");
@@ -160,6 +161,7 @@
 
 			lineOffset = line.value + magnetY.value;
 			ctaOffset = (isMdUp ? base.value : 0) + magnetX.value;
+			scrollLine.setScreenY(winHeight / 2 - 250 + lineOffset);
 		};
 
 		rafHandle = registerRafTask(tick);
