@@ -63,7 +63,7 @@
 	<!-- Critical font preloads for LCP -->
 	<link
 		rel="preload"
-		href="/fonts/acumin-pro-600-normal.woff2"
+		href="/fonts/geist-variable-normal.woff2"
 		as="font"
 		type="font/woff2"
 		crossorigin="anonymous"
@@ -71,13 +71,6 @@
 	<link
 		rel="preload"
 		href="/fonts/meno-display-700-italic.woff2"
-		as="font"
-		type="font/woff2"
-		crossorigin="anonymous"
-	/>
-	<link
-		rel="preload"
-		href="/fonts/acumin-pro-400-normal.woff2"
 		as="font"
 		type="font/woff2"
 		crossorigin="anonymous"

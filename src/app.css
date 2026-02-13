@@ -2,7 +2,7 @@
 @import "tailwindcss";
 
 @theme {
-	--font-sans: var(--font-acumin);
+	--font-sans: var(--font-geist);
 	--font-serif: var(--font-meno);
 	--font-mono: var(--font-fira-code);
 	--font-handwritten: var(--font-professor);

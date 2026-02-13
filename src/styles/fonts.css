@@ -1,41 +1,17 @@
-/* Acumin Pro - Sans Serif */
+/* Geist - Sans Serif (Variable) */
 @font-face {
-	font-family: "Acumin Pro";
-	src: url("/fonts/acumin-pro-300-normal.woff2") format("woff2");
-	font-weight: 300;
+	font-family: "Geist";
+	src: url("/fonts/geist-variable-normal.woff2") format("woff2-variations");
+	font-weight: 100 900;
 	font-style: normal;
 	font-display: swap;
 }
 
 @font-face {
-	font-family: "Acumin Pro";
-	src: url("/fonts/acumin-pro-400-normal.woff2") format("woff2");
-	font-weight: 400;
-	font-style: normal;
-	font-display: swap;
-}
-
-@font-face {
-	font-family: "Acumin Pro";
-	src: url("/fonts/acumin-pro-400-italic.woff2") format("woff2");
-	font-weight: 400;
+	font-family: "Geist";
+	src: url("/fonts/geist-variable-italic.woff2") format("woff2-variations");
+	font-weight: 100 900;
 	font-style: italic;
-	font-display: swap;
-}
-
-@font-face {
-	font-family: "Acumin Pro";
-	src: url("/fonts/acumin-pro-500-normal.woff2") format("woff2");
-	font-weight: 500;
-	font-style: normal;
-	font-display: swap;
-}
-
-@font-face {
-	font-family: "Acumin Pro";
-	src: url("/fonts/acumin-pro-600-normal.woff2") format("woff2");
-	font-weight: 600;
-	font-style: normal;
 	font-display: swap;
 }
 
@@ -107,8 +83,8 @@
 }
 
 :root {
-	/* Primary fonts (now self-hosted) */
-	--font-acumin: "Acumin Pro", system-ui, -apple-system, BlinkMacSystemFont, "SF Pro", "Segoe UI", "Roboto", "Helvetica Neue", "Arial", sans-serif;
+	/* Primary fonts (self-hosted) */
+	--font-geist: "Geist", system-ui, -apple-system, BlinkMacSystemFont, "SF Pro", "Segoe UI", "Roboto", "Helvetica Neue", "Arial", sans-serif;
 	--font-meno: "Meno Display", "Georgia", "Times New Roman", serif;
 
 	/* Utility fonts */
