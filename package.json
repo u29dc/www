@@ -40,13 +40,13 @@
 		"lighthouse": "^13.0.3",
 		"lint-staged": "^16.2.7",
 		"mdsvex": "^0.12.6",
-		"svelte": "^5.50.3",
+		"svelte": "^5.51.0",
 		"svelte-check-rs": "^0.9.1",
 		"tailwindcss": "^4.1.18",
 		"vite": "^7.3.1"
 	},
 	"dependencies": {
-		"@lucide/svelte": "^0.563.1",
+		"@lucide/svelte": "^0.564.0",
 		"gray-matter": "^4.0.3",
 		"hastscript": "^9.0.1",
 		"js-yaml": "^4.1.1",
