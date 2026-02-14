@@ -6,6 +6,7 @@
 
 function createScrollLineStore() {
 	let screenY = $state(0);
+	let blurActive = $state(false);
 
 	return {
 		/** Line's current Y position in viewport pixels */
@@ -16,6 +17,16 @@ function createScrollLineStore() {
 		/** Update line position (called by CoreScrollLine each frame) */
 		setScreenY(y: number) {
 			screenY = y;
+		},
+
+		/** Whether the scroll line overlaps a section that needs blur */
+		get blurActive() {
+			return blurActive;
+		},
+
+		/** Toggle blur visibility (called by Signal when line enters/exits) */
+		setBlurActive(active: boolean) {
+			blurActive = active;
 		},
 	};
 }

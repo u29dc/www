@@ -12,6 +12,11 @@
 	let sectionRef = $state<HTMLElement | null>(null);
 	let clipBottom = $state(0);
 	let isNearSection = $state(false);
+	let isDirectlyOnSection = $state(false);
+
+	$effect(() => {
+		scrollLine.setBlurActive(isDirectlyOnSection);
+	});
 
 	let sectionTop = 0;
 	let sectionHeight = 0;
@@ -38,9 +43,11 @@
 
 			clipBottom = clamp(0, sectionHeight - clipY, sectionHeight);
 			isNearSection = clipY > -BUFFER && clipY < sectionHeight + BUFFER;
+			isDirectlyOnSection = clipY > 0 && clipY < sectionHeight;
 		});
 
 		return () => {
+			scrollLine.setBlurActive(false);
 			observer.disconnect();
 			rafHandle.dispose();
 		};
@@ -102,7 +109,7 @@
 		class="relative col-content content-visibility-auto"
 	>
 		<!-- Base: muted text (decorative, hidden from assistive tech) -->
-		<div aria-hidden="true" class="py-44 text-black/25">
+		<div aria-hidden="true" class="py-44 text-black/10">
 			{@render content()}
 		</div>
 

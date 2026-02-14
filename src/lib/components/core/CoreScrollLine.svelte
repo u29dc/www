@@ -7,6 +7,7 @@
 	import { getScrollY } from "$lib/scroll";
 	import { scrollLine } from "$lib/scrollline.svelte";
 	import { type SpringState, SPRING_UI, spring } from "$lib/springs";
+	import AtomicGradientBlur from "$lib/components/atomic/AtomicGradientBlur.svelte";
 
 	const isSlugPage = $derived(page.route.id === "/[slug]");
 
@@ -117,7 +118,8 @@
 
 			// Line visibility: immediate on slug pages, fade in after hero on homepage
 			const scrollY = getScrollY();
-			isVisible = isSlugPage || scrollY > winHeight * SCROLL.lineVisibleThreshold;
+			isVisible =
+				isSlugPage || scrollY > winHeight * SCROLL.lineVisibleThreshold;
 
 			// Scroll progress mapped from after hero to footer
 			const adjustedScroll = Math.max(0, scrollY - scrollStart);
@@ -186,9 +188,33 @@
 		style="{lineStyle}; will-change: transform; backface-visibility: hidden;"
 	>
 		<div
-			class="absolute inset-0 origin-left transform-gpu bg-black"
+			class="pointer-events-none absolute inset-0 transition-opacity duration-150"
+			style:opacity={scrollLine.blurActive ? 1 : 0}
+		>
+			<AtomicGradientBlur
+				position="bottom"
+				fixed={false}
+				size="4rem"
+				strength={1}
+				layers={2}
+			/>
+		</div>
+		<div
+			class="absolute inset-0 z-10 origin-left transform-gpu bg-black"
 			style="will-change: transform; backface-visibility: hidden;"
 		></div>
+		<div
+			class="pointer-events-none absolute inset-0 transition-opacity duration-150"
+			style:opacity={scrollLine.blurActive ? 1 : 0}
+		>
+			<AtomicGradientBlur
+				position="top"
+				fixed={false}
+				size="10rem"
+				strength={3}
+				layers={2}
+			/>
+		</div>
 		<div
 			class="pointer-events-auto absolute top-[1px] transform-gpu"
 			style="left: {anchorLeft}; {ctaStyle}; will-change: transform; backface-visibility: hidden;"

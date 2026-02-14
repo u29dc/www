@@ -128,7 +128,7 @@
 			`opacity: ${isVisible ? 1 : 0}`,
 			`transition: ${animated ? "opacity 0.3s ease-out" : "none"}`,
 			`z-index: ${zIndex}`,
-			"contain: layout style paint",
+			fixed ? "contain: layout style paint" : "contain: layout style",
 			`${position}: 0`,
 			isVertical
 				? `height: ${size}; width: 100%; left: 0; right: 0`
@@ -139,7 +139,7 @@
 </script>
 
 <div
-	class={`relative isolate hidden md:block ${className}`}
+	class={`relative hidden md:block ${fixed ? "isolate" : ""} ${className}`}
 	style={containerStyle}
 	use:observeVisibility={{
 		onEnter: () => { isVisible = true; },
