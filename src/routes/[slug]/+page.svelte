@@ -188,7 +188,7 @@
 	</div>
 
 	<div
-		class="article-flow col-full grid-section-full grid gap-y-12 [&>*:not(.mdx-quote)]:col-content [&_[data-footnotes]]:mt-[2.4rem] [&_[data-footnotes]]:border-t [&_[data-footnotes]]:border-black/10 [&_[data-footnotes]]:pt-[2rem] [&_[data-footnotes]_ol]:grid [&_[data-footnotes]_ol]:list-decimal [&_[data-footnotes]_ol]:gap-y-[1.2rem] [&_[data-footnotes]_ol]:ps-[2.2rem] [&_[data-footnotes]_li]:text-[1.25rem] [&_[data-footnotes]_li]:leading-[1.65] [&_[data-footnotes]_li]:text-muted [&_[data-footnotes]_p]:inline [&_a[data-footnote-ref]]:font-mono [&_a[data-footnote-ref]]:text-[0.95rem] [&_a[data-footnote-ref]]:text-muted [&_a[data-footnote-ref]]:no-underline [&_a[data-footnote-backref]]:hidden"
+		class="article-flow col-full grid-section-full grid gap-y-12 [&>*:not(.mdx-quote)]:col-content [&_[data-footnotes]]:mt-[2.4rem] [&_[data-footnotes]]:border-t [&_[data-footnotes]]:border-black/10 [&_[data-footnotes]]:pt-[2rem] [&_[data-footnotes]_ol]:grid [&_[data-footnotes]_ol]:list-decimal [&_[data-footnotes]_ol]:gap-y-[1.2rem] [&_[data-footnotes]_ol]:ps-[2.2rem] [&_[data-footnotes]_li]:[font-family:var(--font-mono)] [&_[data-footnotes]_li]:text-[1.1rem] [&_[data-footnotes]_li]:font-normal [&_[data-footnotes]_li]:normal-case [&_[data-footnotes]_li]:leading-[1.5] [&_[data-footnotes]_li]:text-muted [&_[data-footnotes]_p]:inline [&_a[data-footnote-ref]]:font-mono [&_a[data-footnote-ref]]:text-[0.95rem] [&_a[data-footnote-ref]]:text-muted [&_a[data-footnote-ref]]:no-underline [&_a[data-footnote-backref]]:hidden"
 	>
 		{@html data.contentHtml}
 	</div>
