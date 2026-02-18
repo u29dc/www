@@ -134,9 +134,8 @@
 								{#each thumbnails as thumb}
 									{@const width = THUMB_HEIGHT * thumb.ratio}
 									<div
-										class="h-16 shrink-0 overflow-hidden rounded-sm"
+										class="h-16 max-w-[96px] shrink-0 overflow-hidden rounded-sm"
 										style:width="{width}px"
-										style:max-width="96px"
 									>
 										<img
 											src="{CDN.mediaUrl}{thumb.filename}"

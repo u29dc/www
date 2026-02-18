@@ -47,7 +47,10 @@
 	];
 </script>
 
-<section id="protocols" class="col-wide py-44 content-visibility-auto">
+<section
+	id="protocols"
+	class="col-wide py-44 [content-visibility:auto] [contain-intrinsic-size:1000px_800px]"
+>
 	<header class="mb-16">
 		<p class="font-mono text-muted">[ 02 PROTOCOLS ]</p>
 	</header>

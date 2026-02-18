@@ -67,9 +67,8 @@
 </script>
 
 <div
-	class="h-full"
+	class="h-full shrink-0"
 	style:flex-basis={flexBasis}
-	style:flex-shrink="0"
 	style:aspect-ratio={ratio}
 >
 	{#if isVideo}
@@ -89,7 +88,9 @@
 			{#if shouldLoadVideo}
 				<video
 					bind:this={videoRef}
-					class="media-fill transition-opacity duration-200 {loaded ? 'opacity-100' : 'opacity-0'}"
+					class="h-full w-full object-cover transform-gpu transition-opacity duration-200 {loaded
+						? 'opacity-100'
+						: 'opacity-0'}"
 					src={fullUrl}
 					width={Math.round(100 * ratio)}
 					height={100}
@@ -106,7 +107,9 @@
 	{:else}
 		<img
 			bind:this={imageRef}
-			class="media-fill transition-opacity duration-200 {loaded ? 'opacity-100' : 'opacity-0'}"
+			class="h-full w-full object-cover transform-gpu transition-opacity duration-200 {loaded
+				? 'opacity-100'
+				: 'opacity-0'}"
 			src={fullUrl}
 			width={Math.round(100 * ratio)}
 			height={100}

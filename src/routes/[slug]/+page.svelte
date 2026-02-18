@@ -24,7 +24,29 @@
 			: `${normalizedPathname}.md`;
 		return markdownUrl.toString();
 	});
-	const aiPrompt = $derived(`Read this and summarize: ${markdownPageUrl}`);
+	const markdownRelativePath = $derived.by(() => {
+		const normalizedPathname = page.url.pathname.replace(/\/+$/, "");
+		return normalizedPathname.endsWith(".md")
+			? normalizedPathname
+			: `${normalizedPathname}.md`;
+	});
+	const typeLabel = $derived(
+		({ study: "case study", fragment: "essay", signal: "signal", meta: "artifact" } as const)[
+			data.frontmatter.type
+		] ?? "artifact",
+	);
+	const aiPrompt = $derived(
+		`This is "${data.frontmatter.title}" -- a ${typeLabel} from ${SITE.name},`
+			+ ` a narrative architecture practice building decision-grade narratives for complex technology companies.`
+			+ `\n\nStudio context: ${SITE.url}/llms.md`
+			+ `\nArticle: ${markdownPageUrl}`
+			+ `\n\n1. Read the studio context first for positioning`
+			+ `\n2. Read the article`
+			+ `\n3. One tight paragraph summary + bulleted key arguments`
+			+ `\n4. Frame all claims within the practice's broader positioning -- assume zero prior context`
+			+ `\n5. Offer to go deeper on any thread`
+			+ `\n6. For related topics, search other artifacts: ${SITE.url}/sitemap.xml`,
+	);
 	const claudeUrl = $derived(
 		`https://claude.ai/new?${new URLSearchParams({ q: aiPrompt }).toString()}`,
 	);
@@ -32,33 +54,19 @@
 		`https://chatgpt.com/?${new URLSearchParams({ q: aiPrompt }).toString()}`,
 	);
 
-	const collapseWhitespace = (value: string): string =>
-		value
-			.replace(/\r/g, "")
-			.replace(/[ \t]+\n/g, "\n")
+	const stripFrontmatter = (md: string): string =>
+		md.replace(/^---\n[\s\S]*?\n---\n+/, "");
+
+	const stripMediaLinks = (md: string): string =>
+		md.replace(/^\[.*?\]\(https:\/\/storage\.u29dc\.com\/.*?\)\s*$/gm, "");
+
+	const stripFooter = (md: string): string =>
+		md.replace(/\n---\n\nFull sitemap:.*$/s, "");
+
+	const cleanMarkdown = (md: string): string =>
+		stripFooter(stripMediaLinks(stripFrontmatter(md)))
 			.replace(/\n{3,}/g, "\n\n")
 			.trim();
-
-	const extractPlainTextFromHtml = (html: string): string => {
-		if (typeof document === "undefined") return "";
-		const wrapper = document.createElement("div");
-		wrapper.innerHTML = html;
-
-		for (const ref of wrapper.querySelectorAll<HTMLAnchorElement>(
-			"a[data-footnote-ref]",
-		)) {
-			const marker = ref.textContent?.trim() ?? "";
-			ref.textContent = marker.length > 0 ? `[${marker}]` : "";
-		}
-
-		for (const backRef of wrapper.querySelectorAll<HTMLElement>(
-			"[data-footnote-backref]",
-		)) {
-			backRef.remove();
-		}
-
-		return collapseWhitespace(wrapper.textContent ?? "");
-	};
 
 	const copyWithFallback = (value: string): void => {
 		if (typeof document === "undefined") return;
@@ -89,14 +97,17 @@
 	};
 
 	const copyContent = async (): Promise<void> => {
-		const plainText = extractPlainTextFromHtml(data.contentHtml);
+		const response = await fetch(markdownRelativePath);
+		if (!response.ok) return;
+		const md = await response.text();
+		const body = cleanMarkdown(md);
 		const blocks = [
 			data.frontmatter.title,
 			data.frontmatter.description,
 			formatDate(data.frontmatter.date),
-			plainText,
+			body,
 			pageUrl,
-		].filter((value) => value.trim().length > 0);
+		].filter((v) => v.trim().length > 0);
 		await writeToClipboard(blocks.join("\n\n"));
 	};
 
@@ -126,7 +137,7 @@
 				href={claudeUrl}
 				target="_blank"
 				rel="noopener noreferrer"
-				class="action-button"
+				class="inline-flex min-h-[30px] cursor-pointer select-none items-center justify-center rounded-md bg-black/5 px-3 font-mono font-xs text-foreground no-underline transition-colors focus-ring pressed-state hover-bg-subtle"
 			>
 				Read with Claude
 			</a>
@@ -134,14 +145,22 @@
 				href={chatGptUrl}
 				target="_blank"
 				rel="noopener noreferrer"
-				class="action-button"
+				class="inline-flex min-h-[30px] cursor-pointer select-none items-center justify-center rounded-md bg-black/5 px-3 font-mono font-xs text-foreground no-underline transition-colors focus-ring pressed-state hover-bg-subtle"
 			>
 				Read with ChatGPT
 			</a>
-			<button type="button" onclick={copyContent} class="action-button">
+			<button
+				type="button"
+				onclick={copyContent}
+				class="inline-flex min-h-[30px] cursor-pointer select-none appearance-none items-center justify-center rounded-md border-0 bg-black/5 px-3 font-mono font-xs text-foreground no-underline transition-colors focus-ring pressed-state hover-bg-subtle"
+			>
 				Copy content
 			</button>
-			<button type="button" onclick={copyLink} class="action-button">
+			<button
+				type="button"
+				onclick={copyLink}
+				class="inline-flex min-h-[30px] cursor-pointer select-none appearance-none items-center justify-center rounded-md border-0 bg-black/5 px-3 font-mono font-xs text-foreground no-underline transition-colors focus-ring pressed-state hover-bg-subtle"
+			>
 				Copy link
 			</button>
 		</div>
@@ -162,7 +181,9 @@
 		</time>
 	</div>
 
-	<div class="essay-flow">
+	<div
+		class="article-flow col-full grid-section-full grid gap-y-12 [&>*:not(.mdx-quote)]:col-content [&_[data-footnotes]]:mt-[2.4rem] [&_[data-footnotes]]:border-t [&_[data-footnotes]]:border-black/10 [&_[data-footnotes]]:pt-[2rem] [&_[data-footnotes]_ol]:grid [&_[data-footnotes]_ol]:list-decimal [&_[data-footnotes]_ol]:gap-y-[1.2rem] [&_[data-footnotes]_ol]:ps-[2.2rem] [&_[data-footnotes]_li]:text-[1.25rem] [&_[data-footnotes]_li]:leading-[1.65] [&_[data-footnotes]_li]:text-muted [&_[data-footnotes]_p]:inline [&_a[data-footnote-ref]]:font-mono [&_a[data-footnote-ref]]:text-[0.95rem] [&_a[data-footnote-ref]]:text-muted [&_a[data-footnote-ref]]:no-underline [&_a[data-footnote-backref]]:hidden"
+	>
 		{@html data.contentHtml}
 	</div>
 

@@ -62,13 +62,11 @@
 	 * --z-base: backgrounds and base content (hero bg)
 	 * --z-content: primary content and hero elements
 	 * --z-overlay: scroll indicators, floating UI
-	 * --z-blur: gradient blur effects
 	 * --z-chrome: fixed header, grain overlay, skip links
 	 */
 	--z-base: 0;
 	--z-content: 10;
 	--z-overlay: 20;
-	--z-blur: 40;
 	--z-chrome: 50;
 
 	/*
@@ -233,13 +231,6 @@
 	@apply font-lg font-semibold uppercase;
 }
 
-@utility mdx-paragraph {
-	font-size: 1.4rem;
-	font-weight: 500;
-	line-height: 1.7;
-	text-wrap: pretty;
-}
-
 /* ================================================== */
 /* GRID SYSTEM */
 /* ================================================== */
@@ -323,19 +314,6 @@
 	height: calc(var(--vh, 1vh) * 100);
 }
 
-@utility full-container {
-	@apply h-full w-full;
-}
-
-@utility media-fill {
-	@apply h-full w-full object-cover transform-gpu;
-}
-
-@utility content-visibility-auto {
-	content-visibility: auto;
-	contain-intrinsic-size: 1000px 800px;
-}
-
 @utility scrollbar-hidden {
 	scrollbar-width: none;
 	&::-webkit-scrollbar {
@@ -354,10 +332,6 @@
 
 @utility z-overlay {
 	z-index: var(--z-overlay);
-}
-
-@utility z-blur {
-	z-index: var(--z-blur);
 }
 
 @utility z-chrome {
@@ -397,20 +371,6 @@
 	}
 }
 
-/* Unified action control style for links and buttons */
-@utility action-button {
-	@apply inline-flex min-h-[30px] cursor-pointer items-center justify-center rounded-md bg-black/5 px-3 font-mono font-xs text-foreground no-underline transition-colors focus-ring pressed-state;
-	appearance: none;
-	border: 0;
-	user-select: none;
-
-	@media (hover: hover) {
-		&:hover {
-			background-color: color-mix(in oklab, var(--color-black) 10%, transparent);
-		}
-	}
-}
-
 /* External link feedback states */
 @utility external-link-feedback {
 	&:visited {
@@ -422,99 +382,18 @@
 	}
 }
 
-/* ================================================== */
-/* ARTICLE FLOW */
-/* ================================================== */
-
-@utility essay-flow {
-	@apply col-full grid-section-full;
-	row-gap: 3rem;
-}
-
-.essay-flow > * {
-	@apply col-content;
-}
-
-.essay-flow > .mdx-quote {
-	@apply col-content-wide;
-}
-
-.essay-flow .mdx-quote {
-	padding-inline: 2rem;
-	text-align: center;
-}
-
-.essay-flow .mdx-quote blockquote {
-	font-family: var(--font-serif);
-	font-style: italic;
-	font-size: clamp(2rem, 2.2vw, 2.9rem);
-	font-weight: 700;
-	line-height: 1.28;
-	text-wrap: balance;
-}
-
-.essay-flow .mdx-quote figcaption {
-	margin-top: 1.2rem;
-	display: flex;
-	flex-wrap: wrap;
-	justify-content: center;
-	gap: 0.5rem;
-	color: var(--trace);
-	font-family: var(--font-mono);
-	font-size: 0.95rem;
-	text-transform: uppercase;
-}
-
-.essay-flow .mdx-quote figcaption a {
-	text-decoration: underline;
-	text-underline-offset: 0.2rem;
-}
-
-.essay-flow sup:has(> a[data-footnote-ref]) {
+/* Footnote marker punctuation still needs pseudo-elements/has selectors */
+.article-flow sup:has(> a[data-footnote-ref]) {
 	top: -0.18em;
 	margin-inline-start: 0.18em;
 }
 
-.essay-flow a[data-footnote-ref] {
-	color: var(--trace);
-	font-family: var(--font-mono);
-	font-size: 0.95rem;
-	text-decoration: none;
-}
-
-.essay-flow a[data-footnote-ref]::before {
+.article-flow a[data-footnote-ref]::before {
 	content: "[";
 }
 
-.essay-flow a[data-footnote-ref]::after {
+.article-flow a[data-footnote-ref]::after {
 	content: "]";
-}
-
-.essay-flow [data-footnotes] {
-	margin-top: 2.4rem;
-	padding-top: 2rem;
-	border-top: 1px solid color-mix(in oklab, var(--color-black) 10%, transparent);
-}
-
-.essay-flow [data-footnotes] ol {
-	list-style: decimal;
-	padding-inline-start: 2.2rem;
-	display: grid;
-	row-gap: 1.2rem;
-}
-
-.essay-flow [data-footnotes] li {
-	color: var(--trace);
-	font-size: 1.25rem;
-	line-height: 1.65;
-}
-
-.essay-flow [data-footnotes] p {
-	display: inline;
-}
-
-.essay-flow a[data-footnote-backref] {
-	display: none;
 }
 
 /* ================================================== */
@@ -538,38 +417,6 @@
 }
 
 /* ================================================== */
-/* VISUAL EFFECTS */
-/* ================================================== */
-
-@utility marker-all {
-	position: relative;
-	background-image:
-		linear-gradient(to bottom, var(--color-black-faded), var(--color-black-faded)), linear-gradient(to right, var(--color-black-faded), var(--color-black-faded)),
-		linear-gradient(to bottom, var(--color-black-faded), var(--color-black-faded)), linear-gradient(to left, var(--color-black-faded), var(--color-black-faded)),
-		linear-gradient(to top, var(--color-black-faded), var(--color-black-faded)), linear-gradient(to right, var(--color-black-faded), var(--color-black-faded)),
-		linear-gradient(to top, var(--color-black-faded), var(--color-black-faded)), linear-gradient(to left, var(--color-black-faded), var(--color-black-faded));
-	background-size:
-		1px 4px,
-		4px 1px,
-		1px 4px,
-		4px 1px,
-		1px 4px,
-		4px 1px,
-		1px 4px,
-		4px 1px;
-	background-position:
-		top left,
-		top left,
-		top right,
-		top right,
-		bottom left,
-		bottom left,
-		bottom right,
-		bottom right;
-	background-repeat: no-repeat;
-}
-
-/* ================================================== */
 /* LENIS SMOOTH SCROLL */
 /* ================================================== */
 
@@ -588,41 +435,4 @@ html.lenis.lenis-smooth [data-lenis-prevent] {
 
 html.lenis.lenis-stopped {
 	overflow: clip;
-}
-
-/* ================================================== */
-/* SCROLL-TRIGGERED REVEALS */
-/* ================================================== */
-
-@utility reveal-hidden {
-	opacity: 0;
-	transform: translateY(12px);
-}
-
-@utility reveal-visible {
-	opacity: 1;
-	transform: translateY(0);
-	transition:
-		opacity 500ms var(--ease-settle),
-		transform 500ms var(--ease-settle);
-}
-
-/* Staggered reveal delays via CSS custom property
- * Set --stagger-index via inline style: style="--stagger-index: {index}"
- * Delay = index * 50ms
- */
-.reveal-visible {
-	transition-delay: calc(var(--stagger-index, 0) * 50ms);
-}
-
-/* Respect reduced motion preference */
-@media (prefers-reduced-motion: reduce) {
-	.reveal-hidden {
-		opacity: 1;
-		transform: none;
-	}
-
-	.reveal-visible {
-		transition: none;
-	}
 }

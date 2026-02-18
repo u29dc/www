@@ -68,7 +68,7 @@ const parseMediaSources = (value: string | undefined): string[] => {
 	return [];
 };
 
-const mdxParagraphWrapper = (children: ElementContent[]): Element => h('div', { className: 'mdx-paragraph' }, children);
+const mdxParagraphWrapper = (children: ElementContent[]): Element => h('div', { className: 'text-[1.4rem] font-medium leading-[1.7] text-pretty' }, children);
 
 const mdxMediaPlaceholder = (sources: string[], alt?: string): Element => {
 	const payload = JSON.stringify(sources);
@@ -108,7 +108,7 @@ const mdxQuotePlaceholder = (children: ElementContent[], metadata: MdxQuoteMetad
 				h(
 					'a',
 					{
-						className: 'mdx-quote-reference external-link-feedback',
+						className: 'external-link-feedback underline underline-offset-[0.2rem]',
 						href: metadata.href,
 						target: '_blank',
 						rel: 'noopener noreferrer',
@@ -117,17 +117,22 @@ const mdxQuotePlaceholder = (children: ElementContent[], metadata: MdxQuoteMetad
 				),
 			);
 		} else {
-			captionChildren.push(h('span', { className: 'mdx-quote-reference' }, metadata.reference));
+			captionChildren.push(h('span', {}, metadata.reference));
 		}
 	}
 
-	const figureChildren: ElementContent[] = [h('blockquote', {}, children)];
+	const figureChildren: ElementContent[] = [h('blockquote', { className: 'font-serif italic text-[clamp(2rem,2.2vw,2.9rem)] font-bold leading-[1.28] text-balance' }, children)];
 
 	if (captionChildren.length > 0) {
-		figureChildren.push(h('figcaption', {}, [h('span', { className: 'mdx-quote-prefix', 'aria-hidden': 'true' }, '—'), ...captionChildren]));
+		figureChildren.push(
+			h('figcaption', { className: 'mt-[1.2rem] flex flex-wrap justify-center gap-2 text-muted font-mono text-[0.95rem] uppercase' }, [
+				h('span', { 'aria-hidden': 'true' }, '—'),
+				...captionChildren,
+			]),
+		);
 	}
 
-	return h('figure', { className: 'mdx-quote' }, figureChildren);
+	return h('figure', { className: 'mdx-quote col-content-wide px-8 text-center' }, figureChildren);
 };
 
 const mdxJsxFlowElementHandler = (state: State, node: MdxJsxFlowElement): Element => {

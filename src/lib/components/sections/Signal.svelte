@@ -99,14 +99,17 @@
 {/snippet}
 
 {#if prefersReducedMotion.current}
-	<section id="signal" class="col-content py-44 content-visibility-auto">
+	<section
+		id="signal"
+		class="col-content py-44 [content-visibility:auto] [contain-intrinsic-size:1000px_800px]"
+	>
 		{@render content()}
 	</section>
 {:else}
 	<section
 		bind:this={sectionRef}
 		id="signal"
-		class="relative col-content content-visibility-auto"
+		class="relative col-content [content-visibility:auto] [contain-intrinsic-size:1000px_800px]"
 	>
 		<!-- Base: muted text (decorative, hidden from assistive tech) -->
 		<div aria-hidden="true" class="py-44 text-black/10">

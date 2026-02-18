@@ -150,7 +150,7 @@
 		disabled: !animated,
 	}}
 >
-	<div class="full-container relative">
+	<div class="relative h-full w-full">
 		{#each layerStyles as layerStyle}
 			<div class="absolute inset-0" style="{layerStyle}; will-change: {layerWillChange}"></div>
 		{/each}
