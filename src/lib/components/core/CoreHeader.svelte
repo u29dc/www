@@ -32,10 +32,13 @@
 	let revealTimeout: ReturnType<typeof setTimeout> | null = null;
 	let hideTimeout: ReturnType<typeof setTimeout> | null = null;
 	let promoteTimeout: ReturnType<typeof setTimeout> | null = null;
+	let navIntentSection = $state<string | null>(null);
+	let navIntentTimeout: ReturnType<typeof setTimeout> | null = null;
 	let slugTitleVisible = $state(false);
 	const INITIAL_INDICATOR_FADE_DELAY_MS = 80;
 	const INITIAL_INDICATOR_FADE_MS = 420;
 	const INDICATOR_FADE_OUT_MS = 560;
+	const NAV_INTENT_LOCK_MS = 900;
 
 	const cancelIndicatorTransitions = () => {
 		if (revealFrame !== null) {
@@ -54,6 +57,35 @@
 			clearTimeout(promoteTimeout);
 			promoteTimeout = null;
 		}
+	};
+
+	const clearNavIntent = () => {
+		if (navIntentTimeout !== null) {
+			clearTimeout(navIntentTimeout);
+			navIntentTimeout = null;
+		}
+		navIntentSection = null;
+	};
+
+	const handleSectionNavClick = (sectionId: string) => {
+		clearNavIntent();
+		navIntentSection = sectionId;
+		navIntentTimeout = setTimeout(() => {
+			navIntentTimeout = null;
+			navIntentSection = null;
+		}, NAV_INTENT_LOCK_MS);
+
+		activeSection = sectionId;
+		requestAnimationFrame(() => {
+			const hasPosition = updateIndicatorPosition();
+			if (!hasPosition) return;
+
+			cancelIndicatorTransitions();
+			indicatorPrimed = true;
+			indicatorBooting = false;
+			indicatorTransitionMode = "full";
+			indicatorVisible = true;
+		});
 	};
 
 	const updateIndicatorPosition = (): boolean => {
@@ -279,6 +311,14 @@
 			}
 
 			tracker = createActiveTracker(trackedIds, (activeId) => {
+				if (navIntentSection) {
+					if (activeId === navIntentSection) {
+						clearNavIntent();
+						activeSection = activeId;
+					}
+					// Ignore transient null or neighboring section hits while anchor scroll settles.
+					return;
+				}
 				activeSection = activeId;
 			});
 		};
@@ -314,13 +354,14 @@
 		}
 		scheduleIndicatorUpdate();
 
-		return () => {
-			if (trackerAttachFrame !== null) {
-				cancelAnimationFrame(trackerAttachFrame);
-			}
-			cancelIndicatorTransitions();
-			tracker?.disconnect();
-			resizeObserver.disconnect();
+			return () => {
+				if (trackerAttachFrame !== null) {
+					cancelAnimationFrame(trackerAttachFrame);
+				}
+				clearNavIntent();
+				cancelIndicatorTransitions();
+				tracker?.disconnect();
+				resizeObserver.disconnect();
 			window.removeEventListener("resize", scheduleIndicatorUpdate);
 			if (supportsFontEvents) {
 				fontSet.removeEventListener(
@@ -372,25 +413,40 @@
 						aria-hidden="true"
 					></div>
 
-					<!-- Section links -->
-					{#each sections as section, i}
-						<a
-							bind:this={navRefs[i]}
-							href="#{section.id}"
-							class="z-content hidden min-h-[30px] items-center rounded-md px-3 font-mono font-xs text-black/60 transition-colors focus-ring pressed-state hover-text-solid sm:inline-flex {activeSection ===
-							section.id
-								? 'text-black'
-								: ''}"
-							aria-current={activeSection === section.id
-								? "page"
-								: undefined}
-						>
-							{section.num}
-							{section.name}
-						</a>
-					{/each}
+						<!-- Section links -->
+						{#each sections as section, i}
+							<a
+								bind:this={navRefs[i]}
+								href="#{section.id}"
+								onclick={() => handleSectionNavClick(section.id)}
+								class="z-content inline-flex min-h-[30px] items-center rounded-md px-2 font-mono font-xs text-black/60 transition-colors focus-ring pressed-state hover-text-solid sm:px-3 {activeSection ===
+								section.id
+									? 'text-black'
+									: ''}"
+								aria-label={`${section.num} ${section.name}`}
+								aria-current={activeSection === section.id
+									? "page"
+									: undefined}
+							>
+								<span aria-hidden="true" class="sm:hidden uppercase"
+									>{section.name}</span
+								>
+								<span class="hidden sm:inline"
+									>{section.num}
+									{section.name}</span
+								>
+							</a>
+							{#if i < sections.length - 1}
+								<span
+									aria-hidden="true"
+									class="font-mono font-xs text-black/20 sm:hidden"
+								>
+									|
+								</span>
+							{/if}
+						{/each}
+					</div>
 				</div>
-			</div>
-		{/if}
+			{/if}
 	</nav>
 </header>
