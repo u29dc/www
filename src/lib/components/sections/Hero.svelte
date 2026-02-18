@@ -119,34 +119,36 @@
 	></div>
 
 	<!-- Content grid matching page layout -->
-	<div
-		class="relative z-content grid-page h-full"
-		style="opacity: {contentOpacity}; transform: translateY(-{contentParallaxY}px); will-change: {willChangeActive
-			? 'opacity, transform'
-			: 'auto'}"
-	>
-		<div class="col-content flex h-full flex-col justify-center text-white">
-			<h1 class="font-serif font-2xl font-bold">
-				The technology works.<br class="sm:hidden" /> The story doesn't.
-			</h1>
-		</div>
-	</div>
+    <div
+        class="relative z-content grid-page h-full"
+        style="opacity: {contentOpacity}; transform: translateY(-{contentParallaxY}px); will-change: {willChangeActive
+            ? 'opacity, transform'
+            : 'auto'}"
+    >
+        <div
+            class="col-content flex h-full flex-col items-center justify-center text-center text-white"
+        >
+            <h1 class="w-full text-center font-serif font-2xl font-bold">
+                The technology works.<br class="sm:hidden" /> The story doesn't.
+            </h1>
+        </div>
+    </div>
 
 	<!-- Scroll indicator at bottom -->
-	<button
-		type="button"
-		onclick={scrollToSignal}
-		class="absolute inset-x-0 bottom-8 z-content flex cursor-pointer justify-center rounded-full text-white focus-ring md:bottom-[120px] md:grid-page md:justify-start"
-		style="opacity: {Math.max(
-			0,
-			1 - progress * 3,
-		)}; will-change: {willChangeActive ? 'opacity' : 'auto'}"
-		aria-label="Scroll to next section"
-	>
-		<div class="md:col-content">
-			<ChevronDown size={24} strokeWidth={1.5} aria-hidden="true" />
-		</div>
-	</button>
+    <button
+        type="button"
+        onclick={scrollToSignal}
+        class="absolute inset-x-0 bottom-8 z-content grid-page cursor-pointer rounded-full text-white focus-ring md:bottom-[120px]"
+        style="opacity: {Math.max(
+            0,
+            1 - progress * 3,
+        )}; will-change: {willChangeActive ? 'opacity' : 'auto'}"
+        aria-label="Scroll to next section"
+    >
+        <div class="col-content flex justify-center">
+            <ChevronDown size={24} strokeWidth={1.5} aria-hidden="true" />
+        </div>
+    </button>
 </div>
 
 <!-- Spacer to maintain scroll height (hero is fixed, so exits document flow) -->

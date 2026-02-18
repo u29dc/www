@@ -31,27 +31,32 @@
 			: `${normalizedPathname}.md`;
 	});
 	const typeLabel = $derived(
-		({ study: "case study", fragment: "essay", signal: "signal", meta: "artifact" } as const)[
-			data.frontmatter.type
-		] ?? "artifact",
+		(
+			{
+				study: "study",
+				fragment: "fragment",
+				signal: "signal",
+				meta: "meta",
+			} as const
+		)[data.frontmatter.type] ?? "artifact",
 	);
-	const aiPrompt = $derived(
-		`This is "${data.frontmatter.title}" -- a ${typeLabel} from ${SITE.name},`
-			+ ` a narrative architecture practice building decision-grade narratives for complex technology companies.`
-			+ `\n\nStudio context: ${SITE.url}/llms.md`
-			+ `\nArticle: ${markdownPageUrl}`
-			+ `\n\n1. Read the studio context first for positioning`
-			+ `\n2. Read the article`
-			+ `\n3. One tight paragraph summary + bulleted key arguments`
-			+ `\n4. Frame all claims within the practice's broader positioning -- assume zero prior context`
-			+ `\n5. Offer to go deeper on any thread`
-			+ `\n6. For related topics, search other artifacts: ${SITE.url}/sitemap.xml`,
+	const llmPrompt = $derived(
+		`This is "${data.frontmatter.title}" -- a ${typeLabel} from ${SITE.name},` +
+			` a narrative architecture practice building decision-grade narratives for complex technology companies.` +
+			`\n\nStudio context: ${SITE.url}/llms.md` +
+			`\nArticle: ${markdownPageUrl}` +
+			`\n\n1. Read the studio context first for positioning` +
+			`\n2. Read the article` +
+			`\n3. One tight paragraph summary + bulleted key arguments` +
+			`\n4. Frame all claims within the practice's broader positioning -- assume zero prior context` +
+			`\n5. Offer to go deeper on any thread` +
+			`\n6. For related topics, search other artifacts: ${SITE.url}/sitemap.xml`,
 	);
 	const claudeUrl = $derived(
-		`https://claude.ai/new?${new URLSearchParams({ q: aiPrompt }).toString()}`,
+		`https://claude.ai/new?${new URLSearchParams({ q: llmPrompt }).toString()}`,
 	);
 	const chatGptUrl = $derived(
-		`https://chatgpt.com/?${new URLSearchParams({ q: aiPrompt }).toString()}`,
+		`https://chatgpt.com/?${new URLSearchParams({ q: llmPrompt }).toString()}`,
 	);
 
 	const stripFrontmatter = (md: string): string =>
@@ -107,6 +112,7 @@
 			formatDate(data.frontmatter.date),
 			body,
 			pageUrl,
+			markdownPageUrl,
 		].filter((v) => v.trim().length > 0);
 		await writeToClipboard(blocks.join("\n\n"));
 	};
@@ -121,8 +127,8 @@
 	<meta name="description" content={data.frontmatter.description} />
 </svelte:head>
 
-<article class="grid-section-full pb-32 pt-52 md:pt-56">
-	<header class="col-content-wide mb-14 text-center">
+<article class="grid-section-full pb-32 pt-52 md:pt-44">
+	<header data-slug-hero class="col-content-wide mb-14 text-center">
 		<h1 class="mx-auto font-serif font-bold text-balance">
 			{data.frontmatter.title}
 		</h1>

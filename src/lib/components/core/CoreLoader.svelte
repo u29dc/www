@@ -199,8 +199,12 @@
 >
 	<!-- Grid matches Hero.svelte exactly for seamless visual handoff -->
 	<div class="grid-page h-full">
-		<div class="col-content flex h-full flex-col justify-center text-black">
-			<h1 class="relative w-fit font-serif font-2xl font-bold">
+		<div
+			class="col-content flex h-full flex-col items-center justify-center text-center text-black"
+		>
+			<h1
+				class="relative w-full text-center font-serif font-2xl font-bold"
+			>
 				{#each words as word, wordIndex}
 					<span class="inline-block whitespace-nowrap"
 						>{#each word.split("") as char, charIndex}<span

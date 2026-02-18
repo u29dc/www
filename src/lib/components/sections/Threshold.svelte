@@ -66,7 +66,7 @@
 		class:pt-40={compact}
 	>
 		<!-- Top: Headline + Pricing + Grid Links -->
-		<div class="w-full">
+		<div class="w-full mt-4">
 			<h2 class="font-serif font-2xl font-bold">
 				<span class="block sm:inline"
 					>Stories that hold aren't written.</span
