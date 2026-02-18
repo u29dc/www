@@ -78,8 +78,8 @@
 				£3,000 · 48 hours · Three routes, one recommendation.
 			</p>
 
-			<!-- Grid Links (2 columns) -->
-			<div class="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-x-8">
+			<!-- Grid Links aligned to parent content tracks -->
+			<div class="mt-12 grid-content-tracks gap-y-4">
 				{#each links as link}
 					<a
 						href={link.href}
@@ -89,7 +89,7 @@
 						rel={link.href.startsWith("mailto:")
 							? undefined
 							: "noopener noreferrer"}
-						class="group -mx-3 flex flex-row justify-between gap-2 border-b border-black/10 px-3 py-6 transition duration-200 hover:bg-black hover:text-white focus-ring external-link-feedback"
+						class="col-span-full group flex flex-row justify-between gap-2 border-b border-black/10 px-3 py-6 transition duration-200 hover:bg-black hover:text-white focus-ring external-link-feedback md:col-span-3 lg:col-span-2 4xl:col-span-1"
 					>
 						<div>
 							<div class="uppercase">{link.title}</div>

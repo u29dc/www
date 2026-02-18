@@ -93,9 +93,9 @@
 		<p class="font-mono text-muted">[ 03 ORIGIN ]</p>
 	</header>
 
-	<div class="col-content grid gap-8 md:grid-cols-[auto_1fr] md:gap-12">
+	<div class="col-content grid-content-tracks items-start gap-y-8 md:gap-y-0">
 		<div
-			class="group relative w-full max-w-[200px] overflow-hidden rounded-sm"
+			class="col-span-full group relative w-full max-w-[200px] overflow-hidden rounded-sm md:col-span-2 md:max-w-none lg:col-span-2 lg:max-w-[220px] 2xl:col-span-1 4xl:col-span-1 4xl:max-w-none"
 			bind:this={photoRef}
 		>
 			<img
@@ -114,7 +114,7 @@
 			></div>
 		</div>
 
-		<div class="flex flex-col gap-4">
+		<div class="col-span-full flex flex-col gap-4 md:col-span-4 lg:col-span-2 2xl:col-span-3 4xl:col-span-1">
 			<h2 class="font-subtitle">Han</h2>
 
 			<div class="space-y-4 leading-relaxed text-muted">

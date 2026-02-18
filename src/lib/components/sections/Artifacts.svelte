@@ -102,9 +102,6 @@
 				{#if artifact.isConfidential}
 					<div class="pl-4 opacity-60">
 						<div class="flex items-baseline gap-4">
-							<span class="font-mono text-muted shrink-0"
-								>{formatYear(artifact.date)}</span
-							>
 							<h2 class="font-subtitle text-muted">
 								{artifact.title}
 							</h2>
@@ -119,21 +116,18 @@
 					{@const thumbnails = getThumbnails(artifact.media)}
 					<a href="/{artifact.slug}" class="block pl-4">
 						<div class="flex flex-wrap items-baseline gap-4">
-							<span class="font-mono text-muted shrink-0"
-								>{formatYear(artifact.date)}</span
-							>
 							<h2 class="font-subtitle">{artifact.title}</h2>
 							<span
 								class="font-mono text-muted ml-auto shrink-0 hidden sm:inline"
 								>{formatDate(artifact.date)}</span
 							>
 						</div>
-						<p class="mt-2 pl-12 text-muted">
+						<p class="mt-2 text-muted">
 							{artifact.description}
 						</p>
 
 						{#if thumbnails.length > 0}
-							<div class="mt-4 flex gap-1 overflow-hidden pl-12">
+							<div class="mt-4 flex gap-1 overflow-hidden">
 								{#each thumbnails as thumb}
 									{@const width = THUMB_HEIGHT * thumb.ratio}
 									<div

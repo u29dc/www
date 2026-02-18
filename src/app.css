@@ -257,19 +257,24 @@
 /* Content column span - centered narrow reading measure */
 @utility col-content {
 	grid-column: 1 / -1;
+	--content-cols: 10;
 
 	@media (width >= 48rem) {
 		grid-column: 3 / 9;
+		--content-cols: 6;
 	}
 	@media (width >= 64rem) {
 		grid-column: 4 / 8;
+		--content-cols: 4;
 	}
 	@media (width >= 80rem) {
 		grid-column: 4 / 8;
+		--content-cols: 4;
 	}
 	/* Ultra-wide: keep narrative measure compact and centered */
 	@media (width >= 160rem) {
 		grid-column: 5 / 7;
+		--content-cols: 2;
 	}
 }
 
@@ -300,6 +305,13 @@
 /* Full span (backgrounds, decorative elements) */
 @utility col-full {
 	grid-column: 1 / -1;
+}
+
+/* Nested grid aligned to content track count from col-content */
+@utility grid-content-tracks {
+	display: grid;
+	grid-template-columns: repeat(var(--content-cols, 1), minmax(0, 1fr));
+	column-gap: var(--grid-gap);
 }
 
 /* ================================================== */
