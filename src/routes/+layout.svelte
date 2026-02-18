@@ -132,7 +132,7 @@
 	<CoreScrollLine />
 	<CoreScrollProgress />
 	<CoreGrainOverlay
-		intensity={0.5}
+		intensity={0.35}
 		grainScale={10.0}
 		animationSpeed={0.1}
 		exposure={0.01}

@@ -27,6 +27,8 @@
 	--color-edge: var(--edge);
 	--color-ink: var(--ink);
 	--color-trace: var(--trace);
+	--color-muted: var(--trace);
+	--color-foreground: var(--ink);
 
 	/* Grid system tokens */
 	--grid-gap: 1rem;
@@ -132,12 +134,13 @@
 	body {
 		@apply antialiased;
 		@apply font-sm;
-		@apply leading-[1.25];
-		@apply font-semibold;
+		@apply leading-[1.35];
+		@apply font-medium;
 		@apply not-italic;
 		@apply [text-rendering:optimizeLegibility];
 		@apply cursor-default;
 		font-family: var(--font-sans);
+		letter-spacing: 0.005em;
 		overflow-x: hidden;
 		max-width: 100vw;
 	}
@@ -233,7 +236,7 @@
 @utility mdx-paragraph {
 	font-size: 1.4rem;
 	font-weight: 500;
-	line-height: 1.6;
+	line-height: 1.7;
 	text-wrap: pretty;
 }
 
@@ -260,58 +263,47 @@
 	grid-template-columns: subgrid;
 }
 
-/* Content column span - ASYMMETRIC (offset right of center) */
+/* Content column span - centered narrow reading measure */
 @utility col-content {
 	grid-column: 1 / -1;
 
 	@media (width >= 48rem) {
-		grid-column: 3 / 11;
+		grid-column: 3 / 9;
 	}
 	@media (width >= 64rem) {
-		grid-column: 4 / 10;
+		grid-column: 4 / 8;
 	}
 	@media (width >= 80rem) {
-		grid-column: 5 / 9;
+		grid-column: 4 / 8;
 	}
-	/* Ultra-wide: 2560px+ (4K/5K monitors) - shifted right for asymmetry */
+	/* Ultra-wide: keep narrative measure compact and centered */
 	@media (width >= 160rem) {
-		grid-column: 6 / 8;
+		grid-column: 5 / 7;
 	}
 }
 
-/* Wide content span - starts at content edge, extends right (Protocols) */
+/* Wide content span - single centered utility for expanded surfaces */
 @utility col-content-wide {
 	grid-column: 1 / -1;
 
 	@media (width >= 48rem) {
-		grid-column: 3 / 11;
+		grid-column: 2 / 10;
 	}
 	@media (width >= 64rem) {
-		grid-column: 4 / 11;
+		grid-column: 3 / 9;
 	}
 	@media (width >= 80rem) {
-		grid-column: 5 / 11;
+		grid-column: 3 / 9;
 	}
-	/* Ultra-wide: 2560px+ (4K/5K monitors) - shifted right for asymmetry */
+	/* Ultra-wide: keep wide lane consistent; avoid narrowing on large monitors */
 	@media (width >= 160rem) {
-		grid-column:  6/ 10;
+		grid-column: 3 / 9;
 	}
 }
 
-/* Wide content span (Axioms, slug page first media) */
+/* Legacy alias - keep existing references stable */
 @utility col-wide {
-	grid-column: 1 / -1;
-
-	@media (width >= 48rem) {
-		grid-column: 2 / 11;
-	}
-	@media (width >= 80rem) {
-		grid-column: 4 / 10;
-	}
-	/* Ultra-wide: 2560px+ (4K/5K monitors) - shifted right for asymmetry */
-	@media (width >= 160rem) {
-		grid-column: 5 / 9;
-	}
+	@apply col-content-wide;
 }
 
 /* Full span (backgrounds, decorative elements) */
@@ -405,6 +397,20 @@
 	}
 }
 
+/* Unified action control style for links and buttons */
+@utility action-button {
+	@apply inline-flex min-h-[30px] cursor-pointer items-center justify-center rounded-md bg-black/5 px-3 font-mono font-xs text-foreground no-underline transition-colors focus-ring pressed-state;
+	appearance: none;
+	border: 0;
+	user-select: none;
+
+	@media (hover: hover) {
+		&:hover {
+			background-color: color-mix(in oklab, var(--color-black) 10%, transparent);
+		}
+	}
+}
+
 /* External link feedback states */
 @utility external-link-feedback {
 	&:visited {
@@ -414,6 +420,101 @@
 		transform: scale(0.98);
 		transition: transform var(--duration-pulse) var(--ease-settle);
 	}
+}
+
+/* ================================================== */
+/* ARTICLE FLOW */
+/* ================================================== */
+
+@utility essay-flow {
+	@apply col-full grid-section-full;
+	row-gap: 3rem;
+}
+
+.essay-flow > * {
+	@apply col-content;
+}
+
+.essay-flow > .mdx-quote {
+	@apply col-content-wide;
+}
+
+.essay-flow .mdx-quote {
+	padding-inline: 2rem;
+	text-align: center;
+}
+
+.essay-flow .mdx-quote blockquote {
+	font-family: var(--font-serif);
+	font-style: italic;
+	font-size: clamp(2rem, 2.2vw, 2.9rem);
+	font-weight: 700;
+	line-height: 1.28;
+	text-wrap: balance;
+}
+
+.essay-flow .mdx-quote figcaption {
+	margin-top: 1.2rem;
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 0.5rem;
+	color: var(--trace);
+	font-family: var(--font-mono);
+	font-size: 0.95rem;
+	text-transform: uppercase;
+}
+
+.essay-flow .mdx-quote figcaption a {
+	text-decoration: underline;
+	text-underline-offset: 0.2rem;
+}
+
+.essay-flow sup:has(> a[data-footnote-ref]) {
+	top: -0.18em;
+	margin-inline-start: 0.18em;
+}
+
+.essay-flow a[data-footnote-ref] {
+	color: var(--trace);
+	font-family: var(--font-mono);
+	font-size: 0.95rem;
+	text-decoration: none;
+}
+
+.essay-flow a[data-footnote-ref]::before {
+	content: "[";
+}
+
+.essay-flow a[data-footnote-ref]::after {
+	content: "]";
+}
+
+.essay-flow [data-footnotes] {
+	margin-top: 2.4rem;
+	padding-top: 2rem;
+	border-top: 1px solid color-mix(in oklab, var(--color-black) 10%, transparent);
+}
+
+.essay-flow [data-footnotes] ol {
+	list-style: decimal;
+	padding-inline-start: 2.2rem;
+	display: grid;
+	row-gap: 1.2rem;
+}
+
+.essay-flow [data-footnotes] li {
+	color: var(--trace);
+	font-size: 1.25rem;
+	line-height: 1.65;
+}
+
+.essay-flow [data-footnotes] p {
+	display: inline;
+}
+
+.essay-flow a[data-footnote-backref] {
+	display: none;
 }
 
 /* ================================================== */

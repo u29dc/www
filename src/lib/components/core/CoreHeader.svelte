@@ -25,8 +25,7 @@
 	let lastLeft = $state("0px");
 	let lastWidth = $state("0px");
 
-	// Track position with effect (runs when activeSection changes)
-	$effect(() => {
+	const updateIndicatorPosition = () => {
 		if (!activeSection || !navContainer) return;
 
 		const index = sections.findIndex((s) => s.id === activeSection);
@@ -37,6 +36,11 @@
 		const elRect = el.getBoundingClientRect();
 		lastLeft = `${elRect.left - navRect.left}px`;
 		lastWidth = `${elRect.width}px`;
+	};
+
+	// Track position with effect (runs when activeSection changes)
+	$effect(() => {
+		updateIndicatorPosition();
 	});
 
 	// Pure derived - no mutations
@@ -57,6 +61,10 @@
 		};
 	});
 
+	const indicatorWillChange = $derived(
+		activeSection ? "left, width, transform, opacity" : "auto",
+	);
+
 	onMount(() => {
 		if (isSlugPage) return;
 
@@ -67,7 +75,46 @@
 			},
 		);
 
-		return () => tracker.disconnect();
+		const scheduleIndicatorUpdate = () => {
+			requestAnimationFrame(() => {
+				updateIndicatorPosition();
+			});
+		};
+
+		const resizeObserver = new ResizeObserver(() => {
+			scheduleIndicatorUpdate();
+		});
+
+		if (navContainer) {
+			resizeObserver.observe(navContainer);
+		}
+		for (const link of navRefs) {
+			if (link) {
+				resizeObserver.observe(link);
+			}
+		}
+
+		window.addEventListener("resize", scheduleIndicatorUpdate);
+		const fontSet = document.fonts;
+		const supportsFontEvents =
+			typeof fontSet !== "undefined" &&
+			typeof fontSet.addEventListener === "function";
+		if (supportsFontEvents) {
+			fontSet.addEventListener("loadingdone", scheduleIndicatorUpdate);
+		}
+		scheduleIndicatorUpdate();
+
+		return () => {
+			tracker.disconnect();
+			resizeObserver.disconnect();
+			window.removeEventListener("resize", scheduleIndicatorUpdate);
+			if (supportsFontEvents) {
+				fontSet.removeEventListener(
+					"loadingdone",
+					scheduleIndicatorUpdate,
+				);
+			}
+		};
 	});
 </script>
 
@@ -75,85 +122,104 @@
 	<nav
 		bind:this={navContainer}
 		aria-label="Main navigation"
-		class="relative col-content flex w-fit select-none items-center gap-2 rounded-lg bg-white/80 p-[5px] shadow-sm ring-1 ring-black/5 backdrop-blur-xl transition-all duration-300"
+		class="relative col-content flex w-full select-none items-center rounded-lg bg-white/80 p-[5px] shadow-sm ring-1 ring-black/5 backdrop-blur-xl transition-all duration-300"
 	>
 		{#if isSlugPage}
-			<!-- Back button -->
-			<AtomicHeaderButton href="/" class="inline-flex items-center gap-2">
-				<ArrowLeft size={14} />
-				Back
-			</AtomicHeaderButton>
+			<div class="flex w-full min-w-0 items-center gap-2">
+				<!-- Back button -->
+				<AtomicHeaderButton
+					href="/"
+					class="inline-flex items-center gap-2"
+				>
+					<ArrowLeft size={14} />
+					Back
+				</AtomicHeaderButton>
 
-			<!-- Divider -->
-			<div class="h-4 w-px bg-black/10" aria-hidden="true"></div>
+				<!-- Divider -->
+				<div class="h-4 w-px bg-black/10" aria-hidden="true"></div>
 
-			<!-- Brand name -->
-			<span
-				class="hidden font-mono text-[9px] text-black/60 uppercase sm:inline"
-			>
-				Incomplete Infinity
-			</span>
-
-			<!-- Divider -->
-			<div
-				class="hidden h-4 w-px bg-black/10 sm:block"
-				aria-hidden="true"
-			></div>
-
-			<!-- Article title -->
-			{#if articleTitle}
-				<span class="font-mono text-[9px] text-black/60 uppercase">
-					{articleTitle}
+				<!-- Brand name -->
+				<span
+					class="hidden font-mono text-[9px] text-black/60 uppercase sm:inline"
+				>
+					Incomplete Infinity
 				</span>
-			{/if}
-		{:else}
-			<!-- Logo -->
-			<div class="relative min-h-[30px] w-[80px]">
+
+				<!-- Divider -->
 				<div
-					class="absolute top-1/2 left-1/2 w-0 -translate-x-1/2 -translate-y-1/2 overflow-visible"
-				>
-					<AtomicBrandLogo
-						width={60}
-						noiseIntensity={0.1}
-						blurStart={1.5}
-						defaultBlurIntensity={0.2}
-						mouseBlurIntensity={0.4}
-						mouseBlurSize={0.2}
-						className="-translate-x-1/2"
-					/>
-				</div>
+					class="hidden h-4 w-px bg-black/10 sm:block"
+					aria-hidden="true"
+				></div>
+
+				<!-- Article title -->
+				{#if articleTitle}
+					<span
+						class="truncate font-mono text-[9px] text-black/60 uppercase"
+					>
+						{articleTitle}
+					</span>
+				{/if}
 			</div>
-
-			<!-- Divider -->
+		{:else}
 			<div
-				class="hidden h-4 w-px bg-black/10 sm:block"
-				aria-hidden="true"
-			></div>
+				class="grid w-full min-w-0 grid-cols-[auto_1fr] items-center gap-2 sm:grid-cols-[auto_1fr_auto]"
+			>
+				<div class="flex min-w-0 items-center gap-2">
+					<!-- Logo -->
+					<div class="relative min-h-[30px] w-[80px]">
+						<div
+							class="absolute top-1/2 left-1/2 w-0 -translate-x-1/2 -translate-y-1/2 overflow-visible"
+						>
+							<AtomicBrandLogo
+								width={60}
+								theme="light"
+								noiseIntensity={0.1}
+								blurStart={1.5}
+								defaultBlurIntensity={0.2}
+								mouseBlurIntensity={0.4}
+								mouseBlurSize={0.2}
+								className="-translate-x-1/2"
+							/>
+						</div>
+					</div>
 
-			<!-- Sliding indicator -->
-			<div
-				class="pointer-events-none absolute top-[5px] h-[30px] rounded-md bg-black/5 transition-all duration-[var(--duration-breath)] ease-[var(--ease-settle)]"
-				style="left: {indicatorStyle.left}; width: {indicatorStyle.width}; opacity: {indicatorStyle.opacity}; transform: {indicatorStyle.transform};"
-				aria-hidden="true"
-			></div>
+					<!-- Divider -->
+					<div
+						class="hidden h-4 w-px bg-black/10 sm:block"
+						aria-hidden="true"
+					></div>
+				</div>
 
-			<!-- Section links -->
-			{#each sections as section, i}
-				<a
-					bind:this={navRefs[i]}
-					href="#{section.id}"
-					class="z-content hidden min-h-[30px] items-center rounded-md px-3 font-mono font-xs text-black/60 transition-colors focus-ring pressed-state hover-text-solid sm:inline-flex {activeSection ===
-					section.id
-						? 'text-black'
-						: ''}"
-					aria-current={activeSection === section.id
-						? "page"
-						: undefined}
-				>
-					{section.num}
-					{section.name}
-				</a>
-			{/each}
+				<div class="flex min-w-0 items-center justify-center gap-2">
+					<!-- Sliding indicator -->
+					<div
+						class="pointer-events-none absolute top-[5px] h-[30px] transform-gpu rounded-md bg-black/5 transition-all duration-[var(--duration-breath)] ease-[var(--ease-settle)] [backface-visibility:hidden]"
+						style="left: {indicatorStyle.left}; width: {indicatorStyle.width}; opacity: {indicatorStyle.opacity}; transform: {indicatorStyle.transform}; will-change: {indicatorWillChange};"
+						aria-hidden="true"
+					></div>
+
+					<!-- Section links -->
+					{#each sections as section, i}
+						<a
+							bind:this={navRefs[i]}
+							href="#{section.id}"
+							class="z-content hidden min-h-[30px] items-center rounded-md px-3 font-mono font-xs text-black/60 transition-colors focus-ring pressed-state hover-text-solid sm:inline-flex {activeSection ===
+							section.id
+								? 'text-black'
+								: ''}"
+							aria-current={activeSection === section.id
+								? "page"
+								: undefined}
+						>
+							{section.num}
+							{section.name}
+						</a>
+						{/each}
+				</div>
+
+				<!-- Right spacer balances logo width so nav links stay centered -->
+				<div class="hidden h-[30px] w-[89px] shrink-0 sm:block" aria-hidden="true"></div>
+			</div>
 		{/if}
 	</nav>
 </header>

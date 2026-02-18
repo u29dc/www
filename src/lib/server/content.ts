@@ -22,6 +22,13 @@ type MdxEntry = {
 	source: string;
 };
 
+type MdxQuoteMetadata = {
+	author: string | undefined;
+	source: string | undefined;
+	reference: string | undefined;
+	href: string | undefined;
+};
+
 const MDX_SCRIPT_BLOCK = /<script[^>]*>[\s\S]*?<\/script>/g;
 
 const stripMdxScript = (source: string): string =>
@@ -77,6 +84,52 @@ const mdxMediaPlaceholder = (sources: string[], alt?: string): Element => {
 
 const mdxSpacerPlaceholder = (): Element => h('div', { className: 'mdx-spacer h-10' }, []);
 
+const mdxQuotePlaceholder = (children: ElementContent[], metadata: MdxQuoteMetadata): Element => {
+	const captionChildren: ElementContent[] = [];
+
+	const appendSeparator = () => {
+		if (captionChildren.length === 0) return;
+		captionChildren.push(h('span', { className: 'mdx-quote-separator', 'aria-hidden': 'true' }, '·'));
+	};
+
+	if (metadata.author) {
+		captionChildren.push(h('span', { className: 'mdx-quote-author' }, metadata.author));
+	}
+
+	if (metadata.source) {
+		appendSeparator();
+		captionChildren.push(h('span', { className: 'mdx-quote-source' }, metadata.source));
+	}
+
+	if (metadata.reference) {
+		appendSeparator();
+		if (metadata.href) {
+			captionChildren.push(
+				h(
+					'a',
+					{
+						className: 'mdx-quote-reference external-link-feedback',
+						href: metadata.href,
+						target: '_blank',
+						rel: 'noopener noreferrer',
+					},
+					metadata.reference,
+				),
+			);
+		} else {
+			captionChildren.push(h('span', { className: 'mdx-quote-reference' }, metadata.reference));
+		}
+	}
+
+	const figureChildren: ElementContent[] = [h('blockquote', {}, children)];
+
+	if (captionChildren.length > 0) {
+		figureChildren.push(h('figcaption', {}, [h('span', { className: 'mdx-quote-prefix', 'aria-hidden': 'true' }, '—'), ...captionChildren]));
+	}
+
+	return h('figure', { className: 'mdx-quote' }, figureChildren);
+};
+
 const mdxJsxFlowElementHandler = (state: State, node: MdxJsxFlowElement): Element => {
 	if (node.name === 'MdxParagraph') {
 		return mdxParagraphWrapper(state.all(node));
@@ -88,6 +141,14 @@ const mdxJsxFlowElementHandler = (state: State, node: MdxJsxFlowElement): Elemen
 	}
 	if (node.name === 'MdxSpacer') {
 		return mdxSpacerPlaceholder();
+	}
+	if (node.name === 'MdxQuote') {
+		return mdxQuotePlaceholder(state.all(node), {
+			author: readMdxAttribute(node, 'author'),
+			source: readMdxAttribute(node, 'source'),
+			reference: readMdxAttribute(node, 'reference'),
+			href: readMdxAttribute(node, 'href'),
+		});
 	}
 	return h('div', {}, state.all(node));
 };
@@ -244,6 +305,47 @@ interface MarkdownTransformOptions {
 	stripMedia?: boolean;
 }
 
+const readInlineAttribute = (rawAttributes: string, key: string): string | undefined => {
+	const doubleQuotedPattern = new RegExp(`${key}="([^"]+)"`);
+	const singleQuotedPattern = new RegExp(`${key}='([^']+)'`);
+	const doubleMatch = rawAttributes.match(doubleQuotedPattern);
+	if (doubleMatch?.[1]) {
+		return doubleMatch[1];
+	}
+	const singleMatch = rawAttributes.match(singleQuotedPattern);
+	if (singleMatch?.[1]) {
+		return singleMatch[1];
+	}
+	return undefined;
+};
+
+const formatMdxQuote = (rawAttributes: string, body: string): string => {
+	const quoteBody = body.trim().replace(/\n{3,}/g, '\n\n');
+
+	if (quoteBody.length === 0) {
+		return '';
+	}
+
+	const quoteLines = quoteBody.split('\n').map((line) => (line.length > 0 ? `> ${line}` : '>'));
+	const author = readInlineAttribute(rawAttributes, 'author');
+	const source = readInlineAttribute(rawAttributes, 'source');
+	const reference = readInlineAttribute(rawAttributes, 'reference');
+	const href = readInlineAttribute(rawAttributes, 'href');
+
+	const metadata: string[] = [];
+	if (author) metadata.push(author);
+	if (source) metadata.push(source);
+	if (reference) {
+		metadata.push(href ? `[${reference}](${href})` : reference);
+	}
+
+	if (metadata.length > 0) {
+		quoteLines.push(`> — ${metadata.join(' · ')}`);
+	}
+
+	return `${quoteLines.join('\n')}\n`;
+};
+
 function formatMediaSources(sourceDeclaration: string, stripMedia: boolean, altText: string): string {
 	if (stripMedia) {
 		return '';
@@ -290,6 +392,8 @@ function toMarkdownBody(_frontmatter: ContentItem, content: string, options: Mar
 		const altText: string = typeof altCandidate === 'string' && altCandidate.length > 0 ? altCandidate : '';
 		return formatMediaSources(src, stripMedia, altText);
 	});
+
+	markdown = markdown.replace(/<MdxQuote([^>]*)>([\s\S]*?)<\/MdxQuote>/g, (_match: string, rawAttributes: string, body: string) => formatMdxQuote(rawAttributes, body));
 
 	markdown = markdown.replace(/^import\s+.*$/gm, '');
 	markdown = markdown.replace(/^export\s+.*$/gm, '');

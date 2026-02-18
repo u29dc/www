@@ -15,7 +15,7 @@
 		noiseScale?: number;
 		animateNoise?: boolean;
 		className?: string;
-		theme?: "light" | "dark" | "system";
+		theme: "light" | "dark";
 		enableObservation?: boolean;
 		debug?: boolean;
 	}
@@ -356,30 +356,6 @@ void main() {
 		const g = ((bigint >> 8) & 255) / 255;
 		const b = (bigint & 255) / 255;
 		return [r, g, b];
-	}
-
-	function readSystemTheme(): ThemeVariant {
-		if (typeof document !== "undefined") {
-			const root = document.documentElement;
-			if (root.classList.contains("dark")) return "dark";
-			if (root.classList.contains("light")) return "light";
-		}
-		if (typeof window !== "undefined") {
-			return window.matchMedia?.("(prefers-color-scheme: dark)").matches
-				? "dark"
-				: "light";
-		}
-		return "light";
-	}
-
-	function resolveTheme(
-		theme: AtomicBrandLogoProps["theme"],
-		systemTheme: ThemeVariant,
-	): ThemeVariant {
-		if (theme && theme !== "system") {
-			return theme;
-		}
-		return systemTheme;
 	}
 
 	function createGraphicsContext(
@@ -957,7 +933,7 @@ void main() {
 		noiseScale = 150,
 		animateNoise = false,
 		className = "",
-		theme = "system",
+		theme,
 		enableObservation = true,
 		debug = false,
 	}: AtomicBrandLogoProps = $props();
@@ -971,7 +947,6 @@ void main() {
 
 	let canvasRef = $state<HTMLCanvasElement | null>(null);
 	let renderer = $state<AtomicBrandLogoRenderer | null>(null);
-	let resolvedTheme = $state<ThemeVariant>("light");
 	let isInView = $state(true);
 	let isPageVisible = $state(true);
 	let prefersReducedMotion = $state(false);
@@ -986,10 +961,6 @@ void main() {
 			(enableObservation ? isInView : true),
 	);
 
-	$effect(() => {
-		resolvedTheme = resolveTheme(theme, readSystemTheme());
-	});
-
 	const buildState = (): AtomicBrandLogoState => ({
 		width,
 		height,
@@ -1001,7 +972,7 @@ void main() {
 		noiseIntensity,
 		noiseScale,
 		animateNoise,
-		theme: resolvedTheme,
+		theme,
 	});
 
 	onMount(() => {
@@ -1035,19 +1006,7 @@ void main() {
 			};
 		}
 
-		resolvedTheme = resolveTheme(theme, readSystemTheme());
 		const state = buildState();
-		let mediaQuery: MediaQueryList | null = null;
-		let handleMediaChange: (() => void) | null = null;
-
-		if (theme === "system" && typeof window !== "undefined") {
-			mediaQuery =
-				window.matchMedia?.("(prefers-color-scheme: dark)") ?? null;
-			handleMediaChange = () => {
-				resolvedTheme = resolveTheme(theme, readSystemTheme());
-			};
-			mediaQuery?.addEventListener("change", handleMediaChange);
-		}
 
 		try {
 			renderer = createAtomicBrandLogoRenderer(canvasRef, state);
@@ -1057,10 +1016,6 @@ void main() {
 				message: error instanceof Error ? error.message : String(error),
 			});
 			return () => {
-				mediaQuery?.removeEventListener(
-					"change",
-					handleMediaChange ?? (() => {}),
-				);
 				motionQuery.removeEventListener(
 					"change",
 					updateMotionPreference,
@@ -1075,10 +1030,6 @@ void main() {
 		return () => {
 			renderer?.dispose();
 			renderer = null;
-			mediaQuery?.removeEventListener(
-				"change",
-				handleMediaChange ?? (() => {}),
-			);
 			motionQuery.removeEventListener("change", updateMotionPreference);
 			document.removeEventListener(
 				"visibilitychange",

@@ -47,75 +47,77 @@
 	];
 </script>
 
-<section id="protocols" class="col-content-wide py-44 content-visibility-auto">
+<section id="protocols" class="col-wide py-44 content-visibility-auto">
 	<header class="mb-16">
 		<p class="font-mono text-muted">[ 02 PROTOCOLS ]</p>
 	</header>
 
-	<div class="grid gap-4 md:grid-cols-3">
-		{#each protocols as protocol}
-			<article
-				class="flex min-h-[300px] flex-col rounded-lg p-8 md:min-h-[420px] {protocol.emphasized
-					? 'bg-black text-white'
-					: 'bg-black/5'}"
-			>
-				<!-- Header -->
-				<div>
-					<p
-						class="font-mono text-xs {protocol.emphasized
-							? 'text-white/50'
-							: 'text-muted'}"
-					>
-						{protocol.subtitle}
-					</p>
-					<h2 class="font-subtitle mt-2">{protocol.title}</h2>
-				</div>
-
-				<!-- Price -->
-				<div class="mt-8">
-					<p class="font-serif font-lg font-bold mb-4">
-						{protocol.price}
-					</p>
-					<p
-						class="font-mono mt-1 {protocol.emphasized
-							? 'text-white/50'
-							: 'text-muted'}"
-					>
-						{protocol.timeline}
-					</p>
-				</div>
-
-				<!-- Description -->
-				<p
-					class="mt-8 flex-1 leading-relaxed {protocol.emphasized
-						? 'text-white/70'
-						: 'text-muted'}"
+	<div class="col-content-wide w-full">
+		<div class="flex flex-col gap-4 xl:flex-row xl:items-stretch">
+			{#each protocols as protocol}
+				<article
+					class="flex min-h-[300px] min-w-0 flex-col rounded-sm p-8 xl:min-h-[420px] xl:basis-0 xl:flex-1 {protocol.emphasized
+						? 'bg-black text-white'
+						: 'bg-black/5'}"
 				>
-					{protocol.description}
-				</p>
+					<!-- Header -->
+					<div>
+						<p
+							class="font-mono text-xs {protocol.emphasized
+								? 'text-white/50'
+								: 'text-muted'}"
+						>
+							{protocol.subtitle}
+						</p>
+						<h2 class="font-subtitle mt-2">{protocol.title}</h2>
+					</div>
 
-				<!-- CTA -->
-				{#if protocol.requires}
-					<button
-						type="button"
-						disabled
-						class="mt-8 flex w-full items-center justify-between rounded-md px-4 py-3 font-medium bg-black/5 text-muted/60 cursor-not-allowed"
+					<!-- Price -->
+					<div class="mt-8">
+						<p class="font-serif font-lg font-bold mb-4">
+							{protocol.price}
+						</p>
+						<p
+							class="font-mono mt-1 {protocol.emphasized
+								? 'text-white/50'
+								: 'text-muted'}"
+						>
+							{protocol.timeline}
+						</p>
+					</div>
+
+					<!-- Description -->
+					<p
+						class="mt-8 flex-1 leading-relaxed {protocol.emphasized
+							? 'text-white/70'
+							: 'text-muted'}"
 					>
-						<span>{protocol.cta}</span>
-						<Lock size={16} aria-hidden="true" />
-					</button>
-				{:else}
-					<a
-						href="https://cal.com/u29dc/map"
-						class="mt-8 flex w-full items-center justify-between rounded-md px-4 py-3 font-medium transition-colors focus-ring external-link-feedback {protocol.emphasized
-							? 'bg-white text-black hover:bg-white/90'
-							: 'bg-black/10 hover:bg-black/15'}"
-					>
-						<span>{protocol.cta}</span>
-						<ArrowRight size={16} aria-hidden="true" />
-					</a>
-				{/if}
-			</article>
-		{/each}
+						{protocol.description}
+					</p>
+
+					<!-- CTA -->
+					{#if protocol.requires}
+						<button
+							type="button"
+							disabled
+							class="mt-8 flex w-full items-center justify-between rounded-md bg-black/5 px-4 py-3 font-medium text-muted/60 cursor-not-allowed"
+						>
+							<span>{protocol.cta}</span>
+							<Lock size={16} aria-hidden="true" />
+						</button>
+					{:else}
+						<a
+							href="https://cal.com/u29dc/map"
+							class="mt-8 flex w-full items-center justify-between rounded-md px-4 py-3 font-medium transition-colors focus-ring external-link-feedback {protocol.emphasized
+								? 'bg-white text-black hover:bg-white/90'
+								: 'bg-black/10 hover:bg-black/15'}"
+						>
+							<span>{protocol.cta}</span>
+							<ArrowRight size={16} aria-hidden="true" />
+						</a>
+					{/if}
+				</article>
+			{/each}
+		</div>
 	</div>
 </section>

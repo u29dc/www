@@ -49,7 +49,7 @@
 	});
 </script>
 
-<div class="flex w-full" style:aspect-ratio={totalRatio}>
+<div class="flex w-full overflow-hidden rounded-sm" style:aspect-ratio={totalRatio}>
 	{#each parsedSources as source, index (source.filename)}
 		<MdxMediaItem
 			src={source.filename}

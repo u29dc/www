@@ -3,6 +3,12 @@
 	import ArrowUpRight from "@lucide/svelte/icons/arrow-up-right";
 	import AtomicBrandLogo from "$lib/components/atomic/AtomicBrandLogo.svelte";
 
+	type Props = {
+		compact?: boolean;
+	};
+
+	let { compact = false }: Props = $props();
+
 	let isMobile = $state(false);
 
 	onMount(() => {
@@ -50,9 +56,15 @@
 
 <footer
 	id="threshold"
-	class="mt-96 grid-section-full min-h-screen-safe bg-black/5 -mx-[var(--grid-margin)] px-[var(--grid-margin)] md:-mx-[var(--grid-margin-md)] md:px-[var(--grid-margin-md)] lg:mx-0 lg:px-0"
+	class="grid-section-full min-h-screen-safe bg-black/5 -mx-[var(--grid-margin)] px-[var(--grid-margin)] md:-mx-[var(--grid-margin-md)] md:px-[var(--grid-margin-md)] lg:mx-0 lg:px-0 rounded-sm"
+	class:mt-96={!compact}
+	class:mt-40={compact}
 >
-	<div class="col-content flex flex-col justify-between gap-16 pb-16 pt-64">
+	<div
+		class="col-content flex flex-col justify-between gap-16 pb-16"
+		class:pt-64={!compact}
+		class:pt-40={compact}
+	>
 		<!-- Top: Headline + Pricing + Grid Links -->
 		<div class="w-full">
 			<h2 class="font-serif font-2xl font-bold">
@@ -105,6 +117,7 @@
 		<!-- Middle: Large Logo -->
 		<AtomicBrandLogo
 			width={isMobile ? 250 : 400}
+			theme="light"
 			noiseIntensity={0.1}
 			noiseScale={0.5}
 			defaultBlurIntensity={0.25}

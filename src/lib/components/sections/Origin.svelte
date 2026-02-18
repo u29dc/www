@@ -18,7 +18,7 @@
 
 		// Only run magnetic parallax on devices with precise pointer (mouse/trackpad)
 		// Touch devices never fire mousemove, so RAF task would run 60fps for nothing
-		const hasFinePointer = window.matchMedia('(pointer: fine)').matches;
+		const hasFinePointer = window.matchMedia("(pointer: fine)").matches;
 		if (!hasFinePointer) return;
 
 		let photoRect: DOMRect | null = null;
@@ -95,7 +95,7 @@
 
 	<div class="grid gap-8 md:grid-cols-[auto_1fr] md:gap-12">
 		<div
-			class="group relative w-full max-w-[200px] overflow-hidden"
+			class="group relative w-full max-w-[200px] overflow-hidden rounded-sm"
 			bind:this={photoRef}
 		>
 			<img
@@ -121,19 +121,10 @@
 				<p>
 					Eight years across architecture, new media art, creative
 					technology, and brand strategy — most recently three years
-					inside Lotus Cars during their EV transformation. Each
-					domain contributed a different fluency. Architecture:
-					spatial narrative and systems thinking. New media art:
-					technical decisions as conceptual carriers. Production:
-					delivery under compression. Lotus: what happens when
-					positioning meets reality at scale — where strategy breaks
-					down, where execution reveals gaps, where the story is built
-					or lost.
+					inside Lotus Cars during their EV transformation.
 				</p>
 
 				<p>
-					The throughline is translation. Making complex ideas
-					tangible for audiences who experience before they analyse.
 					The interesting problems live where established disciplines
 					fail to reach — and "disciplinary homeless" describes
 					someone who carries enough fluency across boundaries to work
@@ -148,7 +139,9 @@
 				class="group/link mt-2 inline-flex w-fit items-center gap-1 text-muted transition-colors duration-150 hover:text-foreground"
 			>
 				<span>Follow on LinkedIn</span>
-				<ArrowUpRight class="size-4 transition-transform duration-150 group-hover/link:-translate-y-0.5 group-hover/link:translate-x-0.5" />
+				<ArrowUpRight
+					class="size-4 transition-transform duration-150 group-hover/link:-translate-y-0.5 group-hover/link:translate-x-0.5"
+				/>
 			</a>
 		</div>
 	</div>
