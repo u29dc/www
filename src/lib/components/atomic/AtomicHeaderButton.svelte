@@ -5,7 +5,13 @@
 		href: string;
 		variant?: "ghost" | "solid";
 		class?: string;
-		"aria-current"?: "page" | "step" | "location" | "date" | "time" | undefined;
+		"aria-current"?:
+			| "page"
+			| "step"
+			| "location"
+			| "date"
+			| "time"
+			| undefined;
 		children: Snippet;
 	}
 

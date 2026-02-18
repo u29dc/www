@@ -66,7 +66,9 @@
 	// Opacity-only transition (no transform to preserve fixed positioning)
 	// Initial load: wait for loader to complete before showing content
 	// Page transitions: existing exiting/entering logic
-	const opacity = $derived(!initialRevealComplete ? 0 : phase === "exiting" ? 0 : 1);
+	const opacity = $derived(
+		!initialRevealComplete ? 0 : phase === "exiting" ? 0 : 1,
+	);
 	const duration = $derived(
 		phase === "exiting"
 			? TRANSITION.exitDuration
@@ -77,7 +79,9 @@
 	// Enter: quickly appears, gently settles (immediate feedback)
 	const easing = "var(--ease-settle)";
 	// Apply will-change during transitions or initial reveal
-	const willChange = $derived(phase !== "idle" || !initialRevealComplete ? "opacity" : "auto");
+	const willChange = $derived(
+		phase !== "idle" || !initialRevealComplete ? "opacity" : "auto",
+	);
 </script>
 
 <div

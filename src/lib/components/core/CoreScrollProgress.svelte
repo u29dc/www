@@ -20,12 +20,8 @@
 	let progress = $state(0);
 	let dotOffset = $state(0);
 
-	const lineStyle = $derived(
-		`height: ${LINE_HEIGHT}px;`,
-	);
-	const dotStyle = $derived(
-		`transform: translate3d(0, ${dotOffset}px, 0);`,
-	);
+	const lineStyle = $derived(`height: ${LINE_HEIGHT}px;`);
+	const dotStyle = $derived(`transform: translate3d(0, ${dotOffset}px, 0);`);
 
 	const handleBackToTop = () => {
 		smoothScrollToTop();
@@ -71,10 +67,7 @@
 	style:opacity={isVisible ? 1 : 0}
 >
 	<div class="flex flex-col items-center gap-2">
-		<div
-			class="relative w-px bg-black/10"
-			style={lineStyle}
-		>
+		<div class="relative w-px bg-black/10" style={lineStyle}>
 			<div
 				class="absolute top-0 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-black"
 				style="{dotStyle}; will-change: transform; backface-visibility: hidden;"

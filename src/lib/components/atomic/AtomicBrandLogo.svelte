@@ -724,8 +724,12 @@ void main() {
 
 		const handlePointerEnter = () => {
 			if (!isTracking) {
-				canvas.addEventListener("pointermove", handlePointerMove, { passive: true });
-				canvas.addEventListener("mousemove", handlePointerMove, { passive: true });
+				canvas.addEventListener("pointermove", handlePointerMove, {
+					passive: true,
+				});
+				canvas.addEventListener("mousemove", handlePointerMove, {
+					passive: true,
+				});
 				isTracking = true;
 			}
 		};
@@ -738,8 +742,12 @@ void main() {
 			}
 		};
 
-		canvas.addEventListener("pointerenter", handlePointerEnter, { passive: true });
-		canvas.addEventListener("pointerleave", handlePointerLeave, { passive: true });
+		canvas.addEventListener("pointerenter", handlePointerEnter, {
+			passive: true,
+		});
+		canvas.addEventListener("pointerleave", handlePointerLeave, {
+			passive: true,
+		});
 
 		applyStaticUniforms(state);
 		applyThemeUniforms(state.theme);
@@ -1085,7 +1093,7 @@ void main() {
 			style={canvasStyle}
 			data-animate
 			aria-label="u29dc logo"
-			role="img"
-		>U29DC</canvas>
+			role="img">U29DC</canvas
+		>
 	{/if}
 </div>

@@ -135,24 +135,30 @@
 				: `width: ${size}; height: 100%; top: 0; bottom: 0`,
 		].join("; "),
 	);
-
 </script>
 
 <div
 	class={`relative hidden md:block ${fixed ? "isolate" : ""} ${className}`}
 	style={containerStyle}
 	use:observeVisibility={{
-		onEnter: () => { isVisible = true; },
-		onLeave: () => { isVisible = false; },
+		onEnter: () => {
+			isVisible = true;
+		},
+		onLeave: () => {
+			isVisible = false;
+		},
 		once: false,
-		rootMargin: '0px',
+		rootMargin: "0px",
 		threshold: 0.1,
 		disabled: !animated,
 	}}
 >
 	<div class="relative h-full w-full">
 		{#each layerStyles as layerStyle}
-			<div class="absolute inset-0" style="{layerStyle}; will-change: {layerWillChange}"></div>
+			<div
+				class="absolute inset-0"
+				style="{layerStyle}; will-change: {layerWillChange}"
+			></div>
 		{/each}
 	</div>
 	{#if children}

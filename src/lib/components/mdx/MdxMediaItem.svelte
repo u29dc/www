@@ -14,7 +14,8 @@
 
 	const fullUrl = $derived(`${CDN.mediaUrl}${src}`);
 	const isVideo = $derived(
-		src.toLowerCase().includes(".webm") || src.toLowerCase().includes(".mp4"),
+		src.toLowerCase().includes(".webm") ||
+			src.toLowerCase().includes(".mp4"),
 	);
 
 	let imageRef = $state<HTMLImageElement | null>(null);
@@ -79,9 +80,11 @@
 					isIntersecting = true;
 					shouldLoadVideo = true;
 				},
-				onLeave: () => { isIntersecting = false; },
+				onLeave: () => {
+					isIntersecting = false;
+				},
 				once: false,
-				rootMargin: '200px',
+				rootMargin: "200px",
 				threshold: 0.1,
 			}}
 		>
