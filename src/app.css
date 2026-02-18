@@ -293,7 +293,7 @@
 	}
 	/* Ultra-wide: keep wide lane consistent; avoid narrowing on large monitors */
 	@media (width >= 160rem) {
-		grid-column: 3 / 9;
+		grid-column: 4 / 8;
 	}
 }
 

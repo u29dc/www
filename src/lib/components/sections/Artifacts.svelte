@@ -110,7 +110,7 @@
 								>{formatDate(artifact.date)}</span
 							>
 						</div>
-						<p class="mt-2 pl-12 text-muted/50">Confidential</p>
+						<p class="mt-2 text-muted/50">Confidential</p>
 					</div>
 				{:else}
 					{@const thumbnails = getThumbnails(artifact.media)}
