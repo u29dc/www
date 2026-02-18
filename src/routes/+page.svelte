@@ -4,7 +4,6 @@
 	import Signal from "$lib/components/sections/Signal.svelte";
 	import Protocols from "$lib/components/sections/Protocols.svelte";
 	import Artifacts from "$lib/components/sections/Artifacts.svelte";
-	import Axioms from "$lib/components/sections/Axioms.svelte";
 	import Origin from "$lib/components/sections/Origin.svelte";
 	import Threshold from "$lib/components/sections/Threshold.svelte";
 	import type { PageData } from "./$types";
@@ -24,7 +23,6 @@
 	<Signal />
 	<Protocols />
 	<Artifacts artifacts={data.artifacts} />
-	<Axioms />
 	<Origin />
 	<Threshold />
 </div>

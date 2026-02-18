@@ -88,12 +88,12 @@
 	});
 </script>
 
-<section id="origin" class="col-content py-44">
-	<header class="mb-16">
-		<p class="font-mono text-muted">[ 05 ORIGIN ]</p>
+<section id="origin" class="grid-section-full py-44">
+	<header class="col-content mb-16">
+		<p class="font-mono text-muted">[ 03 ORIGIN ]</p>
 	</header>
 
-	<div class="grid gap-8 md:grid-cols-[auto_1fr] md:gap-12">
+	<div class="col-content grid gap-8 md:grid-cols-[auto_1fr] md:gap-12">
 		<div
 			class="group relative w-full max-w-[200px] overflow-hidden rounded-sm"
 			bind:this={photoRef}

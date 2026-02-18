@@ -54,11 +54,13 @@
 	});
 </script>
 
-{#snippet content()}
-	<header class="mb-16">
-		<p class="font-mono text-muted">[ 01 SIGNAL ]</p>
+{#snippet headerContent()}
+	<header class="col-content mb-16">
+		<p class="font-mono text-muted">[ 00 SIGNAL ]</p>
 	</header>
+{/snippet}
 
+{#snippet bodyContent()}
 	<div class="font-lg font-medium space-y-8">
 		<h2
 			class="font-serif font-2xl font-bold underline decoration-1 underline-offset-4"
@@ -98,31 +100,33 @@
 	</div>
 {/snippet}
 
-{#if prefersReducedMotion.current}
-	<section
-		id="signal"
-		class="col-content py-44 [content-visibility:auto] [contain-intrinsic-size:1000px_800px]"
-	>
-		{@render content()}
-	</section>
-{:else}
-	<section
-		bind:this={sectionRef}
-		id="signal"
-		class="relative col-content [content-visibility:auto] [contain-intrinsic-size:1000px_800px]"
-	>
-		<!-- Base: muted text (decorative, hidden from assistive tech) -->
-		<div aria-hidden="true" class="py-44 text-black/10">
-			{@render content()}
-		</div>
+<section id="signal" class="grid-section-full py-44">
+	{@render headerContent()}
 
-		<!-- Reveal: full-contrast text (clipped at line position, semantic layer) -->
+	{#if prefersReducedMotion.current}
 		<div
-			class="pointer-events-none absolute inset-0 py-44"
-			style:clip-path="inset(0 0 {clipBottom}px 0)"
-			style:will-change={isNearSection ? "clip-path" : "auto"}
+			class="col-content [content-visibility:auto] [contain-intrinsic-size:1000px_800px]"
 		>
-			{@render content()}
+			{@render bodyContent()}
 		</div>
-	</section>
-{/if}
+	{:else}
+		<div
+			bind:this={sectionRef}
+			class="relative col-content [content-visibility:auto] [contain-intrinsic-size:1000px_800px]"
+		>
+			<!-- Base: muted text (decorative, hidden from assistive tech) -->
+			<div aria-hidden="true" class="text-black/10">
+				{@render bodyContent()}
+			</div>
+
+			<!-- Reveal: full-contrast text (clipped at line position, semantic layer) -->
+			<div
+				class="pointer-events-none absolute inset-0"
+				style:clip-path="inset(0 0 {clipBottom}px 0)"
+				style:will-change={isNearSection ? "clip-path" : "auto"}
+			>
+				{@render bodyContent()}
+			</div>
+		</div>
+	{/if}
+</section>

@@ -48,7 +48,10 @@
 	};
 
 	const getThumbnails = (media: string[]): ParsedThumb[] => {
-		return media.filter(isImage).slice(0, MAX_THUMBNAILS).map(parseMediaSrc);
+		return media
+			.filter(isImage)
+			.slice(0, MAX_THUMBNAILS)
+			.map(parseMediaSrc);
 	};
 
 	onMount(() => {
@@ -69,12 +72,12 @@
 	});
 </script>
 
-<section id="artifacts" class="col-content py-44">
-	<header class="mb-16">
-		<p class="font-mono text-muted">[ 03 ARTIFACTS ]</p>
+<section id="artifacts" class="grid-section-full py-44">
+	<header class="col-content mb-16">
+		<p class="font-mono text-muted">[ 02 ARTIFACTS ]</p>
 	</header>
 
-	<div class="flex flex-col">
+	<div class="col-content flex flex-col">
 		{#each artifacts as artifact, index}
 			<article
 				bind:this={items[index]}
@@ -139,7 +142,12 @@
 									>
 										<img
 											src="{CDN.mediaUrl}{thumb.filename}"
-											width={Math.min(Math.round(THUMB_HEIGHT * thumb.ratio), 96)}
+											width={Math.min(
+												Math.round(
+													THUMB_HEIGHT * thumb.ratio,
+												),
+												96,
+											)}
 											height={THUMB_HEIGHT}
 											alt="{artifact.title} preview"
 											loading="lazy"

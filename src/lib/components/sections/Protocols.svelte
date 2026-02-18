@@ -47,15 +47,14 @@
 	];
 </script>
 
-<section
-	id="protocols"
-	class="col-wide py-44 [content-visibility:auto] [contain-intrinsic-size:1000px_800px]"
->
-	<header class="mb-16">
-		<p class="font-mono text-muted">[ 02 PROTOCOLS ]</p>
+<section id="protocols" class="grid-section-full py-44">
+	<header class="col-content mb-16">
+		<p class="font-mono text-muted">[ 01 PROTOCOLS ]</p>
 	</header>
 
-	<div class="col-content-wide w-full">
+	<div
+		class="col-content-wide w-full [content-visibility:auto] [contain-intrinsic-size:1000px_800px]"
+	>
 		<div class="flex flex-col gap-4 xl:flex-row xl:items-stretch">
 			{#each protocols as protocol}
 				<article
