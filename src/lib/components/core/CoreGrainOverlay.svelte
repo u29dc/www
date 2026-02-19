@@ -3,7 +3,17 @@
 	import { logEvent } from "$lib/logger";
 	import { observeVisibility } from "$lib/observe";
 	import { registerRafTask } from "$lib/raf";
-	import { shouldDisableGrainOverlay } from "$lib/webgl";
+	import {
+		clearGrainOverlayCooldown,
+		detectDeviceTier,
+		evaluateGrainOverlayPolicy,
+		getDprCap,
+		getWebglRuntimeConfig,
+		readGrainOverlayCooldown,
+		recordWebglDiagnostic,
+		writeGrainOverlayCooldown,
+		type DeviceTier,
+	} from "$lib/webgl";
 
 	export interface CoreGrainOverlayProps {
 		/** Grain intensity (0-1 range, default 0.25) */
@@ -21,7 +31,6 @@
 	}
 
 	type ThemeVariant = "light" | "dark";
-	type DeviceTier = "high" | "medium" | "low";
 
 	interface GrainState {
 		intensity: number;
@@ -229,9 +238,9 @@ void main() {
 	const DEFAULT_CONTEXT_ATTRIBUTES: WebGLContextAttributes = {
 		alpha: true,
 		antialias: false,
-		desynchronized: true,
-		powerPreference: "high-performance",
-		premultipliedAlpha: false,
+		desynchronized: false,
+		powerPreference: "default",
+		premultipliedAlpha: true,
 		preserveDrawingBuffer: false,
 		depth: false,
 		stencil: false,
@@ -242,38 +251,6 @@ void main() {
 		const angle = i * GOLDEN_ANGLE;
 		return [Math.cos(angle), Math.sin(angle)] as [number, number];
 	});
-
-	function detectDeviceTier(): DeviceTier {
-		if (typeof window === "undefined" || typeof navigator === "undefined") {
-			return "high";
-		}
-
-		const memory =
-			(navigator as { deviceMemory?: number }).deviceMemory ?? 4;
-		const cores = navigator.hardwareConcurrency ?? 4;
-		const prefersReducedMotion =
-			window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ??
-			false;
-
-		if (prefersReducedMotion || memory <= 2 || cores <= 2) {
-			return "low";
-		}
-		if (memory <= 4 || cores <= 4) {
-			return "medium";
-		}
-		return "high";
-	}
-
-	function getDprCap(): number {
-		const tier = detectDeviceTier();
-		const isMobile =
-			typeof window !== "undefined" &&
-			(window.matchMedia?.("(max-width: 768px)").matches ??
-				window.innerWidth <= 768);
-		if (tier === "low") return 1;
-		if (tier === "medium") return isMobile ? 1.25 : 1.5;
-		return isMobile ? 1.5 : 2;
-	}
 
 	function readSystemTheme(): ThemeVariant {
 		if (typeof document !== "undefined") {
@@ -303,7 +280,92 @@ void main() {
 			throw new Error("WebGL2 is not supported on this device.");
 		}
 
+		const contextAttributes = gl.getContextAttributes();
+		if (!contextAttributes?.alpha) {
+			logEvent("grain-overlay", "context", "UNSAFE_ALPHA", {
+				alpha: contextAttributes?.alpha ?? null,
+				desynchronized: contextAttributes?.desynchronized ?? null,
+				premultipliedAlpha:
+					contextAttributes?.premultipliedAlpha ?? null,
+			});
+			throw new Error(
+				"WebGL context does not expose alpha; overlay disabled for reliability.",
+			);
+		}
+
 		return gl;
+	}
+
+	type ProbeResult = {
+		ok: boolean;
+		reason: string;
+		alpha?: number;
+		glError?: number;
+	};
+
+	function runTransparencyProbe(): ProbeResult {
+		if (typeof document === "undefined") {
+			return { ok: false, reason: "probe_no_document" };
+		}
+
+		const probeCanvas = document.createElement("canvas");
+		probeCanvas.width = 2;
+		probeCanvas.height = 2;
+
+		const probeGl = probeCanvas.getContext(
+			"webgl2",
+			DEFAULT_CONTEXT_ATTRIBUTES,
+		);
+		if (!probeGl) {
+			probeCanvas.width = 0;
+			probeCanvas.height = 0;
+			return { ok: false, reason: "probe_context_unavailable" };
+		}
+
+		try {
+			const attrs = probeGl.getContextAttributes();
+			if (!attrs?.alpha) {
+				return { ok: false, reason: "probe_alpha_unavailable" };
+			}
+
+			probeGl.viewport(0, 0, 1, 1);
+			probeGl.clearColor(0, 0, 0, 0);
+			probeGl.clear(probeGl.COLOR_BUFFER_BIT);
+
+			const pixel = new Uint8Array(4);
+			probeGl.readPixels(
+				0,
+				0,
+				1,
+				1,
+				probeGl.RGBA,
+				probeGl.UNSIGNED_BYTE,
+				pixel,
+			);
+
+			const alpha = pixel[3] ?? 255;
+			if (alpha > 8) {
+				return {
+					ok: false,
+					reason: "probe_alpha_not_transparent",
+					alpha,
+				};
+			}
+
+			const glError = probeGl.getError();
+			if (glError !== probeGl.NO_ERROR) {
+				return { ok: false, reason: "probe_gl_error", glError };
+			}
+
+			return { ok: true, reason: "probe_ok", alpha };
+		} finally {
+			const loseContext = probeGl.getExtension("WEBGL_lose_context") as
+				| { loseContext: () => void }
+				| null;
+			loseContext?.loseContext();
+			probeCanvas.width = 0;
+			probeCanvas.height = 0;
+		}
 	}
 
 	function measureCanvas(
@@ -536,6 +598,13 @@ void main() {
 		canvas: HTMLCanvasElement,
 		initialState: GrainState,
 		blueNoisePixels: Uint8Array,
+		onFatalContextError?: (
+			reason:
+				| "context-lost"
+				| "context-restored"
+				| "frame-validation-failed"
+				| "warmup-unstable",
+		) => void,
 	): GrainRenderer {
 		const gl = createGraphicsContext(canvas);
 		const program = createProgram(gl, {
@@ -607,14 +676,82 @@ void main() {
 		gl.bindTexture(gl.TEXTURE_2D, null);
 
 		let state = { ...initialState };
-		const dprCap = getDprCap();
+		const runtimeConfig = getWebglRuntimeConfig();
+		const dprCap = getDprCap({ mobileAware: true });
 		let dimensions = measureCanvas(canvas, dprCap);
 		applyCanvasSize(canvas, gl, dimensions);
 
 		let frameCounter = 0;
 		let isRunning = false;
 		let isDisposed = false;
+		let hasContextFailure = false;
+		let hasValidatedFrame = false;
+		let warmupLongFrameCount = 0;
+		let warmupComplete = runtimeConfig.warmupMs <= 0;
+		const warmupDeadline = performance.now() + runtimeConfig.warmupMs;
 		let resizeObserver: ResizeObserver | null = null;
+		const frameSample = new Uint8Array(4);
+
+		const failOnContextError = (
+			reason:
+				| "context-lost"
+				| "context-restored"
+				| "frame-validation-failed"
+				| "warmup-unstable",
+			message: string,
+		) => {
+			if (hasContextFailure || isDisposed) return;
+			hasContextFailure = true;
+			isRunning = false;
+			logEvent("grain-overlay", "context", "FAIL", { reason, message });
+			onFatalContextError?.(reason);
+		};
+
+		const handleContextLost = (event: Event) => {
+			const contextEvent = event as WebGLContextEvent;
+			contextEvent.preventDefault();
+			failOnContextError(
+				"context-lost",
+				contextEvent.statusMessage || "WebGL context lost",
+			);
+		};
+
+		const handleContextRestored = () => {
+			failOnContextError(
+				"context-restored",
+				"WebGL context restored unexpectedly; forcing safe disable",
+			);
+		};
+
+		const validateFrameTransparency = () => {
+			if (hasValidatedFrame || hasContextFailure || isDisposed) return;
+			hasValidatedFrame = true;
+
+			gl.readPixels(
+				0,
+				0,
+				1,
+				1,
+				gl.RGBA,
+				gl.UNSIGNED_BYTE,
+				frameSample,
+			);
+			const alpha = frameSample[3] ?? 255;
+
+			// Grain overlay must stay translucent. Opaque alpha indicates a broken
+			// pipeline that can render as a fullscreen black sheet.
+			if (alpha > 220) {
+				failOnContextError(
+					"frame-validation-failed",
+					`Unexpected overlay alpha sample: ${alpha}`,
+				);
+			}
+		};
+
+		canvas.addEventListener("webglcontextlost", handleContextLost, {
+			passive: false,
+		});
+		canvas.addEventListener("webglcontextrestored", handleContextRestored);
 
 		const updateResolutionUniforms = () => {
 			setUniform2f(
@@ -691,12 +828,41 @@ void main() {
 			gl.clearColor(0, 0, 0, 0);
 			gl.clear(gl.COLOR_BUFFER_BIT);
 			gl.drawArrays(gl.TRIANGLES, 0, fullscreenQuad.itemCount);
+			validateFrameTransparency();
 			gl.bindVertexArray(null);
 		};
 
-		const tick = (timestamp: number, _deltaSeconds: number) => {
+		const tick = (timestamp: number, deltaSeconds: number) => {
 			if (!isRunning) return;
 			drawFrame(timestamp);
+
+			if (warmupComplete || hasContextFailure || isDisposed) return;
+
+			if (
+				typeof document !== "undefined" &&
+				document.visibilityState !== "visible"
+			) {
+				return;
+			}
+
+			if (timestamp >= warmupDeadline) {
+				warmupComplete = true;
+				return;
+			}
+
+			const longFrameThresholdMs = runtimeConfig.warmupLongFrameMs;
+			const frameDurationMs = deltaSeconds * 1000;
+			if (frameDurationMs >= longFrameThresholdMs) {
+				warmupLongFrameCount += 1;
+				if (
+					warmupLongFrameCount >= runtimeConfig.warmupMaxLongFrames
+				) {
+					failOnContextError(
+						"warmup-unstable",
+						`Warmup exceeded long-frame budget: ${warmupLongFrameCount}/${runtimeConfig.warmupMaxLongFrames}`,
+					);
+				}
+			}
 		};
 
 		const rafTask = registerRafTask(tick);
@@ -759,6 +925,11 @@ void main() {
 			if (typeof window !== "undefined") {
 				window.removeEventListener("resize", handleWindowResize);
 			}
+			canvas.removeEventListener("webglcontextlost", handleContextLost);
+			canvas.removeEventListener(
+				"webglcontextrestored",
+				handleContextRestored,
+			);
 
 			gl.bindTexture(gl.TEXTURE_2D, null);
 			gl.deleteTexture(blueNoiseTexture);
@@ -789,7 +960,7 @@ void main() {
 
 	const classValue = $derived(className);
 	const canvasStyle =
-		"width: 100%; height: 100%; display: block; --animate-duration: 700ms; --animate-delay: 0ms; --animate-y: 0px; --animate-blur: 0px;";
+		"width: 100%; height: 100%; display: block; background: transparent; --animate-duration: 700ms; --animate-delay: 0ms; --animate-y: 0px; --animate-blur: 0px;";
 	const timeOffset = Math.random() * 1000;
 
 	let canvasRef = $state<HTMLCanvasElement | null>(null);
@@ -824,17 +995,96 @@ void main() {
 	});
 
 	onMount(() => {
-		deviceTier = detectDeviceTier();
+		if (window.location.search.includes("webgl-reset=1")) {
+			clearGrainOverlayCooldown();
+			recordWebglDiagnostic({
+				feature: "grain-overlay",
+				stage: "cooldown",
+				result: "RESET",
+			});
+		}
 
-		// Skip grain overlay entirely on low-tier devices to reduce GPU pressure
-		// from dual WebGL contexts (logo + grain). Logo is essential; grain is not.
-		if (shouldDisableGrainOverlay()) {
+		const runtimeConfig = getWebglRuntimeConfig();
+		const policy = evaluateGrainOverlayPolicy();
+		deviceTier = policy.snapshot.deviceTier;
+
+		recordWebglDiagnostic({
+			feature: "grain-overlay",
+			stage: "policy",
+			result: policy.allowed ? "ALLOW" : "DENY",
+			data: {
+				mode: policy.mode,
+				riskScore: policy.riskScore,
+				riskThreshold: policy.riskThreshold,
+				deviceTier: policy.snapshot.deviceTier,
+				touchPoints: policy.snapshot.touchPoints,
+				coarsePointer: policy.snapshot.coarsePointer,
+				prefersReducedMotion: policy.snapshot.prefersReducedMotion,
+			},
+		});
+
+		if (!policy.allowed) {
 			webglFailed = true;
-			logEvent("grain-overlay", "skip", "LOW_TIER", {
-				reason: "Disabled on low-tier device to reduce GPU pressure",
+			logEvent("grain-overlay", "skip", "DISABLED", {
+				reasons: policy.reasons,
+				deviceTier,
+				mode: policy.mode,
+				riskScore: policy.riskScore,
+				riskThreshold: policy.riskThreshold,
 			});
 			return () => {};
 		}
+
+		if (policy.mode !== "on") {
+			const cooldown = readGrainOverlayCooldown();
+			if (cooldown) {
+				webglFailed = true;
+				logEvent("grain-overlay", "skip", "COOLDOWN", {
+					reason: cooldown.reason,
+					expiresAt: new Date(cooldown.expiresAt).toISOString(),
+				});
+				recordWebglDiagnostic({
+					feature: "grain-overlay",
+					stage: "cooldown",
+					result: "ACTIVE",
+					data: {
+						reason: cooldown.reason,
+						expiresAt: cooldown.expiresAt,
+					},
+				});
+				return () => {};
+			}
+		}
+
+		if (policy.shouldProbe) {
+			const probeResult = runTransparencyProbe();
+			if (!probeResult.ok) {
+				webglFailed = true;
+				writeGrainOverlayCooldown(`probe:${probeResult.reason}`);
+				logEvent("grain-overlay", "skip", "PROBE_FAIL", {
+					reason: probeResult.reason,
+					alpha: probeResult.alpha ?? null,
+					glError: probeResult.glError ?? null,
+				});
+				recordWebglDiagnostic({
+					feature: "grain-overlay",
+					stage: "probe",
+					result: "FAIL",
+					data: {
+						reason: probeResult.reason,
+						alpha: probeResult.alpha ?? null,
+						glError: probeResult.glError ?? null,
+					},
+				});
+				return () => {};
+			}
+		}
+
+		recordWebglDiagnostic({
+			feature: "grain-overlay",
+			stage: "probe",
+			result: "PASS",
+		});
 
 		const motionQuery = window.matchMedia(
 			"(prefers-reduced-motion: reduce)",
@@ -896,13 +1146,48 @@ void main() {
 					canvasRef,
 					grainState,
 					blueNoisePixels,
+					(reason) => {
+						webglFailed = true;
+						writeGrainOverlayCooldown(`runtime:${reason}`);
+						renderer?.dispose();
+						renderer = null;
+						cleanup();
+						recordWebglDiagnostic({
+							feature: "grain-overlay",
+							stage: "runtime",
+							result: "FAIL",
+							data: { reason },
+						});
+						logEvent("grain-overlay", "mount", "DISABLED", {
+							reason,
+						});
+					},
 				);
+				recordWebglDiagnostic({
+					feature: "grain-overlay",
+					stage: "mount",
+					result: "SUCCESS",
+					data: {
+						mode: policy.mode,
+						warmupMs: runtimeConfig.warmupMs,
+					},
+				});
 				logEvent("grain-overlay", "mount", "SUCCESS", {
 					intensity: adjustedIntensity,
 					theme: resolvedTheme,
 				});
 			} catch (error) {
 				webglFailed = true;
+				writeGrainOverlayCooldown("mount:init-fail");
+				recordWebglDiagnostic({
+					feature: "grain-overlay",
+					stage: "mount",
+					result: "FAIL",
+					data: {
+						message:
+							error instanceof Error ? error.message : String(error),
+					},
+				});
 				logEvent("grain-overlay", "mount", "FAIL", {
 					message:
 						error instanceof Error ? error.message : String(error),

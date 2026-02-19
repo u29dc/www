@@ -3,6 +3,12 @@
 	import { logEvent } from "$lib/logger";
 	import { observeVisibility } from "$lib/observe";
 	import { registerRafTask } from "$lib/raf";
+	import {
+		detectDeviceTier,
+		getDprCap,
+		recordWebglDiagnostic,
+		type DeviceTier,
+	} from "$lib/webgl";
 
 	export interface AtomicBrandLogoProps {
 		width?: number;
@@ -21,7 +27,6 @@
 	}
 
 	type ThemeVariant = "light" | "dark";
-	type DeviceTier = "high" | "medium" | "low";
 
 	interface AtomicBrandLogoState {
 		width: number;
@@ -298,39 +303,11 @@ void main() {
 	const DEFAULT_CONTEXT_ATTRIBUTES: WebGLContextAttributes = {
 		alpha: true,
 		antialias: true,
-		desynchronized: true,
-		powerPreference: "high-performance",
+		desynchronized: false,
+		powerPreference: "default",
 		premultipliedAlpha: true,
 		preserveDrawingBuffer: false,
 	};
-
-	function detectDeviceTier(): DeviceTier {
-		if (typeof window === "undefined" || typeof navigator === "undefined") {
-			return "high";
-		}
-
-		const memory =
-			(navigator as { deviceMemory?: number }).deviceMemory ?? 4;
-		const cores = navigator.hardwareConcurrency ?? 4;
-		const prefersReducedMotion =
-			window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ??
-			false;
-
-		if (prefersReducedMotion || memory <= 2 || cores <= 2) {
-			return "low";
-		}
-		if (memory <= 4 || cores <= 4) {
-			return "medium";
-		}
-		return "high";
-	}
-
-	function getDprCap(): number {
-		const tier = detectDeviceTier();
-		if (tier === "low") return 1;
-		if (tier === "medium") return 1.5;
-		return 2;
-	}
 
 	function damp(
 		current: number,
@@ -370,6 +347,17 @@ void main() {
 				errorStack: errorInstance.stack,
 			});
 			throw new Error("WebGL2 is not supported on this device.");
+		}
+
+		const contextAttributes = gl.getContextAttributes();
+		if (!contextAttributes?.alpha) {
+			logEvent("WEBGL", "CONTEXT", "UNSAFE_ALPHA", {
+				alpha: contextAttributes?.alpha ?? null,
+				desynchronized: contextAttributes?.desynchronized ?? null,
+			});
+			throw new Error(
+				"WebGL context does not expose alpha; logo overlay disabled.",
+			);
 		}
 
 		return gl;
@@ -586,6 +574,9 @@ void main() {
 	function createAtomicBrandLogoRenderer(
 		canvas: HTMLCanvasElement,
 		initialState: AtomicBrandLogoState,
+		onFatalContextError?: (
+			reason: "context-lost" | "context-restored" | "gl-error",
+		) => void,
 	): AtomicBrandLogoRenderer {
 		const gl = createGraphicsContext(canvas);
 		const program = createProgram(gl, {
@@ -627,7 +618,7 @@ void main() {
 		gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
 		const uniforms = resolveUniforms(gl, program, UNIFORM_NAMES);
-		const dprCap = getDprCap();
+		const dprCap = getDprCap({ mobileAware: false });
 
 		let state = { ...initialState };
 		let dimensions = measureCanvas(
@@ -643,8 +634,19 @@ void main() {
 		const dampedMouse = { ...mousePosition };
 		let hasPointerInteraction = false;
 		let hasLoggedFirstFrame = false;
+		let hasContextFailure = false;
 
 		const colorCache = new Map<string, [number, number, number]>();
+
+		const failOnContextError = (
+			reason: "context-lost" | "context-restored" | "gl-error",
+			message: string,
+		) => {
+			if (hasContextFailure) return;
+			hasContextFailure = true;
+			logEvent("WEBGL", "ATOMIC-LOGO", "FAIL", { reason, message });
+			onFatalContextError?.(reason);
+		};
 
 		const checkGlError = (phase: string) => {
 			const error = gl.getError();
@@ -653,7 +655,33 @@ void main() {
 					phase,
 					error,
 				});
+				if (
+					phase === "beforeDraw" ||
+					phase === "afterDraw" ||
+					phase === "updateResolutionUniforms"
+				) {
+					failOnContextError(
+						"gl-error",
+						`Critical GL error (${error}) during ${phase}`,
+					);
+				}
 			}
+		};
+
+		const handleContextLost = (event: Event) => {
+			const contextEvent = event as WebGLContextEvent;
+			contextEvent.preventDefault();
+			failOnContextError(
+				"context-lost",
+				contextEvent.statusMessage || "WebGL context lost",
+			);
+		};
+
+		const handleContextRestored = () => {
+			failOnContextError(
+				"context-restored",
+				"WebGL context restored unexpectedly",
+			);
 		};
 
 		const updateResolutionUniforms = (nextDimensions: CanvasDimensions) => {
@@ -748,6 +776,10 @@ void main() {
 		canvas.addEventListener("pointerleave", handlePointerLeave, {
 			passive: true,
 		});
+		canvas.addEventListener("webglcontextlost", handleContextLost, {
+			passive: false,
+		});
+		canvas.addEventListener("webglcontextrestored", handleContextRestored);
 
 		applyStaticUniforms(state);
 		applyThemeUniforms(state.theme);
@@ -758,7 +790,7 @@ void main() {
 		let resizeObserver: ResizeObserver | null = null;
 
 		const drawFrame = (timestamp: number, deltaSeconds: number) => {
-			if (isDisposed) return;
+			if (isDisposed || hasContextFailure) return;
 			if (!hasLoggedFirstFrame) {
 				hasLoggedFirstFrame = true;
 				logEvent("WEBGL", "ATOMIC-LOGO", "FRAME-START", {
@@ -902,6 +934,11 @@ void main() {
 				canvas.removeEventListener("pointermove", handlePointerMove);
 				canvas.removeEventListener("mousemove", handlePointerMove);
 			}
+			canvas.removeEventListener("webglcontextlost", handleContextLost);
+			canvas.removeEventListener(
+				"webglcontextrestored",
+				handleContextRestored,
+			);
 
 			if (resizeObserver) {
 				resizeObserver.disconnect();
@@ -952,6 +989,16 @@ void main() {
 	const canvasStyle = $derived(
 		`width: 100%; height: 100%; display: block; --animate-duration: 600ms; --animate-delay: 0ms; --animate-y: 0px; --animate-blur: 0px;${debug ? " outline: 2px solid red;" : ""}`,
 	);
+	const fallbackStyle = $derived(
+		(() => {
+			const size = Math.max(width * 0.16, 16);
+			const darkStyles =
+				"color: rgba(255, 255, 255, 0.88); border-color: rgba(255, 255, 255, 0.22); background: rgba(255, 255, 255, 0.06);";
+			const lightStyles =
+				"color: rgba(0, 0, 0, 0.86); border-color: rgba(0, 0, 0, 0.12); background: rgba(0, 0, 0, 0.03);";
+			return `width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; border: 1px solid transparent; font-size: ${size}px; letter-spacing: 0.22em; ${theme === "dark" ? darkStyles : lightStyles}`;
+		})(),
+	);
 
 	let canvasRef = $state<HTMLCanvasElement | null>(null);
 	let renderer = $state<AtomicBrandLogoRenderer | null>(null);
@@ -985,6 +1032,15 @@ void main() {
 
 	onMount(() => {
 		deviceTier = detectDeviceTier();
+		recordWebglDiagnostic({
+			feature: "atomic-logo",
+			stage: "policy",
+			result: "EVALUATED",
+			data: {
+				deviceTier,
+				enableObservation,
+			},
+		});
 
 		const motionQuery = window.matchMedia(
 			"(prefers-reduced-motion: reduce)",
@@ -1017,9 +1073,42 @@ void main() {
 		const state = buildState();
 
 		try {
-			renderer = createAtomicBrandLogoRenderer(canvasRef, state);
+			renderer = createAtomicBrandLogoRenderer(
+				canvasRef,
+				state,
+				(reason) => {
+					webglFailed = true;
+					renderer?.dispose();
+					renderer = null;
+					recordWebglDiagnostic({
+						feature: "atomic-logo",
+						stage: "runtime",
+						result: "FAIL",
+						data: { reason },
+					});
+					logEvent("WEBGL", "ATOMIC-LOGO", "DISABLED", {
+						reason,
+					});
+				},
+			);
+			recordWebglDiagnostic({
+				feature: "atomic-logo",
+				stage: "mount",
+				result: "SUCCESS",
+				data: {
+					deviceTier,
+				},
+			});
 		} catch (error) {
 			webglFailed = true;
+			recordWebglDiagnostic({
+				feature: "atomic-logo",
+				stage: "mount",
+				result: "FAIL",
+				data: {
+					message: error instanceof Error ? error.message : String(error),
+				},
+			});
 			logEvent("WEBGL", "ATOMIC-LOGO", "INIT-FAIL", {
 				message: error instanceof Error ? error.message : String(error),
 			});
@@ -1095,5 +1184,14 @@ void main() {
 			aria-label="u29dc logo"
 			role="img">U29DC</canvas
 		>
+	{:else}
+		<div
+			class="font-mono uppercase"
+			style={fallbackStyle}
+			aria-label="u29dc logo fallback"
+			role="img"
+		>
+			U29DC
+		</div>
 	{/if}
 </div>
