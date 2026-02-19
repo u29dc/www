@@ -1,60 +1,17 @@
 import type { Handle } from '@sveltejs/kit';
 import { dev } from '$app/environment';
 import { CDN } from '$lib/constants';
+import { type AgentRedirectClassification, type AgentRedirectMode, classifyAgentRedirectRequest, parseAgentRedirectMode } from '$lib/server/classifier';
+import { logEvent } from '$lib/server/logger';
 
-const AGENT_UA_PATTERNS: RegExp[] = [
-	/\bcurl\b/i,
-	/\bwget\b/i,
-	/\bhttpie\b/i,
-	/\bChatGPT-User\b/i,
-	/\bGPTBot\b/i,
-	/\bClaudeBot\b/i,
-	/\bClaude-Web\b/i,
-	/\bAnthropic\b/i,
-	/\bPerplexityBot\b/i,
-	/\bCohereBot\b/i,
-	/\bCopilot\b/i,
-	/\bai2-bot\b/i,
-	/\bCCBot\b/i,
-	/\bGoogle-Extended\b/i,
-	/\bApplebot-Extended\b/i,
-	/\bBytespider\b/i,
-	/\bYouBot\b/i,
-];
+type RuntimeEnv = {
+	AGENT_REDIRECT_MODE: string | null;
+	AGENT_REDIRECT_DEBUG: string | null;
+};
 
-const HTML_ALLOWLIST_UA_PATTERNS: RegExp[] = [
-	/Googlebot/i,
-	/Bingbot/i,
-	/DuckDuckBot/i,
-	/Slurp/i,
-	/Twitterbot/i,
-	/facebookexternalhit/i,
-	/LinkedInBot/i,
-	/Discordbot/i,
-	/Slackbot/i,
-	/WhatsApp/i,
-	/TelegramBot/i,
-];
-
-const isAllowlistedUserAgent = (ua: string): boolean => HTML_ALLOWLIST_UA_PATTERNS.some((pattern) => pattern.test(ua));
-
-const isAgentUserAgent = (ua: string): boolean => AGENT_UA_PATTERNS.some((pattern) => pattern.test(ua));
-
-const prefersPlainText = (request: Request): boolean => {
-	const accept = request.headers.get('accept') ?? '';
-	if (!accept || accept === '*/*') return false;
-
-	const types = accept.split(',').map((entry) => {
-		const [type, ...params] = entry.trim().split(';');
-		const qParam = params.find((p) => p.trim().startsWith('q='));
-		const q = qParam ? Number.parseFloat(qParam.trim().slice(2)) : 1;
-		return { type: type?.trim().toLowerCase() ?? '', q: Number.isNaN(q) ? 1 : q };
-	});
-
-	const htmlQ = types.find((t) => t.type === 'text/html' || t.type === 'application/xhtml+xml')?.q ?? 0;
-	const plainQ = Math.max(types.find((t) => t.type === 'text/plain')?.q ?? 0, types.find((t) => t.type === 'text/markdown')?.q ?? 0);
-
-	return plainQ > 0 && htmlQ === 0;
+type ProcessRuntimeEnv = {
+	AGENT_REDIRECT_MODE?: string;
+	AGENT_REDIRECT_DEBUG?: string;
 };
 
 const getAgentRedirectTarget = (url: URL): string => {
@@ -62,6 +19,144 @@ const getAgentRedirectTarget = (url: URL): string => {
 	const slugMatch = path.match(/^\/([a-z0-9-]+)$/);
 	const target = slugMatch ? `/${slugMatch[1]}.txt` : '/llms.txt';
 	return url.search ? `${target}${url.search}` : target;
+};
+
+const getProcessRuntimeEnv = (): ProcessRuntimeEnv | undefined => {
+	if (typeof process === 'undefined') return undefined;
+	return process.env as ProcessRuntimeEnv;
+};
+
+const getStringBinding = (value: unknown): string | undefined => {
+	if (typeof value === 'string') return value;
+	return undefined;
+};
+
+const getRuntimeEnv = (platformEnv: Record<string, unknown> | undefined): RuntimeEnv => {
+	const processEnv = getProcessRuntimeEnv();
+
+	return {
+		AGENT_REDIRECT_MODE: getStringBinding(platformEnv?.['AGENT_REDIRECT_MODE']) ?? processEnv?.AGENT_REDIRECT_MODE ?? null,
+		AGENT_REDIRECT_DEBUG: getStringBinding(platformEnv?.['AGENT_REDIRECT_DEBUG']) ?? processEnv?.AGENT_REDIRECT_DEBUG ?? null,
+	};
+};
+
+const getAgentRedirectMode = (env: RuntimeEnv): AgentRedirectMode => parseAgentRedirectMode(env.AGENT_REDIRECT_MODE);
+
+const isAgentDebugEnabled = (env: RuntimeEnv): boolean => {
+	const value = env.AGENT_REDIRECT_DEBUG;
+	if (!value) return false;
+
+	switch (value.trim().toLowerCase()) {
+		case '1':
+		case 'true':
+		case 'on':
+		case 'yes':
+			return true;
+		default:
+			return false;
+	}
+};
+
+const setAgentDebugHeaders = ({ headers, mode, classification }: { headers: Headers; mode: AgentRedirectMode; classification: AgentRedirectClassification }): void => {
+	headers.set('x-agent-mode', mode);
+	headers.set('x-agent-decision', classification.shouldRedirect ? 'redirect' : 'html');
+	headers.set('x-agent-confidence', classification.confidence);
+	headers.set('x-agent-reasons', classification.reasonCodes.join(','));
+	headers.set('x-agent-accept-plain', classification.acceptPrefersPlainText ? '1' : '0');
+
+	if (classification.agentPatternId) {
+		headers.set('x-agent-agent-pattern', classification.agentPatternId);
+	}
+
+	if (classification.allowlistPatternId) {
+		headers.set('x-agent-allowlist-pattern', classification.allowlistPatternId);
+	}
+
+	if (classification.browserSignals.length > 0) {
+		headers.set('x-agent-browser-signals', classification.browserSignals.join(','));
+	}
+};
+
+const shouldLogAgentDecision = ({ mode, classification }: { mode: AgentRedirectMode; classification: AgentRedirectClassification }): boolean =>
+	classification.eligible && (mode !== 'off' || classification.wouldRedirect || classification.acceptPrefersPlainText);
+
+const getAgentDecisionResult = (classification: AgentRedirectClassification): string => {
+	if (classification.shouldRedirect) return 'REDIRECT';
+	if (classification.wouldRedirect) return 'CANDIDATE';
+	return 'PASS';
+};
+
+const logAgentDecision = ({
+	requestId,
+	path,
+	method,
+	mode,
+	classification,
+}: {
+	requestId: string;
+	path: string;
+	method: string;
+	mode: AgentRedirectMode;
+	classification: AgentRedirectClassification;
+}): void => {
+	if (!shouldLogAgentDecision({ mode, classification })) return;
+
+	logEvent('AGENT_REDIRECT', 'CLASSIFY', getAgentDecisionResult(classification), {
+		requestId,
+		path,
+		method,
+		mode,
+		confidence: classification.confidence,
+		reasonCodes: classification.reasonCodes,
+		agentPatternId: classification.agentPatternId,
+		allowlistPatternId: classification.allowlistPatternId,
+		browserSignals: classification.browserSignals,
+	});
+};
+
+const createAgentRedirectResponse = ({
+	url,
+	mode,
+	classification,
+	debugAgentHeaders,
+}: {
+	url: URL;
+	mode: AgentRedirectMode;
+	classification: AgentRedirectClassification;
+	debugAgentHeaders: boolean;
+}): Response => {
+	const headers = new Headers({
+		location: getAgentRedirectTarget(url),
+		'cache-control': 'no-store',
+	});
+
+	if (debugAgentHeaders) {
+		setAgentDebugHeaders({ headers, mode, classification });
+	}
+
+	return new Response(null, {
+		status: 302,
+		headers,
+	});
+};
+
+const applySecurityHeaders = (response: Response, path: string): void => {
+	if (path.startsWith('/api')) return;
+
+	response.headers.set('x-frame-options', 'DENY');
+	response.headers.set('x-content-type-options', 'nosniff');
+	response.headers.set('referrer-policy', 'strict-origin-when-cross-origin');
+	response.headers.set('permissions-policy', ['camera=()', 'microphone=()', 'geolocation=()', 'autoplay=()', 'fullscreen=(self)', 'picture-in-picture=()'].join(', '));
+
+	const slugMatch = path.match(/^\/([a-z0-9-]+)$/);
+	if (slugMatch) {
+		const slug = slugMatch[1];
+		response.headers.append('link', `</${slug}.txt>; rel="alternate"; type="text/plain"; title="${slug} text"`);
+		response.headers.append('link', `</${slug}.md>; rel="alternate"; type="text/markdown"; title="${slug} markdown"`);
+		return;
+	}
+
+	response.headers.append('link', '</llms.txt>; rel="alternate"; type="text/plain"; title="LLMS context"');
 };
 
 type CspDirective = {
@@ -106,50 +201,52 @@ const shouldRedirectToHome = (path: string): boolean => {
 };
 
 export const handle: Handle = async ({ event, resolve }) => {
-	const method = event.request.method;
 	const path = event.url.pathname;
-	const userAgent = event.request.headers.get('user-agent') ?? '';
+	const platform = event.platform as { env?: Record<string, unknown> } | undefined;
+	const runtimeEnv = getRuntimeEnv(platform?.env);
+	const mode = getAgentRedirectMode(runtimeEnv);
+	const debugAgentHeaders = isAgentDebugEnabled(runtimeEnv);
+	const requestId = crypto.randomUUID();
+	event.locals.requestId = requestId;
 
-	if ((method === 'GET' || method === 'HEAD') && !path.startsWith('/api') && !path.endsWith('.txt') && !path.endsWith('.md') && !path.includes('.') && !isAllowlistedUserAgent(userAgent)) {
-		if (isAgentUserAgent(userAgent) || prefersPlainText(event.request)) {
-			return new Response(null, {
-				status: 302,
-				headers: {
-					location: getAgentRedirectTarget(event.url),
-					'cache-control': 'no-store',
-				},
-			});
-		}
+	const classification = classifyAgentRedirectRequest({
+		request: event.request,
+		path,
+		mode,
+	});
+
+	logAgentDecision({
+		requestId,
+		path,
+		method: event.request.method,
+		mode,
+		classification,
+	});
+
+	if (classification.shouldRedirect) {
+		return createAgentRedirectResponse({
+			url: event.url,
+			mode,
+			classification,
+			debugAgentHeaders,
+		});
 	}
 
 	const nonce = createNonce();
-	const requestId = crypto.randomUUID();
 	event.locals.nonce = nonce;
-	event.locals.requestId = requestId;
 
 	const response = await resolve(event, {
 		transformPageChunk: ({ html }) => html.replace(/<script(?![^>]*nonce=)/g, `<script nonce="${nonce}"`),
 	});
 
 	response.headers.set('content-security-policy', buildCsp(nonce));
-
-	if (!path.startsWith('/api')) {
-		response.headers.set('x-frame-options', 'DENY');
-		response.headers.set('x-content-type-options', 'nosniff');
-		response.headers.set('referrer-policy', 'strict-origin-when-cross-origin');
-		response.headers.set('permissions-policy', ['camera=()', 'microphone=()', 'geolocation=()', 'autoplay=()', 'fullscreen=(self)', 'picture-in-picture=()'].join(', '));
-
-		const slugMatch = path.match(/^\/([a-z0-9-]+)$/);
-		if (slugMatch) {
-			const slug = slugMatch[1];
-			response.headers.append('link', `</${slug}.txt>; rel="alternate"; type="text/plain"; title="${slug} text"`);
-			response.headers.append('link', `</${slug}.md>; rel="alternate"; type="text/markdown"; title="${slug} markdown"`);
-		} else {
-			response.headers.append('link', '</llms.txt>; rel="alternate"; type="text/plain"; title="LLMS context"');
-		}
-	}
+	applySecurityHeaders(response, path);
 
 	response.headers.set('strict-transport-security', 'max-age=31536000; includeSubDomains');
+
+	if (debugAgentHeaders && classification.eligible) {
+		setAgentDebugHeaders({ headers: response.headers, mode, classification });
+	}
 
 	if (response.status === 404 && shouldRedirectToHome(path)) {
 		const redirectHeaders = new Headers(response.headers);
