@@ -367,6 +367,30 @@
 	}
 }
 
+/* Editorial action chip hover - subtle elevation and contrast shift */
+@utility action-chip-hover {
+	transition-property: background-color, transform;
+	transition-duration: var(--duration-pulse), var(--duration-pulse);
+	transition-timing-function: var(--ease-settle);
+
+	@media (hover: hover) {
+		&:hover {
+			background-color: oklch(0% 0 0 / 0.08);
+			transform: translateY(-1px);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		transition-duration: 0ms;
+
+		@media (hover: hover) {
+			&:hover {
+				transform: none;
+			}
+		}
+	}
+}
+
 @utility hover-text-solid {
 	@media (hover: hover) {
 		&:hover {

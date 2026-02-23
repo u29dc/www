@@ -139,36 +139,36 @@
 		{/if}
 
 		<div class="mt-8 flex flex-wrap justify-center gap-2">
-			<a
-				href={claudeUrl}
-				target="_blank"
-				rel="noopener noreferrer"
-				class="inline-flex min-h-[30px] cursor-pointer select-none items-center justify-center rounded-md bg-black/5 px-3 font-mono font-xs text-foreground no-underline transition-colors focus-ring pressed-state hover-bg-subtle"
-			>
-				Read with Claude
-			</a>
-			<a
-				href={chatGptUrl}
-				target="_blank"
-				rel="noopener noreferrer"
-				class="inline-flex min-h-[30px] cursor-pointer select-none items-center justify-center rounded-md bg-black/5 px-3 font-mono font-xs text-foreground no-underline transition-colors focus-ring pressed-state hover-bg-subtle"
-			>
-				Read with ChatGPT
-			</a>
-			<button
-				type="button"
-				onclick={copyContent}
-				class="inline-flex min-h-[30px] cursor-pointer select-none appearance-none items-center justify-center rounded-md border-0 bg-black/5 px-3 font-mono font-xs text-foreground no-underline transition-colors focus-ring pressed-state hover-bg-subtle"
-			>
-				Copy content
-			</button>
-			<button
-				type="button"
-				onclick={copyLink}
-				class="inline-flex min-h-[30px] cursor-pointer select-none appearance-none items-center justify-center rounded-md border-0 bg-black/5 px-3 font-mono font-xs text-foreground no-underline transition-colors focus-ring pressed-state hover-bg-subtle"
-			>
-				Copy link
-			</button>
+				<a
+					href={claudeUrl}
+					target="_blank"
+					rel="noopener noreferrer"
+					class="inline-flex min-h-[30px] cursor-pointer select-none items-center justify-center rounded-md bg-black/5 px-3 font-mono font-xs text-foreground no-underline focus-ring pressed-state action-chip-hover"
+				>
+					Read with Claude
+				</a>
+				<a
+					href={chatGptUrl}
+					target="_blank"
+					rel="noopener noreferrer"
+					class="inline-flex min-h-[30px] cursor-pointer select-none items-center justify-center rounded-md bg-black/5 px-3 font-mono font-xs text-foreground no-underline focus-ring pressed-state action-chip-hover"
+				>
+					Read with ChatGPT
+				</a>
+				<button
+					type="button"
+					onclick={copyContent}
+					class="inline-flex min-h-[30px] cursor-pointer select-none appearance-none items-center justify-center rounded-md border-0 bg-black/5 px-3 font-mono font-xs text-foreground no-underline focus-ring pressed-state action-chip-hover"
+				>
+					Copy content
+				</button>
+				<button
+					type="button"
+					onclick={copyLink}
+					class="inline-flex min-h-[30px] cursor-pointer select-none appearance-none items-center justify-center rounded-md border-0 bg-black/5 px-3 font-mono font-xs text-foreground no-underline focus-ring pressed-state action-chip-hover"
+				>
+					Copy link
+				</button>
 		</div>
 	</header>
 
