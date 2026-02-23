@@ -5,6 +5,9 @@ import { defineConfig } from 'vite';
 export default defineConfig({
 	plugins: [sveltekit(), tailwindcss()],
 	server: { port: 3000 },
+	optimizeDeps: {
+		exclude: ['@lucide/svelte'],
+	},
 	build: {
 		rollupOptions: {
 			output: {
