@@ -377,7 +377,7 @@
 	<nav
 		bind:this={navContainer}
 		aria-label="Main navigation"
-		class="relative col-content flex w-full origin-top select-none items-center overflow-hidden rounded-lg bg-white/80 shadow-sm ring-1 ring-black/5 backdrop-blur-xl {navStateClass}"
+		class="relative col-content flex w-full origin-top select-none items-center overflow-hidden rounded-lg shadow-sm backdrop-blur-xl [background-color:var(--header-bg)] ring-header {navStateClass}"
 	>
 		{#if isSlugPage}
 			<div class="relative flex min-h-[30px] w-full min-w-0 items-center">
@@ -392,12 +392,12 @@
 				<div
 					class="flex w-full min-w-0 items-center justify-center px-12"
 				>
-					{#if articleTitle}
-						<span
-							class="max-w-full truncate px-3 text-center font-mono font-xs text-black/60 transition-opacity duration-300 ease-[var(--ease-settle)] {slugTitleVisible
-								? 'opacity-100'
-								: 'opacity-0'}"
-						>
+						{#if articleTitle}
+							<span
+								class="max-w-full truncate px-3 text-center font-mono font-xs text-foreground/60 transition-opacity duration-300 ease-[var(--ease-settle)] {slugTitleVisible
+									? 'opacity-100'
+									: 'opacity-0'}"
+							>
 							{articleTitle}
 						</span>
 					{/if}
@@ -406,25 +406,25 @@
 		{:else}
 			<div class="flex w-full min-w-0 items-center justify-center">
 				<div class="flex min-w-0 items-center gap-2">
-					<!-- Sliding indicator -->
-					<div
-						class="pointer-events-none absolute top-[5px] h-[30px] transform-gpu rounded-md bg-black/5 [backface-visibility:hidden] {indicatorTransitionClass}"
-						style="left: {indicatorStyle.left}; width: {indicatorStyle.width}; opacity: {indicatorStyle.opacity}; transition-duration: {indicatorTransitionDuration}; transition-timing-function: {indicatorTransitionTiming}; will-change: {indicatorWillChange};"
-						aria-hidden="true"
-					></div>
+						<!-- Sliding indicator -->
+						<div
+							class="pointer-events-none absolute top-[5px] h-[30px] transform-gpu rounded-md bg-subtle [backface-visibility:hidden] {indicatorTransitionClass}"
+							style="left: {indicatorStyle.left}; width: {indicatorStyle.width}; opacity: {indicatorStyle.opacity}; transition-duration: {indicatorTransitionDuration}; transition-timing-function: {indicatorTransitionTiming}; will-change: {indicatorWillChange};"
+							aria-hidden="true"
+						></div>
 
 						<!-- Section links -->
 						{#each sections as section, i}
-							<a
-								bind:this={navRefs[i]}
-								href="#{section.id}"
-								onclick={() => handleSectionNavClick(section.id)}
-								class="z-content inline-flex min-h-[30px] items-center rounded-md px-2 font-mono font-xs text-black/60 transition-colors focus-ring pressed-state hover-text-solid sm:px-3 {activeSection ===
-								section.id
-									? 'text-black'
-									: ''}"
-								aria-label={`${section.num} ${section.name}`}
-								aria-current={activeSection === section.id
+								<a
+									bind:this={navRefs[i]}
+									href="#{section.id}"
+									onclick={() => handleSectionNavClick(section.id)}
+									class="z-content inline-flex min-h-[30px] items-center rounded-md px-2 font-mono font-xs text-foreground/60 transition-colors focus-ring pressed-state hover-text-solid sm:px-3 {activeSection ===
+									section.id
+										? 'text-foreground'
+										: ''}"
+									aria-label={`${section.num} ${section.name}`}
+									aria-current={activeSection === section.id
 									? "page"
 									: undefined}
 							>
@@ -436,13 +436,13 @@
 									{section.name}</span
 								>
 							</a>
-							{#if i < sections.length - 1}
-								<span
-									aria-hidden="true"
-									class="font-mono font-xs text-black/20 sm:hidden"
-								>
-									|
-								</span>
+								{#if i < sections.length - 1}
+									<span
+										aria-hidden="true"
+										class="font-mono font-xs text-foreground/20 sm:hidden"
+									>
+										|
+									</span>
 							{/if}
 						{/each}
 					</div>

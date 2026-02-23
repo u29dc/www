@@ -103,13 +103,65 @@
 	--shadow-xl: 0 20px 25px oklch(0% 0 0 / 0.1), 0 8px 10px oklch(0% 0 0 / 0.04);
 }
 
-:root {
+:root,
+html.light {
 	/* Semantic tokens: ground (foundation), surface (elevated), edge (boundaries), ink (marks), trace (faded) */
 	--ground: #f8f9fa;
 	--surface: #ffffff;
+	--surface-subtle: #f1f2f3;
 	--edge: #e5e7eb;
 	--ink: #1f2937;
 	--trace: #6b7280;
+
+	/* UI role tokens */
+	--header-bg: oklch(100% 0 0 / 0.8);
+	--header-ring: oklch(0% 0 0 / 0.05);
+	--ui-subtle-bg: oklch(0% 0 0 / 0.05);
+	--ui-subtle-hover: oklch(0% 0 0 / 0.08);
+	--ui-contrast-bg: #111315;
+	--ui-contrast-fg: #ffffff;
+	--line-ink: #111315;
+	--line-trace: oklch(0% 0 0 / 0.1);
+	--focus-ring-color: oklch(50% 0 0);
+	--hero-overlay: #f8f9fa;
+	--loader-bg: #ffffff;
+	--loader-fg: #111315;
+	--loader-progress: #111315;
+	--selection-bg: var(--color-selection-light);
+	--selection-fg: var(--color-black);
+}
+
+html.dark {
+	--ground: #121314;
+	--surface: #18191b;
+	--surface-subtle: #1d1f21;
+	--edge: #2a2d31;
+	--ink: #e8eaed;
+	--trace: #9ca0a8;
+
+	--header-bg: oklch(24% 0 0 / 0.8);
+	--header-ring: oklch(100% 0 0 / 0.1);
+	--ui-subtle-bg: oklch(100% 0 0 / 0.07);
+	--ui-subtle-hover: oklch(100% 0 0 / 0.12);
+	--ui-contrast-bg: #e8eaed;
+	--ui-contrast-fg: #111315;
+	--line-ink: #d9dcde;
+	--line-trace: oklch(100% 0 0 / 0.28);
+	--focus-ring-color: oklch(75% 0 0 / 0.75);
+	--hero-overlay: #121314;
+	--loader-bg: #121314;
+	--loader-fg: #e8eaed;
+	--loader-progress: #e8eaed;
+	--selection-bg: var(--color-selection-dark);
+	--selection-fg: var(--color-white-pure);
+}
+
+html.light {
+	color-scheme: light;
+}
+
+html.dark {
+	color-scheme: dark;
 }
 
 /* ================================================== */
@@ -123,10 +175,11 @@
 	}
 
 	html {
-		@apply theme-light;
 		overflow-x: hidden;
 		max-width: 100vw;
 		scroll-behavior: smooth;
+		background: var(--ground);
+		color: var(--ink);
 	}
 
 	body {
@@ -141,6 +194,13 @@
 		letter-spacing: 0.005em;
 		overflow-x: hidden;
 		max-width: 100vw;
+		background: var(--ground);
+		color: var(--ink);
+	}
+
+	::selection {
+		background: var(--selection-bg);
+		color: var(--selection-fg);
 	}
 
 	h1 {
@@ -354,7 +414,7 @@
 @utility focus-ring {
 	&:focus-visible {
 		outline: none;
-		box-shadow: 0 0 0 2px var(--ground), 0 0 0 4px oklch(50% 0 0);
+		box-shadow: 0 0 0 2px var(--ground), 0 0 0 4px var(--focus-ring-color);
 	}
 }
 
@@ -362,7 +422,7 @@
 @utility hover-bg-subtle {
 	@media (hover: hover) {
 		&:hover {
-			background-color: oklch(0% 0 0 / 0.05);
+			background-color: var(--ui-subtle-hover);
 		}
 	}
 }
@@ -375,7 +435,7 @@
 
 	@media (hover: hover) {
 		&:hover {
-			background-color: oklch(0% 0 0 / 0.08);
+			background-color: var(--ui-subtle-hover);
 			transform: translateY(-1px);
 		}
 	}
@@ -418,6 +478,48 @@
 	}
 }
 
+@utility bg-subtle {
+	background-color: var(--ui-subtle-bg);
+}
+
+@utility bg-contrast {
+	background-color: var(--ui-contrast-bg);
+	color: var(--ui-contrast-fg);
+}
+
+@utility border-edge {
+	border-color: var(--edge);
+}
+
+@utility ring-header {
+	box-shadow: 0 0 0 1px var(--header-ring);
+}
+
+@utility hover-bg-contrast {
+	@media (hover: hover) {
+		&:hover {
+			background-color: var(--ui-contrast-bg);
+			color: var(--ui-contrast-fg);
+		}
+	}
+}
+
+@utility hover-contrast-dim {
+	@media (hover: hover) {
+		&:hover {
+			filter: brightness(0.92);
+		}
+	}
+}
+
+@utility hover-opacity-soft {
+	@media (hover: hover) {
+		&:hover {
+			opacity: 0.9;
+		}
+	}
+}
+
 /* Footnote marker punctuation still needs pseudo-elements/has selectors */
 .article-flow sup:has(> a[data-footnote-ref]) {
 	top: -0.18em;
@@ -438,17 +540,33 @@
 
 @utility theme-light {
 	color-scheme: light;
-	background: var(--color-white);
-	color: var(--color-black);
+	background: var(--ground);
+	color: var(--ink);
 
 	& body {
-		background: var(--color-white);
-		color: var(--color-black);
+		background: var(--ground);
+		color: var(--ink);
 	}
 
 	& ::selection {
-		background: var(--color-selection-light);
-		color: var(--color-black);
+		background: var(--selection-bg);
+		color: var(--selection-fg);
+	}
+}
+
+@utility theme-dark {
+	color-scheme: dark;
+	background: var(--ground);
+	color: var(--ink);
+
+	& body {
+		background: var(--ground);
+		color: var(--ink);
+	}
+
+	& ::selection {
+		background: var(--selection-bg);
+		color: var(--selection-fg);
 	}
 }
 

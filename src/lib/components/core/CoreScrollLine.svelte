@@ -200,7 +200,7 @@
 			/>
 		</div>
 		<div
-			class="absolute inset-0 z-10 origin-left transform-gpu bg-black"
+			class="absolute inset-0 z-10 origin-left transform-gpu [background-color:var(--line-ink)]"
 			style="will-change: transform; backface-visibility: hidden;"
 		></div>
 		<div
@@ -224,12 +224,12 @@
 				href="https://cal.com/u29dc/hey"
 				target="_blank"
 				rel="noopener noreferrer"
-			>
-				<div
-					class="-translate-x-full whitespace-nowrap bg-black px-3 py-2 font-mono text-sm text-white md:-translate-x-1/2"
 				>
-					BOOK A CALL
-				</div>
+					<div
+						class="-translate-x-full whitespace-nowrap px-3 py-2 font-mono text-sm md:-translate-x-1/2 [background-color:var(--ui-contrast-bg)] [color:var(--ui-contrast-fg)]"
+					>
+						BOOK A CALL
+					</div>
 			</a>
 		</div>
 	</div>

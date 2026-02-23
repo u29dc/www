@@ -190,7 +190,7 @@
 	then JavaScript takes over to fade it out.
 -->
 <div
-	class="fixed inset-0 z-chrome bg-white"
+	class="fixed inset-0 z-chrome [background-color:var(--loader-bg)]"
 	style="opacity: {opacity}; transition: {skipAnimation
 		? 'none'
 		: `opacity ${duration}ms ${easing}`}; will-change: {willChange}; pointer-events: {pointerEvents};"
@@ -200,7 +200,7 @@
 	<!-- Grid matches Hero.svelte exactly for seamless visual handoff -->
 	<div class="grid-page h-full">
 		<div
-			class="col-content flex h-full flex-col items-center justify-center text-center text-black"
+			class="col-content flex h-full flex-col items-center justify-center text-center [color:var(--loader-fg)]"
 		>
 			<h1
 				class="relative w-full text-center font-serif font-2xl font-bold"
@@ -219,7 +219,7 @@
 				{/each}
 				<!-- Progress bar: 1px, animates width via scaleX for performance -->
 				<span
-					class="progress-bar absolute left-0 top-[calc(100%+0.5em)] h-px w-full origin-left bg-black"
+					class="progress-bar absolute left-0 top-[calc(100%+0.5em)] h-px w-full origin-left [background-color:var(--loader-progress)]"
 					style="transform: scaleX({loader.progress});"
 					aria-hidden="true"
 				></span>
@@ -244,7 +244,11 @@
 
 	.progress-tip {
 		width: 8px;
-		background: linear-gradient(to right, black, transparent);
+		background: linear-gradient(
+			to right,
+			var(--loader-progress),
+			transparent
+		);
 		filter: blur(2.5px);
 		transform: translateX(-100%);
 		transition: opacity 150ms ease-out;

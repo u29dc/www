@@ -6,6 +6,7 @@
 	import { MAGNETIC } from "$lib/motion";
 	import { registerRafTask } from "$lib/raf";
 	import { type SpringState, SPRING_PARALLAX, spring } from "$lib/springs";
+	import { theme } from "$lib/theme.svelte";
 
 	const PHOTO_SCALE = 1.2;
 
@@ -103,13 +104,19 @@
 				alt="Han"
 				loading="lazy"
 				decoding="async"
-				class="aspect-square w-full origin-center object-cover mix-blend-darken"
+				class="aspect-square w-full origin-center object-cover {theme.resolved ===
+				'dark'
+					? 'mix-blend-screen'
+					: 'mix-blend-darken'}"
 				style:transform={prefersReducedMotion.current
 					? "none"
 					: `scale(${PHOTO_SCALE}) translate3d(${offsetX}px, ${offsetY}px, 0)`}
 			/>
 			<div
-				class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"
+				class="pointer-events-none absolute inset-0 {theme.resolved ===
+				'dark'
+					? 'bg-gradient-to-t from-white/10 to-transparent'
+					: 'bg-gradient-to-t from-black/10 to-transparent'}"
 				aria-hidden="true"
 			></div>
 		</div>

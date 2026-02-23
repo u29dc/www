@@ -25,14 +25,14 @@
 
 	const variantClasses = $derived(
 		variant === "solid"
-			? "bg-black text-white hover:bg-black/80"
-			: "text-black/60 hover-bg-subtle hover-text-solid",
+			? "bg-contrast [filter:brightness(1)] hover-contrast-dim"
+			: "text-foreground/60 hover-bg-subtle hover-text-solid",
 	);
 </script>
 
 <a
 	{href}
-	class="inline-flex min-h-[30px] items-center rounded-md px-3 font-mono font-xs transition-colors focus-ring pressed-state aria-[current=page]:text-black {variantClasses} {className}"
+	class="inline-flex min-h-[30px] items-center rounded-md px-3 font-mono font-xs transition-colors focus-ring pressed-state aria-[current=page]:text-foreground {variantClasses} {className}"
 	aria-current={ariaCurrent}
 >
 	{@render children()}

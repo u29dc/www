@@ -11,9 +11,10 @@
 	import CoreScrollProgress from "$lib/components/core/CoreScrollProgress.svelte";
 	import CoreSmoothScroll from "$lib/components/core/CoreSmoothScroll.svelte";
 	import CoreViewportFix from "$lib/components/core/CoreViewportFix.svelte";
-	import { CDN, SITE } from "$lib/constants";
+	import { CDN } from "$lib/constants";
 	import { loader } from "$lib/loader.svelte";
 	import { resetScroll, startScroll, stopScroll } from "$lib/scroll";
+	import { theme } from "$lib/theme.svelte";
 	import type { LayoutData } from "./$types";
 
 	let { data, children }: { data: LayoutData; children: Snippet } = $props();
@@ -21,6 +22,8 @@
 	// Loader timing orchestration
 	// onMount only fires on fresh loads (layout mounts once per session)
 	onMount(() => {
+		const stopThemeSync = theme.start();
+
 		// Disable browser's automatic scroll restoration on refresh
 		// Must happen before any scroll operations
 		if ("scrollRestoration" in history) {
@@ -32,7 +35,11 @@
 		window.scrollTo(0, 0);
 
 		// Skip if loader already completed (defensive)
-		if (loader.hasCompleted) return;
+		if (loader.hasCompleted) {
+			return () => {
+				stopThemeSync();
+			};
+		}
 
 		// Block scrolling while loader is active (Lenis + native CSS fallback)
 		stopScroll();
@@ -52,12 +59,15 @@
 			loader.complete();
 		}, holdDuration);
 
-		return () => clearTimeout(timer);
+		return () => {
+			clearTimeout(timer);
+			stopThemeSync();
+		};
 	});
 </script>
 
 <svelte:head>
-	<meta name="theme-color" content={SITE.themeColor} />
+	<meta name="theme-color" content={theme.themeColor} />
 	<meta name="color-scheme" content="light dark" />
 	<link rel="preconnect" href={CDN.baseUrl} crossorigin="anonymous" />
 	<!-- Critical font preloads for LCP -->
@@ -93,7 +103,7 @@
 	<link
 		rel="mask-icon"
 		href="/safari-pinned-tab.svg"
-		color={SITE.themeColor}
+		color={theme.themeColor}
 	/>
 	{#if data?.nonce}
 		<meta property="csp-nonce" content={data.nonce} />

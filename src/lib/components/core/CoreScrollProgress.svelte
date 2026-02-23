@@ -67,16 +67,16 @@
 	style:opacity={isVisible ? 1 : 0}
 >
 	<div class="flex flex-col items-center gap-2">
-		<div class="relative w-px bg-black/10" style={lineStyle}>
+		<div class="relative w-px [background-color:var(--line-trace)]" style={lineStyle}>
 			<div
-				class="absolute top-0 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-black"
+				class="absolute top-0 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full [background-color:var(--line-ink)]"
 				style="{dotStyle}; will-change: transform; backface-visibility: hidden;"
 			></div>
 		</div>
 		<button
 			type="button"
 			onclick={handleBackToTop}
-			class="pointer-events-auto -m-2 cursor-pointer p-2 font-mono text-[10px] tracking-wider text-black/60 transition-colors duration-150 hover:text-black focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
+			class="pointer-events-auto -m-2 cursor-pointer p-2 font-mono text-[10px] tracking-wider text-foreground/60 transition-colors duration-150 hover:text-foreground focus-ring"
 			aria-label="Scroll to top"
 		>
 			TOP

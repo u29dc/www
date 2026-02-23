@@ -81,7 +81,9 @@
 </script>
 
 <!-- Fixed hero container -->
-<div class="fixed inset-0 z-base h-screen overflow-hidden bg-black">
+<div
+	class="fixed inset-0 z-base h-screen overflow-hidden [background-color:var(--ground)]"
+>
 	<!-- Parallax video-->
 	<!-- <video
 		bind:this={videoRef}
@@ -111,7 +113,7 @@
 
 	<!-- White overlay that fades in as user scrolls -->
 	<div
-		class="absolute inset-0 bg-white"
+		class="absolute inset-0 [background-color:var(--hero-overlay)]"
 		style="opacity: {overlayOpacity}; will-change: {willChangeActive
 			? 'opacity'
 			: 'auto'}"

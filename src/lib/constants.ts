@@ -4,8 +4,8 @@ export const SITE = {
 	description: 'We turn complex futures into decision-grade narratives',
 	url: 'https://u29dc.com',
 	locale: 'en-GB',
-	themeColor: '#000000',
-	backgroundColor: '#FFFFFF',
+	themeColor: '#f8f9fa',
+	backgroundColor: '#f8f9fa',
 	keywords: ['design', 'creative', 'media'],
 	creator: 'u29dc',
 } as const;

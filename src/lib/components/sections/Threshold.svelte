@@ -2,6 +2,7 @@
 	import { onMount } from "svelte";
 	import ArrowUpRight from "@lucide/svelte/icons/arrow-up-right";
 	import AtomicBrandLogo from "$lib/components/atomic/AtomicBrandLogo.svelte";
+	import { theme } from "$lib/theme.svelte";
 
 	type Props = {
 		compact?: boolean;
@@ -56,7 +57,7 @@
 
 <footer
 	id="threshold"
-	class="grid-section-full min-h-screen-safe bg-black/5 -mx-[var(--grid-margin)] px-[var(--grid-margin)] md:-mx-[var(--grid-margin-md)] md:px-[var(--grid-margin-md)] lg:mx-0 lg:px-0 rounded-sm"
+	class="grid-section-full min-h-screen-safe -mx-[var(--grid-margin)] rounded-sm px-[var(--grid-margin)] md:-mx-[var(--grid-margin-md)] md:px-[var(--grid-margin-md)] lg:mx-0 lg:px-0 [background-color:var(--surface-subtle)]"
 	class:mt-96={!compact}
 	class:mt-40={compact}
 >
@@ -89,16 +90,16 @@
 						rel={link.href.startsWith("mailto:")
 							? undefined
 							: "noopener noreferrer"}
-						class="col-span-full group flex flex-row justify-between gap-2 border-b border-black/10 px-3 py-6 transition duration-200 hover:bg-black hover:text-white focus-ring external-link-feedback md:col-span-3 lg:col-span-2 4xl:col-span-1"
+						class="col-span-full group flex flex-row justify-between gap-2 border-b border-edge px-3 py-6 transition duration-200 hover-bg-contrast focus-ring external-link-feedback md:col-span-3 lg:col-span-2 4xl:col-span-1"
 					>
 						<div>
 							<div class="uppercase">{link.title}</div>
-							<div class="text-muted group-hover:text-white/60">
+							<div class="text-muted group-hover:text-foreground/70">
 								{link.description}
 							</div>
 							{#if link.note}
 								<div
-									class="mt-2 font-mono text-muted group-hover:text-white/60"
+									class="mt-2 font-mono text-muted group-hover:text-foreground/70"
 								>
 									[ {link.note} ]
 								</div>
@@ -117,7 +118,7 @@
 		<!-- Middle: Large Logo -->
 		<AtomicBrandLogo
 			width={isMobile ? 250 : 400}
-			theme="light"
+			theme={theme.resolved}
 			noiseIntensity={0.1}
 			noiseScale={0.5}
 			defaultBlurIntensity={0.25}

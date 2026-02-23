@@ -115,7 +115,7 @@
 			class="relative col-content [content-visibility:auto] [contain-intrinsic-size:1000px_800px]"
 		>
 			<!-- Base: muted text (decorative, hidden from assistive tech) -->
-			<div aria-hidden="true" class="text-black/10">
+			<div aria-hidden="true" class="text-foreground/10">
 				{@render bodyContent()}
 			</div>
 
