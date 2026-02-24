@@ -376,7 +376,7 @@ function formatMediaSources(sourceDeclaration: string, stripMedia: boolean, altT
 	return `\n${items.join('\n\n')}\n`;
 }
 
-function toMarkdownBody(_frontmatter: ContentItem, content: string, options: MarkdownTransformOptions = {}): string {
+export function toMarkdownBody(_frontmatter: ContentItem, content: string, options: MarkdownTransformOptions = {}): string {
 	const { stripMedia = false } = options;
 
 	let markdown = stripMdxScript(content);

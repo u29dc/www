@@ -24,54 +24,38 @@
 			: `${normalizedPathname}.md`;
 		return markdownUrl.toString();
 	});
-	const markdownRelativePath = $derived.by(() => {
-		const normalizedPathname = page.url.pathname.replace(/\/+$/, "");
-		return normalizedPathname.endsWith(".md")
-			? normalizedPathname
-			: `${normalizedPathname}.md`;
-	});
-	const typeLabel = $derived(
-		(
-			{
-				study: "study",
+    const typeLabel = $derived(
+        (
+            {
+                study: "study",
 				fragment: "fragment",
 				signal: "signal",
 				meta: "meta",
 			} as const
-		)[data.frontmatter.type] ?? "artifact",
-	);
-	const llmPrompt = $derived(
-		`This is "${data.frontmatter.title}" -- a ${typeLabel} from ${SITE.name},` +
-			` a narrative architecture practice building decision-grade narratives for complex technology companies.` +
-			`\n\nStudio context: ${SITE.url}/llms.md` +
-			`\nArticle: ${markdownPageUrl}` +
+        )[data.frontmatter.type] ?? "artifact",
+    );
+    const promptArticleContent = $derived(
+        data.articleContent.replace(/\n{3,}/g, "\n\n").trim(),
+    );
+    const llmPrompt = $derived(
+        `This is "${data.frontmatter.title}" -- a ${typeLabel} from ${SITE.name},` +
+            ` a narrative architecture practice building decision-grade narratives for complex technology companies.` +
+            `\n\nStudio context: ${SITE.url}/llms.md` +
+            `\nArticle: ${markdownPageUrl}` +
 			`\n\n1. Read the studio context first for positioning` +
 			`\n2. Read the article` +
-			`\n3. One tight paragraph summary + bulleted key arguments` +
-			`\n4. Frame all claims within the practice's broader positioning -- assume zero prior context` +
-			`\n5. Offer to go deeper on any thread` +
-			`\n6. For related topics, search other artifacts: ${SITE.url}/sitemap.xml`,
-	);
+            `\n3. One tight paragraph summary + bulleted key arguments` +
+            `\n4. Frame all claims within the practice's broader positioning -- assume zero prior context` +
+            `\n5. Offer to go deeper on any thread` +
+            `\n6. For related topics, search other artifacts: ${SITE.url}/sitemap.xml` +
+            `\n\nFull article content:\n"""\n${promptArticleContent}\n"""`,
+    );
 	const claudeUrl = $derived(
 		`https://claude.ai/new?${new URLSearchParams({ q: llmPrompt }).toString()}`,
 	);
 	const chatGptUrl = $derived(
 		`https://chatgpt.com/?${new URLSearchParams({ q: llmPrompt }).toString()}`,
 	);
-
-	const stripFrontmatter = (md: string): string =>
-		md.replace(/^---\n[\s\S]*?\n---\n+/, "");
-
-	const stripMediaLinks = (md: string): string =>
-		md.replace(/^\[.*?\]\(https:\/\/storage\.u29dc\.com\/.*?\)\s*$/gm, "");
-
-	const stripFooter = (md: string): string =>
-		md.replace(/\n---\n\nFull sitemap:.*$/s, "");
-
-	const cleanMarkdown = (md: string): string =>
-		stripFooter(stripMediaLinks(stripFrontmatter(md)))
-			.replace(/\n{3,}/g, "\n\n")
-			.trim();
 
 	const copyWithFallback = (value: string): void => {
 		if (typeof document === "undefined") return;
@@ -102,15 +86,11 @@
 	};
 
 	const copyContent = async (): Promise<void> => {
-		const response = await fetch(markdownRelativePath);
-		if (!response.ok) return;
-		const md = await response.text();
-		const body = cleanMarkdown(md);
 		const blocks = [
 			data.frontmatter.title,
 			data.frontmatter.description,
 			formatDate(data.frontmatter.date),
-			body,
+			promptArticleContent,
 			pageUrl,
 			markdownPageUrl,
 		].filter((v) => v.trim().length > 0);

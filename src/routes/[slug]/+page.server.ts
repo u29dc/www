@@ -1,7 +1,7 @@
 import { error, redirect } from '@sveltejs/kit';
 import { isStudy } from '$lib/content-types';
 import { ValidationError } from '$lib/errors';
-import { extractFirstMedia, getAllContent, getContentBySlug, renderContentHtml } from '$lib/server/content';
+import { extractFirstMedia, getAllContent, getContentBySlug, renderContentHtml, toMarkdownBody } from '$lib/server/content';
 import { validateSlug } from '$lib/server/validators';
 import type { PageServerLoad } from './$types';
 
@@ -57,6 +57,7 @@ export const load: PageServerLoad = async ({ params }) => {
 		slug,
 		frontmatter: entry.frontmatter,
 		firstMedia,
+		articleContent: toMarkdownBody(entry.frontmatter, remainingContent, { stripMedia: true }),
 		contentHtml,
 	};
 };
