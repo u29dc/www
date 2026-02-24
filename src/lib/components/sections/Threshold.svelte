@@ -82,35 +82,31 @@
 			<!-- Grid Links aligned to parent content tracks -->
 			<div class="mt-12 grid-content-tracks gap-y-4">
 				{#each links as link}
-					<a
-						href={link.href}
-						target={link.href.startsWith("mailto:")
-							? undefined
-							: "_blank"}
-						rel={link.href.startsWith("mailto:")
-							? undefined
-							: "noopener noreferrer"}
-						class="col-span-full group flex flex-row justify-between gap-2 border-b border-edge px-3 py-6 transition duration-200 hover-bg-contrast focus-ring external-link-feedback md:col-span-3 lg:col-span-2 4xl:col-span-1"
-					>
-						<div>
-							<div class="uppercase">{link.title}</div>
-							<div class="text-muted group-hover:text-foreground/70">
-								{link.description}
-							</div>
-							{#if link.note}
-								<div
-									class="mt-2 font-mono text-muted group-hover:text-foreground/70"
-								>
-									[ {link.note} ]
-								</div>
-							{/if}
-						</div>
-						<div
-							class="transition-all duration-200 group-hover:mr-2"
+						<a
+							href={link.href}
+							target={link.href.startsWith("mailto:")
+								? undefined
+								: "_blank"}
+							rel={link.href.startsWith("mailto:")
+								? undefined
+								: "noopener noreferrer"}
+							class="col-span-full group flex flex-row justify-between gap-2 border-b border-edge px-3 py-6 transition duration-200 hover-bg-contrast focus-ring external-link-feedback md:col-span-3 lg:col-span-2 4xl:col-span-1"
 						>
-							<ArrowUpRight size={16} />
-						</div>
-					</a>
+							<div>
+								<div class="uppercase">{link.title}</div>
+								<div class="hover-contrast-secondary">
+									{link.description}
+								</div>
+								{#if link.note}
+									<div class="mt-2 font-mono hover-contrast-secondary">
+										[ {link.note} ]
+									</div>
+								{/if}
+							</div>
+							<div class="transition-transform duration-200 group-hover:-translate-x-2">
+								<ArrowUpRight size={16} />
+							</div>
+						</a>
 				{/each}
 			</div>
 		</div>

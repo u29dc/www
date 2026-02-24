@@ -495,11 +495,23 @@ html.dark {
 	box-shadow: 0 0 0 1px var(--header-ring);
 }
 
+@utility hover-contrast-secondary {
+	color: var(--trace);
+	opacity: 1;
+	transition:
+		color var(--duration-breath) var(--ease-settle),
+		opacity var(--duration-breath) var(--ease-settle);
+}
+
 @utility hover-bg-contrast {
 	@media (hover: hover) {
 		&:hover {
 			background-color: var(--ui-contrast-bg);
 			color: var(--ui-contrast-fg);
+			.hover-contrast-secondary {
+				color: var(--ui-contrast-fg);
+				opacity: 0.72;
+			}
 		}
 	}
 }
