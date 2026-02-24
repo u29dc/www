@@ -2,7 +2,7 @@ export type ThemePreference = 'light' | 'dark' | 'system';
 export type ResolvedTheme = 'light' | 'dark';
 
 const THEME_STORAGE_KEY = 'u29dc-theme-preference';
-const DARK_THEME_COLOR = '#121314';
+const DARK_THEME_COLOR = '#0c0d0e';
 const LIGHT_THEME_COLOR = '#f8f9fa';
 
 const inBrowser = (): boolean => typeof window !== 'undefined' && typeof document !== 'undefined';

@@ -132,7 +132,7 @@ html.light {
 }
 
 html.dark {
-	--ground: #121314;
+	--ground: #0c0d0e;
 	--surface: #18191b;
 	--surface-subtle: #1d1f21;
 	--edge: #2a2d31;
@@ -148,8 +148,8 @@ html.dark {
 	--line-ink: #d9dcde;
 	--line-trace: oklch(100% 0 0 / 0.28);
 	--focus-ring-color: oklch(75% 0 0 / 0.75);
-	--hero-overlay: #121314;
-	--loader-bg: #121314;
+	--hero-overlay: #0c0d0e;
+	--loader-bg: #0c0d0e;
 	--loader-fg: #e8eaed;
 	--loader-progress: #e8eaed;
 	--selection-bg: var(--color-selection-dark);
