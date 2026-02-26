@@ -1,5 +1,7 @@
 <script lang="ts">
+	import { onDestroy, onMount } from "svelte";
 	import { page } from "$app/state";
+	import AtomicTextMorph from "$lib/components/atomic/AtomicTextMorph.svelte";
 	import MdxMedia from "$lib/components/mdx/MdxMedia.svelte";
 	import MdxMediaEnhancer from "$lib/components/mdx/MdxMediaEnhancer.svelte";
 	import Threshold from "$lib/components/sections/Threshold.svelte";
@@ -56,9 +58,85 @@
 	const chatGptUrl = $derived(
 		`https://chatgpt.com/?${new URLSearchParams({ q: llmPrompt }).toString()}`,
 	);
+	const COPY_FEEDBACK_DURATION_MS = 1_000;
 
-	const copyWithFallback = (value: string): void => {
-		if (typeof document === "undefined") return;
+	let contentCopied = $state(false);
+	let linkCopied = $state(false);
+	let copyAnnouncement = $state("");
+	let announcementFrame: number | null = null;
+	let contentResetTimer: ReturnType<typeof setTimeout> | null = null;
+	let linkResetTimer: ReturnType<typeof setTimeout> | null = null;
+	let copyContentButton: HTMLButtonElement | null = $state(null);
+	let copyLinkButton: HTMLButtonElement | null = $state(null);
+	let copyContentButtonWidth = $state<string | undefined>(undefined);
+	let copyLinkButtonWidth = $state<string | undefined>(undefined);
+
+	const clearCopyTimers = (): void => {
+		if (contentResetTimer !== null) {
+			clearTimeout(contentResetTimer);
+			contentResetTimer = null;
+		}
+		if (linkResetTimer !== null) {
+			clearTimeout(linkResetTimer);
+			linkResetTimer = null;
+		}
+	};
+
+	const announceCopy = (message: string): void => {
+		if (typeof window === "undefined") return;
+		copyAnnouncement = "";
+		if (announcementFrame !== null) {
+			cancelAnimationFrame(announcementFrame);
+		}
+		announcementFrame = requestAnimationFrame(() => {
+			copyAnnouncement = message;
+			announcementFrame = null;
+		});
+	};
+
+	const setCopyFeedback = (target: "content" | "link"): void => {
+		if (target === "content") {
+			contentCopied = true;
+			if (contentResetTimer !== null) {
+				clearTimeout(contentResetTimer);
+			}
+			contentResetTimer = setTimeout(() => {
+				contentCopied = false;
+				contentResetTimer = null;
+			}, COPY_FEEDBACK_DURATION_MS);
+			return;
+		}
+
+		linkCopied = true;
+		if (linkResetTimer !== null) {
+			clearTimeout(linkResetTimer);
+		}
+		linkResetTimer = setTimeout(() => {
+			linkCopied = false;
+			linkResetTimer = null;
+		}, COPY_FEEDBACK_DURATION_MS);
+	};
+
+	const measureButtonWidth = (
+		button: HTMLButtonElement | null,
+	): string | undefined => {
+		if (!button) return;
+		return `${button.offsetWidth}px`;
+	};
+
+	const syncLockedButtonWidths = (): void => {
+		const contentWidth = measureButtonWidth(copyContentButton);
+		if (contentWidth) {
+			copyContentButtonWidth = contentWidth;
+		}
+		const linkWidth = measureButtonWidth(copyLinkButton);
+		if (linkWidth) {
+			copyLinkButtonWidth = linkWidth;
+		}
+	};
+
+	const copyWithFallback = (value: string): boolean => {
+		if (typeof document === "undefined") return false;
 		const textarea = document.createElement("textarea");
 		textarea.value = value;
 		textarea.setAttribute("readonly", "true");
@@ -66,23 +144,24 @@
 		textarea.style.opacity = "0";
 		document.body.append(textarea);
 		textarea.select();
-		document.execCommand("copy");
+		const copied = document.execCommand("copy");
 		textarea.remove();
+		return copied;
 	};
 
-	const writeToClipboard = async (value: string): Promise<void> => {
+	const writeToClipboard = async (value: string): Promise<boolean> => {
 		if (
 			typeof navigator !== "undefined" &&
 			navigator.clipboard?.writeText
 		) {
 			try {
 				await navigator.clipboard.writeText(value);
-				return;
+				return true;
 			} catch {
 				// fall through to legacy copy path
 			}
 		}
-		copyWithFallback(value);
+		return copyWithFallback(value);
 	};
 
 	const copyContent = async (): Promise<void> => {
@@ -94,12 +173,60 @@
 			pageUrl,
 			markdownPageUrl,
 		].filter((v) => v.trim().length > 0);
-		await writeToClipboard(blocks.join("\n\n"));
+		const didCopy = await writeToClipboard(blocks.join("\n\n"));
+		if (!didCopy) return;
+		setCopyFeedback("content");
+		announceCopy("Content copied to clipboard");
 	};
 
 	const copyLink = async (): Promise<void> => {
-		await writeToClipboard(pageUrl);
+		const didCopy = await writeToClipboard(pageUrl);
+		if (!didCopy) return;
+		setCopyFeedback("link");
+		announceCopy("Link copied to clipboard");
 	};
+
+	onMount(() => {
+		if (typeof window === "undefined") {
+			return;
+		}
+
+		const syncWidths = (): void => {
+			if (!contentCopied && !linkCopied) {
+				syncLockedButtonWidths();
+			}
+		};
+
+		const syncWidthsDeferred = (): void => {
+			requestAnimationFrame(syncWidths);
+		};
+
+		syncWidthsDeferred();
+
+		window.addEventListener("resize", syncWidthsDeferred);
+		const fontSet = document.fonts;
+		const supportsFontEvents =
+			typeof fontSet !== "undefined" &&
+			typeof fontSet.addEventListener === "function";
+		if (supportsFontEvents) {
+			fontSet.addEventListener("loadingdone", syncWidthsDeferred);
+		}
+
+		return () => {
+			window.removeEventListener("resize", syncWidthsDeferred);
+			if (supportsFontEvents) {
+				fontSet.removeEventListener("loadingdone", syncWidthsDeferred);
+			}
+		};
+	});
+
+	onDestroy(() => {
+		clearCopyTimers();
+		if (announcementFrame !== null) {
+			cancelAnimationFrame(announcementFrame);
+			announcementFrame = null;
+		}
+	});
 </script>
 
 <svelte:head>
@@ -119,37 +246,46 @@
 		{/if}
 
 		<div class="mt-8 flex flex-wrap justify-center gap-2">
-				<a
-					href={claudeUrl}
-					target="_blank"
-					rel="noopener noreferrer"
-					class="inline-flex min-h-[30px] cursor-pointer select-none items-center justify-center rounded-md bg-subtle px-3 font-mono font-xs text-foreground no-underline focus-ring pressed-state action-chip-hover"
-				>
-					Read with Claude
-				</a>
-				<a
-					href={chatGptUrl}
-					target="_blank"
-					rel="noopener noreferrer"
-					class="inline-flex min-h-[30px] cursor-pointer select-none items-center justify-center rounded-md bg-subtle px-3 font-mono font-xs text-foreground no-underline focus-ring pressed-state action-chip-hover"
-				>
-					Read with ChatGPT
-				</a>
-				<button
-					type="button"
-					onclick={copyContent}
-					class="inline-flex min-h-[30px] cursor-pointer select-none appearance-none items-center justify-center rounded-md border-0 bg-subtle px-3 font-mono font-xs text-foreground no-underline focus-ring pressed-state action-chip-hover"
-				>
-					Copy content
-				</button>
-				<button
-					type="button"
-					onclick={copyLink}
-					class="inline-flex min-h-[30px] cursor-pointer select-none appearance-none items-center justify-center rounded-md border-0 bg-subtle px-3 font-mono font-xs text-foreground no-underline focus-ring pressed-state action-chip-hover"
-				>
-					Copy link
-				</button>
+			<a
+				href={claudeUrl}
+				target="_blank"
+				rel="noopener noreferrer"
+				class="inline-flex min-h-[30px] cursor-pointer select-none items-center justify-center rounded-md bg-subtle px-3 font-mono font-xs text-foreground no-underline focus-ring pressed-state action-chip-hover"
+			>
+				Read with Claude
+			</a>
+			<a
+				href={chatGptUrl}
+				target="_blank"
+				rel="noopener noreferrer"
+				class="inline-flex min-h-[30px] cursor-pointer select-none items-center justify-center rounded-md bg-subtle px-3 font-mono font-xs text-foreground no-underline focus-ring pressed-state action-chip-hover"
+			>
+				Read with ChatGPT
+			</a>
+			<button
+				bind:this={copyContentButton}
+				type="button"
+				onclick={copyContent}
+				style:width={copyContentButtonWidth}
+				class="inline-flex min-h-[30px] min-w-[12ch] cursor-pointer select-none appearance-none items-center justify-center rounded-md border-0 bg-subtle px-3 font-mono font-xs text-foreground no-underline focus-ring pressed-state action-chip-hover"
+			>
+				<AtomicTextMorph
+					text={contentCopied ? "Copied" : "Copy content"}
+				/>
+			</button>
+			<button
+				bind:this={copyLinkButton}
+				type="button"
+				onclick={copyLink}
+				style:width={copyLinkButtonWidth}
+				class="inline-flex min-h-[30px] min-w-[9ch] cursor-pointer select-none appearance-none items-center justify-center rounded-md border-0 bg-subtle px-3 font-mono font-xs text-foreground no-underline focus-ring pressed-state action-chip-hover"
+			>
+				<AtomicTextMorph text={linkCopied ? "Copied" : "Copy link"} />
+			</button>
 		</div>
+		<p aria-live="polite" class="sr-only" role="status">
+			{copyAnnouncement}
+		</p>
 	</header>
 
 	{#if data.firstMedia}
