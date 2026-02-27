@@ -6,7 +6,7 @@
 
 function createScrollLineStore() {
 	let screenY = $state(0);
-	let blurActive = $state(false);
+	let blurOpacity = $state(0);
 
 	return {
 		/** Line's current Y position in viewport pixels */
@@ -19,14 +19,24 @@ function createScrollLineStore() {
 			screenY = y;
 		},
 
-		/** Whether the scroll line overlaps a section that needs blur */
-		get blurActive() {
-			return blurActive;
+		/** Blur opacity for line edge treatment (0-1) */
+		get blurOpacity() {
+			return blurOpacity;
 		},
 
-		/** Toggle blur visibility (called by Signal when line enters/exits) */
+		/** Whether the scroll line blur is currently visible */
+		get blurActive() {
+			return blurOpacity > 0;
+		},
+
+		/** Set blur opacity with clamping */
+		setBlurOpacity(opacity: number) {
+			blurOpacity = Math.max(0, Math.min(opacity, 1));
+		},
+
+		/** Backwards-compatible toggle for full on/off blur */
 		setBlurActive(active: boolean) {
-			blurActive = active;
+			blurOpacity = active ? 1 : 0;
 		},
 	};
 }

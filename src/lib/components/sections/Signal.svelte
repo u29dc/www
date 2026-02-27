@@ -7,15 +7,45 @@
 	const clamp = (min: number, value: number, max: number) =>
 		Math.max(min, Math.min(value, max));
 
-	const BUFFER = 200;
+	const CLIP_WILL_CHANGE_BUFFER = 200;
+	const BLUR_ACTIVE_BUFFER_TOP = 150;
+	const BLUR_ACTIVE_BUFFER_BOTTOM = 100;
+	const BLUR_FADE_DISTANCE = 180;
+
+	const smoothstep = (min: number, max: number, value: number) => {
+		if (min === max) return value < min ? 0 : 1;
+		const t = clamp(0, (value - min) / (max - min), 1);
+		return t * t * (3 - 2 * t);
+	};
+
+	const getBlurOpacity = (clipY: number, height: number) => {
+		if (height <= 0) return 0;
+
+		const activeStart = -BLUR_ACTIVE_BUFFER_TOP;
+		const activeEnd = height + BLUR_ACTIVE_BUFFER_BOTTOM;
+
+		if (clipY >= activeStart && clipY <= activeEnd) {
+			return 1;
+		}
+
+		if (clipY < activeStart) {
+			return smoothstep(
+				activeStart - BLUR_FADE_DISTANCE,
+				activeStart,
+				clipY,
+			);
+		}
+
+		return 1 - smoothstep(activeEnd, activeEnd + BLUR_FADE_DISTANCE, clipY);
+	};
 
 	let sectionRef = $state<HTMLElement | null>(null);
 	let clipBottom = $state(0);
+	let blurOpacity = $state(0);
 	let isNearSection = $state(false);
-	let isDirectlyOnSection = $state(false);
 
 	$effect(() => {
-		scrollLine.setBlurActive(isDirectlyOnSection);
+		scrollLine.setBlurOpacity(blurOpacity);
 	});
 
 	let sectionTop = 0;
@@ -42,12 +72,14 @@
 			const clipY = lineScreenY - sectionScreenTop;
 
 			clipBottom = clamp(0, sectionHeight - clipY, sectionHeight);
-			isNearSection = clipY > -BUFFER && clipY < sectionHeight + BUFFER;
-			isDirectlyOnSection = clipY > 0 && clipY < sectionHeight;
+			blurOpacity = getBlurOpacity(clipY, sectionHeight);
+			isNearSection =
+				clipY > -CLIP_WILL_CHANGE_BUFFER &&
+				clipY < sectionHeight + CLIP_WILL_CHANGE_BUFFER;
 		});
 
 		return () => {
-			scrollLine.setBlurActive(false);
+			scrollLine.setBlurOpacity(0);
 			observer.disconnect();
 			rafHandle.dispose();
 		};

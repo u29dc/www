@@ -188,8 +188,8 @@
 		style="{lineStyle}; will-change: transform; backface-visibility: hidden;"
 	>
 		<div
-			class="pointer-events-none absolute inset-0 transition-opacity duration-150"
-			style:opacity={scrollLine.blurActive ? 1 : 0}
+			class="pointer-events-none absolute inset-0 transition-opacity duration-200 ease-out"
+			style:opacity={scrollLine.blurOpacity}
 		>
 			<AtomicGradientBlur
 				position="bottom"
@@ -204,8 +204,8 @@
 			style="will-change: transform; backface-visibility: hidden;"
 		></div>
 		<div
-			class="pointer-events-none absolute inset-0 transition-opacity duration-150"
-			style:opacity={scrollLine.blurActive ? 1 : 0}
+			class="pointer-events-none absolute inset-0 transition-opacity duration-200 ease-out"
+			style:opacity={scrollLine.blurOpacity}
 		>
 			<AtomicGradientBlur
 				position="top"
