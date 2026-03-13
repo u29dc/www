@@ -5,6 +5,13 @@
 	import AtomicBrandLogo from "$lib/components/atomic/AtomicBrandLogo.svelte";
 	import { theme } from "$lib/theme.svelte";
 
+	/*
+	 * TODO(newsletter):
+	 * - Add Turnstile if signup spam becomes a real issue.
+	 * - Polish the success state with more deliberate feedback and motion.
+	 * - Add a lightweight export or read-only admin surface for subscribers.
+	 */
+
 	type Props = {
 		compact?: boolean;
 	};
@@ -16,15 +23,13 @@
 	let newsletterMessage = $state(
 		"Occasional notes when there is something worth sending.",
 	);
-	let newsletterState = $state<
-		"idle" | "submitting" | "success" | "error"
-	>("idle");
+	let newsletterState = $state<"idle" | "submitting" | "success" | "error">(
+		"idle",
+	);
 	let newsletterInvalid = $state(false);
 
 	const sourcePath = $derived(page.url.pathname || "/");
-	const isNewsletterSubmitting = $derived(
-		newsletterState === "submitting",
-	);
+	const isNewsletterSubmitting = $derived(newsletterState === "submitting");
 	const newsletterButtonLabel = $derived(
 		isNewsletterSubmitting ? "Signing up..." : "Sign up",
 	);
@@ -32,11 +37,7 @@
 
 	interface NewsletterResponse {
 		ok: boolean;
-		code:
-			| "SUBSCRIBED"
-			| "INVALID_EMAIL"
-			| "UNAVAILABLE"
-			| "SERVER_ERROR";
+		code: "SUBSCRIBED" | "INVALID_EMAIL" | "UNAVAILABLE" | "SERVER_ERROR";
 		message: string;
 	}
 
@@ -208,12 +209,16 @@
 								{link.description}
 							</div>
 							{#if link.note}
-								<div class="mt-2 font-mono hover-contrast-secondary">
+								<div
+									class="mt-2 font-mono hover-contrast-secondary"
+								>
 									[ {link.note} ]
 								</div>
 							{/if}
 						</div>
-						<div class="transition-transform duration-200 group-hover:-translate-x-2">
+						<div
+							class="transition-transform duration-200 group-hover:-translate-x-2"
+						>
 							<ArrowUpRight size={16} />
 						</div>
 					</a>
