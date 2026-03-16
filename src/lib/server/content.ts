@@ -10,7 +10,7 @@ import remarkMdx from 'remark-mdx';
 import remarkParse from 'remark-parse';
 import remarkRehype from 'remark-rehype';
 import { unified } from 'unified';
-import { CDN } from '$lib/constants';
+import { CDN, SITE } from '$lib/constants';
 import { type ContentItem, ContentSchema, type ParsedContent } from '$lib/content-types';
 import { NotFoundError } from '$lib/errors';
 import { logEvent } from '$lib/server/logger';
@@ -220,9 +220,11 @@ export function formatArtifactsAsMarkdown(artifacts: ParsedContent[], maxCount?:
 	const limited = maxCount ? artifacts.slice(0, maxCount) : artifacts;
 
 	const sections = limited.map((artifact) => {
-		const { title, type } = artifact.frontmatter;
+		const { title, type, slug } = artifact.frontmatter;
+		const canonicalPath = `/${slug}`;
+		const canonicalUrl = `${SITE.url}${canonicalPath}`;
 		const bodyMarkdown = toMarkdownBody(artifact.frontmatter, artifact.content, { stripMedia: true });
-		return `### ${title} [${type}]\n\n${bodyMarkdown}`;
+		return `### ${title} [${type}] [${canonicalPath}](${canonicalUrl})\n\n${bodyMarkdown}`;
 	});
 
 	return sections.join('\n\n');
