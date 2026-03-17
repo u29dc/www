@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { SITE } from "$lib/constants";
+	import CoreSeoHead from "$lib/components/core/CoreSeoHead.svelte";
 	import Hero from "$lib/components/sections/Hero.svelte";
 	import Signal from "$lib/components/sections/Signal.svelte";
 	import Protocols from "$lib/components/sections/Protocols.svelte";
@@ -11,10 +11,7 @@
 	let { data }: { data: PageData } = $props();
 </script>
 
-<svelte:head>
-	<title>{SITE.title}</title>
-	<meta name="description" content={SITE.description} />
-</svelte:head>
+<CoreSeoHead seo={data.seo} />
 
 <Hero />
 

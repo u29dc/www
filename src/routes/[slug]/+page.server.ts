@@ -1,19 +1,16 @@
 import { error, redirect } from '@sveltejs/kit';
-import { isStudy } from '$lib/content-types';
 import { ValidationError } from '$lib/errors';
-import { extractFirstMedia, getAllContent, getContentBySlug, renderContentHtml, toMarkdownBody } from '$lib/server/content';
+import { getPublicArtifactBySlug, getPublicArtifacts } from '$lib/server/artifacts';
+import { extractFirstMedia, renderContentHtml, toMarkdownBody } from '$lib/server/content';
+import { buildArtifactSeo } from '$lib/server/seo';
 import { validateSlug } from '$lib/server/validators';
 import type { PageServerLoad } from './$types';
 
 export const prerender = true;
 
 export const entries = async () => {
-	const content = await getAllContent();
-	return content
-		.filter((item) => item.frontmatter.slug !== 'llms')
-		.filter((item) => item.frontmatter.isArtifactItem !== false)
-		.filter((item) => !(isStudy(item.frontmatter) && (item.frontmatter.isConfidential ?? false)))
-		.map((item) => ({ slug: item.frontmatter.slug }));
+	const artifacts = await getPublicArtifacts();
+	return artifacts.map((item) => ({ slug: item.frontmatter.slug }));
 };
 
 export const load: PageServerLoad = async ({ params }) => {
@@ -31,16 +28,8 @@ export const load: PageServerLoad = async ({ params }) => {
 		throw redirect(302, '/llms.txt');
 	}
 
-	const entry = await getContentBySlug(slug);
+	const entry = await getPublicArtifactBySlug(slug);
 	if (!entry) {
-		throw error(404, 'Not Found');
-	}
-
-	if (isStudy(entry.frontmatter) && (entry.frontmatter.isConfidential ?? false)) {
-		throw redirect(302, '/');
-	}
-
-	if (entry.frontmatter.isArtifactItem === false) {
 		throw error(404, 'Not Found');
 	}
 
@@ -59,5 +48,11 @@ export const load: PageServerLoad = async ({ params }) => {
 		firstMedia,
 		articleContent: toMarkdownBody(entry.frontmatter, remainingContent, { stripMedia: true }),
 		contentHtml,
+		seo: buildArtifactSeo({
+			slug,
+			title: entry.frontmatter.title,
+			description: entry.frontmatter.description,
+			...(entry.frontmatter.ogImageAlt ? { ogImageAlt: entry.frontmatter.ogImageAlt } : {}),
+		}),
 	};
 };

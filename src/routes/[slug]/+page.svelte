@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onDestroy, onMount } from "svelte";
 	import { page } from "$app/state";
+	import CoreSeoHead from "$lib/components/core/CoreSeoHead.svelte";
 	import AtomicTextMorph from "$lib/components/atomic/AtomicTextMorph.svelte";
 	import MdxMedia from "$lib/components/mdx/MdxMedia.svelte";
 	import MdxMediaEnhancer from "$lib/components/mdx/MdxMediaEnhancer.svelte";
@@ -26,32 +27,32 @@
 			: `${normalizedPathname}.md`;
 		return markdownUrl.toString();
 	});
-    const typeLabel = $derived(
-        (
-            {
-                study: "study",
+	const typeLabel = $derived(
+		(
+			{
+				study: "study",
 				fragment: "fragment",
 				signal: "signal",
 				meta: "meta",
 			} as const
-        )[data.frontmatter.type] ?? "artifact",
-    );
-    const promptArticleContent = $derived(
-        data.articleContent.replace(/\n{3,}/g, "\n\n").trim(),
-    );
-    const llmPrompt = $derived(
-        `This is "${data.frontmatter.title}" -- a ${typeLabel} from ${SITE.name},` +
-            ` a narrative architecture practice building decision-grade narratives for complex technology companies.` +
-            `\n\nStudio context: ${SITE.url}/llms.md` +
-            `\nArticle: ${markdownPageUrl}` +
+		)[data.frontmatter.type] ?? "artifact",
+	);
+	const promptArticleContent = $derived(
+		data.articleContent.replace(/\n{3,}/g, "\n\n").trim(),
+	);
+	const llmPrompt = $derived(
+		`This is "${data.frontmatter.title}" -- a ${typeLabel} from ${SITE.name},` +
+			` a narrative architecture practice building decision-grade narratives for complex technology companies.` +
+			`\n\nStudio context: ${SITE.url}/llms.md` +
+			`\nArticle: ${markdownPageUrl}` +
 			`\n\n1. Read the studio context first for positioning` +
 			`\n2. Read the article` +
-            `\n3. One tight paragraph summary + bulleted key arguments` +
-            `\n4. Frame all claims within the practice's broader positioning -- assume zero prior context` +
-            `\n5. Offer to go deeper on any thread` +
-            `\n6. For related topics, search other artifacts: ${SITE.url}/sitemap.xml` +
-            `\n\nFull article content:\n"""\n${promptArticleContent}\n"""`,
-    );
+			`\n3. One tight paragraph summary + bulleted key arguments` +
+			`\n4. Frame all claims within the practice's broader positioning -- assume zero prior context` +
+			`\n5. Offer to go deeper on any thread` +
+			`\n6. For related topics, search other artifacts: ${SITE.url}/sitemap.xml` +
+			`\n\nFull article content:\n"""\n${promptArticleContent}\n"""`,
+	);
 	const claudeUrl = $derived(
 		`https://claude.ai/new?${new URLSearchParams({ q: llmPrompt }).toString()}`,
 	);
@@ -229,10 +230,7 @@
 	});
 </script>
 
-<svelte:head>
-	<title>{SITE.name} | {data.frontmatter.title}</title>
-	<meta name="description" content={data.frontmatter.description} />
-</svelte:head>
+<CoreSeoHead seo={data.seo} />
 
 <article class="grid-section-full pb-32 pt-52 md:pt-44">
 	<header data-slug-hero class="col-content-wide mb-14 text-center">

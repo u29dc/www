@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+const OgTextToneSchema = z.enum(['auto', 'light', 'dark']);
+
 export const StudySchema = z.object({
 	type: z.literal('study'),
 	date: z.iso.datetime(),
@@ -11,6 +13,9 @@ export const StudySchema = z.object({
 	client: z.string().min(1),
 	mode: z.enum(['MAP', 'LAB', 'COM']),
 	thumbnailMedia: z.string().optional(),
+	ogImage: z.string().optional(),
+	ogImageAlt: z.string().optional(),
+	ogTextTone: OgTextToneSchema.optional(),
 	isConfidential: z.boolean().optional().default(false),
 });
 
@@ -24,6 +29,9 @@ export const FragmentSchema = z.object({
 
 	excerpt: z.string().optional(),
 	thumbnailMedia: z.string().optional(),
+	ogImage: z.string().optional(),
+	ogImageAlt: z.string().optional(),
+	ogTextTone: OgTextToneSchema.optional(),
 });
 
 export const SignalSchema = z.object({
@@ -36,6 +44,9 @@ export const SignalSchema = z.object({
 
 	link: z.url().optional(),
 	thumbnailMedia: z.string().optional(),
+	ogImage: z.string().optional(),
+	ogImageAlt: z.string().optional(),
+	ogTextTone: OgTextToneSchema.optional(),
 });
 
 export const MetaSchema = z.object({
@@ -47,6 +58,9 @@ export const MetaSchema = z.object({
 	isArtifactItem: z.boolean(),
 
 	thumbnailMedia: z.string().optional(),
+	ogImage: z.string().optional(),
+	ogImageAlt: z.string().optional(),
+	ogTextTone: OgTextToneSchema.optional(),
 });
 
 export const ContentSchema = z.discriminatedUnion('type', [StudySchema, FragmentSchema, SignalSchema, MetaSchema]);
