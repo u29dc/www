@@ -1,133 +1,96 @@
+> `www` is a SvelteKit 2 / Cloudflare site for U29DC that serves the Incomplete Infinity homepage, prerendered MDX artifact pages, LLM-oriented raw exports, newsletter signup, and generated OG image routes.
+
 ## 1. Documentation
 
-- **Framework**: [`svelte.dev/llms.txt`](https://svelte.dev/llms.txt), [`svelte.dev/docs`](https://svelte.dev/docs), [`kit.svelte.dev/docs`](https://kit.svelte.dev/docs), MCP via `mcp__svelte__*`
-- **UI**: [`tailwindcss.com/docs`](https://tailwindcss.com/docs)
-- **Bundler**: [`vite.dev/guide.md`](https://vite.dev/guide.md), [`vite.dev/config.md`](https://vite.dev/config.md), [`vite.dev/plugins.md`](https://vite.dev/plugins.md)
-- **DevTools**: [`bun.sh/docs/llms.txt`](https://bun.sh/docs/llms.txt), [`biomejs.dev`](https://biomejs.dev), [`mdsvex.com/docs`](https://mdsvex.com/docs)
+- Primary references: [Svelte](https://svelte.dev/llms.txt), [SvelteKit](https://kit.svelte.dev/docs), [Tailwind CSS](https://tailwindcss.com/docs), [Vite](https://vite.dev/guide.md), [mdsvex](https://mdsvex.com/docs)
+- Local source-of-truth files: [`src/hooks.server.ts`](src/hooks.server.ts), [`src/lib/server/content.ts`](src/lib/server/content.ts), [`src/lib/server/raw.ts`](src/lib/server/raw.ts), [`src/lib/server/og.ts`](src/lib/server/og.ts), [`src/lib/components/sections/Threshold.svelte`](src/lib/components/sections/Threshold.svelte), [`src/app.d.ts`](src/app.d.ts)
+- Edit [`AGENTS.md`](AGENTS.md) only; [`README.md`](README.md) and [`CLAUDE.md`](CLAUDE.md) are symlinks to it
 
 ## 2. Repository Structure
 
-```
+```text
 .
-├── src
-│   ├── app.css
-│   ├── app.html
-│   ├── content/                  # MDX content files
-│   ├── hooks.server.ts
-│   ├── lib/
-│   │   ├── components/
-│   │   │   ├── atomic/           # AtomicBrandLogo, AtomicGradientBlur, AtomicHeaderButton
-│   │   │   ├── core/             # CoreHeader, CoreLoader, CorePageTransition, CoreScrollLine, CoreScrollProgress, CoreSmoothScroll, CoreGrainOverlay, CoreViewportFix
-│   │   │   ├── mdx/              # MdxMedia, MdxMediaItem, MdxMediaEnhancer, MdxParagraph, MdxQuote, MdxSpacer, mdx-context.ts
-│   │   │   └── sections/         # Hero, Signal, Protocols, Artifacts, Origin, Threshold
-│   │   ├── server/
-│   │   │   ├── content.ts        # MDX parsing with unified pipeline
-│   │   │   ├── errors.ts         # API/raw response error helpers
-│   │   │   ├── logger.ts         # Server-side Pino logging
-│   │   │   ├── metadata.ts       # Meta tag generation
-│   │   │   ├── mdx-modules.ts    # MDX module exports
-│   │   │   ├── raw.ts            # Raw response handlers
-│   │   │   └── validators.ts     # Zod input validation
-│   │   ├── constants.ts          # Site config, CDN URLs
-│   │   ├── content-types.ts      # Zod schemas (study|fragment|signal|meta)
-│   │   ├── errors.ts
-│   │   ├── loader.svelte.ts      # Loader state store (Svelte 5 runes)
-│   │   ├── logger.ts             # Client-side logger stub (dev console only)
-│   │   ├── motion.ts             # Animation constants (parallax, thresholds, magnetic)
-│   │   ├── observe.ts            # IntersectionObserver utilities
-│   │   ├── raf.ts                # RAF task coordination
-│   │   ├── scroll.ts             # Lenis scroll utilities
-│   │   ├── scrollline.svelte.ts  # Shared scroll-line state store
-│   │   ├── springs.ts            # Spring physics presets
-│   │   ├── transition.ts         # Page transition timing
-│   │   └── webgl.ts              # WebGL device tier detection
-│   ├── routes/
-│   │   ├── +error.svelte
-│   │   ├── +page.svelte
-│   │   ├── +page.server.ts
-│   │   ├── +layout.svelte
-│   │   ├── +layout.server.ts
-│   │   ├── [slug]/
-│   │   ├── [slug].md/
-│   │   ├── [slug].txt/
-│   │   ├── api/
-│   │   ├── manifest.json/
-│   │   ├── robots.txt/
-│   │   └── sitemap.xml/
-│   └── styles/
-├── static/
-│   ├── fonts/
-│   └── textures/
-├── biome.json
-├── commitlint.config.js
-├── lint-staged.config.js
-├── package.json
-├── svelte.config.js
-├── tsconfig.json
-├── tsconfig.svelte.json
-└── vite.config.ts
+├── src/
+│   ├── content/               MDX artifacts plus `llms.mdx`
+│   ├── lib/components/        atomic, core, MDX, and section UI
+│   ├── lib/server/            content parsing, raw export, metadata, OG, newsletter
+│   └── routes/                home, slug pages, raw endpoints, OG, newsletter, robots/sitemap/manifest
+├── static/                    self-hosted fonts, icons, blue-noise texture, `empty.js`
+├── migrations/                Cloudflare D1 schema
+├── scripts/                   validation helpers (`check-og.ts`)
+├── _headers                   deployed cache rules for OG images
+└── AGENTS.md                  canonical repo instructions
 ```
+
+- Start in [`src/lib/server/content.ts`](src/lib/server/content.ts) and [`src/routes/`](src/routes/) for behavior changes; most data flow passes through them
+- Treat [`src/content/`](src/content/) frontmatter as the metadata source of truth; homepage cards, raw exports, sitemap entries, and OG routes all derive from it
+- Treat `.svelte-kit/`, `build/`, and `node_modules/.vite/` as generated output. Regenerate or clean; never edit generated files by hand
 
 ## 3. Stack
 
-| Layer      | Choice                 | Notes                                                              |
-| ---------- | ---------------------- | ------------------------------------------------------------------ |
-| Framework  | SvelteKit 2            | Svelte 5 runes, prefer runes over stores                           |
-| Bundler    | Vite 7                 | Via @sveltejs/vite-plugin-svelte                                   |
-| Styling    | Tailwind CSS 4         | Class order sorted per Biome useSortedClasses                      |
-| Content    | MDsveX                 | MDX in `src/content/`, Zod schemas in `content-types.ts`           |
-| Runtime    | Bun                    | Package manager and script runner                                  |
-| Linting    | Biome                  | Format + lint, replaces ESLint/Prettier                            |
-| Types      | tsgo + svelte-check-rs | Triple-layer type checking (tsgo, svelte-check-rs, zvelte-check)   |
-| Animation  | Lenis                  | Smooth scroll, RAF coordination in `raf.ts`                        |
-| Logging    | Pino + client stub     | Pino server logger, browser-safe dev logger in `src/lib/logger.ts` |
-| Validation | Zod                    | Content schemas, input validation                                  |
-| Deployment | Cloudflare             | Via @sveltejs/adapter-cloudflare                                   |
+| Layer | Choice | Notes |
+| --- | --- | --- |
+| Runtime | Bun + SvelteKit 2 + Cloudflare adapter | prerendered HTML/OG plus Workers-compatible handlers |
+| Content | MDsveX `.mdx` + `gray-matter` + `zod` | raw imports via `import.meta.glob`, validated by [`src/lib/content-types.ts`](src/lib/content-types.ts) |
+| Styling | Tailwind CSS 4 + [`src/app.css`](src/app.css) | custom tokens, self-hosted fonts, light/dark theme bootstrap |
+| Media / OG | CDN-backed media + `sharp` + `satori` + `@resvg/resvg-js` | home and per-artifact `og.png` routes |
+| Motion | Lenis + custom RAF + WebGL overlays | progressive enhancement on top of readable static content |
+| Validation | Biome + `tsgo` + `svelte-check-rs` + `zvelte-check` + OG smoke script | bundled in `bun run util:check` |
+| Persistence | Cloudflare D1 | optional newsletter storage only |
 
 ## 4. Commands
 
-- `bun run dev` - Start dev server
-- `bun run build` - Production build
-- `bun run preview` - Preview build
-- `bun run util:check` - Format, lint, types (5-stage: format, lint, tsgo, svelte-check-rs, zvelte-check)
-- `bun run util:lint:fix` - Auto-fix lint
-- `bun run util:types` - Typecheck (svelte-kit sync + tsgo)
-- `bun run util:types:svelte` - Svelte-specific types (svelte-check-rs)
-- `bun run util:types:zvelte` - Zvelte checker
-- `bun run util:clean` - Remove build and cache outputs
+- `bun install` - install dependencies and husky hooks
+- `bun run dev` - sync SvelteKit and start the local dev server on port `3000`
+- `bun run build` - sync, prerender pages and OG images, and build Cloudflare output
+- `bun run preview` - preview the production build locally
+- `bun run util:check` - full gate: runs `biome format --write` first, then lint, `tsgo`, `svelte-check-rs`, `zvelte-check`, and the OG generation smoke test
+- `bun run util:og` - validate home and public artifact OG generation only
+- `bun run util:clean` - remove `.svelte-kit`, `build`, `.wrangler`, `.vite`, and `*.tsbuildinfo`
 
 ## 5. Architecture
 
-- Page shells in `src/routes`, slug pages in `src/routes/[slug]`, raw endpoints in `src/routes/[slug].md`, `src/routes/[slug].txt`, and `src/routes/api/raw/[format]/[slug]`
-- Site and CDN configuration in `src/lib/constants.ts`, logging in `src/lib/logger.ts`, error helpers in `src/lib/errors.ts`
-- Global styles in `src/app.css` and `src/styles/*`, fonts in `src/styles/fonts.css`, static files under `static/`, media URLs from `CDN` in `src/lib/constants.ts`
-- **Content types**: 4 discriminated types in `content-types.ts` (study for client work, fragment for written pieces, signal for external links, meta for metadata pages) with Zod validation
-- **Animation system**: Centralized RAF task coordination in `raf.ts`, Lenis smooth scroll in `scroll.ts`, page transitions (400ms in/out) in `transition.ts`
-- **Agent detection**: `hooks.server.ts` detects agent/curl UAs plus text-preferring requests and redirects to plain text endpoints (with crawler allowlist)
-- **Observation system**: Visibility detection, active section tracking, and staggered reveals via IntersectionObserver utilities in `observe.ts`
-- **Device optimization**: WebGL tier detection in `webgl.ts` manages GPU load (grain overlay, DPR capping) based on device capabilities
-- **Loader and line state**: Initial page loader uses runes store in `loader.svelte.ts`; scroll-line cross-component state lives in `scrollline.svelte.ts`
-- **Motion constants**: Centralized parallax factors, scroll thresholds, and magnetic cursor parameters in `motion.ts`
-- **Spring physics**: Configurable spring presets (SPRING_UI, SPRING_PARALLAX) in `springs.ts`
+- [`src/content/`](src/content/) is the content source of truth. [`src/lib/server/content.ts`](src/lib/server/content.ts) imports raw MDX, validates frontmatter, strips scripts/imports for raw output, renders custom `Mdx*` tags into HTML placeholders, and extracts media for cards
+- Artifact visibility is a shared contract: `isArtifactItem` opts content into the artifact system, `slug === 'llms'` is a special meta document, and `study.isConfidential` removes pages/raw access/sitemap/OG while still allowing a title-only placeholder on the homepage
+- [`src/routes/[slug]/+page.server.ts`](src/routes/[slug]/+page.server.ts) and [`src/routes/[slug]/og.png/+server.ts`](src/routes/[slug]/og.png/+server.ts) are `prerender = true` with `entries()` from [`src/lib/server/artifacts.ts`](src/lib/server/artifacts.ts). Public visibility must survive `validateSlug()` and `isPublicArtifact()`
+- [`src/routes/[slug].md/+server.ts`](src/routes/[slug].md/+server.ts), [`src/routes/[slug].txt/+server.ts`](src/routes/[slug].txt/+server.ts), and [`src/routes/api/raw/[format]/[slug]/+server.ts`](src/routes/api/raw/[format]/[slug]/+server.ts) all delegate to [`src/lib/server/raw.ts`](src/lib/server/raw.ts); `llms` injects live artifact summaries into `[ARTIFACTS]` and appends the sitemap link
+- [`src/hooks.server.ts`](src/hooks.server.ts) owns request IDs, CSP nonce creation, inline-script nonce injection, security headers, alternate raw `Link` headers, agent redirect classification, and the non-file `404 -> /` redirect
+- Theme setup is split between [`src/app.html`](src/app.html) for pre-hydration paint and [`src/lib/theme.svelte.ts`](src/lib/theme.svelte.ts) for runtime sync. Keep the storage key and theme colors aligned in both places
+- [`src/lib/components/core/CoreGrainOverlay.svelte`](src/lib/components/core/CoreGrainOverlay.svelte) and [`src/lib/components/atomic/AtomicBrandLogo.svelte`](src/lib/components/atomic/AtomicBrandLogo.svelte) are the heaviest client paths. They depend on [`src/lib/webgl.ts`](src/lib/webgl.ts) policy, diagnostics, and fallback behavior
 
-## 6. Conventions
+## 6. Runtime and State
 
-- Use aliases `$lib`, `$app`, and `@` for app code; allow same-directory relative imports for generated route `$types` and local styles
-- TypeScript strict mode, no `any`, no ad-hoc `console` outside intentional logger stubs
-- No emojis in code, docs, or commits
-- **Component naming**: Prefix matches directory (Atomic*, Core*, Mdx\*, section names unprefixed)
-- **Animation**: 400ms page transitions, spring physics via presets in `springs.ts` (SPRING_PARALLAX: stiffness 25, damping 12), motion constants in `motion.ts`, respect `prefers-reduced-motion`, transform/opacity only, will-change managed dynamically
-- **Security**: Preserve CSP nonce generation and `<script>` nonce injection in `src/hooks.server.ts`, keep `csp-nonce` meta and `/empty.js` nonce script in `src/routes/+layout.svelte` with `src/routes/+layout.server.ts` data
-- **Headers**: Security headers (HSTS, permissions-policy, x-frame-options, referrer-policy) set in `src/hooks.server.ts`, do not weaken; 404 redirect rules for non-file paths live in `src/hooks.server.ts`
-- **Raw responses**: Raw text and markdown responses must keep `X-Robots-Tag: noindex` and cache headers in `src/lib/server/raw.ts`
+- Cloudflare binding: [`src/app.d.ts`](src/app.d.ts) declares optional `platform.env.NEWSLETTER_DB`. Without it, `/api/newsletter` returns `503` with code `UNAVAILABLE`
+- Runtime envs from [`src/hooks.server.ts`](src/hooks.server.ts): `AGENT_REDIRECT_MODE` (`off`, `shadow`, `enforce` and truthy aliases) and `AGENT_REDIRECT_DEBUG` (adds `x-agent-*` decision headers)
+- Public browser envs from [`src/lib/webgl.ts`](src/lib/webgl.ts): `PUBLIC_WEBGL_OVERLAY_MODE`, `PUBLIC_WEBGL_OVERLAY_RISK_THRESHOLD`, `PUBLIC_WEBGL_OVERLAY_WARMUP_MS`, `PUBLIC_WEBGL_OVERLAY_LONG_FRAME_MS`, `PUBLIC_WEBGL_OVERLAY_WARMUP_MAX_LONG_FRAMES`, `PUBLIC_WEBGL_OVERLAY_FAIL_TTL_HOURS`
+- Build identity: `PUBLIC_COMMIT_SHA` or `COMMIT_SHA` feeds [`src/lib/constants.ts`](src/lib/constants.ts); the short SHA namespaces WebGL cooldown and diagnostics in localStorage
+- Client persistence: theme preference lives under `u29dc-theme-preference`; WebGL overlay cooldown and diagnostic records are also stored in localStorage and scoped by build SHA
+- Generated output is disposable: `.svelte-kit/`, `build/`, prerendered `*.html`, and prerendered `*/og.png` artifacts are rebuilt, not edited. [`_headers`](_headers) controls deployed cache TTL for `/og.png` and `/*/og.png`
 
-## 7. Quality
+## 7. Conventions
 
-- No automated tests; manual QA required
-- Run `bun run dev` and load the home page; verify animations, overlays, page transitions, and theme with no console errors
-- Visit a content page like `/patterns`; verify scroll CTA, overlays, and metadata
-- Request `/llms.txt` and one slug `.md` or `.txt`; confirm raw output, headers, and artifact injection
-- Test agent detection: `curl -A "ClaudeBot" https://u29dc.com/` should redirect to plain text
-- Check the head for `csp-nonce` and confirm `/empty.js` and inline scripts receive the nonce; verify permissions-policy and HSTS headers
-- Finish with `bun run util:check` (must pass all 5 stages)
-- Commits: Conventional Commits format `type(scope): description` with body required; types [feat|fix|refactor|docs|style|chore|test|build|ci|perf|revert], scopes [core|ui|api|config|deps|types|utils|docs|ci|release]
+- Add or rename MDX components only if you update both `renderContentHtml()` and `toMarkdownBody()` in [`src/lib/server/content.ts`](src/lib/server/content.ts); raw exports and HTML rendering intentionally share the same custom tag surface
+- Keep route handlers thin. Validation, serialization, metadata, OG generation, and newsletter persistence live under [`src/lib/server/`](src/lib/server/)
+- Use lowercase hyphenated slugs only. [`src/lib/server/validators.ts`](src/lib/server/validators.ts) rejects uppercase, path separators, `..`, and overlong slugs
+- Keep the newsletter form contract stable: `email`, `source`, and honeypot `website`. UI, API, and migration assumptions all depend on those names
+- Media references inside MDX sometimes use `filename@ratio` suffixes. [`src/lib/components/sections/Artifacts.svelte`](src/lib/components/sections/Artifacts.svelte) parses those suffixes for thumbnail sizing
+- Homepage cards intentionally keep confidential studies visible as unlinked placeholders while public pages, raw exports, sitemap entries, and OG routes exclude them. Preserve that asymmetry unless you mean to change product behavior
+
+## 8. Constraints
+
+- Do not weaken CSP, HSTS, `permissions-policy`, alternate raw `Link` headers, or nonce injection in [`src/hooks.server.ts`](src/hooks.server.ts) and [`src/routes/+layout.svelte`](src/routes/+layout.svelte)
+- Do not remove [`static/empty.js`](static/empty.js); it exists so the layout can load a nonce-bearing external script on first paint
+- Do not hand-edit `.svelte-kit/`, `build/`, prerendered OG PNGs, or `node_modules/.vite`; rebuild or clean instead
+- Treat [`src/lib/server/content.ts`](src/lib/server/content.ts), [`src/lib/server/raw.ts`](src/lib/server/raw.ts), [`src/lib/server/metadata.ts`](src/lib/server/metadata.ts), and [`src/lib/server/artifacts.ts`](src/lib/server/artifacts.ts) as a coupled system. Visibility or serialization changes ripple into pages, raw exports, sitemap, and OG routes
+- Treat [`src/lib/server/og.ts`](src/lib/server/og.ts), [`scripts/check-og.ts`](scripts/check-og.ts), [`_headers`](_headers), and MDX `ogImage` / `ogTextTone` frontmatter as one deployment surface
+- Adding new top-level non-file routes may require updating `shouldRedirectToHome()` in [`src/hooks.server.ts`](src/hooks.server.ts); unmatched `/foo` paths currently 302 to `/` after a 404
+- Changes to [`src/lib/components/core/CoreGrainOverlay.svelte`](src/lib/components/core/CoreGrainOverlay.svelte), [`src/lib/components/atomic/AtomicBrandLogo.svelte`](src/lib/components/atomic/AtomicBrandLogo.svelte), or [`src/lib/webgl.ts`](src/lib/webgl.ts) need extra validation on reduced-motion, coarse-pointer, and low-tier devices
+
+## 9. Validation
+
+- Required gate: `bun run util:check` and expect it to rewrite formatting before the non-mutating checks
+- If you touch OG generation, media handling, or MDX frontmatter fields used by OG routes, also run `bun run build` because [`src/routes/og.png/+server.ts`](src/routes/og.png/+server.ts) and [`src/routes/[slug]/og.png/+server.ts`](src/routes/[slug]/og.png/+server.ts) are prerendered outputs
+- Manual smoke: run `bun run dev`, load `/`, one public slug like `/patterns` or `/transect`, `/llms.txt`, and `/patterns.md`; verify no console errors, correct raw output, and working copy/share controls on slug pages
+- Agent redirect smoke: with `AGENT_REDIRECT_MODE=enforce`, `curl -I -A 'ClaudeBot' http://localhost:3000/patterns` should `302` to `/patterns.txt`; set `AGENT_REDIRECT_DEBUG=1` when you need `x-agent-*` headers
+- Newsletter smoke: submit the footer form once with valid input and once with invalid input. With `NEWSLETTER_DB` configured, duplicate emails should be idempotent; without it, expect `503` / `UNAVAILABLE`
+- Security smoke: confirm `content-security-policy`, `strict-transport-security`, `permissions-policy`, and alternate raw `Link` headers, plus a `csp-nonce` meta tag and nonce-bearing `/empty.js` load in the document head
