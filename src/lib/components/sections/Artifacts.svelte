@@ -1,31 +1,62 @@
 <script lang="ts">
-	import { onMount } from "svelte";
 	import { prefersReducedMotion } from "svelte/motion";
 	import { CDN } from "$lib/constants";
-	import { createStaggerObserver } from "$lib/observe";
+	import { observeVisibility } from "$lib/observe";
+	import type { HomeArtifactGroups as ArtifactGroups } from "$lib/types/artifacts";
 
-	interface Artifact {
-		slug: string;
-		title: string;
-		description: string;
-		type: string;
-		date: string;
-		media: string[];
-		isConfidential: boolean;
-	}
+	type ParsedThumbnail = {
+		filename: string;
+		ratio: number;
+	};
 
-	let { artifacts }: { artifacts: Artifact[] } = $props();
+	let { artifacts }: { artifacts: ArtifactGroups } = $props();
 
-	let items: HTMLElement[] = $state([]);
-	let visibleItems = $state(new Set<number>());
+	let expandedFragments = $state(false);
+	let visibleRows = $state(new Set<string>());
 
-	const MAX_THUMBNAILS = 6;
+	const INITIAL_VISIBLE_FRAGMENT_COUNT = 4;
+	const MAX_STUDY_THUMBNAILS = 4;
 	const DEFAULT_RATIO = 2;
-	const THUMB_HEIGHT = 64; // h-16 = 64px
+	const THUMB_HEIGHT = 40;
+	const DATE_FORMATTER = new Intl.DateTimeFormat("en-GB", {
+		day: "2-digit",
+		month: "short",
+		year: "numeric",
+	});
 
-	type ParsedThumb = { filename: string; ratio: number };
+	const hasMoreWriting = $derived(
+		artifacts.fragments.length > INITIAL_VISIBLE_FRAGMENT_COUNT,
+	);
+	const showAllFragments = $derived(
+		expandedFragments || !hasMoreWriting,
+	);
+	const visibleFragments = $derived(
+		showAllFragments
+			? artifacts.fragments
+			: artifacts.fragments.slice(0, INITIAL_VISIBLE_FRAGMENT_COUNT),
+	);
+	const writingToggleLabel = $derived(
+		showAllFragments ? "Show less writing" : "Show more writing",
+	);
 
-	const parseMediaSrc = (src: string): ParsedThumb => {
+	const markRowVisible = (slug: string): void => {
+		if (visibleRows.has(slug)) return;
+		visibleRows = new Set([...visibleRows, slug]);
+	};
+
+	const isRowVisible = (slug: string): boolean => {
+		return prefersReducedMotion.current || visibleRows.has(slug);
+	};
+
+	const formatDate = (date: string): string => {
+		const parsed = new Date(date);
+		if (Number.isNaN(parsed.getTime())) {
+			return date;
+		}
+		return DATE_FORMATTER.format(parsed);
+	};
+
+	const parseMediaSrc = (src: string): ParsedThumbnail => {
 		const match = src.match(/^(.+)@([\d.]+)$/);
 		if (match && match[1] && match[2]) {
 			return { filename: match[1], ratio: parseFloat(match[2]) };
@@ -33,43 +64,13 @@
 		return { filename: src, ratio: DEFAULT_RATIO };
 	};
 
-	const formatYear = (date: string): string => {
-		return new Date(date).getFullYear().toString();
+	const getStudyThumbnails = (sources: string[]): ParsedThumbnail[] => {
+		return sources.slice(0, MAX_STUDY_THUMBNAILS).map(parseMediaSrc);
 	};
 
-	const formatDate = (date: string): string => {
-		return new Date(date).toISOString().split("T")[0] ?? "";
+	const toMediaUrl = (filename: string): string => {
+		return `${CDN.mediaUrl}${filename}`;
 	};
-
-	const isImage = (filename: string): boolean => {
-		const clean = filename.replace(/@[\d.]+$/, "");
-		const ext = clean.toLowerCase().split(".").pop() ?? "";
-		return ["webp", "jpg", "jpeg", "png", "gif", "avif"].includes(ext);
-	};
-
-	const getThumbnails = (media: string[]): ParsedThumb[] => {
-		return media
-			.filter(isImage)
-			.slice(0, MAX_THUMBNAILS)
-			.map(parseMediaSrc);
-	};
-
-	onMount(() => {
-		if (prefersReducedMotion.current) {
-			visibleItems = new Set(artifacts.map((_, i) => i));
-			return;
-		}
-
-		const stagger = createStaggerObserver(
-			items,
-			(index) => {
-				visibleItems = new Set([...visibleItems, index]);
-			},
-			{ threshold: 0.1, rootMargin: "-30px" },
-		);
-
-		return () => stagger.disconnect();
-	});
 </script>
 
 <section id="artifacts" class="grid-section-full py-44">
@@ -77,84 +78,260 @@
 		<p class="font-mono text-muted">[ 02 ARTIFACTS ]</p>
 	</header>
 
-	<div class="col-content flex flex-col">
-		{#each artifacts as artifact, index}
-			<article
-				bind:this={items[index]}
-				class="relative py-6 transition-all duration-500 [transition-timing-function:var(--ease-settle)] [&+article]:border-t [&+article]:border-current/10"
-				class:group={!artifact.isConfidential}
-				class:cursor-pointer={!artifact.isConfidential}
-				class:opacity-0={!visibleItems.has(index)}
-				class:translate-y-5={!visibleItems.has(index)}
-				class:opacity-100={visibleItems.has(index)}
-				class:translate-y-0={visibleItems.has(index)}
-				style:transition-delay={prefersReducedMotion.current
-					? "0ms"
-					: `${index * 90}ms`}
-			>
-				{#if !artifact.isConfidential}
-					<div
-						class="pointer-events-none absolute left-0 top-0 h-full w-0.5 bg-transparent transition-colors duration-200 group-hover:bg-current/40"
-						aria-hidden="true"
-					></div>
-				{/if}
+	<div class="col-content flex flex-col gap-12">
+		{#if artifacts.fragments.length > 0}
+			<section aria-labelledby="artifacts-writing" class="flex flex-col">
+				<header class="mb-3">
+					<h2 id="artifacts-writing" class="font-mono text-muted">
+						Writing
+					</h2>
+				</header>
 
-				{#if artifact.isConfidential}
-					<div class="pl-4 opacity-60">
-						<div class="flex items-baseline gap-4">
-							<h2 class="font-subtitle text-muted">
-								{artifact.title}
-							</h2>
-							<span
-								class="font-mono text-muted/50 ml-auto shrink-0"
-								>{formatDate(artifact.date)}</span
+				<div id="artifacts-writing-list" class="flex flex-col">
+					{#each visibleFragments as artifact (artifact.slug)}
+						<article
+							use:observeVisibility={{
+								onEnter: () => markRowVisible(artifact.slug),
+								once: true,
+								rootMargin: "-30px",
+								threshold: 0.1,
+								disabled: prefersReducedMotion.current,
+							}}
+							class="relative transition-all duration-500 [transition-timing-function:var(--ease-settle)] [&+article]:border-t [&+article]:border-current/10"
+							class:opacity-0={!isRowVisible(artifact.slug)}
+							class:translate-y-5={!isRowVisible(artifact.slug)}
+							class:opacity-100={isRowVisible(artifact.slug)}
+							class:translate-y-0={isRowVisible(artifact.slug)}
+						>
+							<a
+								href="/{artifact.slug}"
+								class="group relative block py-6 pl-4 focus-ring external-link-feedback"
 							>
-						</div>
-						<p class="mt-2 text-muted/50">Confidential</p>
-					</div>
-				{:else}
-					{@const thumbnails = getThumbnails(artifact.media)}
-					<a href="/{artifact.slug}" class="block pl-4">
-						<div class="flex flex-wrap items-baseline gap-4">
-							<h2 class="font-subtitle">{artifact.title}</h2>
-							<span
-								class="font-mono text-muted ml-auto shrink-0 hidden sm:inline"
-								>{formatDate(artifact.date)}</span
-							>
-						</div>
-						<p class="mt-2 text-muted">
-							{artifact.description}
-						</p>
+								<div
+									class="pointer-events-none absolute left-0 top-0 h-full w-px bg-transparent transition-colors duration-150 group-hover:bg-current/25 group-focus-visible:bg-current/25"
+									aria-hidden="true"
+								></div>
 
-						{#if thumbnails.length > 0}
-							<div class="mt-4 flex gap-1 overflow-hidden">
-								{#each thumbnails as thumb}
-									{@const width = THUMB_HEIGHT * thumb.ratio}
-									<div
-										class="h-16 max-w-[96px] shrink-0 overflow-hidden rounded-sm"
-										style:width="{width}px"
+								<div
+									class="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-4 gap-y-1"
+								>
+									<h3
+										class="font-subtitle pr-3 transition-colors duration-150 group-hover:text-foreground"
 									>
-										<img
-											src="{CDN.mediaUrl}{thumb.filename}"
-											width={Math.min(
-												Math.round(
-													THUMB_HEIGHT * thumb.ratio,
-												),
-												96,
-											)}
-											height={THUMB_HEIGHT}
-											alt="{artifact.title} preview"
-											loading="lazy"
-											decoding="async"
-											class="h-full w-full object-cover opacity-80 grayscale transition-all duration-300 group-hover:opacity-100 group-hover:grayscale-0"
-										/>
-									</div>
-								{/each}
-							</div>
-						{/if}
-					</a>
+										{artifact.title}
+									</h3>
+									<time
+										class="font-mono text-muted shrink-0 text-right [font-variant-numeric:tabular-nums] transition-colors duration-150 group-hover:text-foreground/70"
+										datetime={artifact.date}
+									>
+										{formatDate(artifact.date)}
+									</time>
+								</div>
+
+								<p
+									class="mt-2 text-muted transition-colors duration-150 group-hover:text-foreground/80"
+								>
+									{artifact.description}
+								</p>
+							</a>
+						</article>
+					{/each}
+				</div>
+
+				{#if hasMoreWriting}
+					<button
+						type="button"
+						onclick={() => {
+							expandedFragments = !expandedFragments;
+						}}
+						aria-controls="artifacts-writing-list"
+						aria-expanded={showAllFragments}
+						class="mt-3 inline-flex min-h-[44px] w-fit items-center rounded-sm pl-4 py-1 font-mono text-muted transition-colors duration-150 hover:text-foreground focus-ring pressed-state"
+					>
+						{writingToggleLabel}
+					</button>
 				{/if}
-			</article>
-		{/each}
+			</section>
+		{/if}
+
+		{#if artifacts.studies.length > 0}
+			<section aria-labelledby="artifacts-studies" class="flex flex-col">
+				<header class="mb-3">
+					<h2 id="artifacts-studies" class="font-mono text-muted">
+						Studies
+					</h2>
+				</header>
+
+				<div class="flex flex-col">
+					{#each artifacts.studies as artifact (artifact.slug)}
+						<article
+							use:observeVisibility={{
+								onEnter: () => markRowVisible(artifact.slug),
+								once: true,
+								rootMargin: "-30px",
+								threshold: 0.1,
+								disabled: prefersReducedMotion.current,
+							}}
+							class="relative transition-all duration-500 [transition-timing-function:var(--ease-settle)] [&+article]:border-t [&+article]:border-current/10"
+							class:opacity-0={!isRowVisible(artifact.slug)}
+							class:translate-y-5={!isRowVisible(artifact.slug)}
+							class:opacity-100={isRowVisible(artifact.slug)}
+							class:translate-y-0={isRowVisible(artifact.slug)}
+						>
+							{#if artifact.isConfidential}
+								<div class="py-6 pl-4 opacity-65">
+									<div
+										class="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-4 gap-y-1"
+									>
+										<h3
+											class="font-subtitle pr-3 text-muted/90"
+										>
+											{artifact.title}
+										</h3>
+										<time
+											class="font-mono text-muted/55 shrink-0 text-right [font-variant-numeric:tabular-nums]"
+											datetime={artifact.date}
+										>
+											{formatDate(artifact.date)}
+										</time>
+									</div>
+
+									<p class="mt-2 text-muted/60">
+										Confidential
+									</p>
+								</div>
+							{:else}
+								{@const thumbnails = getStudyThumbnails(
+									artifact.thumbnails,
+								)}
+								<a
+									href="/{artifact.slug}"
+									class="group relative block py-6 pl-4 focus-ring external-link-feedback"
+								>
+									<div
+										class="pointer-events-none absolute left-0 top-0 h-full w-px bg-transparent transition-colors duration-150 group-hover:bg-current/25 group-focus-visible:bg-current/25"
+										aria-hidden="true"
+									></div>
+
+									<div
+										class="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-4 gap-y-1"
+									>
+										<h3
+											class="font-subtitle pr-3 transition-colors duration-150 group-hover:text-foreground"
+										>
+											{artifact.title}
+										</h3>
+										<time
+											class="font-mono text-muted shrink-0 text-right [font-variant-numeric:tabular-nums] transition-colors duration-150 group-hover:text-foreground/70"
+											datetime={artifact.date}
+										>
+											{formatDate(artifact.date)}
+										</time>
+									</div>
+
+									<p
+										class="mt-2 text-muted transition-colors duration-150 group-hover:text-foreground/80"
+									>
+										{artifact.description}
+									</p>
+
+									{#if thumbnails.length > 0}
+										<div
+											class="mt-4 flex gap-1 overflow-hidden"
+											aria-hidden="true"
+										>
+											{#each thumbnails as thumbnail}
+												{@const width = Math.min(
+													Math.round(
+														THUMB_HEIGHT *
+															thumbnail.ratio,
+													),
+													96,
+												)}
+												<div
+													class="h-16 max-w-[96px] shrink-0 overflow-hidden rounded-sm opacity-78 transition-opacity duration-150 group-hover:opacity-100"
+													style:width={`${width}px`}
+												>
+													<img
+														src={toMediaUrl(
+															thumbnail.filename,
+														)}
+														alt=""
+														loading="lazy"
+														decoding="async"
+														class="h-full w-full object-cover"
+													/>
+												</div>
+											{/each}
+										</div>
+									{/if}
+								</a>
+							{/if}
+						</article>
+					{/each}
+				</div>
+			</section>
+		{/if}
+
+		{#if artifacts.other.length > 0}
+			<section aria-labelledby="artifacts-other" class="flex flex-col">
+				<header class="mb-3">
+					<h2 id="artifacts-other" class="font-mono text-muted">
+						Other
+					</h2>
+				</header>
+
+				<div class="flex flex-col">
+					{#each artifacts.other as artifact (artifact.slug)}
+						<article
+							use:observeVisibility={{
+								onEnter: () => markRowVisible(artifact.slug),
+								once: true,
+								rootMargin: "-30px",
+								threshold: 0.1,
+								disabled: prefersReducedMotion.current,
+							}}
+							class="relative transition-all duration-500 [transition-timing-function:var(--ease-settle)] [&+article]:border-t [&+article]:border-current/10"
+							class:opacity-0={!isRowVisible(artifact.slug)}
+							class:translate-y-5={!isRowVisible(artifact.slug)}
+							class:opacity-100={isRowVisible(artifact.slug)}
+							class:translate-y-0={isRowVisible(artifact.slug)}
+						>
+							<a
+								href="/{artifact.slug}"
+								class="group relative block py-6 pl-4 focus-ring external-link-feedback"
+							>
+								<div
+									class="pointer-events-none absolute left-0 top-0 h-full w-px bg-transparent transition-colors duration-150 group-hover:bg-current/25 group-focus-visible:bg-current/25"
+									aria-hidden="true"
+								></div>
+
+								<div
+									class="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-4 gap-y-1"
+								>
+									<h3
+										class="font-subtitle pr-3 transition-colors duration-150 group-hover:text-foreground"
+									>
+										{artifact.title}
+									</h3>
+									<time
+										class="font-mono text-muted shrink-0 text-right [font-variant-numeric:tabular-nums] transition-colors duration-150 group-hover:text-foreground/70"
+										datetime={artifact.date}
+									>
+										{formatDate(artifact.date)}
+									</time>
+								</div>
+
+								<p
+									class="mt-2 text-muted transition-colors duration-150 group-hover:text-foreground/80"
+								>
+									{artifact.description}
+								</p>
+							</a>
+						</article>
+					{/each}
+				</div>
+			</section>
+		{/if}
 	</div>
 </section>
