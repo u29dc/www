@@ -35,7 +35,7 @@
 		"@tailwindcss/vite": "^4.2.2",
 		"@types/js-yaml": "^4.0.9",
 		"@typescript-eslint/types": "^8.58.0",
-		"@typescript/native-preview": "^7.0.0-dev.20260406.1",
+		"@typescript/native-preview": "^7.0.0-dev.20260407.1",
 		"husky": "^9.1.7",
 		"lighthouse": "^13.1.0",
 		"lint-staged": "^16.4.0",
