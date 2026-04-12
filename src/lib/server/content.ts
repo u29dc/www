@@ -169,6 +169,23 @@ const markdownProcessor = unified()
 	})
 	.use(rehypeStringify);
 
+const FOOTNOTE_REF_LINK = /<a([^>]*\bdata-footnote-ref\b[^>]*)>(.*?)<\/a>/g;
+
+const renderSelectableFootnoteRefs = (html: string): string =>
+	html.replace(FOOTNOTE_REF_LINK, (match, attributes: string, body: string) => {
+		if (body.includes('aria-hidden="true"')) {
+			return match;
+		}
+
+		const footnoteNumber = body.replace(/<[^>]+>/g, '').trim();
+		if (footnoteNumber.length === 0) {
+			return match;
+		}
+
+		const ariaLabel = /aria-label=/.test(attributes) ? '' : ` aria-label="Footnote ${footnoteNumber}"`;
+		return `<a${attributes}${ariaLabel}><span aria-hidden="true">[</span>${body}<span aria-hidden="true">]</span></a>`;
+	});
+
 const mdxModules = import.meta.glob('/src/content/*.mdx', {
 	query: '?raw',
 	import: 'default',
@@ -299,7 +316,7 @@ export async function parseMdx(source: string, filePath: string): Promise<Parsed
 export function renderContentHtml(source: string): string {
 	const sanitized = stripMdxScript(source).trim();
 	try {
-		return String(markdownProcessor.processSync(sanitized));
+		return renderSelectableFootnoteRefs(String(markdownProcessor.processSync(sanitized)));
 	} catch (error) {
 		logEvent('MDX', 'RENDER_HTML', 'FAIL', {
 			error: error instanceof Error ? error.message : String(error),

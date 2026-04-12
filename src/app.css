@@ -532,18 +532,9 @@ html.dark {
 	}
 }
 
-/* Footnote marker punctuation still needs pseudo-elements/has selectors */
 .article-flow sup:has(> a[data-footnote-ref]) {
 	top: -0.18em;
-	margin-inline-start: 0.18em;
-}
-
-.article-flow a[data-footnote-ref]::before {
-	content: "[";
-}
-
-.article-flow a[data-footnote-ref]::after {
-	content: "]";
+	margin-inline-start: 0;
 }
 
 /* ================================================== */
