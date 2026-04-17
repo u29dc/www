@@ -1,7 +1,6 @@
 import type { Handle } from '@sveltejs/kit';
 import { dev } from '$app/environment';
 import { CDN } from '$lib/constants';
-import { CONTENT_SIGNAL_POLICY } from '$lib/server/agent-policy';
 import { type AgentRedirectClassification, type AgentRedirectMode, classifyAgentRedirectRequest, parseAgentRedirectMode } from '$lib/server/classifier';
 import { logEvent } from '$lib/server/logger';
 
@@ -147,7 +146,6 @@ const applySecurityHeaders = (response: Response, path: string): void => {
 	response.headers.set('x-frame-options', 'DENY');
 	response.headers.set('x-content-type-options', 'nosniff');
 	response.headers.set('referrer-policy', 'strict-origin-when-cross-origin');
-	response.headers.set('content-signal', CONTENT_SIGNAL_POLICY);
 	response.headers.set('permissions-policy', ['camera=()', 'microphone=()', 'geolocation=()', 'autoplay=()', 'fullscreen=(self)', 'picture-in-picture=()'].join(', '));
 
 	const slugMatch = path.match(/^\/([a-z0-9-]+)$/);

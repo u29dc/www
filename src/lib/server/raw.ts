@@ -1,6 +1,5 @@
 import { SITE } from '$lib/constants';
 import { isStudy } from '$lib/content-types';
-import { estimateMarkdownTokens } from '$lib/server/agent-policy';
 import { formatArtifactsAsMarkdown, getContentBySlug, getDisplayableArtifacts, injectArtifactsIntoLlms, toMarkdown } from '$lib/server/content';
 import { createErrorResponse, ForbiddenError, NotFoundError, ProcessingError, ValidationError } from '$lib/server/errors';
 import { logEvent } from '$lib/server/logger';
@@ -63,7 +62,6 @@ export async function handleRawContentRequest(format: string, rawSlug: string): 
 				'X-Robots-Tag': 'noindex, nofollow',
 				'X-Content-Type-Options': 'nosniff',
 				Link: `</${slug}>; rel="canonical"`,
-				...(format === 'md' ? { 'X-Markdown-Tokens': String(estimateMarkdownTokens(output)) } : {}),
 			},
 		});
 

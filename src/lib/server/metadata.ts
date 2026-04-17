@@ -1,6 +1,5 @@
 import { SITE } from '$lib/constants';
 import { isStudy } from '$lib/content-types';
-import { CONTENT_SIGNAL_DIRECTIVE } from '$lib/server/agent-policy';
 import { getAllContent } from '$lib/server/content';
 import { logEvent } from '$lib/server/logger';
 
@@ -32,6 +31,7 @@ type SitemapEntry = {
 };
 
 const escapeXml = (value: string): string => value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+const CONTENT_SIGNAL_DIRECTIVE = 'Content-Signal: ai-train=yes, search=yes, ai-input=yes';
 
 const ROBOTS_LINES = [
 	'User-agent: *',
