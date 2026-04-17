@@ -9,6 +9,28 @@ type AcceptType = {
 	q: number;
 };
 
+const AGENT_UA_PATTERNS = [
+	/\bChatGPT-User\b/i,
+	/\bGPTBot\b/i,
+	/\bClaudeBot\b/i,
+	/\bClaude-Web\b/i,
+	/\bAnthropic\b/i,
+	/\bPerplexityBot\b/i,
+	/\bCohereBot\b/i,
+	/\bCopilot\b/i,
+	/\bai2-bot\b/i,
+	/\bCCBot\b/i,
+	/\bGoogle-Extended\b/i,
+	/\bApplebot-Extended\b/i,
+	/\bBytespider\b/i,
+	/\bYouBot\b/i,
+	/\bcurl\b/i,
+	/\bwget\b/i,
+	/\bhttpie\b/i,
+] as const;
+
+const BROWSER_UA_PATTERN = /(Mozilla\/5\.0).*(Chrome|CriOS|Safari|Firefox|FxiOS|Edg|Edge|OPR|SamsungBrowser)/i;
+
 type ProtocolSummary = {
 	title: string;
 	subtitle: string;
@@ -25,7 +47,6 @@ type ContactLink = {
 };
 
 const SLUG_PATH_PATTERN = /^\/([a-z0-9-]+)$/;
-const MARKDOWN_CACHE_CONTROL = 'public, s-maxage=86400, stale-while-revalidate=43200';
 
 const SIGNAL_SECTION_PARAGRAPHS = [
 	'Most companies building complex technology can explain what they do. Fewer can make anyone feel why it matters.',
@@ -89,6 +110,8 @@ const CONTACT_LINKS: readonly ContactLink[] = [
 	},
 ] as const;
 
+const getAcceptQuality = (types: AcceptType[], target: string): number => types.reduce((max, item) => (item.type === target ? Math.max(max, item.q) : max), 0);
+
 const parseAcceptTypes = (acceptHeader: string | null): AcceptType[] => {
 	if (!acceptHeader) return [];
 
@@ -104,6 +127,23 @@ const parseAcceptTypes = (acceptHeader: string | null): AcceptType[] => {
 	});
 };
 
+const userAgentLooksLikeAgent = (userAgent: string): boolean => AGENT_UA_PATTERNS.some((pattern) => pattern.test(userAgent));
+
+const isLikelyBrowserNavigationRequest = ({ request, acceptTypes, userAgent }: { request: Request; acceptTypes: AcceptType[]; userAgent: string }): boolean => {
+	if (userAgentLooksLikeAgent(userAgent)) {
+		return false;
+	}
+
+	const htmlQuality = Math.max(getAcceptQuality(acceptTypes, 'text/html'), getAcceptQuality(acceptTypes, 'application/xhtml+xml'));
+	const hasBrowserLikeUserAgent = BROWSER_UA_PATTERN.test(userAgent);
+	const secFetchMode = request.headers.get('sec-fetch-mode')?.toLowerCase();
+	const secFetchDest = request.headers.get('sec-fetch-dest')?.toLowerCase();
+	const hasAcceptLanguage = request.headers.has('accept-language');
+	const isDocumentNavigation = secFetchMode === 'navigate' || secFetchDest === 'document';
+
+	return hasBrowserLikeUserAgent && htmlQuality > 0 && (isDocumentNavigation || hasAcceptLanguage);
+};
+
 const requestAcceptsMarkdown = (request: Request): boolean => {
 	const method = request.method.toUpperCase();
 	if (method !== 'GET' && method !== 'HEAD') {
@@ -111,7 +151,16 @@ const requestAcceptsMarkdown = (request: Request): boolean => {
 	}
 
 	const acceptTypes = parseAcceptTypes(request.headers.get('accept'));
-	return acceptTypes.some((entry) => entry.q > 0 && entry.type === 'text/markdown');
+	if (!acceptTypes.some((entry) => entry.q > 0 && entry.type === 'text/markdown')) {
+		return false;
+	}
+
+	const userAgent = request.headers.get('user-agent') ?? '';
+	return !isLikelyBrowserNavigationRequest({
+		request,
+		acceptTypes,
+		userAgent,
+	});
 };
 
 const createMarkdownResponse = ({ request, markdown }: { request: Request; markdown: string }): Response => {
@@ -122,7 +171,9 @@ const createMarkdownResponse = ({ request, markdown }: { request: Request; markd
 		headers: {
 			'content-type': 'text/markdown; charset=utf-8',
 			'content-length': String(byteLength),
-			'cache-control': MARKDOWN_CACHE_CONTROL,
+			'cache-control': 'private, no-store, must-revalidate',
+			'cdn-cache-control': 'no-store',
+			'cloudflare-cdn-cache-control': 'no-store',
 			'content-signal': CONTENT_SIGNAL_POLICY,
 			vary: 'Accept',
 			'x-markdown-tokens': String(estimateMarkdownTokens(markdown)),

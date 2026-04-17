@@ -1,4 +1,4 @@
-export const CONTENT_SIGNAL_POLICY = 'ai-train=no, search=yes, ai-input=yes';
+export const CONTENT_SIGNAL_POLICY = 'ai-train=yes, search=yes, ai-input=yes';
 
 export const CONTENT_SIGNAL_DIRECTIVE = `Content-Signal: ${CONTENT_SIGNAL_POLICY}`;
 
