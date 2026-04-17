@@ -1,4 +1,5 @@
 import { readdir, readFile } from 'node:fs/promises';
+import { availableParallelism } from 'node:os';
 import { join } from 'node:path';
 import matter from 'gray-matter';
 import { SITE } from '../src/lib/constants';
@@ -13,6 +14,36 @@ type OgCheckTarget = {
 };
 
 const CONTENT_DIR = join(process.cwd(), 'src', 'content');
+
+const parsePositiveInteger = (value: string | undefined): number | null => {
+	if (!value) return null;
+	const parsed = Number.parseInt(value, 10);
+	if (!Number.isFinite(parsed) || parsed < 1) {
+		return null;
+	}
+	return parsed;
+};
+
+const DEFAULT_CONCURRENCY = Math.max(2, Math.min(parsePositiveInteger(process.env.CHECK_OG_CONCURRENCY) ?? availableParallelism(), 8));
+
+async function mapConcurrent<TInput, TOutput>(items: readonly TInput[], concurrency: number, mapper: (item: TInput, index: number) => Promise<TOutput>): Promise<TOutput[]> {
+	if (items.length === 0) return [];
+
+	const limit = Math.max(1, Math.min(concurrency, items.length));
+	const results = new Array<TOutput>(items.length);
+	let nextIndex = 0;
+
+	const worker = async (): Promise<void> => {
+		while (nextIndex < items.length) {
+			const currentIndex = nextIndex;
+			nextIndex += 1;
+			results[currentIndex] = await mapper(items[currentIndex], currentIndex);
+		}
+	};
+
+	await Promise.all(Array.from({ length: limit }, () => worker()));
+	return results;
+}
 
 const normalizeFrontmatter = (data: Record<string, unknown>): Record<string, unknown> => ({
 	...data,
@@ -40,19 +71,26 @@ const getContentTargets = async (): Promise<OgCheckTarget[]> => {
 		},
 	];
 
-	for (const filename of filenames) {
+	const contentTargets = await mapConcurrent(filenames, DEFAULT_CONCURRENCY, async (filename) => {
 		const filePath = join(CONTENT_DIR, filename);
 		const source = await readFile(filePath, 'utf8');
 		const { data } = matter(source);
 		const frontmatter = ContentSchema.parse(normalizeFrontmatter(data));
-		if (!isPublicArtifact(frontmatter)) continue;
+		if (!isPublicArtifact(frontmatter)) {
+			return null;
+		}
 
-		targets.push({
+		return {
 			id: frontmatter.slug,
 			title: frontmatter.title,
 			...(frontmatter.ogImage ? { source: frontmatter.ogImage } : {}),
 			...(frontmatter.ogTextTone ? { textTone: frontmatter.ogTextTone } : {}),
-		});
+		} satisfies OgCheckTarget;
+	});
+
+	for (const target of contentTargets) {
+		if (!target) continue;
+		targets.push(target);
 	}
 
 	return targets;
@@ -62,15 +100,23 @@ const formatResult = (target: OgCheckTarget): string => (target.source ? `${targ
 
 async function main(): Promise<void> {
 	const targets = await getContentTargets();
+	const start = performance.now();
 
-	for (const target of targets) {
+	const results = await mapConcurrent(targets, DEFAULT_CONCURRENCY, async (target) => {
 		const png = await renderOgCard(target);
 		if (png.byteLength === 0) {
 			throw new Error(`Generated empty OG card for ${formatResult(target)}`);
 		}
 
-		process.stdout.write(`OG OK ${formatResult(target)}\n`);
+		return `OG OK ${formatResult(target)}\n`;
+	});
+
+	for (const result of results) {
+		process.stdout.write(result);
 	}
+
+	const durationMs = Math.round(performance.now() - start);
+	process.stdout.write(`OG check completed for ${targets.length} cards in ${durationMs}ms with concurrency ${Math.min(DEFAULT_CONCURRENCY, targets.length)}\n`);
 }
 
 await main();

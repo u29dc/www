@@ -1,8 +1,10 @@
 import type { Handle } from '@sveltejs/kit';
 import { dev } from '$app/environment';
 import { CDN } from '$lib/constants';
+import { appendVaryHeader, CONTENT_SIGNAL_POLICY } from '$lib/server/agent-policy';
 import { type AgentRedirectClassification, type AgentRedirectMode, classifyAgentRedirectRequest, parseAgentRedirectMode } from '$lib/server/classifier';
 import { logEvent } from '$lib/server/logger';
+import { createMarkdownNegotiationResponse, isMarkdownNegotiablePath } from '$lib/server/markdown-negotiation';
 
 type RuntimeEnv = {
 	AGENT_REDIRECT_MODE: string | null;
@@ -146,6 +148,7 @@ const applySecurityHeaders = (response: Response, path: string): void => {
 	response.headers.set('x-frame-options', 'DENY');
 	response.headers.set('x-content-type-options', 'nosniff');
 	response.headers.set('referrer-policy', 'strict-origin-when-cross-origin');
+	response.headers.set('content-signal', CONTENT_SIGNAL_POLICY);
 	response.headers.set('permissions-policy', ['camera=()', 'microphone=()', 'geolocation=()', 'autoplay=()', 'fullscreen=(self)', 'picture-in-picture=()'].join(', '));
 
 	const slugMatch = path.match(/^\/([a-z0-9-]+)$/);
@@ -209,6 +212,17 @@ export const handle: Handle = async ({ event, resolve }) => {
 	const requestId = crypto.randomUUID();
 	event.locals.requestId = requestId;
 
+	const markdownResponse = await createMarkdownNegotiationResponse({
+		request: event.request,
+		url: event.url,
+	});
+
+	if (markdownResponse) {
+		applySecurityHeaders(markdownResponse, path);
+		markdownResponse.headers.set('strict-transport-security', 'max-age=31536000; includeSubDomains');
+		return markdownResponse;
+	}
+
 	const classification = classifyAgentRedirectRequest({
 		request: event.request,
 		path,
@@ -241,6 +255,9 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	response.headers.set('content-security-policy', buildCsp(nonce));
 	applySecurityHeaders(response, path);
+	if (isMarkdownNegotiablePath(path)) {
+		appendVaryHeader(response.headers, 'Accept');
+	}
 
 	response.headers.set('strict-transport-security', 'max-age=31536000; includeSubDomains');
 

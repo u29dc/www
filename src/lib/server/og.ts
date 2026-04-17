@@ -27,6 +27,8 @@ const LIGHT_TEXT = '#f8f9fa';
 const DARK_TEXT = '#111315';
 
 let serifFontPromise: Promise<Buffer> | null = null;
+const sourceBufferPromiseCache = new Map<string, Promise<Buffer>>();
+const preparedSourcePromiseCache = new Map<string, Promise<{ imageDataUrl: string; autoTone: 'light' | 'dark' }>>();
 
 const getSerifFont = async (): Promise<Buffer> => {
 	serifFontPromise ??= readFile(FONT_PATH);
@@ -41,7 +43,7 @@ const resolveSourceUrl = (source: string): URL => {
 	return new URL(source, CDN.mediaUrl);
 };
 
-const fetchSourceBuffer = async (source: string): Promise<Buffer> => {
+const fetchSourceBufferUncached = async (source: string): Promise<Buffer> => {
 	if (source.startsWith('/')) {
 		return readFile(resolve(process.cwd(), 'static', source.slice(1)));
 	}
@@ -58,6 +60,21 @@ const fetchSourceBuffer = async (source: string): Promise<Buffer> => {
 	}
 
 	return Buffer.from(await response.arrayBuffer());
+};
+
+const fetchSourceBuffer = (source: string): Promise<Buffer> => {
+	const cached = sourceBufferPromiseCache.get(source);
+	if (cached) {
+		return cached;
+	}
+
+	const pending = fetchSourceBufferUncached(source).catch((error) => {
+		sourceBufferPromiseCache.delete(source);
+		throw error;
+	});
+
+	sourceBufferPromiseCache.set(source, pending);
+	return pending;
 };
 
 const getTitleFontSize = (title: string): number => {
@@ -103,7 +120,7 @@ const toDataUrl = (buffer: Buffer): string => `data:image/jpeg;base64,${buffer.t
 
 const describeCard = (title: string, id?: string): string => (id ? `"${id}" (${title})` : `"${title}"`);
 
-const prepareSourceImage = async (source: string): Promise<{ imageDataUrl: string; autoTone: 'light' | 'dark' }> => {
+const prepareSourceImageUncached = async (source: string): Promise<{ imageDataUrl: string; autoTone: 'light' | 'dark' }> => {
 	const normalizedImage = await normalizeSourceImage(await fetchSourceBuffer(source));
 	let autoTone: 'light' | 'dark' = 'light';
 
@@ -117,6 +134,21 @@ const prepareSourceImage = async (source: string): Promise<{ imageDataUrl: strin
 		imageDataUrl: toDataUrl(normalizedImage),
 		autoTone,
 	};
+};
+
+const prepareSourceImage = (source: string): Promise<{ imageDataUrl: string; autoTone: 'light' | 'dark' }> => {
+	const cached = preparedSourcePromiseCache.get(source);
+	if (cached) {
+		return cached;
+	}
+
+	const pending = prepareSourceImageUncached(source).catch((error) => {
+		preparedSourcePromiseCache.delete(source);
+		throw error;
+	});
+
+	preparedSourcePromiseCache.set(source, pending);
+	return pending;
 };
 
 const buildCardMarkup = ({ title, imageDataUrl, fontSize, resolvedTone }: { title: string; imageDataUrl?: string; fontSize: number; resolvedTone: 'light' | 'dark' }) => {

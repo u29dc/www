@@ -1,5 +1,6 @@
 import { SITE } from '$lib/constants';
 import { isStudy } from '$lib/content-types';
+import { CONTENT_SIGNAL_DIRECTIVE } from '$lib/server/agent-policy';
 import { getAllContent } from '$lib/server/content';
 import { logEvent } from '$lib/server/logger';
 
@@ -73,7 +74,7 @@ export function generateManifest(): ManifestData {
 }
 
 export function generateRobotsTxt(): string {
-	return ['User-agent: *', 'Allow: /', 'Allow: /llms.txt', `Sitemap: ${SITE.url}/sitemap.xml`, ''].join('\n');
+	return ['User-agent: *', 'Allow: /', 'Allow: /llms.txt', CONTENT_SIGNAL_DIRECTIVE, `Sitemap: ${SITE.url}/sitemap.xml`, ''].join('\n');
 }
 
 export async function generateSitemapXml(): Promise<string> {
