@@ -27,20 +27,20 @@
 		{
 			title: "ARC",
 			subtitle: "Architect",
-			price: "£25,000–60,000",
+			price: "£15,000–40,000",
 			timeline: "4–6 weeks",
 			description:
-				"Full narrative package. Origin story, positioning framework, voice system, and a flagship artifact your team can scale from.",
+				"Full narrative architecture: strategy, creative direction, and a flagship artifact your team can scale from. Scope and artifact envelope are set after MAP, with engagement pricing aligned to the commercial moment it serves.",
 			cta: "Requires MAP",
 			requires: "MAP",
 		},
 		{
 			title: "ADV",
 			subtitle: "Steward",
-			price: "£8,000–15,000",
+			price: "£4,000–8,000",
 			timeline: "per month · 3-month minimum",
 			description:
-				"Ongoing creative direction. Strategic counsel, artifact development, and narrative coherence as you scale.",
+				"Fractional brand creative direction. Ongoing strategic counsel, artifact development, and narrative coherence as you scale.",
 			cta: "Requires ARC",
 			requires: "ARC",
 		},
