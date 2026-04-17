@@ -9,6 +9,8 @@ type AcceptType = {
 	q: number;
 };
 
+export const HTML_MODE_COOKIE_NAME = 'u29dc-html';
+
 const AGENT_UA_PATTERNS = [
 	/\bChatGPT-User\b/i,
 	/\bGPTBot\b/i,
@@ -127,7 +129,7 @@ const parseAcceptTypes = (acceptHeader: string | null): AcceptType[] => {
 
 const userAgentLooksLikeAgent = (userAgent: string): boolean => AGENT_UA_PATTERNS.some((pattern) => pattern.test(userAgent));
 
-const isLikelyBrowserNavigationRequest = ({ request, userAgent }: { request: Request; userAgent: string }): boolean => {
+export const isLikelyBrowserNavigationRequest = ({ request, userAgent }: { request: Request; userAgent: string }): boolean => {
 	if (userAgentLooksLikeAgent(userAgent)) {
 		return false;
 	}

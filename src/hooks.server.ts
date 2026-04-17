@@ -4,7 +4,7 @@ import { CDN } from '$lib/constants';
 import { appendVaryHeader, CONTENT_SIGNAL_POLICY } from '$lib/server/agent-policy';
 import { type AgentRedirectClassification, type AgentRedirectMode, classifyAgentRedirectRequest, parseAgentRedirectMode } from '$lib/server/classifier';
 import { logEvent } from '$lib/server/logger';
-import { createMarkdownNegotiationResponse, isMarkdownNegotiablePath } from '$lib/server/markdown-negotiation';
+import { createMarkdownNegotiationResponse, HTML_MODE_COOKIE_NAME, isLikelyBrowserNavigationRequest, isMarkdownNegotiablePath } from '$lib/server/markdown-negotiation';
 
 type RuntimeEnv = {
 	AGENT_REDIRECT_MODE: string | null;
@@ -168,6 +168,18 @@ const applyNegotiationCacheHeaders = (response: Response): void => {
 	response.headers.set('cloudflare-cdn-cache-control', 'no-store');
 };
 
+const applyBrowserHtmlRecoveryHeaders = ({ event, response }: { event: Parameters<Handle>[0]['event']; response: Response }): void => {
+	const userAgent = event.request.headers.get('user-agent') ?? '';
+	if (!isLikelyBrowserNavigationRequest({ request: event.request, userAgent })) {
+		return;
+	}
+
+	if (event.cookies.get(HTML_MODE_COOKIE_NAME) !== '1') {
+		response.headers.append('set-cookie', `${HTML_MODE_COOKIE_NAME}=1; Path=/; Max-Age=2592000; SameSite=Lax; Secure; HttpOnly`);
+		response.headers.set('clear-site-data', '"cache"');
+	}
+};
+
 type CspDirective = {
 	name: string;
 	values: string[];
@@ -264,7 +276,9 @@ export const handle: Handle = async ({ event, resolve }) => {
 	applySecurityHeaders(response, path);
 	if (isMarkdownNegotiablePath(path)) {
 		appendVaryHeader(response.headers, 'Accept');
+		appendVaryHeader(response.headers, 'Cookie');
 		applyNegotiationCacheHeaders(response);
+		applyBrowserHtmlRecoveryHeaders({ event, response });
 	}
 
 	response.headers.set('strict-transport-security', 'max-age=31536000; includeSubDomains');
