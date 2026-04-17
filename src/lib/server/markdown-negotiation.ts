@@ -110,8 +110,6 @@ const CONTACT_LINKS: readonly ContactLink[] = [
 	},
 ] as const;
 
-const getAcceptQuality = (types: AcceptType[], target: string): number => types.reduce((max, item) => (item.type === target ? Math.max(max, item.q) : max), 0);
-
 const parseAcceptTypes = (acceptHeader: string | null): AcceptType[] => {
 	if (!acceptHeader) return [];
 
@@ -129,19 +127,20 @@ const parseAcceptTypes = (acceptHeader: string | null): AcceptType[] => {
 
 const userAgentLooksLikeAgent = (userAgent: string): boolean => AGENT_UA_PATTERNS.some((pattern) => pattern.test(userAgent));
 
-const isLikelyBrowserNavigationRequest = ({ request, acceptTypes, userAgent }: { request: Request; acceptTypes: AcceptType[]; userAgent: string }): boolean => {
+const isLikelyBrowserNavigationRequest = ({ request, userAgent }: { request: Request; userAgent: string }): boolean => {
 	if (userAgentLooksLikeAgent(userAgent)) {
 		return false;
 	}
 
-	const htmlQuality = Math.max(getAcceptQuality(acceptTypes, 'text/html'), getAcceptQuality(acceptTypes, 'application/xhtml+xml'));
 	const hasBrowserLikeUserAgent = BROWSER_UA_PATTERN.test(userAgent);
 	const secFetchMode = request.headers.get('sec-fetch-mode')?.toLowerCase();
 	const secFetchDest = request.headers.get('sec-fetch-dest')?.toLowerCase();
 	const hasAcceptLanguage = request.headers.has('accept-language');
 	const isDocumentNavigation = secFetchMode === 'navigate' || secFetchDest === 'document';
+	const hasBrowserClientHints = request.headers.has('sec-ch-ua') || request.headers.has('sec-ch-ua-platform');
+	const hasUpgradeInsecureRequests = request.headers.get('upgrade-insecure-requests') === '1';
 
-	return hasBrowserLikeUserAgent && htmlQuality > 0 && (isDocumentNavigation || hasAcceptLanguage);
+	return hasBrowserLikeUserAgent && (isDocumentNavigation || hasAcceptLanguage || hasBrowserClientHints || hasUpgradeInsecureRequests);
 };
 
 const requestAcceptsMarkdown = (request: Request): boolean => {
@@ -158,7 +157,6 @@ const requestAcceptsMarkdown = (request: Request): boolean => {
 	const userAgent = request.headers.get('user-agent') ?? '';
 	return !isLikelyBrowserNavigationRequest({
 		request,
-		acceptTypes,
 		userAgent,
 	});
 };
