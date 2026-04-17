@@ -12,7 +12,7 @@
 		"prepare": "husky",
 		"dev----------------------------------": "",
 		"dev": "bunx --bun svelte-kit sync && bunx --bun vite dev",
-		"build": "bunx --bun svelte-kit sync && bunx --bun vite build",
+		"build": "bunx --bun svelte-kit sync && bunx --bun vite build && bun run ./scripts/cfworker.ts",
 		"preview": "bunx --bun vite preview",
 		"check--------------------------------": "",
 		"util:format": "bunx biome format --write .",
