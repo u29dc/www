@@ -1,10 +1,9 @@
 import type { Handle } from '@sveltejs/kit';
 import { dev } from '$app/environment';
 import { CDN } from '$lib/constants';
-import { appendVaryHeader, CONTENT_SIGNAL_POLICY } from '$lib/server/agent-policy';
+import { CONTENT_SIGNAL_POLICY } from '$lib/server/agent-policy';
 import { type AgentRedirectClassification, type AgentRedirectMode, classifyAgentRedirectRequest, parseAgentRedirectMode } from '$lib/server/classifier';
 import { logEvent } from '$lib/server/logger';
-import { createMarkdownNegotiationResponse, HTML_MODE_COOKIE_NAME, isLikelyBrowserNavigationRequest, isMarkdownNegotiablePath } from '$lib/server/markdown-negotiation';
 
 type RuntimeEnv = {
 	AGENT_REDIRECT_MODE: string | null;
@@ -162,24 +161,6 @@ const applySecurityHeaders = (response: Response, path: string): void => {
 	response.headers.append('link', '</llms.txt>; rel="alternate"; type="text/plain"; title="LLMS context"');
 };
 
-const applyNegotiationCacheHeaders = (response: Response): void => {
-	response.headers.set('cache-control', 'private, no-store, must-revalidate');
-	response.headers.set('cdn-cache-control', 'no-store');
-	response.headers.set('cloudflare-cdn-cache-control', 'no-store');
-};
-
-const applyBrowserHtmlRecoveryHeaders = ({ event, response }: { event: Parameters<Handle>[0]['event']; response: Response }): void => {
-	const userAgent = event.request.headers.get('user-agent') ?? '';
-	if (!isLikelyBrowserNavigationRequest({ request: event.request, userAgent })) {
-		return;
-	}
-
-	if (event.cookies.get(HTML_MODE_COOKIE_NAME) !== '1') {
-		response.headers.append('set-cookie', `${HTML_MODE_COOKIE_NAME}=1; Path=/; Max-Age=2592000; SameSite=Lax; Secure; HttpOnly`);
-		response.headers.set('clear-site-data', '"cache"');
-	}
-};
-
 type CspDirective = {
 	name: string;
 	values: string[];
@@ -230,18 +211,6 @@ export const handle: Handle = async ({ event, resolve }) => {
 	const requestId = crypto.randomUUID();
 	event.locals.requestId = requestId;
 
-	const markdownResponse = await createMarkdownNegotiationResponse({
-		request: event.request,
-		url: event.url,
-	});
-
-	if (markdownResponse) {
-		applySecurityHeaders(markdownResponse, path);
-		applyNegotiationCacheHeaders(markdownResponse);
-		markdownResponse.headers.set('strict-transport-security', 'max-age=31536000; includeSubDomains');
-		return markdownResponse;
-	}
-
 	const classification = classifyAgentRedirectRequest({
 		request: event.request,
 		path,
@@ -274,12 +243,6 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	response.headers.set('content-security-policy', buildCsp(nonce));
 	applySecurityHeaders(response, path);
-	if (isMarkdownNegotiablePath(path)) {
-		appendVaryHeader(response.headers, 'Accept');
-		appendVaryHeader(response.headers, 'Cookie');
-		applyNegotiationCacheHeaders(response);
-		applyBrowserHtmlRecoveryHeaders({ event, response });
-	}
 
 	response.headers.set('strict-transport-security', 'max-age=31536000; includeSubDomains');
 
