@@ -162,6 +162,12 @@ const applySecurityHeaders = (response: Response, path: string): void => {
 	response.headers.append('link', '</llms.txt>; rel="alternate"; type="text/plain"; title="LLMS context"');
 };
 
+const applyNegotiationCacheHeaders = (response: Response): void => {
+	response.headers.set('cache-control', 'private, no-store, must-revalidate');
+	response.headers.set('cdn-cache-control', 'no-store');
+	response.headers.set('cloudflare-cdn-cache-control', 'no-store');
+};
+
 type CspDirective = {
 	name: string;
 	values: string[];
@@ -219,6 +225,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	if (markdownResponse) {
 		applySecurityHeaders(markdownResponse, path);
+		applyNegotiationCacheHeaders(markdownResponse);
 		markdownResponse.headers.set('strict-transport-security', 'max-age=31536000; includeSubDomains');
 		return markdownResponse;
 	}
@@ -257,6 +264,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	applySecurityHeaders(response, path);
 	if (isMarkdownNegotiablePath(path)) {
 		appendVaryHeader(response.headers, 'Accept');
+		applyNegotiationCacheHeaders(response);
 	}
 
 	response.headers.set('strict-transport-security', 'max-age=31536000; includeSubDomains');
