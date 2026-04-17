@@ -33,6 +33,44 @@ type SitemapEntry = {
 
 const escapeXml = (value: string): string => value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
 
+const ROBOTS_LINES = [
+	'User-agent: *',
+	'Allow: /',
+	'Allow: /llms.txt',
+	'',
+	'# Explicit AI bot policy: training crawlers are blocked, user-driven retrieval stays allowed.',
+	'User-agent: GPTBot',
+	'Disallow: /',
+	'',
+	'User-agent: ClaudeBot',
+	'Disallow: /',
+	'',
+	'User-agent: Google-Extended',
+	'Disallow: /',
+	'',
+	'User-agent: Applebot-Extended',
+	'Disallow: /',
+	'',
+	'User-agent: CCBot',
+	'Disallow: /',
+	'',
+	'User-agent: Bytespider',
+	'Disallow: /',
+	'',
+	'User-agent: ChatGPT-User',
+	'Allow: /',
+	'',
+	'User-agent: OAI-SearchBot',
+	'Allow: /',
+	'',
+	'User-agent: PerplexityBot',
+	'Allow: /',
+	'',
+	CONTENT_SIGNAL_DIRECTIVE,
+	`Sitemap: ${SITE.url}/sitemap.xml`,
+	'',
+] as const;
+
 const buildSitemapXml = (entries: SitemapEntry[]): string => {
 	const xmlEntries = entries
 		.map(
@@ -74,7 +112,7 @@ export function generateManifest(): ManifestData {
 }
 
 export function generateRobotsTxt(): string {
-	return ['User-agent: *', 'Allow: /', 'Allow: /llms.txt', CONTENT_SIGNAL_DIRECTIVE, `Sitemap: ${SITE.url}/sitemap.xml`, ''].join('\n');
+	return ROBOTS_LINES.join('\n');
 }
 
 export async function generateSitemapXml(): Promise<string> {
