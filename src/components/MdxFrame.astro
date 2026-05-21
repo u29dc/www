@@ -1,0 +1,35 @@
+---
+import { render } from 'astro:content';
+import type { ArtifactEntry } from '../lib/content';
+import UiLink from './UiLink.astro';
+import MdxCitation from './mdx/MdxCitation.astro';
+import MdxMedia from './mdx/MdxMedia.astro';
+import MdxParagraph from './mdx/MdxParagraph.astro';
+import MdxQuote from './mdx/MdxQuote.astro';
+import MdxSpacer from './mdx/MdxSpacer.astro';
+
+type Props = {
+	entry: ArtifactEntry;
+};
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+const components = {
+	a: UiLink,
+	Citation: MdxCitation,
+	Link: UiLink,
+	Media: MdxMedia,
+	MdxCitation,
+	MdxMedia,
+	MdxParagraph,
+	MdxQuote,
+	MdxSpacer,
+	Paragraph: MdxParagraph,
+	Quote: MdxQuote,
+	Spacer: MdxSpacer,
+};
+---
+
+<article class="content-prose">
+	<Content components={components} />
+</article>

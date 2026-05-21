@@ -1,0 +1,64 @@
+---
+import MdxFrame from '../components/MdxFrame.astro';
+import ConnectLine from '../components/ConnectLine.astro';
+import UiLink from '../components/UiLink.astro';
+import SiteLayout from '../layouts/SiteLayout.astro';
+import { formatDate, getArtifacts, isFragmentArtifact, isStudyArtifact } from '../lib/content';
+
+export async function getStaticPaths() {
+	const artifacts = await getArtifacts();
+	return artifacts.map((entry) => ({
+		params: { slug: entry.data.slug },
+		props: { entry },
+	}));
+}
+
+const { entry } = Astro.props;
+---
+
+<SiteLayout title={`${entry.data.title} / Incomplete Infinity`} description={entry.data.description}>
+	<header class="sticky top-0 z-10 bg-ground/86 px-(--space-page) pt-(--space-6) pb-(--space-5) backdrop-blur-md">
+		<nav class="mx-auto flex w-[min(100%,var(--measure-article))] items-center justify-between text-(length:--type-body) font-(--weight-strong) leading-(--leading-body)" aria-label="Primary">
+			<UiLink href="/" showIcon={false} showArrow={false}>Incomplete Infinity</UiLink>
+		</nav>
+	</header>
+	<main class="grid gap-(--space-6) px-(--space-page) pt-(--space-7) pb-(--space-9)">
+		<header class="mx-auto grid w-[min(100%,var(--measure-article))] max-w-(--measure-meta) gap-(--space-4)">
+			<p class="text-(length:--type-body) font-(--weight-strong) leading-(--leading-body) text-muted">{entry.data.type === 'study' ? 'Study' : 'Writing'}</p>
+			<h1 class="max-w-(--measure-article) font-serif-condensed text-(length:--type-title) font-(--weight-title) leading-(--leading-title)">{entry.data.title}</h1>
+			<p class="max-w-(--measure-article) text-(length:--type-body-lg) text-muted">{entry.data.description}</p>
+		</header>
+		<dl class="mx-auto grid hidden w-[min(100%,var(--measure-article))] max-w-(--measure-meta) grid-cols-[max-content_minmax(0,1fr)] gap-x-(--space-5) gap-y-(--space-2) border-y border-edge py-(--space-5) max-[42rem]:grid-cols-1 max-[42rem]:gap-(--space-1)" aria-hidden="true" hidden>
+			<dt>Type</dt>
+			<dd>{entry.data.type === 'study' ? 'Study' : 'Writing'}</dd>
+			<dt>Date</dt>
+			<dd>{formatDate(entry.data.date)}</dd>
+			{isStudyArtifact(entry) && (
+					<>
+						<dt>Client</dt>
+						<dd>{entry.data.client}</dd>
+						<dt>Role</dt>
+						<dd>{entry.data.role}</dd>
+						<dt>Mode</dt>
+						<dd>{entry.data.mode}</dd>
+						{entry.data.venue && (
+							<>
+								<dt>Venue</dt>
+								<dd>{entry.data.venue}</dd>
+							</>
+						)}
+					</>
+				)}
+			{isFragmentArtifact(entry) && (
+				<>
+					<dt>Excerpt</dt>
+					<dd>{entry.data.excerpt}</dd>
+				</>
+			)}
+		</dl>
+		<div class="mx-auto w-[min(100%,var(--measure-article))]">
+			<MdxFrame entry={entry} />
+		</div>
+		<ConnectLine />
+	</main>
+</SiteLayout>

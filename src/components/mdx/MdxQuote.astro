@@ -1,0 +1,34 @@
+---
+type Props = {
+	author?: string;
+	source?: string;
+	reference?: string;
+	href?: string;
+};
+
+const { author, source, reference, href } = Astro.props;
+const hasCaption = Boolean(author || source || reference);
+const isExternal = href ? /^https?:\/\//.test(href) : false;
+---
+
+<figure class="mdx-quote">
+	<blockquote>
+		<slot />
+	</blockquote>
+	{
+		hasCaption && (
+			<figcaption>
+				{author && <span>{author}</span>}
+				{source && <span>{source}</span>}
+				{reference &&
+					(href ? (
+						<a href={href} target={isExternal ? '_blank' : undefined} rel={isExternal ? 'noopener noreferrer' : undefined}>
+							{reference}
+						</a>
+					) : (
+						<span>{reference}</span>
+					))}
+			</figcaption>
+		)
+	}
+</figure>

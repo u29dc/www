@@ -1,0 +1,31 @@
+{
+	"$schema": "./node_modules/oxlint/configuration_schema.json",
+	"plugins": ["typescript", "unicorn", "oxc", "import"],
+	"categories": {
+		"correctness": "error",
+		"suspicious": "error"
+	},
+	"rules": {
+		"no-console": "error",
+		"no-var": "error",
+		"eqeqeq": "error",
+		"@typescript-eslint/no-explicit-any": "error",
+		"@typescript-eslint/no-non-null-assertion": "error",
+		"typescript/consistent-type-imports": "warn"
+	},
+	"overrides": [
+		{
+			"files": ["**/*.astro"],
+			"rules": {
+				"import/no-unassigned-import": "off"
+			}
+		}
+	],
+	"env": {
+		"astro": true,
+		"browser": true,
+		"builtin": true,
+		"node": true
+	},
+	"ignorePatterns": ["dist", ".astro", "node_modules", ".wrangler"]
+}

@@ -1,0 +1,11 @@
+---
+import UiLink from './UiLink.astro';
+import { connectLinks } from '../lib/site-content';
+---
+
+<footer class="mx-auto grid w-[min(100%,var(--measure-article))] gap-(--space-4) pt-(--space-4)" id="connect">
+	<p class="text-(length:--type-body) font-(--weight-strong) leading-(--leading-body) text-muted">Connect</p>
+	<p class="max-w-(--measure-article) text-(length:--type-body-lg) leading-(--leading-body) text-muted [&_.ui-link]:font-(--weight-strong) [&_.ui-link]:text-ink">
+		Book <UiLink href={connectLinks.conversation.href} icon={connectLinks.conversation.icon}>a conversation</UiLink><span class="copy-skip">, </span>write <UiLink href={connectLinks.email.href} icon={connectLinks.email.icon}>han@u29dc.com</UiLink><span class="copy-skip">, </span>or find U29DC on <UiLink href={connectLinks.linkedin.href} icon={connectLinks.linkedin.icon}>LinkedIn</UiLink> and <UiLink href={connectLinks.instagram.href} icon={connectLinks.instagram.icon}>Instagram</UiLink><span class="copy-skip">.</span>
+	</p>
+</footer>
