@@ -2,12 +2,10 @@
 node_modules/
 
 # build
+.astro/
 dist/
-build/
 *.tsbuildinfo
 .biome
-.svelte-kit/
-.zvelte-check/
 
 # system
 .DS_Store

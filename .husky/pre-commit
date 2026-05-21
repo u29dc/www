@@ -1,2 +1,1 @@
-bun run util:lint:staged
-bun run util:check
+bunx lint-staged

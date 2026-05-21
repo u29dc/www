@@ -1,0 +1,39 @@
+---
+import '../styles/app.css';
+
+type Props = {
+	title?: string;
+	description?: string;
+};
+
+const { title = 'Incomplete Infinity', description = 'U29DC website content baseline.' } = Astro.props;
+const rawTheme = import.meta.env['PUBLIC_SITE_THEME'];
+const forcedTheme = rawTheme === 'light' || rawTheme === 'dark' ? rawTheme : undefined;
+---
+
+<!doctype html>
+<html lang="en" data-theme={forcedTheme}>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="description" content={description} />
+		{
+			forcedTheme ? (
+				<meta name="theme-color" content={forcedTheme === 'dark' ? '#18191b' : '#f7f7f7'} />
+			) : (
+				<>
+					<meta name="theme-color" content="#f7f7f7" media="(prefers-color-scheme: light)" />
+					<meta name="theme-color" content="#18191b" media="(prefers-color-scheme: dark)" />
+				</>
+			)
+		}
+		<title>{title}</title>
+	</head>
+	<body class="min-h-dvh">
+		<slot />
+		<script>
+			import '../scripts/mdx-media';
+			import '../scripts/smooth-scroll';
+		</script>
+	</body>
+</html>

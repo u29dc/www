@@ -1,0 +1,17 @@
+---
+import UiLink from '../UiLink.astro';
+
+type Props = {
+	href: string;
+	label?: string;
+	title?: string;
+};
+
+const { href, label = 'source', title } = Astro.props;
+---
+
+<sup class="mdx-citation">
+	<UiLink href={href} showIcon={false} showArrow={false} aria-label={title ?? `Citation: ${label}`}>
+		{label}
+	</UiLink>
+</sup>

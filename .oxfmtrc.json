@@ -1,0 +1,13 @@
+{
+	"$schema": "./node_modules/oxfmt/configuration_schema.json",
+	"ignorePatterns": ["dist", ".astro", "node_modules", ".wrangler"],
+	"printWidth": 200,
+	"proseWrap": "preserve",
+	"quoteProps": "as-needed",
+	"semi": true,
+	"singleQuote": true,
+	"sortPackageJson": false,
+	"tabWidth": 4,
+	"trailingComma": "all",
+	"useTabs": true
+}

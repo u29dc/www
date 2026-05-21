@@ -1,0 +1,96 @@
+---
+import { parseMediaSources } from '../../lib/media';
+
+type Props = {
+	src: string | string[];
+	alt?: string;
+	caption?: string;
+	credit?: string;
+	fit?: 'cover' | 'contain';
+	loading?: 'lazy' | 'eager';
+	autoplay?: boolean;
+	controls?: boolean;
+	loop?: boolean;
+	muted?: boolean;
+};
+
+const {
+	src,
+	alt = '',
+	caption,
+	credit,
+	fit = 'cover',
+	loading = 'lazy',
+	autoplay = true,
+	controls = false,
+	loop = true,
+	muted = true,
+} = Astro.props;
+
+const sources = parseMediaSources(src);
+const totalRatio = sources.reduce((sum, item) => sum + item.ratio, 0);
+const shouldShowControls = controls || !autoplay;
+---
+
+<figure class="mdx-media" style={`--media-ratio:${totalRatio};`} data-count={sources.length}>
+	<div class="mdx-media__track">
+		{
+			sources.map((item) => (
+				<div class="mdx-media__item" style={`--item-ratio:${item.ratio}; --item-basis:${(item.ratio / totalRatio) * 100}%;`} data-alt={alt || undefined}>
+					{item.kind === 'video' ? (
+						<>
+							<video
+								class="mdx-media__asset"
+								data-mdx-video
+								data-src={item.url}
+								data-autoplay={autoplay ? 'true' : 'false'}
+								aria-label={alt || undefined}
+								preload="none"
+								muted={muted}
+								loop={loop}
+								playsinline
+								controls={shouldShowControls}
+								crossorigin="anonymous"
+							/>
+							<noscript>
+								<video
+									class="mdx-media__asset"
+									src={item.url}
+									aria-label={alt || undefined}
+									preload="metadata"
+									muted
+									loop={loop}
+									playsinline
+									controls
+									crossorigin="anonymous"
+								/>
+							</noscript>
+						</>
+					) : (
+						<img
+							class="mdx-media__asset"
+							src={item.url}
+							width={item.width}
+							height={item.height}
+							alt={alt}
+							loading={loading}
+							decoding="async"
+							crossorigin="anonymous"
+							referrerpolicy="origin"
+							data-fit={fit}
+							draggable="false"
+						/>
+					)}
+				</div>
+			))
+		}
+	</div>
+	{
+		(caption || credit) && (
+			<figcaption class="mdx-media__caption">
+				{caption && <span>{caption}</span>}
+				{credit && <span>{credit}</span>}
+			</figcaption>
+		)
+	}
+</figure>
