@@ -16,7 +16,7 @@ export async function getStaticPaths() {
 const { entry } = Astro.props;
 ---
 
-<SiteLayout title={`${entry.data.title} / Incomplete Infinity`} description={entry.data.description}>
+<SiteLayout title={`${entry.data.title} / Incomplete Infinity`} description={entry.data.description} ogType="article" publishedTime={entry.data.date}>
 	<header class="sticky top-0 z-10 bg-ground/86 px-(--space-page) pt-(--space-6) pb-(--space-5) backdrop-blur-md">
 		<nav class="mx-auto flex w-[min(100%,var(--measure-article))] items-center justify-between text-(length:--type-body) font-(--weight-strong) leading-(--leading-body)" aria-label="Primary">
 			<UiLink href="/" showIcon={false} showArrow={false}>Incomplete Infinity</UiLink>

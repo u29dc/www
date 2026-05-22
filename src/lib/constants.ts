@@ -7,9 +7,19 @@ const normalizeBaseUrl = (value: string): string => {
 };
 
 export const SITE = {
+	title: 'Incomplete Infinity',
 	name: 'Incomplete Infinity',
-	description: 'A public thinking surface and commercial trust surface for U29DC.',
+	description: 'We turn complex futures into decision-grade narratives',
 	url: 'https://u29dc.com',
+	locale: 'en_GB',
+	lang: 'en-GB',
+	themeColorLight: '#f7f7f7',
+	themeColorDark: '#18191b',
+	backgroundColor: '#f7f7f7',
+	keywords: ['narrative architecture', 'creative strategy', 'design engineering', 'climate technology', 'industrial AI', 'robotics'],
+	creator: 'u29dc',
+	ogImagePath: '/og.jpg',
+	ogImageType: 'image/jpeg',
 } as const;
 
 export const MEDIA = {
