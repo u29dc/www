@@ -6,6 +6,7 @@ const CONTENT_SIGNAL_DIRECTIVE = 'Content-Signal: ai-train=yes, search=yes, ai-i
 const robots = [
 	'User-agent: *',
 	'Allow: /',
+	'Allow: /llms.txt',
 	'',
 	'# Explicit AI bot policy: training and retrieval crawlers are allowed.',
 	'User-agent: GPTBot',

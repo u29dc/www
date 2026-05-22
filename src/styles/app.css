@@ -242,6 +242,20 @@
 		@apply bg-transparent text-muted;
 	}
 
+	.copy-action {
+		@apply inline-flex min-h-8 items-center rounded-xs border border-edge-soft px-(--space-2) py-(--space-1);
+		@apply font-mono text-(length:--type-label) font-(--weight-strong) leading-(--leading-label) text-muted;
+		@apply bg-transparent;
+	}
+
+	.copy-action:focus-visible {
+		@apply outline-2 outline-offset-3 outline-accent;
+	}
+
+	.copy-action:disabled {
+		@apply cursor-wait opacity-70;
+	}
+
 	.ui-link__icon svg {
 		@apply block size-full;
 		pointer-events: none;
@@ -436,6 +450,10 @@
 }
 
 @media (hover: hover) {
+	.copy-action:hover {
+		@apply border-edge bg-surface text-ink;
+	}
+
 	.ui-link-wrap:hover .ui-link {
 		@apply text-ink;
 	}
@@ -484,7 +502,8 @@
 	}
 
 	.ui-link__icon,
-	.ui-link__arrow {
+	.ui-link__arrow,
+	.copy-action {
 		@apply transition-colors;
 		@apply duration-(--duration-quick) ease-(--ease-settle);
 	}

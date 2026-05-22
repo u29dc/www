@@ -35,6 +35,11 @@ export const GET: APIRoute = async () => {
 			lastModified: new Date(),
 			changeFrequency: 'monthly',
 		},
+		{
+			url: new URL('/llms.txt', SITE.url).toString(),
+			lastModified: new Date(),
+			changeFrequency: 'monthly',
+		},
 		...artifacts
 			.filter((entry) => !(entry.data.type === 'study' && entry.data.isConfidential))
 			.map((entry) => ({

@@ -1,0 +1,20 @@
+---
+import { SITE } from '../lib/constants';
+---
+
+<!doctype html>
+<html lang={SITE.lang}>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="robots" content="noindex, follow" />
+		<meta http-equiv="refresh" content="0;url=/" />
+		<title>Redirecting / {SITE.name}</title>
+		<script is:inline>
+			window.location.replace('/');
+		</script>
+	</head>
+	<body>
+		<a href="/">Return home</a>
+	</body>
+</html>
