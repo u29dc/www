@@ -59,8 +59,8 @@ const showSignals = import.meta.env['PUBLIC_SHOW_SIGNALS'] === 'true';
 			<ul class="grid list-none border-t border-edge-soft p-0">
 				{studies.map((entry) => (
 					<li>
-						<a class="group grid grid-cols-[minmax(0,1fr)_max-content] items-baseline gap-(--space-4) border-b border-edge-soft py-(--space-2) text-current no-underline touch-manipulation max-[42rem]:grid-cols-1 max-[42rem]:gap-(--space-1)" href={`/${entry.data.slug}`}>
-							<span class="font-mono text-(length:--type-label) font-(--weight-strong) leading-(--leading-label)">{entry.data.title}</span>
+						<a class="group grid grid-cols-[minmax(0,1fr)_max-content] items-baseline gap-(--space-4) border-b border-edge-soft py-(--space-2) text-current no-underline opacity-100 transition-opacity duration-(--duration-quick) ease-(--ease-settle) touch-manipulation hover:opacity-72 max-[42rem]:grid-cols-1 max-[42rem]:gap-(--space-1)" href={`/${entry.data.slug}`}>
+							<span class="font-mono text-(length:--type-label) font-(--weight-strong) leading-(--leading-label) motion-safe:transition-transform motion-safe:duration-(--duration-quick) motion-safe:ease-(--ease-settle) motion-safe:group-hover:translate-x-1">{entry.data.title}</span>
 							<span class="text-right font-mono text-(length:--type-label) leading-(--leading-label) tabular-nums text-muted max-[42rem]:text-left">{entry.data.client}</span>
 						</a>
 					</li>
@@ -75,8 +75,8 @@ const showSignals = import.meta.env['PUBLIC_SHOW_SIGNALS'] === 'true';
 			<ul class="grid list-none border-t border-edge-soft p-0">
 				{fragments.map((entry) => (
 					<li>
-						<a class="group grid grid-cols-[minmax(0,1fr)_max-content] items-baseline gap-(--space-4) border-b border-edge-soft py-(--space-2) text-current no-underline touch-manipulation max-[42rem]:grid-cols-1 max-[42rem]:gap-(--space-1)" href={`/${entry.data.slug}`}>
-							<span class="font-mono text-(length:--type-label) font-(--weight-strong) leading-(--leading-label)">{entry.data.title}</span>
+						<a class="group grid grid-cols-[minmax(0,1fr)_max-content] items-baseline gap-(--space-4) border-b border-edge-soft py-(--space-2) text-current no-underline opacity-100 transition-opacity duration-(--duration-quick) ease-(--ease-settle) touch-manipulation hover:opacity-72 max-[42rem]:grid-cols-1 max-[42rem]:gap-(--space-1)" href={`/${entry.data.slug}`}>
+							<span class="font-mono text-(length:--type-label) font-(--weight-strong) leading-(--leading-label) motion-safe:transition-transform motion-safe:duration-(--duration-quick) motion-safe:ease-(--ease-settle) motion-safe:group-hover:translate-x-1">{entry.data.title}</span>
 							<span class="text-right font-mono text-(length:--type-label) leading-(--leading-label) tabular-nums text-muted max-[42rem]:text-left">{formatDate(entry.data.date)}</span>
 						</a>
 					</li>

@@ -9,6 +9,9 @@ export default defineConfig({
 	output: 'static',
 	compressHTML: true,
 	prerenderConflictBehavior: 'error',
+	devToolbar: {
+		enabled: false,
+	},
 	build: {
 		inlineStylesheets: 'never',
 	},
