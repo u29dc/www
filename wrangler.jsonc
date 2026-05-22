@@ -1,0 +1,21 @@
+{
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "www",
+	"compatibility_date": "2026-05-21",
+	"workers_dev": true,
+	"preview_urls": true,
+	"routes": [
+		{
+			"pattern": "u29dc.com",
+			"custom_domain": true,
+		},
+	],
+	"observability": {
+		"enabled": true,
+		"head_sampling_rate": 1,
+	},
+	"assets": {
+		"html_handling": "auto-trailing-slash",
+		"not_found_handling": "404-page",
+	},
+}
