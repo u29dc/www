@@ -1,7 +1,7 @@
 ---
 import '../styles/app.css';
 import { ClientRouter } from 'astro:transitions';
-import { MEDIA, SITE } from '../lib/constants';
+import { MEDIA, SITE, SITE_THEME } from '../lib/constants';
 
 type Props = {
 	title?: string;
@@ -12,7 +12,7 @@ type Props = {
 };
 
 const { title = SITE.title, description = SITE.description, ogType = 'website', publishedTime, markdownUrl } = Astro.props;
-const rawTheme = import.meta.env['PUBLIC_SITE_THEME'];
+const rawTheme = SITE_THEME;
 const forcedTheme = rawTheme === 'light' || rawTheme === 'dark' ? rawTheme : undefined;
 const canonicalUrl = new URL(Astro.url.pathname, SITE.url).toString();
 const markdownHref = markdownUrl ? new URL(markdownUrl, SITE.url).toString() : undefined;
