@@ -1,5 +1,6 @@
 ---
 import '../styles/app.css';
+import { ClientRouter } from 'astro:transitions';
 import { MEDIA, SITE } from '../lib/constants';
 
 type Props = {
@@ -75,13 +76,33 @@ const themeColorDark = SITE.themeColorDark;
 		<meta name="twitter:description" content={description} />
 		<meta name="twitter:image" content={ogImageUrl} />
 		<meta name="twitter:image:alt" content={`${SITE.name} social card`} />
+		<ClientRouter fallback="swap" />
+		<script is:inline>
+			(() => {
+				const root = document.documentElement;
+				const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+				root.dataset.motion = reduceMotion ? 'reduced' : 'ready';
+
+				if (!reduceMotion) {
+					window.setTimeout(() => {
+						if (root.dataset.motionBoot !== 'ready') {
+							root.dataset.motion = 'reduced';
+						}
+					}, 1500);
+				}
+			})();
+		</script>
 		<title>{title}</title>
 	</head>
 	<body class="min-h-dvh">
-		<slot />
+		<div data-page-shell>
+			<slot />
+		</div>
 		<script>
 			import '../scripts/copy-markdown';
 			import '../scripts/mdx-media';
+			import '../scripts/page-transitions';
 			import '../scripts/smooth-scroll';
 		</script>
 	</body>

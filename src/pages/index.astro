@@ -1,5 +1,6 @@
 ---
 import ConnectLine from '../components/ConnectLine.astro';
+import TransitionLink from '../components/TransitionLink.astro';
 import UiLink from '../components/UiLink.astro';
 import SiteLayout from '../layouts/SiteLayout.astro';
 import { formatDate, getFragments, getStudies } from '../lib/content';
@@ -12,14 +13,14 @@ const showSignals = import.meta.env['PUBLIC_SHOW_SIGNALS'] === 'true';
 
 <SiteLayout title="Incomplete Infinity">
 	<header class="sticky top-0 z-10 bg-ground/86 px-(--space-page) pt-(--space-6) pb-(--space-5) backdrop-blur-md">
-		<nav class="mx-auto flex w-[min(100%,var(--measure-article))] items-center justify-between text-(length:--type-body) font-(--weight-strong) leading-(--leading-body)" aria-label="Primary">
+		<nav class="mx-auto flex w-[min(100%,var(--measure-article))] items-center justify-between text-(length:--type-body) font-(--weight-strong) leading-(--leading-body)" aria-label="Primary" data-reveal>
 			<UiLink href="/" showIcon={false} showArrow={false}>Incomplete Infinity</UiLink>
 		</nav>
 	</header>
 	<main class="grid gap-(--space-6) px-(--space-page) pt-(--space-7) pb-(--space-9)">
 		<section class="mx-auto grid w-[min(100%,var(--measure-article))] gap-(--space-4) pt-(--space-5)" id="origin">
-			<p class="text-(length:--type-body) font-(--weight-strong) leading-(--leading-body) text-muted">Origin</p>
-			<div class="grid max-w-(--measure-article) gap-(--space-4)">
+			<p class="text-(length:--type-body) font-(--weight-strong) leading-(--leading-body) text-muted" data-reveal>Origin</p>
+			<div class="grid max-w-(--measure-article) gap-(--space-4)" data-reveal-group>
 				<p class="text-(length:--type-body-lg) leading-(--leading-body) text-muted">
 					Most of the technology that will matter in the next decade is going to work. It will be funded, built, tested, deployed. The engineering question is being answered. The question that is not being answered — the one that shapes adoption, trust, policy, and public patience — is how it enters the world. What story surrounds it. Whether people who were not in the room can feel why it deserves belief.
 				</p>
@@ -37,9 +38,9 @@ const showSignals = import.meta.env['PUBLIC_SHOW_SIGNALS'] === 'true';
 
 		<section class="mx-auto grid w-[min(100%,var(--measure-article))] gap-(--space-4)" id="protocols">
 			<div class="grid gap-0.5">
-				<h2 class="text-(length:--type-body) font-(--weight-strong) leading-(--leading-body) text-muted">Protocols</h2>
+				<h2 class="text-(length:--type-body) font-(--weight-strong) leading-(--leading-body) text-muted" data-reveal>Protocols</h2>
 			</div>
-			<ul class="grid list-none border-t border-edge-soft p-0">
+			<ul class="grid list-none border-t border-edge-soft p-0" data-reveal-group>
 				{protocols.map((protocol) => (
 					<li class="grid grid-cols-[4rem_minmax(0,1fr)] items-baseline gap-x-(--space-4) gap-y-(--space-1) border-b border-edge-soft py-(--space-2) max-[42rem]:grid-cols-1 max-[42rem]:gap-(--space-1)">
 						<div class="flex items-baseline gap-(--space-2) max-[42rem]:flex-wrap">
@@ -54,15 +55,15 @@ const showSignals = import.meta.env['PUBLIC_SHOW_SIGNALS'] === 'true';
 
 		<section class="mx-auto grid w-[min(100%,var(--measure-article))] gap-(--space-4)" id="studies">
 			<div class="grid gap-0.5">
-				<h2 class="text-(length:--type-body) font-(--weight-strong) leading-(--leading-body) text-muted">Artifacts / Studies</h2>
+				<h2 class="text-(length:--type-body) font-(--weight-strong) leading-(--leading-body) text-muted" data-reveal>Artifacts / Studies</h2>
 			</div>
-			<ul class="grid list-none border-t border-edge-soft p-0">
+			<ul class="grid list-none border-t border-edge-soft p-0" data-reveal-group>
 				{studies.map((entry) => (
 					<li>
-						<a class="group grid grid-cols-[minmax(0,1fr)_max-content] items-baseline gap-(--space-4) border-b border-edge-soft py-(--space-2) text-current no-underline opacity-100 transition-opacity duration-(--duration-quick) ease-(--ease-settle) touch-manipulation hover:opacity-72 max-[42rem]:grid-cols-1 max-[42rem]:gap-(--space-1)" href={`/${entry.data.slug}`}>
+						<TransitionLink class="group grid grid-cols-[minmax(0,1fr)_max-content] items-baseline gap-(--space-4) border-b border-edge-soft py-(--space-2) text-current no-underline opacity-100 transition-opacity duration-(--duration-quick) ease-(--ease-settle) touch-manipulation hover:opacity-72 max-[42rem]:grid-cols-1 max-[42rem]:gap-(--space-1)" href={`/${entry.data.slug}`}>
 							<span class="font-mono text-(length:--type-label) font-(--weight-strong) leading-(--leading-label) motion-safe:transition-transform motion-safe:duration-(--duration-quick) motion-safe:ease-(--ease-settle) motion-safe:group-hover:translate-x-1">{entry.data.title}</span>
 							<span class="text-right font-mono text-(length:--type-label) leading-(--leading-label) tabular-nums text-muted max-[42rem]:text-left">{entry.data.client}</span>
-						</a>
+						</TransitionLink>
 					</li>
 				))}
 			</ul>
@@ -70,15 +71,15 @@ const showSignals = import.meta.env['PUBLIC_SHOW_SIGNALS'] === 'true';
 
 		<section class="mx-auto grid w-[min(100%,var(--measure-article))] gap-(--space-4)" id="fragments">
 			<div class="grid gap-0.5">
-				<h2 class="text-(length:--type-body) font-(--weight-strong) leading-(--leading-body) text-muted">Artifacts / Fragments</h2>
+				<h2 class="text-(length:--type-body) font-(--weight-strong) leading-(--leading-body) text-muted" data-reveal>Artifacts / Fragments</h2>
 			</div>
-			<ul class="grid list-none border-t border-edge-soft p-0">
+			<ul class="grid list-none border-t border-edge-soft p-0" data-reveal-group>
 				{fragments.map((entry) => (
 					<li>
-						<a class="group grid grid-cols-[minmax(0,1fr)_max-content] items-baseline gap-(--space-4) border-b border-edge-soft py-(--space-2) text-current no-underline opacity-100 transition-opacity duration-(--duration-quick) ease-(--ease-settle) touch-manipulation hover:opacity-72 max-[42rem]:grid-cols-1 max-[42rem]:gap-(--space-1)" href={`/${entry.data.slug}`}>
+						<TransitionLink class="group grid grid-cols-[minmax(0,1fr)_max-content] items-baseline gap-(--space-4) border-b border-edge-soft py-(--space-2) text-current no-underline opacity-100 transition-opacity duration-(--duration-quick) ease-(--ease-settle) touch-manipulation hover:opacity-72 max-[42rem]:grid-cols-1 max-[42rem]:gap-(--space-1)" href={`/${entry.data.slug}`}>
 							<span class="font-mono text-(length:--type-label) font-(--weight-strong) leading-(--leading-label) motion-safe:transition-transform motion-safe:duration-(--duration-quick) motion-safe:ease-(--ease-settle) motion-safe:group-hover:translate-x-1">{entry.data.title}</span>
 							<span class="text-right font-mono text-(length:--type-label) leading-(--leading-label) tabular-nums text-muted max-[42rem]:text-left">{formatDate(entry.data.date)}</span>
-						</a>
+						</TransitionLink>
 					</li>
 				))}
 			</ul>
@@ -86,13 +87,13 @@ const showSignals = import.meta.env['PUBLIC_SHOW_SIGNALS'] === 'true';
 
 		{
 			showSignals && signals.length > 0 && (
-				<section class="mx-auto grid w-[min(100%,var(--measure-article))] gap-(--space-4)" id="signals">
-					<div class="grid gap-0.5">
-						<h2 class="text-(length:--type-body) font-(--weight-strong) leading-(--leading-body) text-muted">Signals</h2>
-					</div>
-					<ul class="grid list-none border-t border-edge-soft p-0">
-						{signals.map((signal) => (
-							<li class="grid gap-(--space-1) border-b border-edge-soft py-(--space-2)">
+					<section class="mx-auto grid w-[min(100%,var(--measure-article))] gap-(--space-4)" id="signals">
+						<div class="grid gap-0.5">
+							<h2 class="text-(length:--type-body) font-(--weight-strong) leading-(--leading-body) text-muted" data-reveal>Signals</h2>
+						</div>
+						<ul class="grid list-none border-t border-edge-soft p-0" data-reveal-group>
+							{signals.map((signal) => (
+								<li class="grid gap-(--space-1) border-b border-edge-soft py-(--space-2)">
 								<UiLink class="w-fit font-sans text-(length:--type-body) font-(--weight-strong)" href={signal.href}>
 									{signal.label}
 								</UiLink>
@@ -104,6 +105,8 @@ const showSignals = import.meta.env['PUBLIC_SHOW_SIGNALS'] === 'true';
 			)
 		}
 
-		<ConnectLine />
+		<div data-reveal>
+			<ConnectLine />
+		</div>
 	</main>
 </SiteLayout>

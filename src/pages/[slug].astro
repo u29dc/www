@@ -20,12 +20,12 @@ const markdownPath = `/${entry.data.slug}.md`;
 
 <SiteLayout title={`${entry.data.title} / Incomplete Infinity`} description={entry.data.description} ogType="article" publishedTime={entry.data.date} markdownUrl={artifactMarkdownUrl(entry)}>
 	<header class="sticky top-0 z-10 bg-ground/86 px-(--space-page) pt-(--space-6) pb-(--space-5) backdrop-blur-md">
-		<nav class="mx-auto flex w-[min(100%,var(--measure-article))] items-center justify-between text-(length:--type-body) font-(--weight-strong) leading-(--leading-body)" aria-label="Primary">
+		<nav class="mx-auto flex w-[min(100%,var(--measure-article))] items-center justify-between text-(length:--type-body) font-(--weight-strong) leading-(--leading-body)" aria-label="Primary" data-reveal>
 			<UiLink href="/" showIcon={false} showArrow={false}>Incomplete Infinity</UiLink>
 		</nav>
 	</header>
 	<main class="grid gap-(--space-6) px-(--space-page) pt-(--space-7) pb-(--space-9)">
-		<header class="mx-auto grid w-[min(100%,var(--measure-article))] max-w-(--measure-meta) gap-(--space-4)">
+		<header class="mx-auto grid w-[min(100%,var(--measure-article))] max-w-(--measure-meta) gap-(--space-4)" data-reveal-group>
 			<p class="text-(length:--type-body) font-(--weight-strong) leading-(--leading-body) text-muted">{entry.data.type === 'study' ? 'Study' : 'Writing'}</p>
 			<h1 class="max-w-(--measure-article) font-serif-condensed text-(length:--type-title) font-(--weight-title) leading-(--leading-title)">{entry.data.title}</h1>
 			<p class="max-w-(--measure-article) text-(length:--type-body-lg) text-muted">{entry.data.description}</p>
@@ -67,6 +67,8 @@ const markdownPath = `/${entry.data.slug}.md`;
 		<div class="mx-auto w-[min(100%,var(--measure-article))]">
 			<MdxFrame entry={entry} />
 		</div>
-		<ConnectLine />
+		<div data-reveal>
+			<ConnectLine />
+		</div>
 	</main>
 </SiteLayout>

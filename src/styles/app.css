@@ -69,6 +69,11 @@
 	--radius-focus: 0.375rem;
 	--ease-settle: cubic-bezier(0.16, 1, 0.3, 1);
 	--duration-quick: 150ms;
+	--duration-page-exit: 400ms;
+	--duration-reveal: 400ms;
+	--duration-reveal-stagger: 50ms;
+	--motion-page-exit-y: -0.125rem;
+	--motion-reveal-y: 0.25rem;
 }
 
 :root[data-theme='light'] {
@@ -210,6 +215,31 @@
 }
 
 @layer components {
+	[data-page-shell] {
+		@apply min-h-dvh;
+	}
+
+	html[data-page-state='exiting'] {
+		@apply cursor-progress;
+	}
+
+	html[data-page-state='exiting'] [data-page-shell] {
+		@apply pointer-events-none opacity-0;
+		transform: translate3d(0, var(--motion-page-exit-y), 0);
+		will-change: opacity, transform;
+	}
+
+	html[data-motion='ready'] [data-reveal],
+	html[data-motion='ready'] [data-reveal-group] > :where(header, section, article, footer, h1, h2, h3, p, ul, ol, dl, figure, blockquote, div, li) {
+		@apply opacity-0;
+		transform: translate3d(0, var(--motion-reveal-y), 0);
+	}
+
+	html[data-motion='ready'] [data-reveal='visible'] {
+		@apply opacity-100;
+		transform: translate3d(0, 0, 0);
+	}
+
 	.ui-link-wrap {
 		@apply inline;
 		line-height: inherit;
@@ -496,6 +526,22 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
+	::view-transition-old(root),
+	::view-transition-new(root) {
+		animation: none;
+	}
+
+	[data-page-shell] {
+		@apply transition-[opacity,transform];
+		@apply duration-(--duration-page-exit) ease-(--ease-settle);
+	}
+
+	html[data-motion='ready'] [data-reveal='visible'] {
+		@apply transition-[opacity,transform];
+		@apply duration-(--duration-reveal) ease-(--ease-settle);
+		transition-delay: calc(var(--reveal-index, 0) * var(--duration-reveal-stagger));
+	}
+
 	a {
 		@apply transition-colors;
 		@apply duration-(--duration-quick) ease-(--ease-settle);
@@ -506,5 +552,16 @@
 	.copy-action {
 		@apply transition-colors;
 		@apply duration-(--duration-quick) ease-(--ease-settle);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	[data-page-shell],
+	html[data-motion='ready'] [data-reveal],
+	html[data-motion='ready'] [data-reveal-group] > :where(header, section, article, footer, h1, h2, h3, p, ul, ol, dl, figure, blockquote, div, li) {
+		@apply opacity-100;
+		transform: none;
+		transition: none;
+		will-change: auto;
 	}
 }

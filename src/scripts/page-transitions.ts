@@ -1,0 +1,187 @@
+import type { TransitionBeforePreparationEvent, TransitionBeforeSwapEvent } from 'astro:transitions/client';
+
+const DEFAULT_PAGE_EXIT_MS = 400;
+const REVEAL_FALLBACK_MS = 1_500;
+const REVEAL_ROOT_MARGIN = '0px 0px -8% 0px';
+const REVEAL_THRESHOLD = 0.01;
+const MAX_REVEAL_INDEX = 7;
+const REVEAL_TARGET_SELECTOR = ['[data-reveal]', '[data-reveal-group] > :where(header, section, article, footer, h1, h2, h3, p, ul, ol, dl, figure, blockquote, div, li)'].join(',');
+
+const reduceMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+let revealObserver: IntersectionObserver | undefined;
+let revealFallbackHandle: number | undefined;
+let exitAbortCleanup: (() => void) | undefined;
+
+const canAnimate = (): boolean => !reduceMotionQuery.matches;
+
+const readDuration = (propertyName: string, fallbackMilliseconds: number): number => {
+	const rawValue = getComputedStyle(document.documentElement).getPropertyValue(propertyName).trim();
+	const value = Number.parseFloat(rawValue);
+
+	if (!Number.isFinite(value)) return fallbackMilliseconds;
+	if (rawValue.endsWith('ms')) return value;
+	if (rawValue.endsWith('s')) return value * 1_000;
+
+	return value;
+};
+
+const delay = (milliseconds: number, signal?: AbortSignal): Promise<void> => {
+	if (milliseconds <= 0 || signal?.aborted) return Promise.resolve();
+
+	return new Promise((resolve) => {
+		let timeout = 0;
+		const finish = (): void => {
+			window.clearTimeout(timeout);
+			signal?.removeEventListener('abort', finish);
+			resolve();
+		};
+
+		timeout = window.setTimeout(finish, milliseconds);
+		signal?.addEventListener('abort', finish, { once: true });
+	});
+};
+
+const isRevealTarget = (element: Element): element is HTMLElement => element instanceof HTMLElement && !element.closest('[hidden], [aria-hidden="true"], [data-no-reveal]');
+
+const getRevealTargets = (root: Document | Element = document): HTMLElement[] => Array.from(root.querySelectorAll(REVEAL_TARGET_SELECTOR)).filter(isRevealTarget);
+
+const assignRevealIndexes = (targets: HTMLElement[]): void => {
+	const groupIndexes = new WeakMap<Element, number>();
+	let looseIndex = 0;
+
+	for (const target of targets) {
+		const parentGroup = target.parentElement?.matches('[data-reveal-group]') ? target.parentElement : undefined;
+		const index = parentGroup ? (groupIndexes.get(parentGroup) ?? 0) : looseIndex;
+
+		target.style.setProperty('--reveal-index', String(Math.min(index, MAX_REVEAL_INDEX)));
+		target.dataset['reveal'] = canAnimate() ? 'pending' : 'visible';
+
+		if (parentGroup) {
+			groupIndexes.set(parentGroup, index + 1);
+		} else {
+			looseIndex += 1;
+		}
+	}
+};
+
+const prepareRevealTargets = (root: Document | Element = document): void => {
+	const doc = root instanceof Document ? root : root.ownerDocument;
+	doc.documentElement.dataset['motion'] = canAnimate() ? 'ready' : 'reduced';
+	doc.documentElement.dataset['motionBoot'] = 'ready';
+	assignRevealIndexes(getRevealTargets(root));
+};
+
+const clearRevealFallback = (): void => {
+	if (revealFallbackHandle === undefined) return;
+
+	window.clearTimeout(revealFallbackHandle);
+	revealFallbackHandle = undefined;
+};
+
+const hasPendingRevealTargets = (): boolean => getRevealTargets().some((target) => target.dataset['reveal'] === 'pending');
+
+const reveal = (target: HTMLElement): void => {
+	target.dataset['reveal'] = 'visible';
+	revealObserver?.unobserve(target);
+
+	if (!hasPendingRevealTargets()) clearRevealFallback();
+};
+
+const revealPendingTargets = (): void => {
+	for (const target of getRevealTargets()) {
+		if (target.dataset['reveal'] === 'pending') reveal(target);
+	}
+};
+
+const observeRevealTargets = (): void => {
+	revealObserver?.disconnect();
+	clearRevealFallback();
+
+	const targets = getRevealTargets().filter((target) => target.dataset['reveal'] === 'pending');
+
+	if (targets.length === 0) return;
+
+	if (!canAnimate()) {
+		for (const target of targets) reveal(target);
+		return;
+	}
+
+	revealObserver = new IntersectionObserver(
+		(entries) => {
+			for (const entry of entries) {
+				if (entry.isIntersecting && entry.target instanceof HTMLElement) {
+					reveal(entry.target);
+				}
+			}
+		},
+		{ rootMargin: REVEAL_ROOT_MARGIN, threshold: REVEAL_THRESHOLD },
+	);
+
+	for (const target of targets) {
+		revealObserver.observe(target);
+	}
+
+	revealFallbackHandle = window.setTimeout(() => {
+		revealFallbackHandle = undefined;
+		revealPendingTargets();
+	}, REVEAL_FALLBACK_MS);
+};
+
+const initializeReveals = (): void => {
+	clearRevealFallback();
+	prepareRevealTargets();
+	observeRevealTargets();
+};
+
+const clearExitState = (): void => {
+	delete document.documentElement.dataset['pageState'];
+	exitAbortCleanup?.();
+	exitAbortCleanup = undefined;
+};
+
+const playExit = (signal: AbortSignal): Promise<void> => {
+	if (!canAnimate()) return Promise.resolve();
+
+	exitAbortCleanup?.();
+	document.documentElement.dataset['pageState'] = 'exiting';
+
+	const abort = (): void => clearExitState();
+	signal.addEventListener('abort', abort, { once: true });
+	exitAbortCleanup = () => signal.removeEventListener('abort', abort);
+
+	return delay(readDuration('--duration-page-exit', DEFAULT_PAGE_EXIT_MS), signal);
+};
+
+const handleBeforePreparation = (event: TransitionBeforePreparationEvent): void => {
+	const originalLoader = event.loader;
+
+	event.loader = async (): Promise<void> => {
+		const exit = playExit(event.signal);
+		try {
+			await originalLoader();
+			await exit;
+		} catch (error) {
+			clearExitState();
+			throw error;
+		}
+	};
+};
+
+const handleBeforeSwap = (event: TransitionBeforeSwapEvent): void => {
+	delete event.newDocument.documentElement.dataset['pageState'];
+	prepareRevealTargets(event.newDocument);
+};
+
+document.addEventListener('astro:before-preparation', (event) => {
+	handleBeforePreparation(event as TransitionBeforePreparationEvent);
+});
+
+document.addEventListener('astro:before-swap', (event) => {
+	handleBeforeSwap(event as TransitionBeforeSwapEvent);
+});
+
+document.addEventListener('astro:after-swap', clearExitState);
+document.addEventListener('astro:page-load', initializeReveals);
+reduceMotionQuery.addEventListener('change', initializeReveals);
+
+initializeReveals();

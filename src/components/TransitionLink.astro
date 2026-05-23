@@ -1,0 +1,15 @@
+---
+type Props = {
+	href: string;
+	class?: string;
+	prefetch?: 'hover' | 'tap' | 'viewport' | 'load' | false;
+	[key: string]: unknown;
+};
+
+const { href, class: className, prefetch = 'tap', ...anchorProps } = Astro.props as Props;
+const prefetchStrategy = prefetch === false ? undefined : prefetch;
+---
+
+<a class={className} href={href} data-transition-link data-astro-prefetch={prefetchStrategy} {...anchorProps}>
+	<slot />
+</a>
