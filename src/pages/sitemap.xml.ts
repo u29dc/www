@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { getArtifacts } from '../lib/content';
+import { getPublicArtifacts } from '../lib/content';
 import { SITE } from '../lib/constants';
 
 type SitemapEntry = {
@@ -28,7 +28,7 @@ const buildSitemap = (entries: SitemapEntry[]): string => {
 };
 
 export const GET: APIRoute = async () => {
-	const artifacts = await getArtifacts();
+	const artifacts = await getPublicArtifacts();
 	const entries: SitemapEntry[] = [
 		{
 			url: new URL('/', SITE.url).toString(),
@@ -40,13 +40,11 @@ export const GET: APIRoute = async () => {
 			lastModified: new Date(),
 			changeFrequency: 'monthly',
 		},
-		...artifacts
-			.filter((entry) => !(entry.data.type === 'study' && entry.data.isConfidential))
-			.map((entry) => ({
-				url: new URL(`/${entry.data.slug}/`, SITE.url).toString(),
-				lastModified: entry.data.date,
-				changeFrequency: 'monthly' as const,
-			})),
+		...artifacts.map((entry) => ({
+			url: new URL(`/${entry.data.slug}/`, SITE.url).toString(),
+			lastModified: entry.data.date,
+			changeFrequency: 'monthly' as const,
+		})),
 	];
 
 	return new Response(buildSitemap(entries), {

@@ -3,11 +3,11 @@ import MdxFrame from '../components/MdxFrame.astro';
 import ConnectLine from '../components/ConnectLine.astro';
 import UiLink from '../components/UiLink.astro';
 import SiteLayout from '../layouts/SiteLayout.astro';
-import { formatDate, getArtifacts, isFragmentArtifact, isStudyArtifact } from '../lib/content';
+import { formatDate, getPublicArtifacts, isFragmentArtifact, isStudyArtifact } from '../lib/content';
 import { artifactMarkdownUrl } from '../lib/markdown';
 
 export async function getStaticPaths() {
-	const artifacts = await getArtifacts();
+	const artifacts = await getPublicArtifacts();
 	return artifacts.map((entry) => ({
 		params: { slug: entry.data.slug },
 		props: { entry },

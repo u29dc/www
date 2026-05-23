@@ -2,6 +2,11 @@ import type { ArtifactEntry } from './content';
 import { formatDate } from './content';
 import { SITE } from './constants';
 import { parseMediaSource } from './media';
+import remarkGfm from 'remark-gfm';
+import remarkMdx from 'remark-mdx';
+import remarkParse from 'remark-parse';
+import remarkStringify from 'remark-stringify';
+import { unified } from 'unified';
 
 const rawModules = import.meta.glob('../content/*.mdx', {
 	eager: true,
@@ -30,6 +35,46 @@ const rawBySlug = new Map(
 
 const stripFrontmatter = (raw: string): string => raw.replace(FRONTMATTER_PATTERN, '');
 
+type MdxAttributeValueExpression = {
+	type: 'mdxJsxAttributeValueExpression';
+	value: string;
+};
+
+type MdxAttribute = {
+	type: 'mdxJsxAttribute';
+	name: string;
+	value?: string | MdxAttributeValueExpression | null;
+};
+
+type MarkdownNode = {
+	type: string;
+	name?: string | null;
+	value?: string;
+	url?: string;
+	title?: string | null;
+	alt?: string | null;
+	identifier?: string;
+	label?: string;
+	attributes?: MdxAttribute[];
+	children?: MarkdownNode[];
+	position?: {
+		start?: {
+			line?: number;
+			column?: number;
+		};
+	};
+	[key: string]: unknown;
+};
+
+const markdownParser = unified().use(remarkParse).use(remarkGfm).use(remarkMdx);
+const markdownStringifier = unified().use(remarkGfm).use(remarkStringify, {
+	bullet: '-',
+	emphasis: '_',
+	fences: true,
+	listItemIndent: 'one',
+	rule: '-',
+});
+
 const cleanBlock = (value: string): string =>
 	value
 		.replaceAll('\r\n', '\n')
@@ -38,29 +83,115 @@ const cleanBlock = (value: string): string =>
 		.replace(/\n{3,}/g, '\n\n')
 		.trim();
 
-const parseComponentSources = (attributes: string): string[] => {
-	const sourceExpression = attributes.match(/src=\{([^}]+)\}/)?.[1] ?? attributes.match(/src=["']([^"']+)["']/)?.[1] ?? '';
+const getAttributeValue = (node: MarkdownNode, name: string): string => {
+	const attribute = node.attributes?.find((item) => item.name === name);
+	if (!attribute || attribute.value === null || attribute.value === undefined) return '';
+	if (typeof attribute.value === 'string') return attribute.value;
+	return attribute.value.value;
+};
+
+const parseComponentSources = (sourceExpression: string): string[] => {
 	const quotedSources = [...sourceExpression.matchAll(/['"]([^'"]+)['"]/g)].map((match) => match[1]).filter((source): source is string => Boolean(source));
+	if (quotedSources.length === 0 && sourceExpression.trim().length > 0) return [sourceExpression.trim()];
 	return quotedSources.length > 0 && !sourceExpression.includes('[') ? [quotedSources[0] as string] : quotedSources;
 };
 
-const mediaToMarkdown = (attributes: string): string => {
-	const sources = parseComponentSources(attributes);
-	if (sources.length === 0) return '';
-
-	return sources
-		.map((source) => {
-			const media = parseMediaSource(source);
-			const label = media.kind === 'video' ? 'Video' : 'Image';
-			return `[${label}: ${media.path}](${media.url})`;
-		})
-		.join('\n');
+const componentLocation = (node: MarkdownNode): string => {
+	const line = node.position?.start?.line;
+	const column = node.position?.start?.column;
+	return line && column ? ` at ${line}:${column}` : '';
 };
 
-const quoteToMarkdown = (_match: string, content: string): string =>
-	cleanBlock(content)
+const linkNode = (url: string, text: string): MarkdownNode => ({
+	type: 'link',
+	url,
+	title: null,
+	children: [{ type: 'text', value: text }],
+});
+
+const mediaToMarkdownNodes = (node: MarkdownNode): MarkdownNode[] => {
+	const sources = parseComponentSources(getAttributeValue(node, 'src'));
+	if (sources.length === 0) {
+		throw new Error(`MdxMedia is missing src${componentLocation(node)}`);
+	}
+
+	return sources.map((source) => {
+		const media = parseMediaSource(source);
+		const label = media.kind === 'video' ? 'Video' : 'Image';
+		return {
+			type: 'paragraph',
+			children: [linkNode(media.url, `${label}: ${media.path}`)],
+		};
+	});
+};
+
+const transformTextComponent = (node: MarkdownNode): MarkdownNode => {
+	const children = transformNodes(node.children ?? []);
+
+	if (node.name === 'em') {
+		return { type: 'emphasis', children };
+	}
+
+	if (node.name === 'strong') {
+		return { type: 'strong', children };
+	}
+
+	if (node.name === 'a' || node.name === 'Link') {
+		const href = getAttributeValue(node, 'href');
+		if (!href) throw new Error(`${node.name} is missing href${componentLocation(node)}`);
+		return { type: 'link', url: href, title: null, children };
+	}
+
+	throw new Error(`Unsupported inline MDX component "${node.name ?? 'unknown'}"${componentLocation(node)}`);
+};
+
+const transformFlowComponent = (node: MarkdownNode): MarkdownNode[] => {
+	const children = transformNodes(node.children ?? []);
+
+	if (node.name === 'MdxParagraph' || node.name === 'Paragraph') {
+		return children;
+	}
+
+	if (node.name === 'MdxQuote' || node.name === 'Quote') {
+		return [{ type: 'blockquote', children }];
+	}
+
+	if (node.name === 'MdxSpacer' || node.name === 'Spacer') {
+		return [];
+	}
+
+	if (node.name === 'MdxMedia' || node.name === 'Media') {
+		return mediaToMarkdownNodes(node);
+	}
+
+	throw new Error(`Unsupported block MDX component "${node.name ?? 'unknown'}"${componentLocation(node)}`);
+};
+
+const transformNode = (node: MarkdownNode): MarkdownNode[] => {
+	if (node.type === 'mdxJsxFlowElement') {
+		return transformFlowComponent(node);
+	}
+
+	if (node.type === 'mdxJsxTextElement') {
+		return [transformTextComponent(node)];
+	}
+
+	if (node.children) {
+		return [{ ...node, children: transformNodes(node.children) }];
+	}
+
+	return [node];
+};
+
+const transformNodes = (nodes: MarkdownNode[]): MarkdownNode[] => nodes.flatMap(transformNode);
+
+const stripMdxModuleSyntax = (raw: string): string =>
+	raw
 		.split('\n')
-		.map((line) => (line.trim().length === 0 ? '>' : `> ${line}`))
+		.filter((line) => {
+			const trimmed = line.trimStart();
+			return !trimmed.startsWith('import ') && !trimmed.startsWith('export ');
+		})
 		.join('\n');
 
 export const getRawArtifactMarkdown = (slug: string): string => {
@@ -72,16 +203,11 @@ export const getRawArtifactMarkdown = (slug: string): string => {
 };
 
 export const toMarkdownBody = (raw: string): string => {
-	const body = stripFrontmatter(raw)
-		.replace(/^import\s.+$/gm, '')
-		.replace(/^export\s.+$/gm, '')
-		.replace(/<MdxParagraph>\s*/g, '')
-		.replace(/\s*<\/MdxParagraph>/g, '')
-		.replace(/<MdxSpacer\s*\/>/g, '')
-		.replace(/<MdxMedia\s+([^>]*)\/>/g, (_match: string, attributes: string) => mediaToMarkdown(attributes))
-		.replace(/<MdxQuote>\s*([\s\S]*?)\s*<\/MdxQuote>/g, quoteToMarkdown);
+	const tree = markdownParser.parse(stripMdxModuleSyntax(stripFrontmatter(raw))) as unknown as MarkdownNode;
+	tree.children = transformNodes(tree.children ?? []);
+	const body = markdownStringifier.stringify(tree as never);
 
-	return cleanBlock(body);
+	return cleanBlock(String(body));
 };
 
 export const artifactUrl = (entry: ArtifactEntry): string => new URL(`/${entry.data.slug}/`, SITE.url).toString();

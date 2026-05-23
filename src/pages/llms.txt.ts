@@ -1,19 +1,14 @@
 import type { APIRoute } from 'astro';
-import { formatDate, getArtifacts } from '../lib/content';
+import { formatDate, getPublicArtifacts } from '../lib/content';
 import { SITE } from '../lib/constants';
-import { protocols } from '../lib/site-content';
+import { originParagraphs, protocols } from '../lib/site-content';
 import { artifactMarkdownUrl, artifactTextUrl, artifactUrl, toArtifactMarkdown } from '../lib/markdown';
 
 const EMBED_ARTIFACTS = true;
 
 const shouldEmbedArtifacts = (import.meta.env['PUBLIC_LLMS_EMBED_ARTIFACTS'] ?? String(EMBED_ARTIFACTS)) === 'true';
 
-const origin = [
-	'Most of the technology that will matter in the next decade is going to work. It will be funded, built, tested, deployed. The engineering question is being answered. The question that is not being answered - the one that shapes adoption, trust, policy, and public patience - is how it enters the world. What story surrounds it. Whether people who were not in the room can feel why it deserves belief.',
-	'My background started in architecture, then moved through computational design at Salon, creative development at Lusion and Nohlab, and creative direction at Lotus during the shift from petrol to electric. What I am choosing to point that range at now is the structural layer where technical credibility either becomes meaning or does not.',
-	'Incomplete Infinity is the practice I am building around that work. The name is deliberate. I am interested in structures that stay open enough to be entered, precise enough to be trusted, and strange enough to resist becoming another polished surface. Not completeness as closure, but incompleteness as a live architecture: something others can understand, inhabit, and extend.',
-	'The work moves between narrative architecture, creative strategy, and design engineering - depending on what the moment actually demands. Sometimes that means finding the sentence underneath the company. Sometimes it means building the artifact that lets people feel a future before they can explain it. Sometimes it means removing work that should never have been made.',
-].join('\n\n');
+const origin = originParagraphs.join('\n\n');
 
 const officialChannels = [
 	'(@u29dc everywhere)',
@@ -51,7 +46,7 @@ const joinMarkdownBlocks = (blocks: string[]): string =>
 		.join('\n\n')}\n`;
 
 export const GET: APIRoute = async () => {
-	const artifacts = (await getArtifacts()).filter((entry) => !(entry.data.type === 'study' && entry.data.isConfidential));
+	const artifacts = await getPublicArtifacts();
 	const artifactsText = shouldEmbedArtifacts
 		? artifacts.map(toArtifactMarkdown).join('\n\n---\n\n')
 		: artifacts

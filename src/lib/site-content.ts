@@ -30,6 +30,12 @@ export const originLinks = {
 
 export const signals: SiteLink[] = [];
 
+export const originParagraphs = [
+	'Most of the technology that will matter in the next decade is going to work. It will be funded, built, tested, deployed. The engineering question is being answered. The question that is not being answered - the one that shapes adoption, trust, policy, and public patience - is how it enters the world. What story surrounds it. Whether people who were not in the room can feel why it deserves belief.',
+	'My background started in architecture, then moved through computational design at Salon, creative development at Lusion and Nohlab, and creative direction at Lotus during the shift from petrol to electric. I am now pointing that range to the structural layer where technical credibility either becomes meaning or does not.',
+	'Incomplete Infinity is the practice I am building around that work. The name is deliberate. I am interested in structures that stay open enough to be entered, precise enough to be trusted, and strange enough to resist becoming another polished surface. Not completeness as closure, but incompleteness as a live architecture: something others can understand, inhabit, and extend.',
+] as const;
+
 export const protocols = [
 	{
 		name: 'MAP',
@@ -43,7 +49,7 @@ export const protocols = [
 	},
 	{
 		name: 'ADV',
-		meta: '£5k-10k / mo',
+		meta: '£4.8k/mo',
 		description: 'Ongoing counsel to keep shipped work narratively coherent',
 	},
 ] as const;

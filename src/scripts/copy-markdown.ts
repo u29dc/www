@@ -21,21 +21,26 @@ const copyText = async (text: string): Promise<void> => {
 	}
 };
 
+const initializedButtons = new WeakSet<HTMLButtonElement>();
+
 const setStatus = (button: HTMLButtonElement, message: string): void => {
 	const label = button.querySelector<HTMLElement>('[data-copy-label]');
 	if (label) label.textContent = message;
 
-	const status = document.querySelector<HTMLElement>('[data-copy-status]');
+	const status = button.parentElement?.querySelector<HTMLElement>('[data-copy-status]');
 	if (status) status.textContent = message;
 };
 
 const setupCopyButton = (button: HTMLButtonElement): void => {
+	if (initializedButtons.has(button)) return;
+
 	const source = button.dataset['copyMarkdown'];
 	const idleLabel = button.dataset['copyIdle'] ?? 'Copy markdown';
 	const doneLabel = button.dataset['copyDone'] ?? 'Copied';
 	const errorLabel = button.dataset['copyError'] ?? 'Copy failed';
 
 	if (!source) return;
+	initializedButtons.add(button);
 
 	button.addEventListener('click', async () => {
 		button.disabled = true;
@@ -55,4 +60,10 @@ const setupCopyButton = (button: HTMLButtonElement): void => {
 	});
 };
 
-document.querySelectorAll<HTMLButtonElement>('[data-copy-markdown]').forEach(setupCopyButton);
+const setupCopyButtons = (root: ParentNode = document): void => {
+	root.querySelectorAll<HTMLButtonElement>('[data-copy-markdown]').forEach(setupCopyButton);
+};
+
+setupCopyButtons();
+
+document.addEventListener('astro:page-load', () => setupCopyButtons());

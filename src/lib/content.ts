@@ -7,9 +7,15 @@ export type FragmentArtifact = ArtifactEntry & {
 };
 
 const sortByDate = (a: ArtifactEntry, b: ArtifactEntry) => b.data.date.getTime() - a.data.date.getTime();
+const isArtifactItem = (entry: ArtifactEntry): boolean => entry.data.isArtifactItem !== false;
+const isPublicArtifactItem = (entry: ArtifactEntry): boolean => isArtifactItem(entry) && !(entry.data.type === 'study' && entry.data.isConfidential === true);
 
 export async function getArtifacts(): Promise<ArtifactEntry[]> {
 	return (await getCollection('artifacts')).toSorted(sortByDate);
+}
+
+export async function getPublicArtifacts(): Promise<ArtifactEntry[]> {
+	return (await getArtifacts()).filter(isPublicArtifactItem);
 }
 
 export function isStudyArtifact(entry: ArtifactEntry): entry is StudyArtifact {
@@ -21,11 +27,11 @@ export function isFragmentArtifact(entry: ArtifactEntry): entry is FragmentArtif
 }
 
 export async function getStudies(): Promise<StudyArtifact[]> {
-	return (await getArtifacts()).filter(isStudyArtifact);
+	return (await getPublicArtifacts()).filter(isStudyArtifact);
 }
 
 export async function getFragments(): Promise<FragmentArtifact[]> {
-	return (await getArtifacts()).filter(isFragmentArtifact);
+	return (await getPublicArtifacts()).filter(isFragmentArtifact);
 }
 
 export async function getArtifactBySlug(slug: string | undefined): Promise<ArtifactEntry> {

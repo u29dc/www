@@ -1,15 +1,13 @@
 import type { APIRoute } from 'astro';
-import { getArtifacts, type ArtifactEntry } from '../lib/content';
+import { getPublicArtifacts, type ArtifactEntry } from '../lib/content';
 import { toArtifactMarkdown } from '../lib/markdown';
 
 export async function getStaticPaths() {
-	const artifacts = await getArtifacts();
-	return artifacts
-		.filter((entry) => !(entry.data.type === 'study' && entry.data.isConfidential))
-		.map((entry) => ({
-			params: { slug: entry.data.slug },
-			props: { entry },
-		}));
+	const artifacts = await getPublicArtifacts();
+	return artifacts.map((entry) => ({
+		params: { slug: entry.data.slug },
+		props: { entry },
+	}));
 }
 
 export const GET: APIRoute = ({ props }) => {
