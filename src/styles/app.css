@@ -53,6 +53,8 @@
 	--measure-article: 38rem;
 	--measure-meta: 44rem;
 	--measure-media: 52rem;
+	--measure-grid: 76rem;
+	--grid-gap: clamp(0.75rem, 1.4vw, 1.25rem);
 
 	--type-label: 0.75rem;
 	--type-body: 0.875rem;
@@ -219,6 +221,21 @@
 		@apply min-h-dvh;
 	}
 
+	.layout-grid {
+		@apply mx-auto grid w-full px-(--space-page);
+		max-width: calc(var(--measure-grid) + (var(--space-page) * 2));
+		grid-template-columns: repeat(10, minmax(0, 1fr));
+		column-gap: var(--grid-gap);
+	}
+
+	.layout-lane {
+		grid-column: 1 / -1;
+	}
+
+	.layout-lane-wide {
+		grid-column: 1 / -1;
+	}
+
 	html[data-page-state='exiting'] {
 		@apply cursor-progress;
 	}
@@ -235,7 +252,8 @@
 		transform: translate3d(0, var(--motion-reveal-y), 0);
 	}
 
-	html[data-motion='ready'] [data-reveal='visible'] {
+	html[data-motion='ready'] [data-reveal][data-reveal='visible'],
+	html[data-motion='ready'] [data-reveal-group] > [data-reveal='visible'] {
 		@apply opacity-100;
 		transform: translate3d(0, 0, 0);
 	}
@@ -479,6 +497,16 @@
 	}
 }
 
+@media (width >= 64rem) {
+	.layout-lane {
+		grid-column: 1 / span 5;
+	}
+
+	.layout-lane-wide {
+		grid-column: 1 / span 6;
+	}
+}
+
 @media (hover: hover) {
 	.copy-action:hover {
 		@apply border-edge bg-surface text-ink;
@@ -505,6 +533,11 @@
 @media (width < 42rem) {
 	:root {
 		--type-title: 1.375rem;
+	}
+
+	.layout-lane,
+	.layout-lane-wide {
+		grid-column: 1 / -1;
 	}
 
 	.mdx-media__track {
@@ -536,7 +569,8 @@
 		@apply duration-(--duration-page-exit) ease-(--ease-settle);
 	}
 
-	html[data-motion='ready'] [data-reveal='visible'] {
+	html[data-motion='ready'] [data-reveal][data-reveal='visible'],
+	html[data-motion='ready'] [data-reveal-group] > [data-reveal='visible'] {
 		@apply transition-[opacity,transform];
 		@apply duration-(--duration-reveal) ease-(--ease-settle);
 		transition-delay: calc(var(--reveal-index, 0) * var(--duration-reveal-stagger));

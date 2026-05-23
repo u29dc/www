@@ -12,13 +12,15 @@ const showSignals = import.meta.env['PUBLIC_SHOW_SIGNALS'] === 'true';
 ---
 
 <SiteLayout title="Incomplete Infinity">
-	<header class="sticky top-0 z-10 bg-ground/86 px-(--space-page) pt-(--space-6) pb-(--space-5) backdrop-blur-md">
-		<nav class="mx-auto flex w-[min(100%,var(--measure-article))] items-center justify-between text-(length:--type-body) font-(--weight-strong) leading-(--leading-body)" aria-label="Primary" data-reveal>
-			<UiLink href="/" showIcon={false} showArrow={false}>Incomplete Infinity</UiLink>
+	<header class="sticky top-0 z-10 bg-ground/86 pt-(--space-6) pb-(--space-5) backdrop-blur-md">
+		<nav class="layout-grid text-(length:--type-body) font-(--weight-strong) leading-(--leading-body)" aria-label="Primary" data-reveal>
+			<div class="layout-lane flex items-center justify-between">
+				<UiLink href="/" showIcon={false} showArrow={false}>Incomplete Infinity</UiLink>
+			</div>
 		</nav>
 	</header>
-	<main class="grid gap-(--space-6) px-(--space-page) pt-(--space-7) pb-(--space-9)">
-		<section class="mx-auto grid w-[min(100%,var(--measure-article))] gap-(--space-4) pt-(--space-5)" id="origin">
+	<main class="layout-grid gap-y-(--space-6) pt-(--space-7) pb-(--space-9)">
+		<section class="layout-lane grid gap-(--space-4) pt-(--space-5)" id="origin">
 			<p class="text-(length:--type-body) font-(--weight-strong) leading-(--leading-body) text-muted" data-reveal>Origin</p>
 			<div class="grid max-w-(--measure-article) gap-(--space-4)" data-reveal-group>
 				<p class="text-(length:--type-body-lg) leading-(--leading-body) text-muted">
@@ -36,7 +38,7 @@ const showSignals = import.meta.env['PUBLIC_SHOW_SIGNALS'] === 'true';
 			</div>
 		</section>
 
-		<section class="mx-auto grid w-[min(100%,var(--measure-article))] gap-(--space-4)" id="protocols">
+		<section class="layout-lane grid gap-(--space-4)" id="protocols">
 			<div class="grid gap-0.5">
 				<h2 class="text-(length:--type-body) font-(--weight-strong) leading-(--leading-body) text-muted" data-reveal>Protocols</h2>
 			</div>
@@ -53,7 +55,7 @@ const showSignals = import.meta.env['PUBLIC_SHOW_SIGNALS'] === 'true';
 			</ul>
 		</section>
 
-		<section class="mx-auto grid w-[min(100%,var(--measure-article))] gap-(--space-4)" id="studies">
+		<section class="layout-lane grid gap-(--space-4)" id="studies">
 			<div class="grid gap-0.5">
 				<h2 class="text-(length:--type-body) font-(--weight-strong) leading-(--leading-body) text-muted" data-reveal>Artifacts / Studies</h2>
 			</div>
@@ -69,7 +71,7 @@ const showSignals = import.meta.env['PUBLIC_SHOW_SIGNALS'] === 'true';
 			</ul>
 		</section>
 
-		<section class="mx-auto grid w-[min(100%,var(--measure-article))] gap-(--space-4)" id="fragments">
+		<section class="layout-lane grid gap-(--space-4)" id="fragments">
 			<div class="grid gap-0.5">
 				<h2 class="text-(length:--type-body) font-(--weight-strong) leading-(--leading-body) text-muted" data-reveal>Artifacts / Fragments</h2>
 			</div>
@@ -87,7 +89,7 @@ const showSignals = import.meta.env['PUBLIC_SHOW_SIGNALS'] === 'true';
 
 		{
 			showSignals && signals.length > 0 && (
-					<section class="mx-auto grid w-[min(100%,var(--measure-article))] gap-(--space-4)" id="signals">
+					<section class="layout-lane grid gap-(--space-4)" id="signals">
 						<div class="grid gap-0.5">
 							<h2 class="text-(length:--type-body) font-(--weight-strong) leading-(--leading-body) text-muted" data-reveal>Signals</h2>
 						</div>
@@ -105,7 +107,7 @@ const showSignals = import.meta.env['PUBLIC_SHOW_SIGNALS'] === 'true';
 			)
 		}
 
-		<div data-reveal>
+		<div class="layout-lane" data-reveal>
 			<ConnectLine />
 		</div>
 	</main>
