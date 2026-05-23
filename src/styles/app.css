@@ -68,6 +68,7 @@
 	--weight-strong: 560;
 	--weight-title: 620;
 
+	--radius-thin: 4px;
 	--radius-focus: 0.375rem;
 	--ease-settle: cubic-bezier(0.16, 1, 0.3, 1);
 	--duration-quick: 150ms;
@@ -291,7 +292,7 @@
 	}
 
 	.copy-action {
-		@apply inline-flex min-h-8 items-center rounded-xs border border-edge-soft px-(--space-2) py-(--space-1);
+		@apply inline-flex min-h-8 cursor-pointer items-center rounded-(--radius-thin) border border-edge-soft px-(--space-2) py-(--space-1);
 		@apply font-mono text-(length:--type-label) font-(--weight-strong) leading-(--leading-label) text-muted;
 		@apply bg-transparent;
 	}
@@ -323,7 +324,7 @@
 	}
 
 	.ui-link__mark--infinity {
-		background: oklch(17.5% 0.003 250);
+		background: var(--site-ink);
 	}
 
 	.ui-link__mark--lotus {
@@ -392,7 +393,7 @@
 	}
 
 	.mdx-media__item {
-		@apply relative grid place-items-center;
+		@apply relative grid place-items-center overflow-hidden rounded-(--radius-thin);
 		@apply min-w-0 shrink-0;
 		flex-basis: var(--item-basis);
 		aspect-ratio: var(--item-ratio);
@@ -508,7 +509,7 @@
 }
 
 @media (hover: hover) {
-	.copy-action:hover {
+	.copy-action:not(:disabled):hover {
 		@apply border-edge bg-surface text-ink;
 	}
 

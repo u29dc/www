@@ -8,7 +8,7 @@ import { originLinks, protocols, signals } from '../lib/site-content';
 
 const studies = await getStudies();
 const fragments = await getFragments();
-const showSignals = import.meta.env['PUBLIC_SHOW_SIGNALS'] === 'true';
+const showSignals = signals.length > 0;
 ---
 
 <SiteLayout title="Incomplete Infinity">
@@ -27,13 +27,10 @@ const showSignals = import.meta.env['PUBLIC_SHOW_SIGNALS'] === 'true';
 					Most of the technology that will matter in the next decade is going to work. It will be funded, built, tested, deployed. The engineering question is being answered. The question that is not being answered — the one that shapes adoption, trust, policy, and public patience — is how it enters the world. What story surrounds it. Whether people who were not in the room can feel why it deserves belief.
 				</p>
 				<p class="text-(length:--type-body-lg) leading-(--leading-body) text-muted">
-					My background started in architecture at <UiLink class="font-(--weight-strong) text-ink" href={originLinks.salon.href} mark={originLinks.salon.mark}>{originLinks.salon.label}</UiLink>, moved through arts & media at <UiLink class="font-(--weight-strong) text-ink" href={originLinks.nohlab.href} mark={originLinks.nohlab.mark}>{originLinks.nohlab.label}</UiLink>, engineering at <UiLink class="font-(--weight-strong) text-ink" href={originLinks.lusion.href} mark={originLinks.lusion.mark}>{originLinks.lusion.label}</UiLink> as well as various startups, and creative direction at <UiLink class="font-(--weight-strong) text-ink" href={originLinks.lotus.href} mark={originLinks.lotus.mark}>{originLinks.lotus.label}</UiLink> during the shift from petrol to electric. What I'm choosing to point that range at now is the structural layer where technical credibility either becomes meaning or doesn't.
+					My background started in architecture at <UiLink class="font-(--weight-strong) text-ink" href={originLinks.salon.href} mark={originLinks.salon.mark}>{originLinks.salon.label}</UiLink>, moved through arts & media at <UiLink class="font-(--weight-strong) text-ink" href={originLinks.nohlab.href} mark={originLinks.nohlab.mark}>{originLinks.nohlab.label}</UiLink>, engineering at <UiLink class="font-(--weight-strong) text-ink" href={originLinks.lusion.href} mark={originLinks.lusion.mark}>{originLinks.lusion.label}</UiLink> as well as various startups, and creative direction at <UiLink class="font-(--weight-strong) text-ink" href={originLinks.lotus.href} mark={originLinks.lotus.mark}>{originLinks.lotus.label}</UiLink> during the shift from petrol to electric. I'm now pointing that range to the structural layer where technical credibility either becomes meaning or doesn't.
 				</p>
 				<p class="text-(length:--type-body-lg) leading-(--leading-body) text-muted">
 					<UiLink class="font-(--weight-strong) text-ink" href={originLinks.practice.href} mark={originLinks.practice.mark}>{originLinks.practice.label}</UiLink> is the practice I'm building around that work. The name is deliberate. I'm interested in structures that stay open enough to be entered, precise enough to be trusted, and strange enough to resist becoming another polished surface. Not completeness as closure, but incompleteness as a live architecture: something others can understand, inhabit, and extend.
-				</p>
-				<p class="text-(length:--type-body-lg) leading-(--leading-body) text-muted">
-					The work moves between narrative architecture, creative strategy, and design engineering — depending on what the moment actually demands. Sometimes that means finding the sentence underneath the company. Sometimes it means building the artifact that lets people feel a future before they can explain it. Sometimes it means removing work that should never have been made.
 				</p>
 			</div>
 		</section>
