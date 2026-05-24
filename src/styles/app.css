@@ -72,9 +72,9 @@
 	--radius-focus: 0.375rem;
 	--ease-settle: cubic-bezier(0.16, 1, 0.3, 1);
 	--duration-quick: 150ms;
-	--duration-page-exit: 400ms;
-	--duration-reveal: 400ms;
-	--duration-reveal-stagger: 50ms;
+	--duration-page-exit: 500ms;
+	--duration-reveal: 500ms;
+	--duration-reveal-stagger: 100ms;
 	--motion-page-exit-y: -0.125rem;
 	--motion-reveal-y: 0.25rem;
 }
