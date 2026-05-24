@@ -1,0 +1,75 @@
+---
+type Props = {
+	width?: number;
+	mobileWidth?: number;
+	blurStart?: number;
+	defaultBlurIntensity?: number;
+	mouseBlurIntensity?: number;
+	mobileMouseBlurIntensity?: number;
+	mouseBlurSize?: number;
+	mobileMouseBlurSize?: number;
+	roundness?: number;
+	noiseIntensity?: number;
+	noiseScale?: number;
+	animateNoise?: boolean;
+	class?: string;
+	theme?: 'light' | 'dark' | 'system';
+	enableObservation?: boolean;
+	debug?: boolean;
+};
+
+const {
+	width = 200,
+	mobileWidth,
+	blurStart = 1.0,
+	defaultBlurIntensity = 0.5,
+	mouseBlurIntensity = 1.0,
+	mobileMouseBlurIntensity,
+	mouseBlurSize = 0.5,
+	mobileMouseBlurSize,
+	roundness = 0.5,
+	noiseIntensity = 0.15,
+	noiseScale = 150,
+	animateNoise = false,
+	class: className = '',
+	theme = 'system',
+	enableObservation = true,
+	debug = false,
+} = Astro.props;
+
+const resolvedMobileWidth = mobileWidth ?? width;
+const height = width / 2;
+const mobileHeight = resolvedMobileWidth / 2;
+const style = [
+	`--atomic-logo-width:${width}px`,
+	`--atomic-logo-height:${height}px`,
+	`--atomic-logo-mobile-width:${resolvedMobileWidth}px`,
+	`--atomic-logo-mobile-height:${mobileHeight}px`,
+	debug ? 'outline:2px solid red' : '',
+]
+	.filter(Boolean)
+	.join(';');
+---
+
+<div
+	class:list={['atomic-brand-logo', className]}
+	style={style}
+	data-atomic-brand-logo
+	data-width={width}
+	data-mobile-width={resolvedMobileWidth}
+	data-blur-start={blurStart}
+	data-default-blur-intensity={defaultBlurIntensity}
+	data-mouse-blur-intensity={mouseBlurIntensity}
+	data-mobile-mouse-blur-intensity={mobileMouseBlurIntensity ?? mouseBlurIntensity}
+	data-mouse-blur-size={mouseBlurSize}
+	data-mobile-mouse-blur-size={mobileMouseBlurSize ?? mouseBlurSize}
+	data-roundness={roundness}
+	data-noise-intensity={noiseIntensity}
+	data-noise-scale={noiseScale}
+	data-animate-noise={animateNoise ? 'true' : 'false'}
+	data-theme={theme}
+	data-enable-observation={enableObservation ? 'true' : 'false'}
+>
+	<canvas class="atomic-brand-logo__canvas" data-atomic-brand-logo-canvas aria-label="u29dc logo" role="img">U29DC</canvas>
+	<div class="atomic-brand-logo__fallback font-mono uppercase" data-atomic-brand-logo-fallback aria-label="u29dc logo fallback" role="img" hidden>U29DC</div>
+</div>
