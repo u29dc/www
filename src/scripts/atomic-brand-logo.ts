@@ -99,12 +99,25 @@ const buildState = (config: AtomicBrandLogoConfig, isMobile: boolean, theme: Ato
 	};
 };
 
-const showFallback = (element: HTMLElement, canvas: HTMLCanvasElement, fallback: HTMLElement, state: AtomicBrandLogoState): void => {
+const showFallback = (element: HTMLElement, canvas: HTMLCanvasElement, fallback: HTMLElement, state: AtomicBrandLogoState, options: { failed: boolean; reason: string }): void => {
 	canvas.hidden = true;
 	fallback.hidden = false;
 	fallback.style.fontSize = `${Math.max(state.width * 0.16, 16)}px`;
 	fallback.dataset['theme'] = state.theme;
-	element.dataset['atomicBrandLogoFailed'] = 'true';
+	element.dataset['atomicBrandLogoFallback'] = options.reason;
+	if (options.failed) {
+		element.dataset['atomicBrandLogoFailed'] = 'true';
+	} else {
+		delete element.dataset['atomicBrandLogoFailed'];
+	}
+};
+
+const hideFallback = (element: HTMLElement, canvas: HTMLCanvasElement, fallback: HTMLElement): void => {
+	canvas.hidden = false;
+	fallback.hidden = true;
+	delete fallback.dataset['theme'];
+	delete element.dataset['atomicBrandLogoFallback'];
+	delete element.dataset['atomicBrandLogoFailed'];
 };
 
 const createController = (element: HTMLElement): LogoController | undefined => {
@@ -122,17 +135,22 @@ const createController = (element: HTMLElement): LogoController | undefined => {
 	let isMobile = mobileQuery.matches;
 	let prefersReducedMotion = motionQuery.matches;
 	let isPageVisible = document.visibilityState === 'visible';
-	let isInView = true;
+	let isInView = !config.enableObservation || typeof IntersectionObserver === 'undefined';
 	let hasRenderedStatic = false;
+	let hasFatalFallback = false;
+	let isFallbackVisible = false;
 	let isDisposed = false;
 	let renderer: AtomicBrandLogoRenderer | null = null;
-	let deviceTier: DeviceTier = 'high';
+	let deviceTier: DeviceTier = evaluateAtomicBrandLogoPolicy(config.enableObservation);
 	let observer: IntersectionObserver | null = null;
 	let themeObserver: MutationObserver | null = null;
 
 	const currentState = (): AtomicBrandLogoState => buildState(config, isMobile, resolveTheme(config.theme, darkQuery));
 
+	const shouldUseStaticFallback = (): boolean => deviceTier === 'low' || prefersReducedMotion;
+
 	const applyActivity = (): void => {
+		maybeMount();
 		if (!renderer || isDisposed) return;
 
 		const isActive = deviceTier !== 'low' && isPageVisible && !prefersReducedMotion && (config.enableObservation ? isInView : true);
@@ -151,8 +169,14 @@ const createController = (element: HTMLElement): LogoController | undefined => {
 	};
 
 	const applyState = (): void => {
-		if (!renderer || isDisposed) return;
 		const nextState = currentState();
+		if (isFallbackVisible) {
+			showFallback(element, canvas, fallback, nextState, {
+				failed: hasFatalFallback,
+				reason: element.dataset['atomicBrandLogoFallback'] ?? 'static',
+			});
+		}
+		if (!renderer || isDisposed) return;
 		renderer.setState(nextState);
 		renderer.resize({ width: nextState.width, height: nextState.height });
 		if (!renderer || deviceTier === 'low' || prefersReducedMotion) {
@@ -163,6 +187,8 @@ const createController = (element: HTMLElement): LogoController | undefined => {
 
 	const handleFatalContextError = (reason: 'context-lost' | 'context-restored' | 'gl-error'): void => {
 		const state = currentState();
+		hasFatalFallback = true;
+		isFallbackVisible = true;
 		renderer?.dispose();
 		renderer = null;
 		recordWebglDiagnostic({
@@ -171,12 +197,16 @@ const createController = (element: HTMLElement): LogoController | undefined => {
 			result: 'FAIL',
 			data: { reason },
 		});
-		showFallback(element, canvas, fallback, state);
+		showFallback(element, canvas, fallback, state, {
+			failed: true,
+			reason,
+		});
 	};
 
-	const mount = (): void => {
-		deviceTier = evaluateAtomicBrandLogoPolicy(config.enableObservation);
+	const mountRenderer = (): void => {
 		const state = currentState();
+		hideFallback(element, canvas, fallback);
+		isFallbackVisible = false;
 
 		try {
 			renderer = createAtomicBrandLogoRenderer(canvas, state, handleFatalContextError);
@@ -195,11 +225,33 @@ const createController = (element: HTMLElement): LogoController | undefined => {
 					message: error instanceof Error ? error.message : String(error),
 				},
 			});
-			showFallback(element, canvas, fallback, state);
+			hasFatalFallback = true;
+			isFallbackVisible = true;
+			showFallback(element, canvas, fallback, state, {
+				failed: true,
+				reason: 'init-fail',
+			});
 			return;
 		}
 
 		applyActivity();
+	};
+
+	const maybeMount = (): void => {
+		if (isDisposed || renderer || hasFatalFallback || !isPageVisible) return;
+		if (config.enableObservation && !isInView) return;
+
+		const state = currentState();
+		if (shouldUseStaticFallback()) {
+			isFallbackVisible = true;
+			showFallback(element, canvas, fallback, state, {
+				failed: false,
+				reason: prefersReducedMotion ? 'reduced-motion' : 'low-tier',
+			});
+			return;
+		}
+
+		mountRenderer();
 	};
 
 	const handleMobileChange = (): void => {
@@ -210,6 +262,11 @@ const createController = (element: HTMLElement): LogoController | undefined => {
 
 	const handleMotionChange = (): void => {
 		prefersReducedMotion = motionQuery.matches;
+		deviceTier = evaluateAtomicBrandLogoPolicy(config.enableObservation);
+		if (!prefersReducedMotion && isFallbackVisible && !hasFatalFallback) {
+			isFallbackVisible = false;
+			hideFallback(element, canvas, fallback);
+		}
 		applyActivity();
 	};
 
@@ -245,7 +302,7 @@ const createController = (element: HTMLElement): LogoController | undefined => {
 		attributeFilter: ['data-theme'],
 	});
 
-	mount();
+	maybeMount();
 
 	const controller: LogoController = {
 		dispose: () => {
@@ -259,6 +316,7 @@ const createController = (element: HTMLElement): LogoController | undefined => {
 			motionQuery.removeEventListener('change', handleMotionChange);
 			darkQuery.removeEventListener('change', handleThemeChange);
 			document.removeEventListener('visibilitychange', handleVisibilityChange);
+			controllers.delete(element);
 			activeControllers.delete(controller);
 		},
 	};

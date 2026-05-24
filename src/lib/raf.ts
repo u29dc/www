@@ -23,7 +23,14 @@ let rafId: number | null = null;
 let lastTime = 0;
 let isLoopActive = false;
 
-const shouldRun = (): boolean => tasks.size > 0;
+const hasActiveTask = (): boolean => {
+	for (const entry of tasks.values()) {
+		if (entry.isActive) return true;
+	}
+	return false;
+};
+
+const shouldRun = (): boolean => tasks.size > 0 && hasActiveTask();
 
 const stopLoop = (): void => {
 	if (!isLoopActive) return;
@@ -43,7 +50,10 @@ const tick = (timestamp: number): void => {
 
 	tasks.forEach((entry) => {
 		if (entry.isActive) {
-			entry.task(timestamp, deltaSeconds);
+			const shouldStayActive = entry.task(timestamp, deltaSeconds);
+			if (shouldStayActive === false) {
+				entry.isActive = false;
+			}
 		}
 	});
 
@@ -79,7 +89,9 @@ export const registerRafTask = (task: RafTask, options?: RafTaskOptions): RafTas
 
 	const entry: TaskEntry = { task, isActive: autoStart };
 	tasks.set(id, entry);
-	startLoop();
+	if (autoStart) {
+		startLoop();
+	}
 
 	const dispose = (): void => {
 		if (isDisposed) return;
@@ -99,6 +111,9 @@ export const registerRafTask = (task: RafTask, options?: RafTaskOptions): RafTas
 	const sleep = (): void => {
 		if (isDisposed || !entry.isActive) return;
 		entry.isActive = false;
+		if (!shouldRun()) {
+			stopLoop();
+		}
 	};
 
 	return {

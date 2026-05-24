@@ -389,7 +389,7 @@
 	}
 
 	.atomic-brand-logo__fallback {
-		@apply hidden size-full items-center justify-center border border-transparent tracking-[0.22em];
+		@apply hidden size-full items-center justify-center;
 	}
 
 	.atomic-brand-logo__fallback:not([hidden]) {
@@ -397,11 +397,19 @@
 	}
 
 	.atomic-brand-logo__fallback[data-theme='dark'] {
-		@apply border-white/20 bg-white/6 text-white/88;
+		@apply text-white/88;
 	}
 
 	.atomic-brand-logo__fallback[data-theme='light'] {
-		@apply border-black/12 bg-black/3 text-black/86;
+		@apply text-black/86;
+	}
+
+	.atomic-brand-logo__fallback-mark {
+		@apply block;
+		width: 70%;
+		height: 42%;
+		border-radius: 0 999px 999px 0;
+		background: currentColor;
 	}
 
 	.content-prose strong {

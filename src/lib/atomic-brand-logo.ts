@@ -41,10 +41,23 @@ export interface AtomicBrandLogoRenderer {
 }
 
 const logEvent = (scope: string, topic: string, event: string, data?: Record<string, unknown>): void => {
-	void scope;
-	void topic;
-	void event;
-	void data;
+	const diagnosticData: Record<string, string | number | boolean | null> = {};
+	if (data) {
+		for (const [key, value] of Object.entries(data)) {
+			if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' || value === null) {
+				diagnosticData[key] = value;
+				continue;
+			}
+			diagnosticData[key] = JSON.stringify(value) ?? String(value);
+		}
+	}
+
+	recordWebglDiagnostic({
+		feature: 'atomic-logo',
+		stage: `${scope.toLowerCase()}:${topic.toLowerCase()}`,
+		result: event,
+		data: diagnosticData,
+	});
 };
 
 const UNIFORM_NAMES = [
@@ -63,7 +76,6 @@ const UNIFORM_NAMES = [
 	'u_color',
 	'u_noiseIntensity',
 	'u_noiseScale',
-	'u_time',
 ] as const;
 
 export const ATOMIC_BRAND_LOGO_VERTEX_SHADER = /* glsl */ `#version 300 es
@@ -508,6 +520,7 @@ export function createAtomicBrandLogoRenderer(
 	const dampedMouse = { ...mousePosition };
 	let hasPointerInteraction = false;
 	let hasLoggedFirstFrame = false;
+	let hasValidatedFrame = false;
 	let hasContextFailure = false;
 
 	const colorCache = new Map<string, [number, number, number]>();
@@ -519,17 +532,19 @@ export function createAtomicBrandLogoRenderer(
 		onFatalContextError?.(reason);
 	};
 
-	const checkGlError = (phase: string): void => {
+	const checkGlError = (phase: string): boolean => {
 		const error = gl.getError();
 		if (error !== gl.NO_ERROR) {
 			logEvent('WEBGL', 'ATOMIC-LOGO', 'GL-ERROR', {
 				phase,
 				error,
 			});
-			if (phase === 'beforeDraw' || phase === 'afterDraw' || phase === 'updateResolutionUniforms') {
+			if (phase === 'beforeDraw' || phase === 'afterDraw' || phase === 'updateResolutionUniforms' || phase === 'validateFrame') {
 				failOnContextError('gl-error', `Critical GL error (${error}) during ${phase}`);
+				return false;
 			}
 		}
+		return true;
 	};
 
 	const handleContextLost = (event: Event): void => {
@@ -587,6 +602,7 @@ export function createAtomicBrandLogoRenderer(
 	const handlePointerMove = (event: PointerEvent | MouseEvent): void => {
 		updatePointer(event);
 		checkGlError('pointerMove');
+		requestFrameLoop();
 	};
 
 	let isTracking = false;
@@ -649,43 +665,90 @@ export function createAtomicBrandLogoRenderer(
 		gl.clear(gl.COLOR_BUFFER_BIT);
 
 		setUniform2f(uniforms.u_mouse, dampedMouse.x, dampedMouse.y, gl);
-		if (state.animateNoise) {
-			setUniform1f(uniforms.u_time, timestamp * 0.0001, gl);
-		}
-
-		checkGlError('beforeDraw');
+		if (!checkGlError('beforeDraw')) return;
 
 		gl.drawArrays(gl.TRIANGLES, 0, fullscreenQuad.itemCount);
 		gl.bindVertexArray(null);
 
-		checkGlError('afterDraw');
+		if (!checkGlError('afterDraw')) return;
+		validateFrameOutput();
 	};
 
 	const tick = (timestamp: number, deltaSeconds: number): false | true => {
-		if (!isRunning) return false;
+		if (!isRunning || isDisposed || hasContextFailure) {
+			isAnimating = false;
+			return false;
+		}
 		drawFrame(timestamp, deltaSeconds);
+		if (!shouldAnimate()) {
+			isAnimating = false;
+			return false;
+		}
 		return true;
 	};
 
 	const rafTask = registerRafTask(tick, { autoStart: false });
+	let isAnimating = false;
+
+	function shouldAnimate(): boolean {
+		return Math.abs(dampedMouse.x - mousePosition.x) > 0.001 || Math.abs(dampedMouse.y - mousePosition.y) > 0.001;
+	}
+
+	function requestFrameLoop(): void {
+		if (!isRunning || isAnimating || isDisposed || hasContextFailure) return;
+		isAnimating = true;
+		rafTask.wake();
+	}
+
+	function validateFrameOutput(): void {
+		if (hasValidatedFrame || hasContextFailure) return;
+		hasValidatedFrame = true;
+
+		const { pixelWidth, pixelHeight } = dimensions;
+		if (pixelWidth <= 0 || pixelHeight <= 0) {
+			failOnContextError('gl-error', 'Logo canvas has an empty backing buffer.');
+			return;
+		}
+
+		const pixels = new Uint8Array(pixelWidth * pixelHeight * 4);
+		gl.readPixels(0, 0, pixelWidth, pixelHeight, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+		let alphaSum = 0;
+		for (let index = 3; index < pixels.length; index += 4) {
+			alphaSum += pixels[index] ?? 0;
+		}
+
+		if (!checkGlError('validateFrame')) return;
+		if (alphaSum <= 0) {
+			failOnContextError('gl-error', 'Logo rendered a fully transparent frame.');
+			return;
+		}
+
+		logEvent('WEBGL', 'ATOMIC-LOGO', 'FRAME-VALIDATED', {
+			alphaSum,
+			pixelWidth,
+			pixelHeight,
+		});
+	}
 
 	const start = (): void => {
 		if (isRunning || isDisposed) return;
 		isRunning = true;
-		rafTask.wake();
+		renderOnce();
+		if (shouldAnimate()) {
+			requestFrameLoop();
+		}
 	};
 
 	const stop = (): void => {
 		if (!isRunning) return;
 		isRunning = false;
+		isAnimating = false;
 		rafTask.sleep();
 	};
 
 	const renderOnce = (): void => {
 		drawFrame(performance.now(), 0);
 	};
-
-	start();
 
 	const handleResize = (overrides?: Partial<Pick<CanvasDimensions, 'width' | 'height'>>): void => {
 		const targetWidth = overrides?.width ?? state.width;
@@ -699,11 +762,18 @@ export function createAtomicBrandLogoRenderer(
 			mousePosition.y = dimensions.height / 2;
 			dampedMouse.x = mousePosition.x;
 			dampedMouse.y = mousePosition.y;
+			if (isRunning) renderOnce();
 			return;
 		}
 
 		mousePosition.x = Math.min(Math.max(mousePosition.x, 0), dimensions.width);
 		mousePosition.y = Math.min(Math.max(mousePosition.y, 0), dimensions.height);
+		if (isRunning) {
+			renderOnce();
+			if (shouldAnimate()) {
+				requestFrameLoop();
+			}
+		}
 	};
 
 	if (typeof ResizeObserver !== 'undefined') {
@@ -711,14 +781,12 @@ export function createAtomicBrandLogoRenderer(
 			handleResize();
 		});
 		resizeObserver.observe(canvas);
+	} else if (typeof window !== 'undefined') {
+		window.addEventListener('resize', handleWindowResize);
 	}
 
-	const handleWindowResize = (): void => {
+	function handleWindowResize(): void {
 		handleResize();
-	};
-
-	if (typeof window !== 'undefined') {
-		window.addEventListener('resize', handleWindowResize);
 	}
 
 	const resize = (nextDimensions?: Partial<Pick<CanvasDimensions, 'width' | 'height'>>): void => {
@@ -732,6 +800,12 @@ export function createAtomicBrandLogoRenderer(
 		applyStaticUniforms(state);
 		if (state.theme !== previousTheme) {
 			applyThemeUniforms(state.theme);
+		}
+		if (isRunning) {
+			renderOnce();
+			if (shouldAnimate()) {
+				requestFrameLoop();
+			}
 		}
 	};
 
@@ -756,7 +830,7 @@ export function createAtomicBrandLogoRenderer(
 			resizeObserver = null;
 		}
 
-		if (typeof window !== 'undefined') {
+		if (!resizeObserver && typeof window !== 'undefined') {
 			window.removeEventListener('resize', handleWindowResize);
 		}
 
