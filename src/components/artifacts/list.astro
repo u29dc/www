@@ -14,7 +14,7 @@ const metaFor = (entry: ArtifactEntry): string => (entry.data.type === 'study' ?
 
 <section class="layout-lane grid gap-(--space-4)" id={id} data-hover-preview-scope="artifacts" data-reveal>
 	<div class="grid gap-0.5">
-		<h2 class="text-(length:--type-body) font-(--weight-strong) leading-(--leading-body) text-muted">{title}</h2>
+		<h2 class="text-(length:--type-label) font-(--weight-strong) leading-(--leading-label) text-muted uppercase">{title}</h2>
 	</div>
 	<ul class="grid list-none border-t border-edge-soft p-0">
 		{entries.map((entry) => <Row entry={entry} meta={metaFor(entry)} />)}

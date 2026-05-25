@@ -90,6 +90,7 @@
 	--font-geist-sans: 'Geist Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 	--font-geist-mono: 'Geist Mono', 'SF Mono', 'Cascadia Code', Menlo, Consolas, monospace;
 	--font-libre-caslon-condensed: 'Libre Caslon Condensed', Georgia, serif;
+	--font-apple-garamond: 'Apple Garamond', AppleGaramond, var(--font-libre-caslon-condensed);
 	--font-geist-pixel-square: 'Geist Pixel Square', var(--font-geist-mono);
 	--font-geist-pixel-grid: 'Geist Pixel Grid', var(--font-geist-mono);
 	--font-geist-pixel-line: 'Geist Pixel Line', var(--font-geist-mono);

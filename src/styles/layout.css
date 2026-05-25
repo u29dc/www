@@ -1,6 +1,6 @@
 @layer components {
 	[data-page-shell] {
-		@apply min-h-dvh;
+		@apply min-h-0;
 	}
 
 	.layout-grid {

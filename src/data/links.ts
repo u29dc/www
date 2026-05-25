@@ -10,4 +10,6 @@ export type SiteLink = {
 	meta?: string;
 	icon?: LinkIcon;
 	mark?: LinkMark;
+	accent?: string;
+	accentText?: string;
 };

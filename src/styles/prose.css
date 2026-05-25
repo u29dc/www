@@ -78,4 +78,33 @@
 	[data-prose] [data-footnote-backref] {
 		@apply text-muted no-underline;
 	}
+
+	[data-prose] [data-footnotes] a {
+		@apply !inline !whitespace-normal !break-words !rounded-none !border-0 !bg-transparent !p-0 !font-mono !text-(length:--type-label) !font-(--weight-strong) !text-ink !no-underline decoration-muted/45 underline-offset-[0.18em] hover:!underline;
+		--link-pill-bg: transparent !important;
+		--link-pill-hover-bg: transparent !important;
+		--link-pill-fg: var(--site-ink) !important;
+		--link-pill-hover-fg: var(--site-ink) !important;
+		background: transparent !important;
+		background-color: transparent !important;
+		line-height: inherit !important;
+	}
+
+	[data-prose] [data-footnotes] a:hover {
+		background-color: transparent !important;
+		border-color: transparent !important;
+	}
+
+	[data-prose] [data-footnotes] a > span:first-child {
+		@apply !hidden;
+	}
+
+	[data-prose] [data-footnotes] a > span:nth-child(2) {
+		@apply inline min-w-0 leading-[inherit];
+	}
+
+	[data-prose] [data-footnotes] a [data-link-arrow] {
+		@apply !ml-[0.08em] !inline-block !size-[0.72em] !align-[0.08em] !text-muted;
+		display: inline-block !important;
+	}
 }

@@ -1,7 +1,7 @@
 @theme {
 	--font-sans: var(--font-geist-sans);
 	--font-mono: var(--font-geist-mono);
-	--font-serif-condensed: var(--font-libre-caslon-condensed);
+	--font-serif-condensed: var(--font-apple-garamond);
 	--font-pixel-square: var(--font-geist-pixel-square);
 	--font-pixel-grid: var(--font-geist-pixel-grid);
 	--font-pixel-line: var(--font-geist-pixel-line);
@@ -32,6 +32,8 @@
 	--site-accent: oklch(44% 0.012 250);
 	--site-selection-bg: oklch(84% 0.006 250);
 	--site-selection-fg: var(--site-ink);
+	--site-link-pill-bg: oklch(95.5% 0.001 250);
+	--site-link-pill-fg: var(--site-ink);
 	--site-highlight-bg: oklch(89% 0.004 250);
 	--site-highlight-line: oklch(82% 0.006 250);
 	--site-highlight-fg: var(--site-ink);
@@ -56,7 +58,8 @@
 	--type-label: 0.75rem;
 	--type-body: 0.875rem;
 	--type-body-lg: 0.9375rem;
-	--type-title: clamp(1.125rem, 1.4vw, 1.25rem);
+	--type-title: 1.5rem;
+	--type-quote: 1.5rem;
 	--leading-label: 1.25;
 	--leading-body: 1.58;
 	--leading-title: 1.25;
@@ -97,6 +100,8 @@
 	--site-accent: oklch(78% 0.012 250);
 	--site-selection-bg: oklch(39% 0.011 250);
 	--site-selection-fg: var(--site-ink);
+	--site-link-pill-bg: oklch(20% 0.005 250);
+	--site-link-pill-fg: var(--site-ink);
 	--site-highlight-bg: oklch(28% 0.008 250);
 	--site-highlight-line: oklch(36% 0.011 250);
 	--site-highlight-fg: var(--site-ink);
@@ -115,6 +120,8 @@
 		--site-accent: oklch(78% 0.012 250);
 		--site-selection-bg: oklch(39% 0.011 250);
 		--site-selection-fg: var(--site-ink);
+		--site-link-pill-bg: oklch(20% 0.005 250);
+		--site-link-pill-fg: var(--site-ink);
 		--site-highlight-bg: oklch(28% 0.008 250);
 		--site-highlight-line: oklch(36% 0.011 250);
 		--site-highlight-fg: var(--site-ink);
@@ -123,6 +130,7 @@
 
 @media (width < 42rem) {
 	:root {
-		--type-title: 1.375rem;
+		--type-title: 1.5rem;
+		--type-quote: 1.5rem;
 	}
 }

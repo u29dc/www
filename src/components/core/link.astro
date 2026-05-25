@@ -10,6 +10,9 @@ type Props = {
 	href?: string;
 	icon?: LinkIcon;
 	mark?: LinkMark;
+	accent?: string;
+	accentText?: string;
+	variant?: 'text' | 'pill';
 	external?: boolean;
 	showIcon?: boolean;
 	showArrow?: boolean;
@@ -30,6 +33,9 @@ const {
 	href = '#',
 	icon,
 	mark,
+	accent,
+	accentText,
+	variant,
 	external,
 	showIcon,
 	showArrow = true,
@@ -70,10 +76,18 @@ const iconFromHref = (): LinkIcon => {
 
 const activeIcon = icon ?? iconFromHref();
 const shouldRenderIcon = (showIcon ?? Boolean(icon ?? mark)) && !isFootnote;
+const shouldRenderPillIcon = (showIcon ?? true) && !isFootnote;
 const shouldRenderArrow = showArrow && isExternal && !isFootnote;
+const shouldRenderPill = (variant ?? (isExternal && !isFootnote && showArrow !== false ? 'pill' : 'text')) === 'pill';
 const targetValue = isExternal ? (target ?? '_blank') : target;
 const relValue = isExternal ? Array.from(new Set([rel, 'noopener', 'noreferrer'].filter(Boolean))).join(' ') : rel;
 const activePreviewMedia = previewMedia ?? firstDefaultLinkPreviewMedia();
+const pillStyle = [
+	'--link-pill-bg:var(--site-link-pill-bg)',
+	'--link-pill-fg:var(--site-link-pill-fg)',
+	'--link-pill-hover-bg:' + (accent ?? 'var(--site-ink)'),
+	'--link-pill-hover-fg:' + (accentText ?? 'var(--site-ground)'),
+].join(';');
 const preview = resolveLinkHoverPreview(activePreviewMedia, {
 	...(previewAlt === undefined ? {} : { alt: previewAlt }),
 	...(previewFit === undefined ? {} : { fit: previewFit }),
@@ -97,44 +111,76 @@ const ActiveIcon = iconComponents[activeIcon];
 ---
 
 <span class:list={['inline leading-[inherit]', className]}>
-	<a
-		class="group/link inline text-current no-underline decoration-muted/45 underline-offset-[0.18em] leading-[inherit] transition-colors duration-(--duration-quick) ease-(--ease-settle) hover:text-ink"
-		href={href}
-		target={targetValue}
-		rel={relValue}
-		data-hover-preview-target={preview ? 'link' : undefined}
-		data-hover-preview-src={preview?.url}
-		data-hover-preview-kind={preview?.kind}
-		data-hover-preview-ratio={preview?.ratio}
-		data-hover-preview-fit={preview?.fit}
-		data-hover-preview-alt={preview?.alt}
-		{...anchorProps}
-	>
-		<span class="relative inline-block min-w-0 leading-[inherit] group-hover/link:underline"><slot /></span>
-		{
-			shouldRenderIcon && (
-				<span class="ml-[0.12em] inline-block size-[0.98em] select-none align-[-0.14em] text-muted transition-colors duration-(--duration-quick) ease-(--ease-settle) [line-height:0] selection:bg-transparent selection:text-muted group-hover/link:text-ink" aria-hidden="true">
-					{mark ? (
-						markImages[mark] ? (
-							<img class="block size-full rounded-none object-contain select-none pointer-events-none" src={markImages[mark]} alt="" width="64" height="64" decoding="async" draggable="false" />
+	{
+		shouldRenderPill ? (
+			<a
+				class="group/link inline-flex max-w-full items-center gap-[0.2em] whitespace-nowrap rounded-full border border-[color:var(--site-edge-soft)] bg-[var(--link-pill-bg)] px-[0.38em] py-[0.08em] align-[0.04em] text-[13px] font-(--weight-body) text-[var(--link-pill-fg)] no-underline leading-[1.1] transition-[background-color,border-color,color] duration-(--duration-quick) ease-(--ease-settle) hover:border-[color:var(--link-pill-hover-bg)] hover:bg-[var(--link-pill-hover-bg)] hover:text-[var(--link-pill-hover-fg)]"
+				href={href}
+				target={targetValue}
+				rel={relValue}
+				style={pillStyle}
+				data-hover-preview-target={preview ? 'link' : undefined}
+				data-hover-preview-src={preview?.url}
+				data-hover-preview-kind={preview?.kind}
+				data-hover-preview-ratio={preview?.ratio}
+				data-hover-preview-fit={preview?.fit}
+				data-hover-preview-alt={preview?.alt}
+				{...anchorProps}
+			>
+				{shouldRenderPillIcon && (
+					<span class="inline-block size-[0.92em] shrink-0 select-none text-current [line-height:0] selection:bg-transparent" aria-hidden="true">
+						{mark ? (
+							markImages[mark] ? (
+								<img class="block size-full rounded-none object-contain select-none pointer-events-none" src={markImages[mark]} alt="" width="64" height="64" decoding="async" draggable="false" />
+							) : (
+								<span class:list={['block size-full rounded-full', markClasses[mark]]} />
+							)
 						) : (
-							<span class:list={['block size-full rounded-full', markClasses[mark]]} />
-						)
-					) : (
-						<ActiveIcon class="block size-full pointer-events-none" stroke-width={2.35} focusable="false" />
-					)}
-				</span>
-			)
-		}
-		{
-			shouldRenderArrow && (
-				<ArrowUpRight
-					class="ml-[0.06em] inline-block size-[0.72em] select-none align-[0.08em] text-muted transition-[color,transform] duration-(--duration-quick) ease-(--ease-settle) selection:bg-transparent selection:text-muted group-hover/link:translate-x-[0.08em] group-hover/link:translate-y-[-0.08em] group-hover/link:text-ink"
-					stroke-width={2.25}
-					aria-hidden="true"
-					focusable="false"
-				/>
-			)
-		}
-	</a>
+							<ActiveIcon class="block size-full pointer-events-none" stroke-width={2.35} focusable="false" />
+						)}
+					</span>
+				)}
+				<span class="min-w-0 leading-[inherit]"><slot /></span>
+				{shouldRenderArrow && <ArrowUpRight class="inline-block size-[0.72em] shrink-0 select-none text-current transition-transform duration-(--duration-quick) ease-(--ease-settle) selection:bg-transparent group-hover/link:translate-x-[0.08em] group-hover/link:translate-y-[-0.08em]" stroke-width={2.25} data-link-arrow aria-hidden="true" focusable="false" />}
+			</a>
+		) : (
+			<a
+				class="group/link inline text-current no-underline decoration-muted/45 underline-offset-[0.18em] leading-[inherit] transition-colors duration-(--duration-quick) ease-(--ease-settle) hover:text-ink"
+				href={href}
+				target={targetValue}
+				rel={relValue}
+				data-hover-preview-target={preview ? 'link' : undefined}
+				data-hover-preview-src={preview?.url}
+				data-hover-preview-kind={preview?.kind}
+				data-hover-preview-ratio={preview?.ratio}
+				data-hover-preview-fit={preview?.fit}
+				data-hover-preview-alt={preview?.alt}
+				{...anchorProps}
+			>
+				<span class="relative inline-block min-w-0 leading-[inherit] group-hover/link:underline"><slot /></span>
+				{shouldRenderIcon && (
+					<span class="ml-[0.12em] inline-block size-[0.98em] select-none align-[-0.14em] text-muted transition-colors duration-(--duration-quick) ease-(--ease-settle) [line-height:0] selection:bg-transparent selection:text-muted group-hover/link:text-ink" aria-hidden="true">
+						{mark ? (
+							markImages[mark] ? (
+								<img class="block size-full rounded-none object-contain select-none pointer-events-none" src={markImages[mark]} alt="" width="64" height="64" decoding="async" draggable="false" />
+							) : (
+								<span class:list={['block size-full rounded-full', markClasses[mark]]} />
+							)
+						) : (
+							<ActiveIcon class="block size-full pointer-events-none" stroke-width={2.35} focusable="false" />
+						)}
+					</span>
+				)}
+				{shouldRenderArrow && (
+					<ArrowUpRight
+						class="ml-[0.06em] inline-block size-[0.72em] select-none align-[0.08em] text-muted transition-[color,transform] duration-(--duration-quick) ease-(--ease-settle) selection:bg-transparent selection:text-muted group-hover/link:translate-x-[0.08em] group-hover/link:translate-y-[-0.08em] group-hover/link:text-ink"
+						stroke-width={2.25}
+						data-link-arrow
+						aria-hidden="true"
+						focusable="false"
+					/>
+				)}
+			</a>
+		)
+	}
 </span>
