@@ -14,7 +14,6 @@ export async function getStaticPaths() {
 }
 
 const { entry } = Astro.props;
-const markdownPath = `/${entry.data.slug}.md`;
 ---
 
 <SiteLayout title={`${entry.data.title} / Incomplete Infinity`} description={entry.data.description} ogType="article" publishedTime={entry.data.date} markdownUrl={artifactMarkdownUrl(entry)}>
@@ -23,12 +22,6 @@ const markdownPath = `/${entry.data.slug}.md`;
 			<p class="text-(length:--type-label) font-(--weight-strong) leading-(--leading-label) text-muted uppercase">{entry.data.type === 'study' ? 'Study' : 'Writing'}</p>
 			<h1 class="max-w-(--measure-article) font-serif-condensed text-(length:--type-title) font-(--weight-title) leading-(--leading-title)">{entry.data.title}</h1>
 			<p class="max-w-(--measure-article) text-(length:--type-body-lg) text-muted">{entry.data.description}</p>
-			<div class="flex items-center pt-(--space-1)">
-				<button class="inline-flex min-h-8 cursor-pointer items-center rounded-(--radius-thin) border border-edge-soft bg-transparent px-(--space-2) py-(--space-1) font-mono text-(length:--type-label) leading-(--leading-label) font-(--weight-strong) text-muted outline-offset-3 transition-colors duration-(--duration-quick) ease-(--ease-settle) hover:border-edge hover:bg-surface hover:text-ink focus-visible:outline-2 focus-visible:outline-accent disabled:cursor-wait disabled:opacity-70 disabled:hover:border-edge-soft disabled:hover:bg-transparent disabled:hover:text-muted" type="button" data-copy-markdown={markdownPath} data-copy-idle="Copy markdown" data-copy-done="Copied" data-copy-error="Copy failed">
-					<span data-copy-label>Copy markdown</span>
-				</button>
-				<span class="sr-only" aria-live="polite" data-copy-status></span>
-			</div>
 		</header>
 		<dl class="layout-lane-wide hidden max-w-(--measure-meta) grid-cols-[max-content_minmax(0,1fr)] gap-x-(--space-5) gap-y-(--space-2) border-y border-edge py-(--space-5) max-[42rem]:grid-cols-1 max-[42rem]:gap-(--space-1)" aria-hidden="true" hidden>
 			<dt>Type</dt>

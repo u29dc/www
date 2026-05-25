@@ -58,8 +58,8 @@
 	--type-label: 0.75rem;
 	--type-body: 0.875rem;
 	--type-body-lg: 0.9375rem;
-	--type-title: 1.5rem;
-	--type-quote: 1.5rem;
+	--type-title: 25px;
+	--type-quote: 25px;
 	--leading-label: 1.25;
 	--leading-body: 1.58;
 	--leading-title: 1.25;
@@ -130,7 +130,7 @@
 
 @media (width < 42rem) {
 	:root {
-		--type-title: 1.5rem;
-		--type-quote: 1.5rem;
+		--type-title: 25px;
+		--type-quote: 25px;
 	}
 }

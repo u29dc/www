@@ -3,6 +3,10 @@
 		@apply text-(length:--type-body-lg) leading-(--leading-body);
 	}
 
+	[data-prose] [data-mdx-quote] p {
+		@apply font-serif-condensed text-(length:--type-quote) font-(--weight-title) leading-(--leading-title);
+	}
+
 	[data-prose] p,
 	#origin p,
 	.layout-lane-wide > p,
