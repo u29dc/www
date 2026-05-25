@@ -47,7 +47,7 @@ const canUseStorage = (): boolean => {
 	}
 };
 
-export const recordWebglDiagnostic = ({ feature, stage, result, data }: { feature: 'atomic-logo'; stage: string; result: string; data?: DiagnosticPayload }): void => {
+export const recordWebglDiagnostic = ({ feature, stage, result, data }: { feature: 'logo'; stage: string; result: string; data?: DiagnosticPayload }): void => {
 	if (!canUseStorage()) return;
 
 	const event = {

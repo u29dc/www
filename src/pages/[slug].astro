@@ -1,6 +1,6 @@
 ---
-import MdxFrame from '../components/MdxFrame.astro';
-import ConnectLine from '../components/ConnectLine.astro';
+import MdxContent from '../components/MdxContent.astro';
+import Connect from '../components/Connect.astro';
 import SiteLayout from '../layouts/SiteLayout.astro';
 import { formatDate, getPublicArtifacts, isFragmentArtifact, isStudyArtifact } from '../lib/content';
 import { artifactMarkdownUrl } from '../lib/markdown';
@@ -24,7 +24,7 @@ const markdownPath = `/${entry.data.slug}.md`;
 			<h1 class="max-w-(--measure-article) font-serif-condensed text-(length:--type-title) font-(--weight-title) leading-(--leading-title)">{entry.data.title}</h1>
 			<p class="max-w-(--measure-article) text-(length:--type-body-lg) text-muted">{entry.data.description}</p>
 			<div class="flex items-center pt-(--space-1)">
-				<button class="copy-action" type="button" data-copy-markdown={markdownPath} data-copy-idle="Copy markdown" data-copy-done="Copied" data-copy-error="Copy failed">
+				<button class="inline-flex min-h-8 cursor-pointer items-center rounded-(--radius-thin) border border-edge-soft bg-transparent px-(--space-2) py-(--space-1) font-mono text-(length:--type-label) leading-(--leading-label) font-(--weight-strong) text-muted outline-offset-3 transition-colors duration-(--duration-quick) ease-(--ease-settle) hover:border-edge hover:bg-surface hover:text-ink focus-visible:outline-2 focus-visible:outline-accent disabled:cursor-wait disabled:opacity-70 disabled:hover:border-edge-soft disabled:hover:bg-transparent disabled:hover:text-muted" type="button" data-copy-markdown={markdownPath} data-copy-idle="Copy markdown" data-copy-done="Copied" data-copy-error="Copy failed">
 					<span data-copy-label>Copy markdown</span>
 				</button>
 				<span class="sr-only" aria-live="polite" data-copy-status></span>
@@ -59,10 +59,10 @@ const markdownPath = `/${entry.data.slug}.md`;
 			)}
 		</dl>
 		<div class="layout-lane">
-			<MdxFrame entry={entry} />
+			<MdxContent entry={entry} />
 		</div>
 		<div class="layout-lane" data-reveal>
-			<ConnectLine />
+			<Connect />
 		</div>
 	</main>
 </SiteLayout>

@@ -1,7 +1,7 @@
 ---
-import ConnectLine from '../components/ConnectLine.astro';
-import TransitionLink from '../components/TransitionLink.astro';
-import UiLink from '../components/UiLink.astro';
+import Connect from '../components/Connect.astro';
+import Transition from '../components/Transition.astro';
+import Link from '../components/Link.astro';
 import SiteLayout from '../layouts/SiteLayout.astro';
 import { formatDate, getFragments, getStudies } from '../lib/content';
 import { resolveArtifactHoverPreview } from '../lib/hover-preview';
@@ -23,10 +23,10 @@ const showSignals = signals.length > 0;
 					Most of the technology that will matter in the next decade is already becoming possible. The machines will run. The tech will work. The prototypes will become products. What remains is the passage into the world: belief, adoption, permission, memory, demand. A future can be engineered and still fail to become imaginable to the people who have to fund it, buy it, work on it, regulate it, defend it, or live beside it.
 				</p>
 				<p class="text-(length:--type-body-lg) leading-(--leading-body) text-muted">
-					I have spent the last decade working around that passage: from architecture at <UiLink class="font-(--weight-strong) text-ink" href={originLinks.salon.href} mark={originLinks.salon.mark}>{originLinks.salon.label}</UiLink> to arts and media at <UiLink class="font-(--weight-strong) text-ink" href={originLinks.nohlab.href} mark={originLinks.nohlab.mark}>{originLinks.nohlab.label}</UiLink>, creative engineering at <UiLink class="font-(--weight-strong) text-ink" href={originLinks.lusion.href} mark={originLinks.lusion.mark}>{originLinks.lusion.label}</UiLink> and <UiLink class="font-(--weight-strong) text-ink" href={originLinks.artificialRome.href}>{originLinks.artificialRome.label}</UiLink>, cultural and immersive projects across <UiLink class="font-(--weight-strong) text-ink" href={originLinks.porsche.href} mark={originLinks.porsche.mark}>{originLinks.porsche.label}</UiLink>, <UiLink class="font-(--weight-strong) text-ink" href={originLinks.outernet.href}>{originLinks.outernet.label}</UiLink>, the <UiLink class="font-(--weight-strong) text-ink" href={originLinks.ntmofa.href}>{originLinks.ntmofa.label}</UiLink>, <UiLink class="font-(--weight-strong) text-ink" href={originLinks.akbankSanat.href}>{originLinks.akbankSanat.label}</UiLink>, and <UiLink class="font-(--weight-strong) text-ink" href={originLinks.battersea.href}>{originLinks.battersea.label}</UiLink>, then creative direction at <UiLink class="font-(--weight-strong) text-ink" href={originLinks.lotus.href} mark={originLinks.lotus.mark}>{originLinks.lotus.label}</UiLink> during the shift from petrol to electric. Different rooms, different mediums, same pressure: something difficult trying to become visible without becoming smaller.
+					I have spent the last decade working around that passage: from architecture at <Link class="font-(--weight-strong) text-ink" href={originLinks.salon.href} mark={originLinks.salon.mark}>{originLinks.salon.label}</Link> to arts and media at <Link class="font-(--weight-strong) text-ink" href={originLinks.nohlab.href} mark={originLinks.nohlab.mark}>{originLinks.nohlab.label}</Link>, creative engineering at <Link class="font-(--weight-strong) text-ink" href={originLinks.lusion.href} mark={originLinks.lusion.mark}>{originLinks.lusion.label}</Link> and <Link class="font-(--weight-strong) text-ink" href={originLinks.artificialRome.href}>{originLinks.artificialRome.label}</Link>, cultural and immersive projects across <Link class="font-(--weight-strong) text-ink" href={originLinks.porsche.href} mark={originLinks.porsche.mark}>{originLinks.porsche.label}</Link>, <Link class="font-(--weight-strong) text-ink" href={originLinks.outernet.href}>{originLinks.outernet.label}</Link>, the <Link class="font-(--weight-strong) text-ink" href={originLinks.ntmofa.href}>{originLinks.ntmofa.label}</Link>, <Link class="font-(--weight-strong) text-ink" href={originLinks.akbankSanat.href}>{originLinks.akbankSanat.label}</Link>, and <Link class="font-(--weight-strong) text-ink" href={originLinks.battersea.href}>{originLinks.battersea.label}</Link>, then creative direction at <Link class="font-(--weight-strong) text-ink" href={originLinks.lotus.href} mark={originLinks.lotus.mark}>{originLinks.lotus.label}</Link> during the shift from petrol to electric. Different rooms, different mediums, same pressure: something difficult trying to become visible without becoming smaller.
 				</p>
 				<p class="text-(length:--type-body-lg) leading-(--leading-body) text-muted">
-					I am narrowing that range now through <UiLink class="font-(--weight-strong) text-ink" href={originLinks.practice.href} mark={originLinks.practice.mark}>{originLinks.practice.label}</UiLink>, for companies whose work is too consequential to remain trapped inside technical explanation. Energy, climate, robotics: fields where the proof is hard-won, but proof alone rarely carries far enough. The work is narrative architecture, creative strategy, and proof-making for the fragile passage between what has been built and what the world is ready to believe.
+					I am narrowing that range now through <Link class="font-(--weight-strong) text-ink" href={originLinks.practice.href} mark={originLinks.practice.mark}>{originLinks.practice.label}</Link>, for companies whose work is too consequential to remain trapped inside technical explanation. Energy, climate, robotics: fields where the proof is hard-won, but proof alone rarely carries far enough. The work is narrative architecture, creative strategy, and proof-making for the fragile passage between what has been built and what the world is ready to believe.
 				</p>
 				<p class="text-(length:--type-body-lg) leading-(--leading-body) text-muted">
 					The name is deliberate. Complete systems close. Incomplete ones invite participation. I am interested in structures open enough to be entered, precise enough to be trusted, and strange enough to resist becoming another polished surface. Structures that can hold a technical claim, a commercial decision, and a human reason for caring at the same time.
@@ -58,9 +58,10 @@ const showSignals = signals.length > 0;
 			<ul class="grid list-none border-t border-edge-soft p-0">
 				{studyRows.map(({ entry, preview }) => (
 					<li>
-						<TransitionLink
-							class="artifact-row group grid grid-cols-[minmax(0,1fr)_max-content] items-baseline gap-(--space-4) border-b border-edge-soft py-(--space-2) text-current no-underline transition-opacity duration-(--duration-quick) ease-(--ease-settle) touch-manipulation max-[42rem]:grid-cols-1 max-[42rem]:gap-(--space-1)"
+						<Transition
+							class="group relative grid grid-cols-[minmax(0,1fr)_max-content] items-baseline gap-(--space-4) border-b border-edge-soft py-(--space-2) text-current no-underline transition-opacity duration-(--duration-quick) ease-(--ease-settle) touch-manipulation max-[42rem]:grid-cols-1 max-[42rem]:gap-(--space-1)"
 							href={`/${entry.data.slug}`}
+							data-artifact
 							data-hover-preview-target="artifact"
 							data-hover-preview-src={preview.url}
 							data-hover-preview-kind={preview.kind}
@@ -70,7 +71,7 @@ const showSignals = signals.length > 0;
 						>
 							<span class="font-mono text-(length:--type-label) font-(--weight-strong) leading-(--leading-label) motion-safe:transition-transform motion-safe:duration-(--duration-quick) motion-safe:ease-(--ease-settle) motion-safe:group-hover:translate-x-1">{entry.data.title}</span>
 							<span class="text-right font-mono text-(length:--type-label) leading-(--leading-label) tabular-nums text-muted max-[42rem]:text-left">{entry.data.client}</span>
-						</TransitionLink>
+						</Transition>
 					</li>
 				))}
 			</ul>
@@ -83,9 +84,10 @@ const showSignals = signals.length > 0;
 			<ul class="grid list-none border-t border-edge-soft p-0">
 				{fragmentRows.map(({ entry, preview }) => (
 					<li>
-						<TransitionLink
-							class="artifact-row group grid grid-cols-[minmax(0,1fr)_max-content] items-baseline gap-(--space-4) border-b border-edge-soft py-(--space-2) text-current no-underline transition-opacity duration-(--duration-quick) ease-(--ease-settle) touch-manipulation max-[42rem]:grid-cols-1 max-[42rem]:gap-(--space-1)"
+						<Transition
+							class="group relative grid grid-cols-[minmax(0,1fr)_max-content] items-baseline gap-(--space-4) border-b border-edge-soft py-(--space-2) text-current no-underline transition-opacity duration-(--duration-quick) ease-(--ease-settle) touch-manipulation max-[42rem]:grid-cols-1 max-[42rem]:gap-(--space-1)"
 							href={`/${entry.data.slug}`}
+							data-artifact
 							data-hover-preview-target="artifact"
 							data-hover-preview-src={preview.url}
 							data-hover-preview-kind={preview.kind}
@@ -95,7 +97,7 @@ const showSignals = signals.length > 0;
 						>
 							<span class="font-mono text-(length:--type-label) font-(--weight-strong) leading-(--leading-label) motion-safe:transition-transform motion-safe:duration-(--duration-quick) motion-safe:ease-(--ease-settle) motion-safe:group-hover:translate-x-1">{entry.data.title}</span>
 							<span class="text-right font-mono text-(length:--type-label) leading-(--leading-label) tabular-nums text-muted max-[42rem]:text-left">{formatDate(entry.data.date)}</span>
-						</TransitionLink>
+						</Transition>
 					</li>
 				))}
 			</ul>
@@ -110,9 +112,9 @@ const showSignals = signals.length > 0;
 						<ul class="grid list-none border-t border-edge-soft p-0">
 							{signals.map((signal) => (
 								<li class="grid gap-(--space-1) border-b border-edge-soft py-(--space-2)">
-								<UiLink class="w-fit font-sans text-(length:--type-body) font-(--weight-strong)" href={signal.href}>
+								<Link class="w-fit font-sans text-(length:--type-body) font-(--weight-strong)" href={signal.href}>
 									{signal.label}
-								</UiLink>
+								</Link>
 								{signal.meta && <span class="font-sans text-(length:--type-body) leading-(--leading-label) tabular-nums text-muted">{signal.meta}</span>}
 							</li>
 						))}
@@ -122,7 +124,7 @@ const showSignals = signals.length > 0;
 		}
 
 		<div class="layout-lane" data-reveal>
-			<ConnectLine />
+			<Connect />
 		</div>
 	</main>
 </SiteLayout>

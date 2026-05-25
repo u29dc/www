@@ -2,7 +2,7 @@
 import '../styles/app.css';
 import { ClientRouter } from 'astro:transitions';
 import { ArrowLeft } from '@lucide/astro';
-import UiLink from '../components/UiLink.astro';
+import Link from '../components/Link.astro';
 import { MEDIA, SITE, SITE_THEME } from '../lib/constants';
 
 type Props = {
@@ -100,18 +100,23 @@ const themeColorDark = SITE.themeColorDark;
 		<title>{title}</title>
 	</head>
 	<body class="min-h-dvh">
-		<div class="site-grid-guide" aria-hidden="true">
+		<div class="pointer-events-none fixed top-0 left-0 z-30 h-2.5 w-full" aria-hidden="true">
 			<div class="layout-grid h-full">
-				<div class="site-grid-guide__lane"></div>
+				<div class="layout-lane h-full border-x border-muted/55 opacity-[0.82]"></div>
 			</div>
 		</div>
 		<header class="sticky top-0 z-10 pt-(--space-6) pb-(--space-5)" data-site-header transition:persist="site-header">
 			<nav class="layout-grid text-(length:--type-body) font-(--weight-strong) leading-(--leading-body)" aria-label="Primary" data-reveal data-reveal-once>
 				<div class="layout-lane flex items-center justify-between">
-					<UiLink class="site-title-link" href="/" showIcon={false} showArrow={false}>
-						<ArrowLeft class="site-title-arrow" stroke-width={2.35} aria-hidden="true" focusable="false" />
-						<span class="site-title-text">Incomplete Infinity</span>
-					</UiLink>
+					<Link href="/" showIcon={false} showArrow={false}>
+						<ArrowLeft
+							class="pointer-events-none absolute top-[0.34em] left-0 inline-block size-[0.9em] max-h-none max-w-none -translate-x-[0.55rem] text-muted opacity-0 blur-[0.18rem] transition-[color,opacity,filter,translate] duration-(--duration-page-exit) ease-(--ease-route) [html[data-site-route-motion=running]_&]:will-change-[opacity,filter,translate] [html[data-site-route=detail]_&]:translate-x-0 [html[data-site-route=detail]_&]:opacity-100 [html[data-site-route=detail]_&]:blur-none motion-reduce:transition-none motion-reduce:blur-none"
+							stroke-width={2.35}
+							aria-hidden="true"
+							focusable="false"
+						/>
+						<span class="inline-block translate-x-0 blur-none transition-[color,translate] duration-(--duration-page-exit) ease-(--ease-route) [html[data-site-route-motion=running]_&]:will-change-[translate] [html[data-site-route=detail]_&]:translate-x-[1.15rem] motion-reduce:transition-none motion-reduce:blur-none">Incomplete Infinity</span>
+					</Link>
 				</div>
 			</nav>
 		</header>
@@ -119,7 +124,7 @@ const themeColorDark = SITE.themeColorDark;
 			<slot />
 		</div>
 		<script>
-			import '../scripts/atomic-brand-logo';
+			import '../scripts/logo';
 			import '../scripts/copy-markdown';
 			import '../scripts/hover-preview';
 			import '../scripts/mdx-media';

@@ -1,9 +1,9 @@
 import { registerRafTask } from './raf';
 import { detectDeviceTier, getDprCap, recordWebglDiagnostic, type DeviceTier } from './webgl';
 
-export type AtomicBrandLogoTheme = 'light' | 'dark';
+export type Theme = 'light' | 'dark';
 
-export interface AtomicBrandLogoState {
+export interface State {
 	width: number;
 	height: number;
 	blurStart: number;
@@ -14,7 +14,7 @@ export interface AtomicBrandLogoState {
 	noiseIntensity: number;
 	noiseScale: number;
 	animateNoise: boolean;
-	theme: AtomicBrandLogoTheme;
+	theme: Theme;
 }
 
 interface CanvasDimensions {
@@ -31,9 +31,9 @@ interface BufferDescriptor {
 	itemCount: number;
 }
 
-export interface AtomicBrandLogoRenderer {
+export interface Renderer {
 	resize(dimensions?: Partial<Pick<CanvasDimensions, 'width' | 'height'>>): void;
-	setState(state: AtomicBrandLogoState): void;
+	setState(state: State): void;
 	start(): void;
 	stop(): void;
 	renderOnce(): void;
@@ -53,7 +53,7 @@ const logEvent = (scope: string, topic: string, event: string, data?: Record<str
 	}
 
 	recordWebglDiagnostic({
-		feature: 'atomic-logo',
+		feature: 'logo',
 		stage: `${scope.toLowerCase()}:${topic.toLowerCase()}`,
 		result: event,
 		data: diagnosticData,
@@ -78,7 +78,7 @@ const UNIFORM_NAMES = [
 	'u_noiseScale',
 ] as const;
 
-export const ATOMIC_BRAND_LOGO_VERTEX_SHADER = /* glsl */ `#version 300 es
+export const LOGO_VERTEX_SHADER = /* glsl */ `#version 300 es
 layout(location = 0) in vec2 a_position;
 
 void main() {
@@ -86,7 +86,7 @@ void main() {
 }
 `;
 
-export const ATOMIC_BRAND_LOGO_FRAGMENT_SHADER = /* glsl */ `#version 300 es
+export const LOGO_FRAGMENT_SHADER = /* glsl */ `#version 300 es
 precision highp float;
 
 out vec4 fragColor;
@@ -471,15 +471,11 @@ function setUniform3f(location: WebGLUniformLocation | null, x: number, y: numbe
 	gl.uniform3f(location, x, y, z);
 }
 
-export function createAtomicBrandLogoRenderer(
-	canvas: HTMLCanvasElement,
-	initialState: AtomicBrandLogoState,
-	onFatalContextError?: (reason: 'context-lost' | 'context-restored' | 'gl-error') => void,
-): AtomicBrandLogoRenderer {
+export function createRenderer(canvas: HTMLCanvasElement, initialState: State, onFatalContextError?: (reason: 'context-lost' | 'context-restored' | 'gl-error') => void): Renderer {
 	const gl = createGraphicsContext(canvas);
 	const program = createProgram(gl, {
-		vertex: ATOMIC_BRAND_LOGO_VERTEX_SHADER,
-		fragment: ATOMIC_BRAND_LOGO_FRAGMENT_SHADER,
+		vertex: LOGO_VERTEX_SHADER,
+		fragment: LOGO_FRAGMENT_SHADER,
 	});
 
 	gl.useProgram(program);
@@ -490,14 +486,14 @@ export function createAtomicBrandLogoRenderer(
 	const fullscreenQuad = createFullscreenQuad(gl);
 	const positionLocation = gl.getAttribLocation(program, 'a_position');
 	if (positionLocation === -1) {
-		logEvent('WEBGL', 'ATOMIC-LOGO', 'ATTRIB-MISSING', {
+		logEvent('WEBGL', 'LOGO', 'ATTRIB-MISSING', {
 			attribute: 'a_position',
 		});
 	}
 
 	const vao = gl.createVertexArray();
 	if (!vao) {
-		logEvent('WEBGL', 'ATOMIC-LOGO', 'VAO-MISSING');
+		logEvent('WEBGL', 'LOGO', 'VAO-MISSING');
 		throw new Error('Failed to allocate vertex array.');
 	}
 
@@ -528,14 +524,14 @@ export function createAtomicBrandLogoRenderer(
 	const failOnContextError = (reason: 'context-lost' | 'context-restored' | 'gl-error', message: string): void => {
 		if (hasContextFailure) return;
 		hasContextFailure = true;
-		logEvent('WEBGL', 'ATOMIC-LOGO', 'FAIL', { reason, message });
+		logEvent('WEBGL', 'LOGO', 'FAIL', { reason, message });
 		onFatalContextError?.(reason);
 	};
 
 	const checkGlError = (phase: string): boolean => {
 		const error = gl.getError();
 		if (error !== gl.NO_ERROR) {
-			logEvent('WEBGL', 'ATOMIC-LOGO', 'GL-ERROR', {
+			logEvent('WEBGL', 'LOGO', 'GL-ERROR', {
 				phase,
 				error,
 			});
@@ -564,7 +560,7 @@ export function createAtomicBrandLogoRenderer(
 		checkGlError('updateResolutionUniforms');
 	};
 
-	const applyStaticUniforms = (current: AtomicBrandLogoState): void => {
+	const applyStaticUniforms = (current: State): void => {
 		setUniform1f(uniforms.u_rectWidth, 2.0, gl);
 		setUniform1f(uniforms.u_rectHeight, 0.5, gl);
 		setUniform1f(uniforms.u_roundness, current.roundness, gl);
@@ -577,7 +573,7 @@ export function createAtomicBrandLogoRenderer(
 		checkGlError('applyStaticUniforms');
 	};
 
-	const applyThemeUniforms = (variant: AtomicBrandLogoTheme): void => {
+	const applyThemeUniforms = (variant: Theme): void => {
 		const widthMultiplier = 0.75;
 		const heightMultiplier = variant === 'dark' ? 0.1 : 0.5;
 		setUniform1f(uniforms.u_widthSpreadMultiplier, widthMultiplier, gl);
@@ -650,7 +646,7 @@ export function createAtomicBrandLogoRenderer(
 		if (isDisposed || hasContextFailure) return;
 		if (!hasLoggedFirstFrame) {
 			hasLoggedFirstFrame = true;
-			logEvent('WEBGL', 'ATOMIC-LOGO', 'FRAME-START', {
+			logEvent('WEBGL', 'LOGO', 'FRAME-START', {
 				delta: deltaSeconds * 1000,
 				now: timestamp,
 			});
@@ -723,7 +719,7 @@ export function createAtomicBrandLogoRenderer(
 			return;
 		}
 
-		logEvent('WEBGL', 'ATOMIC-LOGO', 'FRAME-VALIDATED', {
+		logEvent('WEBGL', 'LOGO', 'FRAME-VALIDATED', {
 			alphaSum,
 			pixelWidth,
 			pixelHeight,
@@ -793,7 +789,7 @@ export function createAtomicBrandLogoRenderer(
 		handleResize(nextDimensions);
 	};
 
-	const setState = (nextState: AtomicBrandLogoState): void => {
+	const setState = (nextState: State): void => {
 		const previousTheme = state.theme;
 		state = { ...nextState };
 		gl.useProgram(program);
@@ -852,10 +848,10 @@ export function createAtomicBrandLogoRenderer(
 	};
 }
 
-export const evaluateAtomicBrandLogoPolicy = (enableObservation: boolean): DeviceTier => {
+export const evaluatePolicy = (enableObservation: boolean): DeviceTier => {
 	const deviceTier = detectDeviceTier();
 	recordWebglDiagnostic({
-		feature: 'atomic-logo',
+		feature: 'logo',
 		stage: 'policy',
 		result: 'EVALUATED',
 		data: {

@@ -30,20 +30,32 @@ const {
 const sources = parseMediaSources(src);
 const totalRatio = sources.reduce((sum, item) => sum + item.ratio, 0);
 const shouldShowControls = controls || !autoplay;
+const figureStyle = [
+	`--media-ratio:${totalRatio}`,
+	'width:min(calc(100vw - (var(--space-page) * 2)), var(--measure-media))',
+	'margin-inline:calc((100% - min(calc(100vw - (var(--space-page) * 2)), var(--measure-media))) / 2)',
+].join(';');
 ---
 
-<figure class="mdx-media" style={`--media-ratio:${totalRatio};`} data-count={sources.length}>
-	<div class="mdx-media__track">
+<figure class="my-(--space-5) grid gap-(--space-2)" style={figureStyle} data-count={sources.length}>
+	<div class="flex w-full overflow-hidden bg-surface max-[42rem]:grid max-[42rem]:[aspect-ratio:auto]" style="aspect-ratio:var(--media-ratio);">
 		{
 			sources.map((item) => (
-				<div class="mdx-media__item" style={`--item-ratio:${item.ratio}; --item-basis:${(item.ratio / totalRatio) * 100}%;`} data-alt={alt || undefined}>
+				<div
+					class="relative grid min-w-0 shrink-0 place-items-center overflow-hidden rounded-(--radius-thin) max-[42rem]:w-full max-[42rem]:[flex-basis:auto!important]"
+					style={`--item-ratio:${item.ratio}; --item-basis:${(item.ratio / totalRatio) * 100}%; flex-basis:var(--item-basis); aspect-ratio:var(--item-ratio);`}
+					data-media-item
+					data-alt={alt || undefined}
+				>
 					{item.kind === 'video' ? (
 						<>
 							<video
-								class="mdx-media__asset"
-								data-mdx-video
+								class="block size-full object-cover pointer-events-none data-[fit=contain]:object-contain"
+								data-media-video
+								data-media-asset
 								data-src={item.url}
 								data-autoplay={autoplay ? 'true' : 'false'}
+								data-fit={fit}
 								aria-label={alt || undefined}
 								preload="none"
 								muted={muted}
@@ -54,8 +66,10 @@ const shouldShowControls = controls || !autoplay;
 							/>
 							<noscript>
 								<video
-									class="mdx-media__asset"
+									class="block size-full object-cover pointer-events-none data-[fit=contain]:object-contain"
 									src={item.url}
+									data-media-asset
+									data-fit={fit}
 									aria-label={alt || undefined}
 									preload="metadata"
 									muted
@@ -68,7 +82,7 @@ const shouldShowControls = controls || !autoplay;
 						</>
 					) : (
 						<img
-							class="mdx-media__asset"
+							class="block size-full object-cover pointer-events-none select-none data-[fit=contain]:object-contain"
 							src={item.url}
 							width={item.width}
 							height={item.height}
@@ -78,6 +92,7 @@ const shouldShowControls = controls || !autoplay;
 							crossorigin="anonymous"
 							referrerpolicy="origin"
 							data-fit={fit}
+							data-media-asset
 							draggable="false"
 						/>
 					)}
@@ -87,7 +102,7 @@ const shouldShowControls = controls || !autoplay;
 	</div>
 	{
 		(caption || credit) && (
-			<figcaption class="mdx-media__caption">
+			<figcaption class="flex flex-wrap gap-x-(--space-2) gap-y-(--space-1) text-(length:--type-label) leading-(--leading-label) text-muted">
 				{caption && <span>{caption}</span>}
 				{credit && <span>{credit}</span>}
 			</figcaption>

@@ -1,9 +1,9 @@
-import { createAtomicBrandLogoRenderer, evaluateAtomicBrandLogoPolicy, type AtomicBrandLogoRenderer, type AtomicBrandLogoState, type AtomicBrandLogoTheme } from '../lib/atomic-brand-logo';
+import { createRenderer, evaluatePolicy, type Renderer, type State, type Theme } from '../lib/logo';
 import { recordWebglDiagnostic, type DeviceTier } from '../lib/webgl';
 
-type LogoThemePreference = AtomicBrandLogoTheme | 'system';
+type ThemePreference = Theme | 'system';
 
-type AtomicBrandLogoConfig = {
+type Config = {
 	width: number;
 	mobileWidth: number;
 	blurStart: number;
@@ -16,21 +16,21 @@ type AtomicBrandLogoConfig = {
 	noiseIntensity: number;
 	noiseScale: number;
 	animateNoise: boolean;
-	theme: LogoThemePreference;
+	theme: ThemePreference;
 	enableObservation: boolean;
 };
 
-type LogoController = {
+type Controller = {
 	dispose: () => void;
 };
 
-const LOGO_SELECTOR = '[data-atomic-brand-logo]';
+const LOGO_SELECTOR = '[data-logo]';
 const MOBILE_QUERY = '(max-width: 767px)';
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 const DARK_QUERY = '(prefers-color-scheme: dark)';
 
-const controllers = new WeakMap<HTMLElement, LogoController>();
-const activeControllers = new Set<LogoController>();
+const controllers = new WeakMap<HTMLElement, Controller>();
+const activeControllers = new Set<Controller>();
 
 const parseNumber = (value: string | undefined, fallback: number): number => {
 	if (!value) return fallback;
@@ -44,12 +44,12 @@ const parseBoolean = (value: string | undefined, fallback: boolean): boolean => 
 	return fallback;
 };
 
-const parseTheme = (value: string | undefined): LogoThemePreference => {
+const parseTheme = (value: string | undefined): ThemePreference => {
 	if (value === 'light' || value === 'dark') return value;
 	return 'system';
 };
 
-const readConfig = (element: HTMLElement): AtomicBrandLogoConfig => {
+const readConfig = (element: HTMLElement): Config => {
 	const width = parseNumber(element.dataset['width'], 200);
 	const mouseBlurIntensity = parseNumber(element.dataset['mouseBlurIntensity'], 1.0);
 	const mouseBlurSize = parseNumber(element.dataset['mouseBlurSize'], 0.5);
@@ -72,7 +72,7 @@ const readConfig = (element: HTMLElement): AtomicBrandLogoConfig => {
 	};
 };
 
-const resolveTheme = (preference: LogoThemePreference, darkQuery: MediaQueryList): AtomicBrandLogoTheme => {
+const resolveTheme = (preference: ThemePreference, darkQuery: MediaQueryList): Theme => {
 	if (preference === 'light' || preference === 'dark') return preference;
 
 	const rootTheme = document.documentElement.dataset['theme'];
@@ -81,7 +81,7 @@ const resolveTheme = (preference: LogoThemePreference, darkQuery: MediaQueryList
 	return darkQuery.matches ? 'dark' : 'light';
 };
 
-const buildState = (config: AtomicBrandLogoConfig, isMobile: boolean, theme: AtomicBrandLogoTheme): AtomicBrandLogoState => {
+const buildState = (config: Config, isMobile: boolean, theme: Theme): State => {
 	const width = isMobile ? config.mobileWidth : config.width;
 
 	return {
@@ -99,16 +99,16 @@ const buildState = (config: AtomicBrandLogoConfig, isMobile: boolean, theme: Ato
 	};
 };
 
-const showFallback = (element: HTMLElement, canvas: HTMLCanvasElement, fallback: HTMLElement, state: AtomicBrandLogoState, options: { failed: boolean; reason: string }): void => {
+const showFallback = (element: HTMLElement, canvas: HTMLCanvasElement, fallback: HTMLElement, state: State, options: { failed: boolean; reason: string }): void => {
 	canvas.hidden = true;
 	fallback.hidden = false;
 	fallback.style.fontSize = `${Math.max(state.width * 0.16, 16)}px`;
 	fallback.dataset['theme'] = state.theme;
-	element.dataset['atomicBrandLogoFallback'] = options.reason;
+	element.dataset['fallback'] = options.reason;
 	if (options.failed) {
-		element.dataset['atomicBrandLogoFailed'] = 'true';
+		element.dataset['failed'] = 'true';
 	} else {
-		delete element.dataset['atomicBrandLogoFailed'];
+		delete element.dataset['failed'];
 	}
 };
 
@@ -116,15 +116,15 @@ const hideFallback = (element: HTMLElement, canvas: HTMLCanvasElement, fallback:
 	canvas.hidden = false;
 	fallback.hidden = true;
 	delete fallback.dataset['theme'];
-	delete element.dataset['atomicBrandLogoFallback'];
-	delete element.dataset['atomicBrandLogoFailed'];
+	delete element.dataset['fallback'];
+	delete element.dataset['failed'];
 };
 
-const createController = (element: HTMLElement): LogoController | undefined => {
+const createController = (element: HTMLElement): Controller | undefined => {
 	if (controllers.has(element)) return undefined;
 
-	const canvas = element.querySelector<HTMLCanvasElement>('[data-atomic-brand-logo-canvas]');
-	const fallback = element.querySelector<HTMLElement>('[data-atomic-brand-logo-fallback]');
+	const canvas = element.querySelector<HTMLCanvasElement>('[data-logo-canvas]');
+	const fallback = element.querySelector<HTMLElement>('[data-logo-fallback]');
 	if (!canvas || !fallback) return undefined;
 
 	const config = readConfig(element);
@@ -140,12 +140,12 @@ const createController = (element: HTMLElement): LogoController | undefined => {
 	let hasFatalFallback = false;
 	let isFallbackVisible = false;
 	let isDisposed = false;
-	let renderer: AtomicBrandLogoRenderer | null = null;
-	let deviceTier: DeviceTier = evaluateAtomicBrandLogoPolicy(config.enableObservation);
+	let renderer: Renderer | null = null;
+	let deviceTier: DeviceTier = evaluatePolicy(config.enableObservation);
 	let observer: IntersectionObserver | null = null;
 	let themeObserver: MutationObserver | null = null;
 
-	const currentState = (): AtomicBrandLogoState => buildState(config, isMobile, resolveTheme(config.theme, darkQuery));
+	const currentState = (): State => buildState(config, isMobile, resolveTheme(config.theme, darkQuery));
 
 	const shouldUseStaticFallback = (): boolean => deviceTier === 'low' || prefersReducedMotion;
 
@@ -173,7 +173,7 @@ const createController = (element: HTMLElement): LogoController | undefined => {
 		if (isFallbackVisible) {
 			showFallback(element, canvas, fallback, nextState, {
 				failed: hasFatalFallback,
-				reason: element.dataset['atomicBrandLogoFallback'] ?? 'static',
+				reason: element.dataset['fallback'] ?? 'static',
 			});
 		}
 		if (!renderer || isDisposed) return;
@@ -192,7 +192,7 @@ const createController = (element: HTMLElement): LogoController | undefined => {
 		renderer?.dispose();
 		renderer = null;
 		recordWebglDiagnostic({
-			feature: 'atomic-logo',
+			feature: 'logo',
 			stage: 'runtime',
 			result: 'FAIL',
 			data: { reason },
@@ -209,16 +209,16 @@ const createController = (element: HTMLElement): LogoController | undefined => {
 		isFallbackVisible = false;
 
 		try {
-			renderer = createAtomicBrandLogoRenderer(canvas, state, handleFatalContextError);
+			renderer = createRenderer(canvas, state, handleFatalContextError);
 			recordWebglDiagnostic({
-				feature: 'atomic-logo',
+				feature: 'logo',
 				stage: 'mount',
 				result: 'SUCCESS',
 				data: { deviceTier },
 			});
 		} catch (error) {
 			recordWebglDiagnostic({
-				feature: 'atomic-logo',
+				feature: 'logo',
 				stage: 'mount',
 				result: 'FAIL',
 				data: {
@@ -262,7 +262,7 @@ const createController = (element: HTMLElement): LogoController | undefined => {
 
 	const handleMotionChange = (): void => {
 		prefersReducedMotion = motionQuery.matches;
-		deviceTier = evaluateAtomicBrandLogoPolicy(config.enableObservation);
+		deviceTier = evaluatePolicy(config.enableObservation);
 		if (!prefersReducedMotion && isFallbackVisible && !hasFatalFallback) {
 			isFallbackVisible = false;
 			hideFallback(element, canvas, fallback);
@@ -304,7 +304,7 @@ const createController = (element: HTMLElement): LogoController | undefined => {
 
 	maybeMount();
 
-	const controller: LogoController = {
+	const controller: Controller = {
 		dispose: () => {
 			if (isDisposed) return;
 			isDisposed = true;
@@ -326,17 +326,17 @@ const createController = (element: HTMLElement): LogoController | undefined => {
 	return controller;
 };
 
-const setupAtomicBrandLogos = (root: ParentNode = document): void => {
+const setupLogos = (root: ParentNode = document): void => {
 	root.querySelectorAll<HTMLElement>(LOGO_SELECTOR).forEach(createController);
 };
 
-const disposeAtomicBrandLogos = (): void => {
+const disposeLogos = (): void => {
 	for (const controller of Array.from(activeControllers)) {
 		controller.dispose();
 	}
 };
 
-setupAtomicBrandLogos();
+setupLogos();
 
-document.addEventListener('astro:page-load', () => setupAtomicBrandLogos());
-document.addEventListener('astro:before-swap', disposeAtomicBrandLogos);
+document.addEventListener('astro:page-load', () => setupLogos());
+document.addEventListener('astro:before-swap', disposeLogos);

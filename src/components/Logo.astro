@@ -41,10 +41,10 @@ const resolvedMobileWidth = mobileWidth ?? width;
 const height = width / 2;
 const mobileHeight = resolvedMobileWidth / 2;
 const style = [
-	`--atomic-logo-width:${width}px`,
-	`--atomic-logo-height:${height}px`,
-	`--atomic-logo-mobile-width:${resolvedMobileWidth}px`,
-	`--atomic-logo-mobile-height:${mobileHeight}px`,
+	`--logo-width:${width}px`,
+	`--logo-height:${height}px`,
+	`--logo-mobile-width:${resolvedMobileWidth}px`,
+	`--logo-mobile-height:${mobileHeight}px`,
 	debug ? 'outline:2px solid red' : '',
 ]
 	.filter(Boolean)
@@ -52,9 +52,9 @@ const style = [
 ---
 
 <div
-	class:list={['atomic-brand-logo', className]}
+	class:list={['block overflow-visible w-(--logo-width) h-(--logo-height) max-[42rem]:w-(--logo-mobile-width) max-[42rem]:h-(--logo-mobile-height)', className]}
 	style={style}
-	data-atomic-brand-logo
+	data-logo
 	data-width={width}
 	data-mobile-width={resolvedMobileWidth}
 	data-blur-start={blurStart}
@@ -70,8 +70,8 @@ const style = [
 	data-theme={theme}
 	data-enable-observation={enableObservation ? 'true' : 'false'}
 >
-	<canvas class="atomic-brand-logo__canvas" data-atomic-brand-logo-canvas aria-label="Incomplete Infinity mark" role="img">Incomplete Infinity</canvas>
-	<div class="atomic-brand-logo__fallback" data-atomic-brand-logo-fallback aria-label="Incomplete Infinity mark fallback" role="img" hidden>
-		<span class="atomic-brand-logo__fallback-mark" aria-hidden="true"></span>
+	<canvas class="block size-full" data-logo-canvas aria-label="Incomplete Infinity mark" role="img">Incomplete Infinity</canvas>
+	<div class="hidden size-full items-center justify-center data-[theme=dark]:text-white/88 data-[theme=light]:text-black/86 [&:not([hidden])]:flex" data-logo-fallback aria-label="Incomplete Infinity mark fallback" role="img" hidden>
+		<span class="block h-[42%] w-[70%] rounded-r-full bg-current" aria-hidden="true"></span>
 	</div>
 </div>

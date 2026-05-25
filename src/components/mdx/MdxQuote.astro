@@ -11,18 +11,18 @@ const hasCaption = Boolean(author || source || reference);
 const isExternal = href ? /^https?:\/\//.test(href) : false;
 ---
 
-<figure class="mdx-quote">
-	<blockquote>
+<figure class="grid gap-(--space-3) border-l border-edge pl-(--space-4)">
+	<blockquote class="text-(length:--type-body-lg) font-(--weight-strong) leading-(--leading-body)">
 		<slot />
 	</blockquote>
 	{
 		hasCaption && (
-			<figcaption>
+			<figcaption class="flex flex-wrap gap-x-(--space-2) gap-y-(--space-1) text-(length:--type-label) leading-(--leading-label) text-muted">
 				{author && <span>{author}</span>}
 				{source && <span>{source}</span>}
 				{reference &&
 					(href ? (
-						<a href={href} target={isExternal ? '_blank' : undefined} rel={isExternal ? 'noopener noreferrer' : undefined}>
+						<a class="text-current decoration-muted/45 underline-offset-[0.18em]" href={href} target={isExternal ? '_blank' : undefined} rel={isExternal ? 'noopener noreferrer' : undefined}>
 							{reference}
 						</a>
 					) : (

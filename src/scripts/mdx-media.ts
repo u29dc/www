@@ -1,5 +1,5 @@
-const VIDEO_SELECTOR = 'video[data-mdx-video]';
-const IMAGE_SELECTOR = 'img.mdx-media__asset';
+const VIDEO_SELECTOR = 'video[data-media-video]';
+const IMAGE_SELECTOR = 'img[data-media-asset]';
 const reduceMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
 
 const loadVideo = (video: HTMLVideoElement): void => {
@@ -31,7 +31,7 @@ const videos = new Set<HTMLVideoElement>();
 const images = new Set<HTMLImageElement>();
 
 const markMediaError = (media: HTMLImageElement | HTMLVideoElement): void => {
-	const item = media.closest<HTMLElement>('.mdx-media__item');
+	const item = media.closest<HTMLElement>('[data-media-item]');
 	if (!item) return;
 	item.dataset['mediaState'] = 'missing';
 	media.hidden = true;

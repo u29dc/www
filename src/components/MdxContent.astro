@@ -1,7 +1,7 @@
 ---
 import { render } from 'astro:content';
 import type { ArtifactEntry } from '../lib/content';
-import UiLink from './UiLink.astro';
+import Link from './Link.astro';
 import MdxCitation from './mdx/MdxCitation.astro';
 import MdxMedia from './mdx/MdxMedia.astro';
 import MdxParagraph from './mdx/MdxParagraph.astro';
@@ -15,9 +15,9 @@ type Props = {
 const { entry } = Astro.props;
 const { Content } = await render(entry);
 const components = {
-	a: UiLink,
+	a: Link,
 	Citation: MdxCitation,
-	Link: UiLink,
+	Link: Link,
 	Media: MdxMedia,
 	MdxCitation,
 	MdxMedia,
@@ -30,6 +30,6 @@ const components = {
 };
 ---
 
-<article class="content-prose" data-reveal>
+<article class="grid max-w-(--measure-article) gap-(--space-5)" data-prose data-reveal>
 	<Content components={components} />
 </article>

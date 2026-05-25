@@ -1,0 +1,31 @@
+---
+import Logo from './Logo.astro';
+import Link from './Link.astro';
+import { connectLinks } from '../lib/site-content';
+---
+
+<footer class="grid gap-(--space-4) pt-(--space-4)" id="connect">
+	<p class="text-(length:--type-body) font-(--weight-strong) leading-(--leading-body) text-muted">Connect</p>
+	<div class="grid max-w-(--measure-article) gap-(--space-1) text-(length:--type-body-lg) leading-(--leading-body) text-muted">
+		<p class="flex flex-wrap items-baseline gap-x-[0.28em]">
+			<span class="inline-block size-[0.72em] bg-ink selection:bg-transparent motion-safe:animate-[blink_1.2s_ease-in-out_infinite] motion-safe:will-change-[opacity,filter] motion-reduce:opacity-70 motion-reduce:blur-none" aria-hidden="true"></span>
+			<Link class="font-(--weight-strong) text-ink" href={connectLinks.conversation.href} icon={connectLinks.conversation.icon}>Book a call</Link><span class="select-none leading-[inherit] selection:bg-transparent selection:text-muted">, </span>follow and connect on <Link class="font-(--weight-strong) text-ink" href={connectLinks.linkedin.href} icon={connectLinks.linkedin.icon}>LinkedIn</Link> and <Link class="font-(--weight-strong) text-ink" href={connectLinks.instagram.href} icon={connectLinks.instagram.icon}>Instagram</Link>
+		</p>
+		<p>
+			or write to <Link class="font-(--weight-strong) text-ink" href={connectLinks.email.href} icon={connectLinks.email.icon}>han@u29dc.com</Link>
+		</p>
+	</div>
+	<Logo
+		class='my-(--space-4)'
+		width={100}
+		mobileWidth={100}
+		noiseIntensity={0.1}
+		noiseScale={0.5}
+		defaultBlurIntensity={0.40}
+		blurStart={1.5}
+		mouseBlurIntensity={0.25}
+		mobileMouseBlurIntensity={0.3}
+		mouseBlurSize={0.3}
+		mobileMouseBlurSize={0.2}
+	/>
+</footer>
