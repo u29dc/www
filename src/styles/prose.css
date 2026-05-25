@@ -1,0 +1,81 @@
+@layer components {
+	[data-prose] p {
+		@apply text-(length:--type-body-lg) leading-(--leading-body);
+	}
+
+	[data-prose] p,
+	#origin p,
+	.layout-lane-wide > p,
+	#connect p {
+		@apply text-pretty break-normal hyphens-manual;
+	}
+
+	[data-prose] a {
+		@apply text-ink;
+		@apply decoration-muted/45 underline-offset-[0.18em];
+	}
+
+	[data-prose] strong {
+		@apply font-(--weight-strong);
+	}
+
+	[data-media-item][data-media-state='missing']::before {
+		content: attr(data-alt);
+		@apply max-w-[24ch] px-(--space-4) text-center font-mono text-(length:--type-label) leading-(--leading-label) text-muted;
+	}
+
+	[data-prose] [data-footnote-ref] {
+		@apply font-mono text-muted no-underline;
+	}
+
+	[data-prose] sup:has([data-footnote-ref]) {
+		@apply ml-[0.08em] align-super font-mono text-[0.68em] leading-none;
+		@apply not-italic;
+		user-select: none;
+		-webkit-user-select: none;
+	}
+
+	[data-prose] sup:has([data-footnote-ref])::selection,
+	[data-prose] [data-footnote-ref]::selection {
+		@apply bg-transparent text-muted;
+	}
+
+	[data-prose] [data-footnotes] {
+		@apply mt-(--space-6) border-t border-edge pt-(--space-5);
+		@apply font-mono text-(length:--type-label) leading-(--leading-body) text-muted;
+		@apply not-italic;
+	}
+
+	[data-prose] [data-footnotes] em,
+	[data-prose] [data-footnotes] i {
+		@apply not-italic;
+	}
+
+	[data-prose] [data-footnotes] h2 {
+		@apply mb-(--space-3) font-sans text-(length:--type-body) font-(--weight-strong) leading-(--leading-body) text-muted;
+	}
+
+	[data-prose] [data-footnotes] ol {
+		@apply grid gap-(--space-3);
+		@apply list-none p-0;
+		counter-reset: footnotes;
+	}
+
+	[data-prose] [data-footnotes] li {
+		@apply grid grid-cols-[2ch_minmax(0,1fr)] gap-x-(--space-3);
+		counter-increment: footnotes;
+	}
+
+	[data-prose] [data-footnotes] li::before {
+		content: counter(footnotes);
+		@apply font-mono text-(length:--type-label) leading-(--leading-body) tabular-nums text-muted;
+	}
+
+	[data-prose] [data-footnotes] p {
+		@apply text-(length:--type-label);
+	}
+
+	[data-prose] [data-footnote-backref] {
+		@apply text-muted no-underline;
+	}
+}

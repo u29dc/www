@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { SITE } from '../lib/constants';
+import { SITE } from '../data/site';
 
 const CONTENT_SIGNAL_DIRECTIVE = 'Content-Signal: ai-train=yes, search=yes, ai-input=yes';
 

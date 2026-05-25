@@ -1,6 +1,6 @@
-import type { ArtifactEntry } from './content';
-import { formatDate } from './content';
-import { SITE } from './constants';
+import type { ArtifactEntry } from './artifacts';
+import { formatDate } from './artifacts';
+import { SITE } from '../data/site';
 import { parseMediaSource } from './media';
 import remarkGfm from 'remark-gfm';
 import remarkMdx from 'remark-mdx';

@@ -1,4 +1,4 @@
-import { MEDIA } from './constants';
+import { MEDIA } from '../data/site';
 
 export type MediaKind = 'image' | 'video';
 

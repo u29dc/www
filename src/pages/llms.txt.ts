@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
-import { formatDate, getPublicArtifacts } from '../lib/content';
-import { SITE } from '../lib/constants';
-import { originParagraphs, protocols } from '../lib/site-content';
+import { formatDate, getPublicArtifacts } from '../lib/artifacts';
+import { SITE } from '../data/site';
+import { originParagraphs, protocols } from '../data/copy';
 import { artifactMarkdownUrl, artifactTextUrl, artifactUrl, toArtifactMarkdown } from '../lib/markdown';
 
 const EMBED_ARTIFACTS = true;

@@ -1,4 +1,4 @@
-import type { ArtifactEntry } from './content';
+import type { ArtifactEntry } from './artifacts';
 import { getFirstArtifactMediaSource } from './markdown';
 import { parseMediaSource, type MediaKind } from './media';
 

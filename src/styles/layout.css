@@ -1,0 +1,37 @@
+@layer components {
+	[data-page-shell] {
+		@apply min-h-dvh;
+	}
+
+	.layout-grid {
+		@apply mx-auto grid w-full px-(--space-page);
+		max-width: calc(var(--measure-grid) + (var(--space-page) * 2));
+		grid-template-columns: repeat(10, minmax(0, 1fr));
+		column-gap: var(--grid-gap);
+	}
+
+	.layout-lane {
+		grid-column: 1 / -1;
+	}
+
+	.layout-lane-wide {
+		grid-column: 1 / -1;
+	}
+}
+
+@media (width >= 64rem) {
+	.layout-lane {
+		grid-column: 1 / span 5;
+	}
+
+	.layout-lane-wide {
+		grid-column: 1 / span 6;
+	}
+}
+
+@media (width < 42rem) {
+	.layout-lane,
+	.layout-lane-wide {
+		grid-column: 1 / -1;
+	}
+}

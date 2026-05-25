@@ -1,0 +1,22 @@
+---
+import Row from './row.astro';
+import { formatDate, type ArtifactEntry } from '../../lib/artifacts';
+
+type Props = {
+	id: string;
+	title: string;
+	entries: ArtifactEntry[];
+};
+
+const { id, title, entries } = Astro.props;
+const metaFor = (entry: ArtifactEntry): string => (entry.data.type === 'study' ? entry.data.client : formatDate(entry.data.date));
+---
+
+<section class="layout-lane grid gap-(--space-4)" id={id} data-hover-preview-scope="artifacts" data-reveal>
+	<div class="grid gap-0.5">
+		<h2 class="text-(length:--type-body) font-(--weight-strong) leading-(--leading-body) text-muted">{title}</h2>
+	</div>
+	<ul class="grid list-none border-t border-edge-soft p-0">
+		{entries.map((entry) => <Row entry={entry} meta={metaFor(entry)} />)}
+	</ul>
+</section>

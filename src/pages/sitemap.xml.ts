@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
-import { getPublicArtifacts } from '../lib/content';
-import { SITE } from '../lib/constants';
+import { getPublicArtifacts } from '../lib/artifacts';
+import { SITE } from '../data/site';
 
 type SitemapEntry = {
 	url: string;

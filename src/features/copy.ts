@@ -21,8 +21,6 @@ const copyText = async (text: string): Promise<void> => {
 	}
 };
 
-const initializedButtons = new WeakSet<HTMLButtonElement>();
-
 const setStatus = (button: HTMLButtonElement, message: string): void => {
 	const label = button.querySelector<HTMLElement>('[data-copy-label]');
 	if (label) label.textContent = message;
@@ -31,39 +29,37 @@ const setStatus = (button: HTMLButtonElement, message: string): void => {
 	if (status) status.textContent = message;
 };
 
-const setupCopyButton = (button: HTMLButtonElement): void => {
-	if (initializedButtons.has(button)) return;
-
+const copyMarkdown = async (button: HTMLButtonElement): Promise<void> => {
 	const source = button.dataset['copyMarkdown'];
 	const idleLabel = button.dataset['copyIdle'] ?? 'Copy markdown';
 	const doneLabel = button.dataset['copyDone'] ?? 'Copied';
 	const errorLabel = button.dataset['copyError'] ?? 'Copy failed';
 
 	if (!source) return;
-	initializedButtons.add(button);
+	if (button.disabled) return;
 
-	button.addEventListener('click', async () => {
-		button.disabled = true;
+	button.disabled = true;
 
-		try {
-			const response = await fetch(source, { headers: { Accept: 'text/markdown, text/plain' } });
-			if (!response.ok) throw new Error(`Failed to fetch markdown: ${response.status}`);
-			await copyText(await response.text());
-			setStatus(button, doneLabel);
-			window.setTimeout(() => setStatus(button, idleLabel), 1200);
-		} catch {
-			setStatus(button, errorLabel);
-			window.setTimeout(() => setStatus(button, idleLabel), 1600);
-		} finally {
-			button.disabled = false;
-		}
-	});
+	try {
+		const response = await fetch(source, { headers: { Accept: 'text/markdown, text/plain' } });
+		if (!response.ok) throw new Error(`Failed to fetch markdown: ${response.status}`);
+		await copyText(await response.text());
+		setStatus(button, doneLabel);
+		window.setTimeout(() => setStatus(button, idleLabel), 1200);
+	} catch {
+		setStatus(button, errorLabel);
+		window.setTimeout(() => setStatus(button, idleLabel), 1600);
+	} finally {
+		button.disabled = false;
+	}
 };
 
-const setupCopyButtons = (root: ParentNode = document): void => {
-	root.querySelectorAll<HTMLButtonElement>('[data-copy-markdown]').forEach(setupCopyButton);
-};
+document.addEventListener('click', (event) => {
+	if (!(event.target instanceof Element)) return;
 
-setupCopyButtons();
+	const button = event.target.closest<HTMLButtonElement>('[data-copy-markdown]');
+	if (!(button instanceof HTMLButtonElement)) return;
 
-document.addEventListener('astro:page-load', () => setupCopyButtons());
+	event.preventDefault();
+	void copyMarkdown(button);
+});

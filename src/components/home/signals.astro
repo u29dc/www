@@ -1,0 +1,24 @@
+---
+import Link from '../core/link.astro';
+import { signals } from '../../data/copy';
+---
+
+{
+	signals.length > 0 && (
+		<section class="layout-lane grid gap-(--space-4)" id="signals" data-reveal>
+			<div class="grid gap-0.5">
+				<h2 class="text-(length:--type-body) font-(--weight-strong) leading-(--leading-body) text-muted">Signals</h2>
+			</div>
+			<ul class="grid list-none border-t border-edge-soft p-0">
+				{signals.map((signal) => (
+					<li class="grid gap-(--space-1) border-b border-edge-soft py-(--space-2)">
+						<Link class="w-fit font-sans text-(length:--type-body) font-(--weight-strong)" href={signal.href}>
+							{signal.label}
+						</Link>
+						{signal.meta && <span class="font-sans text-(length:--type-body) leading-(--leading-label) tabular-nums text-muted">{signal.meta}</span>}
+					</li>
+				))}
+			</ul>
+		</section>
+	)
+}

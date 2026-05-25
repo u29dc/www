@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { getPublicArtifacts, type ArtifactEntry } from '../lib/content';
+import { getPublicArtifacts, type ArtifactEntry } from '../lib/artifacts';
 import { toArtifactMarkdown } from '../lib/markdown';
 
 export async function getStaticPaths() {

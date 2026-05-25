@@ -1,8 +1,8 @@
 ---
-import MdxContent from '../components/MdxContent.astro';
-import Connect from '../components/Connect.astro';
+import Connect from '../components/chrome/connect.astro';
+import MdxContent from '../components/mdx/content.astro';
 import SiteLayout from '../layouts/SiteLayout.astro';
-import { formatDate, getPublicArtifacts, isFragmentArtifact, isStudyArtifact } from '../lib/content';
+import { formatDate, getPublicArtifacts, isFragmentArtifact, isStudyArtifact } from '../lib/artifacts';
 import { artifactMarkdownUrl } from '../lib/markdown';
 
 export async function getStaticPaths() {

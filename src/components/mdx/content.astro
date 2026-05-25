@@ -1,12 +1,12 @@
 ---
 import { render } from 'astro:content';
-import type { ArtifactEntry } from '../lib/content';
-import Link from './Link.astro';
-import MdxCitation from './mdx/MdxCitation.astro';
-import MdxMedia from './mdx/MdxMedia.astro';
-import MdxParagraph from './mdx/MdxParagraph.astro';
-import MdxQuote from './mdx/MdxQuote.astro';
-import MdxSpacer from './mdx/MdxSpacer.astro';
+import type { ArtifactEntry } from '../../lib/artifacts';
+import Link from '../core/link.astro';
+import MdxCitation from './citation.astro';
+import MdxMedia from './media.astro';
+import MdxParagraph from './paragraph.astro';
+import MdxQuote from './quote.astro';
+import MdxSpacer from './spacer.astro';
 
 type Props = {
 	entry: ArtifactEntry;

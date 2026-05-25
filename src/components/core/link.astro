@@ -1,9 +1,10 @@
 ---
 import { ArrowUpRight, Calendar, Code, File, Globe, Layers, Mail, Mic, Play, Rss } from '@lucide/astro';
 import type { AstroComponent } from '@lucide/astro';
-import { SITE } from '../lib/constants';
-import { resolveLinkHoverPreview, type HoverPreviewFit } from '../lib/hover-preview';
-import type { LinkIcon, LinkMark } from '../lib/links';
+import { SITE } from '../../data/site';
+import { resolveLinkHoverPreview, type HoverPreviewFit } from '../../lib/hover-preview';
+import type { LinkIcon, LinkMark } from '../../data/links';
+import { markClasses, markImages } from '../../data/marks';
 
 type Props = {
 	href?: string;
@@ -93,22 +94,6 @@ const iconComponents: Record<LinkIcon, AstroComponent> = {
 };
 const ActiveIcon = iconComponents[activeIcon];
 
-const markImages: Partial<Record<LinkMark, string>> = {
-	lotus: '/assets/marks/lotus.webp',
-	lusion: '/assets/marks/lusion.webp',
-	nohlab: '/assets/marks/nohlab.webp',
-	porsche: '/assets/marks/porsche.webp',
-	salon: '/assets/marks/salon.webp',
-};
-
-const markClasses: Record<LinkMark, string> = {
-	infinity: 'bg-ink',
-	lotus: 'bg-[oklch(96.86%_0.2046_109.77)]',
-	lusion: 'bg-[oklch(28%_0.004_250)]',
-	nohlab: 'bg-[oklch(42.32%_0.2896_265.17)]',
-	porsche: 'bg-[oklch(36%_0.004_250)]',
-	salon: 'bg-[oklch(36%_0.004_250)]',
-};
 ---
 
 <span class:list={['inline leading-[inherit]', className]}>
