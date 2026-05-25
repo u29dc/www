@@ -112,7 +112,10 @@ const createPreviewElements = (): PreviewElements => {
 };
 
 const getPreviewElements = (): PreviewElements => {
-	previewElements ??= createPreviewElements();
+	if (!previewElements || !previewElements.root.isConnected) {
+		previewElements?.root.remove();
+		previewElements = createPreviewElements();
+	}
 	return previewElements;
 };
 
@@ -278,6 +281,23 @@ const hidePreview = (target?: HTMLElement): void => {
 	}, HIDE_DELAY_MS);
 };
 
+const disposePreviewElements = (): void => {
+	if (activeTarget) {
+		delete activeTarget.dataset['hoverPreviewActive'];
+	}
+	activeTarget = undefined;
+	delete document.documentElement.dataset['hoverPreviewMode'];
+	hasPosition = false;
+	stopAnimation();
+	clearHideHandle();
+
+	if (!previewElements) return;
+
+	stopVideo(previewElements.video);
+	previewElements.root.remove();
+	previewElements = undefined;
+};
+
 const handlePointerEnter = (event: PointerEvent): void => {
 	if (!(event.currentTarget instanceof HTMLElement)) return;
 	showPreview(event.currentTarget, event);
@@ -320,4 +340,4 @@ reduceMotionQuery.addEventListener('change', () => {
 	if (activeTarget) requestPositionFrame();
 });
 document.addEventListener('astro:page-load', () => setupHoverPreviewTargets());
-document.addEventListener('astro:before-swap', () => hidePreview());
+document.addEventListener('astro:before-swap', disposePreviewElements);

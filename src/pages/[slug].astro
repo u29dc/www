@@ -1,7 +1,6 @@
 ---
 import MdxFrame from '../components/MdxFrame.astro';
 import ConnectLine from '../components/ConnectLine.astro';
-import UiLink from '../components/UiLink.astro';
 import SiteLayout from '../layouts/SiteLayout.astro';
 import { formatDate, getPublicArtifacts, isFragmentArtifact, isStudyArtifact } from '../lib/content';
 import { artifactMarkdownUrl } from '../lib/markdown';
@@ -19,13 +18,6 @@ const markdownPath = `/${entry.data.slug}.md`;
 ---
 
 <SiteLayout title={`${entry.data.title} / Incomplete Infinity`} description={entry.data.description} ogType="article" publishedTime={entry.data.date} markdownUrl={artifactMarkdownUrl(entry)}>
-	<header class="sticky top-0 z-10 bg-ground/86 pt-(--space-6) pb-(--space-5) backdrop-blur-md">
-		<nav class="layout-grid text-(length:--type-body) font-(--weight-strong) leading-(--leading-body)" aria-label="Primary" data-reveal>
-			<div class="layout-lane flex items-center justify-between">
-				<UiLink href="/" showIcon={false} showArrow={false}>Incomplete Infinity</UiLink>
-			</div>
-		</nav>
-	</header>
 	<main class="layout-grid gap-y-(--space-6) pt-(--space-7) pb-(--space-9)">
 		<header class="layout-lane-wide grid max-w-(--measure-meta) gap-(--space-4)" data-reveal>
 			<p class="text-(length:--type-body) font-(--weight-strong) leading-(--leading-body) text-muted">{entry.data.type === 'study' ? 'Study' : 'Writing'}</p>

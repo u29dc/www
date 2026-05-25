@@ -15,13 +15,6 @@ const showSignals = signals.length > 0;
 ---
 
 <SiteLayout title="Incomplete Infinity">
-	<header class="sticky top-0 z-10 bg-ground/86 pt-(--space-6) pb-(--space-5) backdrop-blur-md">
-		<nav class="layout-grid text-(length:--type-body) font-(--weight-strong) leading-(--leading-body)" aria-label="Primary" data-reveal>
-			<div class="layout-lane flex items-center justify-between">
-				<UiLink href="/" showIcon={false} showArrow={false}>Incomplete Infinity</UiLink>
-			</div>
-		</nav>
-	</header>
 	<main class="layout-grid gap-y-(--space-6) pt-(--space-7) pb-(--space-9)">
 		<section class="layout-lane grid gap-(--space-4) pt-(--space-5)" id="origin" data-reveal>
 			<p class="text-(length:--type-body) font-(--weight-strong) leading-(--leading-body) text-muted">Origin</p>
@@ -47,12 +40,12 @@ const showSignals = signals.length > 0;
 			</div>
 			<ul class="grid list-none border-t border-edge-soft p-0">
 				{protocols.map((protocol) => (
-					<li class="grid grid-cols-[4rem_minmax(0,1fr)] items-baseline gap-x-(--space-4) gap-y-(--space-1) border-b border-edge-soft py-(--space-2) max-[42rem]:grid-cols-1 max-[42rem]:gap-(--space-1)">
-						<div class="flex items-baseline gap-(--space-2) max-[42rem]:flex-wrap">
+					<li class="grid grid-cols-[9.25rem_minmax(0,1fr)] items-baseline gap-x-(--space-4) gap-y-(--space-1) border-b border-edge-soft py-(--space-2) max-[42rem]:grid-cols-1 max-[42rem]:gap-(--space-1)">
+						<div class="grid grid-cols-[3.25rem_minmax(0,1fr)] items-baseline gap-x-(--space-2)">
 							<span class="font-mono text-(length:--type-label) font-(--weight-strong) leading-(--leading-label) text-ink">{protocol.name}</span>
-							<span class="hidden font-mono text-(length:--type-label) leading-(--leading-label) tabular-nums text-muted max-[42rem]:inline">{protocol.meta}</span>
+							<span class="font-mono text-(length:--type-label) leading-(--leading-label) tabular-nums whitespace-nowrap text-muted">{protocol.meta}</span>
 						</div>
-						<p class="text-right font-mono text-(length:--type-label) leading-(--leading-label) whitespace-nowrap text-muted max-[42rem]:text-left max-[42rem]:whitespace-normal">{protocol.description}</p>
+						<p class="min-w-0 text-right font-mono text-(length:--type-label) leading-(--leading-label) text-muted max-[42rem]:text-left">{protocol.description}</p>
 					</li>
 				))}
 			</ul>

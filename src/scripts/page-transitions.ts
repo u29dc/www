@@ -6,13 +6,48 @@ const REVEAL_ROOT_MARGIN = '0px 0px -8% 0px';
 const REVEAL_THRESHOLD = 0.01;
 const MAX_REVEAL_INDEX = 7;
 const REVEAL_TARGET_SELECTOR = ['[data-reveal]', '[data-reveal-group] > :where(header, section, article, footer, h1, h2, h3, p, ul, ol, dl, figure, blockquote, div, li)'].join(',');
+const SITE_ROUTE_MOTION_FALLBACK_MS = 500;
+const SITE_ROUTE_MOTION_BUFFER_MS = 80;
 
 const reduceMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
 let revealObserver: IntersectionObserver | undefined;
 let revealFallbackHandle: number | undefined;
 let exitAbortCleanup: (() => void) | undefined;
+let siteRouteMotionHandle: number | undefined;
 
 const canAnimate = (): boolean => !reduceMotionQuery.matches;
+
+const readSiteRoute = (url: URL | Location = window.location): 'home' | 'detail' => (url.pathname === '/' ? 'home' : 'detail');
+
+const setSiteRoute = (route: 'home' | 'detail'): void => {
+	document.documentElement.dataset['siteRoute'] = route;
+};
+
+const syncSiteRoute = (): void => {
+	setSiteRoute(readSiteRoute());
+};
+
+const clearSiteRouteMotion = (): void => {
+	if (siteRouteMotionHandle !== undefined) {
+		window.clearTimeout(siteRouteMotionHandle);
+		siteRouteMotionHandle = undefined;
+	}
+
+	delete document.documentElement.dataset['siteRouteMotion'];
+};
+
+const startSiteRouteMotion = (): void => {
+	if (!canAnimate()) return;
+
+	clearSiteRouteMotion();
+	document.documentElement.dataset['siteRouteMotion'] = 'running';
+
+	const finish = (): void => {
+		clearSiteRouteMotion();
+	};
+
+	siteRouteMotionHandle = window.setTimeout(finish, readDuration('--duration-page-exit', SITE_ROUTE_MOTION_FALLBACK_MS) + SITE_ROUTE_MOTION_BUFFER_MS);
+};
 
 const readDuration = (propertyName: string, fallbackMilliseconds: number): number => {
 	const rawValue = getComputedStyle(document.documentElement).getPropertyValue(propertyName).trim();
@@ -50,6 +85,10 @@ const assignRevealIndexes = (targets: HTMLElement[]): void => {
 	let looseIndex = 0;
 
 	for (const target of targets) {
+		if (target.hasAttribute('data-reveal-once') && target.dataset['reveal'] === 'visible') {
+			continue;
+		}
+
 		const parentGroup = target.parentElement?.matches('[data-reveal-group]') ? target.parentElement : undefined;
 		const index = parentGroup ? (groupIndexes.get(parentGroup) ?? 0) : looseIndex;
 
@@ -154,6 +193,13 @@ const playExit = (signal: AbortSignal): Promise<void> => {
 
 const handleBeforePreparation = (event: TransitionBeforePreparationEvent): void => {
 	const originalLoader = event.loader;
+	const previousRoute = document.documentElement.dataset['siteRoute'];
+	const nextRoute = readSiteRoute(event.to);
+
+	if (previousRoute !== nextRoute) {
+		setSiteRoute(nextRoute);
+		startSiteRouteMotion();
+	}
 
 	event.loader = async (): Promise<void> => {
 		const exit = playExit(event.signal);
@@ -162,6 +208,8 @@ const handleBeforePreparation = (event: TransitionBeforePreparationEvent): void 
 			await exit;
 		} catch (error) {
 			clearExitState();
+			clearSiteRouteMotion();
+			syncSiteRoute();
 			throw error;
 		}
 	};
@@ -181,7 +229,11 @@ document.addEventListener('astro:before-swap', (event) => {
 });
 
 document.addEventListener('astro:after-swap', clearExitState);
-document.addEventListener('astro:page-load', initializeReveals);
+document.addEventListener('astro:page-load', () => {
+	syncSiteRoute();
+	initializeReveals();
+});
 reduceMotionQuery.addEventListener('change', initializeReveals);
 
+syncSiteRoute();
 initializeReveals();

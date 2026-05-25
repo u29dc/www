@@ -1,6 +1,8 @@
 ---
 import '../styles/app.css';
 import { ClientRouter } from 'astro:transitions';
+import { ArrowLeft } from '@lucide/astro';
+import UiLink from '../components/UiLink.astro';
 import { MEDIA, SITE, SITE_THEME } from '../lib/constants';
 
 type Props = {
@@ -15,6 +17,7 @@ const { title = SITE.title, description = SITE.description, ogType = 'website', 
 const rawTheme = SITE_THEME;
 const forcedTheme = rawTheme === 'light' || rawTheme === 'dark' ? rawTheme : undefined;
 const canonicalUrl = new URL(Astro.url.pathname, SITE.url).toString();
+const siteRoute = Astro.url.pathname === '/' ? 'home' : 'detail';
 const markdownHref = markdownUrl ? new URL(markdownUrl, SITE.url).toString() : undefined;
 const ogImageUrl = new URL(SITE.ogImagePath, SITE.url).toString();
 const themeColorLight = SITE.themeColorLight;
@@ -22,7 +25,7 @@ const themeColorDark = SITE.themeColorDark;
 ---
 
 <!doctype html>
-<html lang={SITE.lang} data-theme={forcedTheme}>
+<html lang={SITE.lang} data-theme={forcedTheme} data-site-route={siteRoute}>
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -83,6 +86,7 @@ const themeColorDark = SITE.themeColorDark;
 				const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 				root.dataset.motion = reduceMotion ? 'reduced' : 'ready';
+				root.dataset.siteRoute = window.location.pathname === '/' ? 'home' : 'detail';
 
 				if (!reduceMotion) {
 					window.setTimeout(() => {
@@ -96,6 +100,21 @@ const themeColorDark = SITE.themeColorDark;
 		<title>{title}</title>
 	</head>
 	<body class="min-h-dvh">
+		<div class="site-grid-guide" aria-hidden="true">
+			<div class="layout-grid h-full">
+				<div class="site-grid-guide__lane"></div>
+			</div>
+		</div>
+		<header class="sticky top-0 z-10 pt-(--space-6) pb-(--space-5)" data-site-header transition:persist="site-header">
+			<nav class="layout-grid text-(length:--type-body) font-(--weight-strong) leading-(--leading-body)" aria-label="Primary" data-reveal data-reveal-once>
+				<div class="layout-lane flex items-center justify-between">
+					<UiLink class="site-title-link" href="/" showIcon={false} showArrow={false}>
+						<ArrowLeft class="site-title-arrow" stroke-width={2.35} aria-hidden="true" focusable="false" />
+						<span class="site-title-text">Incomplete Infinity</span>
+					</UiLink>
+				</div>
+			</nav>
+		</header>
 		<div data-page-shell>
 			<slot />
 		</div>

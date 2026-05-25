@@ -34,8 +34,7 @@ const officialChannels = [
 const buildProtocols = (): string =>
 	protocols
 		.map((protocol) => {
-			const range = protocol.name === 'MAP' ? '48 hours' : protocol.name === 'ARC' ? 'scoped after MAP' : 'ongoing';
-			return `- ${protocol.name}: ${protocol.meta}; ${range}. ${protocol.description}.`;
+			return `- ${protocol.name}: ${protocol.meta}. ${protocol.description}.`;
 		})
 		.join('\n');
 
