@@ -19,7 +19,9 @@ type Props = {
 	[key: string]: unknown;
 };
 
-const DEFAULT_LINK_PREVIEW_MEDIA = '/og.jpg';
+const DEFAULT_LINK_PREVIEW_MEDIA: readonly string[] = [];
+
+const firstDefaultLinkPreviewMedia = (): string | undefined => DEFAULT_LINK_PREVIEW_MEDIA[0];
 
 const {
 	href = '#',
@@ -68,7 +70,7 @@ const shouldRenderIcon = (showIcon ?? Boolean(icon ?? mark)) && !isFootnote;
 const shouldRenderArrow = showArrow && isExternal && !isFootnote;
 const targetValue = isExternal ? (target ?? '_blank') : target;
 const relValue = isExternal ? Array.from(new Set([rel, 'noopener', 'noreferrer'].filter(Boolean))).join(' ') : rel;
-const activePreviewMedia = previewMedia ?? ((isExternal || isMail) && !isFootnote ? DEFAULT_LINK_PREVIEW_MEDIA : undefined);
+const activePreviewMedia = previewMedia ?? firstDefaultLinkPreviewMedia();
 const preview = resolveLinkHoverPreview(activePreviewMedia, {
 	...(previewAlt === undefined ? {} : { alt: previewAlt }),
 	...(previewFit === undefined ? {} : { fit: previewFit }),
