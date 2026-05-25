@@ -27,12 +27,10 @@
 		0%,
 		100% {
 			opacity: 1;
-			filter: blur(0.001px);
 		}
 
 		50% {
 			opacity: 0;
-			filter: blur(0.035em);
 		}
 	}
 

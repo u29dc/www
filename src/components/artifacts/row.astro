@@ -23,6 +23,7 @@ const preview = resolveArtifactHoverPreview(entry);
 		data-hover-preview-ratio={preview.ratio}
 		data-hover-preview-fit={preview.fit}
 		data-hover-preview-alt={preview.alt}
+		data-hover-preview-poster-src={preview.posterUrl}
 	>
 		<span class="font-mono text-(length:--type-label) font-(--weight-strong) leading-(--leading-label) motion-safe:transition-transform motion-safe:duration-(--duration-quick) motion-safe:ease-(--ease-settle) motion-safe:group-hover:translate-x-1">{entry.data.title}</span>
 		<span class="text-right font-mono text-(length:--type-label) leading-(--leading-label) tabular-nums text-muted max-[42rem]:text-left">{meta}</span>

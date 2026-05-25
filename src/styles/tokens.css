@@ -78,7 +78,6 @@
 	--hover-preview-artifact-width: clamp(12rem, 22vw, 20rem);
 	--hover-preview-link-width: clamp(8rem, 14vw, 12rem);
 	--hover-preview-peer-opacity: 0.34;
-	--hover-preview-peer-blur: 0px;
 	--hover-preview-shadow: 0 1.5rem 4rem oklch(0% 0 0 / 0.22);
 }
 

@@ -194,14 +194,14 @@ const stripMdxModuleSyntax = (raw: string): string =>
 		})
 		.join('\n');
 
-const findFirstMdxMediaSource = (nodes: MarkdownNode[]): string | undefined => {
+const findFirstMdxMediaSource = (nodes: MarkdownNode[], predicate: (source: string) => boolean = () => true): string | undefined => {
 	for (const node of nodes) {
 		if (node.type === 'mdxJsxFlowElement' && (node.name === 'MdxMedia' || node.name === 'Media')) {
-			const [source] = parseComponentSources(getAttributeValue(node, 'src'));
+			const source = parseComponentSources(getAttributeValue(node, 'src')).find(predicate);
 			if (source) return source;
 		}
 
-		const childSource = node.children ? findFirstMdxMediaSource(node.children) : undefined;
+		const childSource = node.children ? findFirstMdxMediaSource(node.children, predicate) : undefined;
 		if (childSource) return childSource;
 	}
 
@@ -221,6 +221,13 @@ export const getFirstArtifactMediaSource = (entry: ArtifactEntry): string | unde
 	const tree = markdownParser.parse(stripMdxModuleSyntax(stripFrontmatter(raw))) as unknown as MarkdownNode;
 
 	return findFirstMdxMediaSource(tree.children ?? []);
+};
+
+export const getFirstArtifactImageMediaSource = (entry: ArtifactEntry): string | undefined => {
+	const raw = getRawArtifactMarkdown(entry.data.slug);
+	const tree = markdownParser.parse(stripMdxModuleSyntax(stripFrontmatter(raw))) as unknown as MarkdownNode;
+
+	return findFirstMdxMediaSource(tree.children ?? [], (source) => parseMediaSource(source).kind === 'image');
 };
 
 export const toMarkdownBody = (raw: string): string => {

@@ -10,6 +10,7 @@ const baseSchema = z.object({
 	isArtifactItem: z.boolean().default(true),
 	thumbnailMedia: z.string().optional(),
 	hoverMedia: z.union([z.string(), z.array(z.string())]).optional(),
+	hoverPosterMedia: z.string().optional(),
 	hoverPreviewAlt: z.string().optional(),
 	hoverPreviewFit: z.enum(['cover', 'contain']).optional(),
 	ogImage: z.string().optional(),
