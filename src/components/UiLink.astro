@@ -1,5 +1,6 @@
 ---
 import { SITE } from '../lib/constants';
+import { resolveLinkHoverPreview, type HoverPreviewFit } from '../lib/hover-preview';
 import type { LinkIcon, LinkMark } from '../lib/links';
 
 type Props = {
@@ -9,11 +10,16 @@ type Props = {
 	external?: boolean;
 	showIcon?: boolean;
 	showArrow?: boolean;
+	previewMedia?: string;
+	previewAlt?: string;
+	previewFit?: HoverPreviewFit;
 	class?: string;
 	target?: string;
 	rel?: string;
 	[key: string]: unknown;
 };
+
+const DEFAULT_LINK_PREVIEW_MEDIA = '/og.jpg';
 
 const {
 	href = '#',
@@ -22,6 +28,9 @@ const {
 	external,
 	showIcon,
 	showArrow = true,
+	previewMedia,
+	previewAlt,
+	previewFit,
 	class: className,
 	target,
 	rel,
@@ -59,6 +68,11 @@ const shouldRenderIcon = (showIcon ?? Boolean(icon ?? mark)) && !isFootnote;
 const shouldRenderArrow = showArrow && isExternal && !isFootnote;
 const targetValue = isExternal ? (target ?? '_blank') : target;
 const relValue = isExternal ? Array.from(new Set([rel, 'noopener', 'noreferrer'].filter(Boolean))).join(' ') : rel;
+const activePreviewMedia = previewMedia ?? ((isExternal || isMail) && !isFootnote ? DEFAULT_LINK_PREVIEW_MEDIA : undefined);
+const preview = resolveLinkHoverPreview(activePreviewMedia, {
+	...(previewAlt === undefined ? {} : { alt: previewAlt }),
+	...(previewFit === undefined ? {} : { fit: previewFit }),
+});
 
 const iconPaths: Record<LinkIcon, string[]> = {
 	arrow: ['M7 17 17 7', 'M7 7h10v10'],
@@ -87,7 +101,19 @@ const markImages: Partial<Record<LinkMark, string>> = {
 ---
 
 <span class:list={['ui-link-wrap', className]}>
-	<a class="ui-link" href={href} target={targetValue} rel={relValue} {...anchorProps}>
+	<a
+		class="ui-link"
+		href={href}
+		target={targetValue}
+		rel={relValue}
+		data-hover-preview-target={preview ? 'link' : undefined}
+		data-hover-preview-src={preview?.url}
+		data-hover-preview-kind={preview?.kind}
+		data-hover-preview-ratio={preview?.ratio}
+		data-hover-preview-fit={preview?.fit}
+		data-hover-preview-alt={preview?.alt}
+		{...anchorProps}
+	>
 		<span class="ui-link__label"><slot /></span>
 		{
 			shouldRenderIcon && (

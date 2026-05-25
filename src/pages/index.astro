@@ -4,10 +4,13 @@ import TransitionLink from '../components/TransitionLink.astro';
 import UiLink from '../components/UiLink.astro';
 import SiteLayout from '../layouts/SiteLayout.astro';
 import { formatDate, getFragments, getStudies } from '../lib/content';
+import { resolveArtifactHoverPreview } from '../lib/hover-preview';
 import { originLinks, protocols, signals } from '../lib/site-content';
 
 const studies = await getStudies();
 const fragments = await getFragments();
+const studyRows = studies.map((entry) => ({ entry, preview: resolveArtifactHoverPreview(entry) }));
+const fragmentRows = fragments.map((entry) => ({ entry, preview: resolveArtifactHoverPreview(entry) }));
 const showSignals = signals.length > 0;
 ---
 
@@ -55,14 +58,23 @@ const showSignals = signals.length > 0;
 			</ul>
 		</section>
 
-		<section class="layout-lane grid gap-(--space-4)" id="studies" data-reveal>
+		<section class="layout-lane grid gap-(--space-4)" id="studies" data-hover-preview-scope="artifacts" data-reveal>
 			<div class="grid gap-0.5">
 				<h2 class="text-(length:--type-body) font-(--weight-strong) leading-(--leading-body) text-muted">Artifacts / Studies</h2>
 			</div>
 			<ul class="grid list-none border-t border-edge-soft p-0">
-				{studies.map((entry) => (
+				{studyRows.map(({ entry, preview }) => (
 					<li>
-						<TransitionLink class="group grid grid-cols-[minmax(0,1fr)_max-content] items-baseline gap-(--space-4) border-b border-edge-soft py-(--space-2) text-current no-underline opacity-100 transition-opacity duration-(--duration-quick) ease-(--ease-settle) touch-manipulation hover:opacity-72 max-[42rem]:grid-cols-1 max-[42rem]:gap-(--space-1)" href={`/${entry.data.slug}`}>
+						<TransitionLink
+							class="artifact-row group grid grid-cols-[minmax(0,1fr)_max-content] items-baseline gap-(--space-4) border-b border-edge-soft py-(--space-2) text-current no-underline transition-opacity duration-(--duration-quick) ease-(--ease-settle) touch-manipulation max-[42rem]:grid-cols-1 max-[42rem]:gap-(--space-1)"
+							href={`/${entry.data.slug}`}
+							data-hover-preview-target="artifact"
+							data-hover-preview-src={preview.url}
+							data-hover-preview-kind={preview.kind}
+							data-hover-preview-ratio={preview.ratio}
+							data-hover-preview-fit={preview.fit}
+							data-hover-preview-alt={preview.alt}
+						>
 							<span class="font-mono text-(length:--type-label) font-(--weight-strong) leading-(--leading-label) motion-safe:transition-transform motion-safe:duration-(--duration-quick) motion-safe:ease-(--ease-settle) motion-safe:group-hover:translate-x-1">{entry.data.title}</span>
 							<span class="text-right font-mono text-(length:--type-label) leading-(--leading-label) tabular-nums text-muted max-[42rem]:text-left">{entry.data.client}</span>
 						</TransitionLink>
@@ -71,14 +83,23 @@ const showSignals = signals.length > 0;
 			</ul>
 		</section>
 
-		<section class="layout-lane grid gap-(--space-4)" id="fragments" data-reveal>
+		<section class="layout-lane grid gap-(--space-4)" id="fragments" data-hover-preview-scope="artifacts" data-reveal>
 			<div class="grid gap-0.5">
 				<h2 class="text-(length:--type-body) font-(--weight-strong) leading-(--leading-body) text-muted">Artifacts / Fragments</h2>
 			</div>
 			<ul class="grid list-none border-t border-edge-soft p-0">
-				{fragments.map((entry) => (
+				{fragmentRows.map(({ entry, preview }) => (
 					<li>
-						<TransitionLink class="group grid grid-cols-[minmax(0,1fr)_max-content] items-baseline gap-(--space-4) border-b border-edge-soft py-(--space-2) text-current no-underline opacity-100 transition-opacity duration-(--duration-quick) ease-(--ease-settle) touch-manipulation hover:opacity-72 max-[42rem]:grid-cols-1 max-[42rem]:gap-(--space-1)" href={`/${entry.data.slug}`}>
+						<TransitionLink
+							class="artifact-row group grid grid-cols-[minmax(0,1fr)_max-content] items-baseline gap-(--space-4) border-b border-edge-soft py-(--space-2) text-current no-underline transition-opacity duration-(--duration-quick) ease-(--ease-settle) touch-manipulation max-[42rem]:grid-cols-1 max-[42rem]:gap-(--space-1)"
+							href={`/${entry.data.slug}`}
+							data-hover-preview-target="artifact"
+							data-hover-preview-src={preview.url}
+							data-hover-preview-kind={preview.kind}
+							data-hover-preview-ratio={preview.ratio}
+							data-hover-preview-fit={preview.fit}
+							data-hover-preview-alt={preview.alt}
+						>
 							<span class="font-mono text-(length:--type-label) font-(--weight-strong) leading-(--leading-label) motion-safe:transition-transform motion-safe:duration-(--duration-quick) motion-safe:ease-(--ease-settle) motion-safe:group-hover:translate-x-1">{entry.data.title}</span>
 							<span class="text-right font-mono text-(length:--type-label) leading-(--leading-label) tabular-nums text-muted max-[42rem]:text-left">{formatDate(entry.data.date)}</span>
 						</TransitionLink>

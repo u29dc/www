@@ -194,12 +194,33 @@ const stripMdxModuleSyntax = (raw: string): string =>
 		})
 		.join('\n');
 
+const findFirstMdxMediaSource = (nodes: MarkdownNode[]): string | undefined => {
+	for (const node of nodes) {
+		if (node.type === 'mdxJsxFlowElement' && (node.name === 'MdxMedia' || node.name === 'Media')) {
+			const [source] = parseComponentSources(getAttributeValue(node, 'src'));
+			if (source) return source;
+		}
+
+		const childSource = node.children ? findFirstMdxMediaSource(node.children) : undefined;
+		if (childSource) return childSource;
+	}
+
+	return undefined;
+};
+
 export const getRawArtifactMarkdown = (slug: string): string => {
 	const raw = rawBySlug.get(slug);
 	if (!raw) {
 		throw new Error(`Missing raw MDX source for slug "${slug}"`);
 	}
 	return raw;
+};
+
+export const getFirstArtifactMediaSource = (entry: ArtifactEntry): string | undefined => {
+	const raw = getRawArtifactMarkdown(entry.data.slug);
+	const tree = markdownParser.parse(stripMdxModuleSyntax(stripFrontmatter(raw))) as unknown as MarkdownNode;
+
+	return findFirstMdxMediaSource(tree.children ?? []);
 };
 
 export const toMarkdownBody = (raw: string): string => {
