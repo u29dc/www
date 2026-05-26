@@ -86,12 +86,19 @@ const themeColorDark = SITE.themeColorDark;
 				const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 				root.dataset.motion = reduceMotion ? 'reduced' : 'ready';
+				root.dataset.lineRevealBoot = reduceMotion ? 'reduced' : 'pending';
 				root.dataset.siteRoute = window.location.pathname === '/' ? 'home' : 'detail';
 
 				if (!reduceMotion) {
 					window.setTimeout(() => {
 						if (root.dataset.motionBoot !== 'ready') {
 							root.dataset.motion = 'reduced';
+						}
+					}, 1500);
+
+					window.setTimeout(() => {
+						if (root.dataset.lineRevealBoot === 'pending') {
+							root.dataset.lineRevealBoot = 'failed';
 						}
 					}, 1500);
 				}
@@ -111,6 +118,7 @@ const themeColorDark = SITE.themeColorDark;
 			import '../features/preview';
 			import '../features/media';
 			import '../features/motion';
+			import '../features/lines';
 			import '../features/scroll';
 		</script>
 	</body>

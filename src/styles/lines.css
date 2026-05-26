@@ -1,0 +1,74 @@
+@layer components {
+	html[data-line-reveal-boot='pending'] [data-line-reveal]:not([data-line-reveal-state='complete']):not([data-line-reveal-state='fallback']),
+	html[data-line-reveal-boot='ready'] [data-line-reveal][data-line-reveal-state='pending'] {
+		@apply opacity-0;
+	}
+
+	.line-reveal-overlay {
+		@apply pointer-events-none absolute block select-none;
+		contain: layout paint style;
+		z-index: 2;
+	}
+
+	.line-reveal-mask {
+		@apply absolute block;
+		overflow: clip;
+	}
+
+	.line-reveal-inner {
+		@apply absolute block max-w-none opacity-0;
+		transform: translate3d(0, var(--motion-line-reveal-y), 0);
+	}
+
+	.line-reveal-slice {
+		@apply absolute block max-w-none;
+		overflow: clip;
+	}
+
+	.line-reveal-inner,
+	.line-reveal-inner *,
+	.line-reveal-slice,
+	.line-reveal-slice * {
+		@apply pointer-events-none select-none;
+	}
+
+	[data-line-clone='true'] {
+		@apply max-w-none;
+	}
+}
+
+@supports not (overflow: clip) {
+	.line-reveal-mask {
+		overflow: hidden;
+	}
+
+	.line-reveal-slice {
+		overflow: hidden;
+	}
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.line-reveal-overlay[data-line-reveal-state='running'] .line-reveal-inner {
+		@apply opacity-100 transition-[opacity,transform];
+		@apply duration-(--duration-line-reveal) ease-(--ease-line-reveal);
+		transition-delay: var(--line-reveal-delay, 0ms);
+		transform: translate3d(0, 0, 0);
+		will-change: opacity, transform;
+	}
+
+	.line-reveal-overlay[data-line-reveal-state='settling'] {
+		@apply opacity-0 transition-opacity;
+		@apply duration-(--duration-line-reveal-handoff) ease-(--ease-line-reveal);
+		will-change: opacity;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.line-reveal-overlay {
+		@apply hidden;
+	}
+
+	[data-line-reveal] {
+		@apply opacity-100;
+	}
+}

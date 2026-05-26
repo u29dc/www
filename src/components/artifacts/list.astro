@@ -12,7 +12,7 @@ const { id, title, entries } = Astro.props;
 const metaFor = (entry: ArtifactEntry): string => (entry.data.type === 'study' ? entry.data.client : formatDate(entry.data.date));
 ---
 
-<section class="layout-lane grid gap-(--space-4)" id={id} data-hover-preview-scope="artifacts" data-reveal>
+<section class="layout-lane grid gap-(--space-4)" id={id} data-hover-preview-scope="artifacts" data-reveal data-reveal-after-line-group="origin">
 	<div class="grid gap-0.5">
 		<h2 class="text-(length:--type-label) font-(--weight-strong) leading-(--leading-label) text-muted uppercase">{title}</h2>
 	</div>

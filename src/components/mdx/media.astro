@@ -37,7 +37,7 @@ const figureStyle = [
 ].join(';');
 ---
 
-<figure class="my-(--space-5) grid gap-(--space-2)" style={figureStyle} data-count={sources.length}>
+<figure class="my-(--space-5) grid gap-(--space-2)" style={figureStyle} data-count={sources.length} data-reveal>
 	<div class="flex w-full overflow-hidden bg-surface max-[42rem]:grid max-[42rem]:[aspect-ratio:auto]" style="aspect-ratio:var(--media-ratio);">
 		{
 			sources.map((item) => (

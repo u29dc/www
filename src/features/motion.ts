@@ -8,12 +8,16 @@ const MAX_REVEAL_INDEX = 7;
 const REVEAL_TARGET_SELECTOR = ['[data-reveal]', '[data-reveal-group] > :where(header, section, article, footer, h1, h2, h3, p, ul, ol, dl, figure, blockquote, div, li)'].join(',');
 const SITE_ROUTE_MOTION_FALLBACK_MS = 500;
 const SITE_ROUTE_MOTION_BUFFER_MS = 80;
+const COMPLETE_LINE_GROUPS_DATASET_KEY = 'lineRevealCompleteGroups';
+const LINE_GROUP_COMPLETE_EVENT = 'line-reveal-group-complete';
+const LINE_GROUP_REVEAL_DELAY_MS = 0;
 
 const reduceMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
 let revealObserver: IntersectionObserver | undefined;
 let revealFallbackHandle: number | undefined;
 let exitAbortCleanup: (() => void) | undefined;
 let siteRouteMotionHandle: number | undefined;
+const lineGroupRevealHandles = new Map<string, number>();
 
 const canAnimate = (): boolean => !reduceMotionQuery.matches;
 
@@ -80,6 +84,13 @@ const isRevealTarget = (element: Element): element is HTMLElement => element ins
 
 const getRevealTargets = (root: Document | Element = document): HTMLElement[] => Array.from(root.querySelectorAll(REVEAL_TARGET_SELECTOR)).filter(isRevealTarget);
 
+const getCompletedLineGroups = (): Set<string> => new Set((document.documentElement.dataset[COMPLETE_LINE_GROUPS_DATASET_KEY] ?? '').split(' ').filter(Boolean));
+
+const shouldWaitForLineGroup = (target: HTMLElement): boolean => {
+	const group = target.dataset['revealAfterLineGroup'];
+	return Boolean(group && canAnimate() && !getCompletedLineGroups().has(group));
+};
+
 const assignRevealIndexes = (targets: HTMLElement[]): void => {
 	const groupIndexes = new WeakMap<Element, number>();
 	let looseIndex = 0;
@@ -117,13 +128,51 @@ const clearRevealFallback = (): void => {
 	revealFallbackHandle = undefined;
 };
 
+const clearLineGroupRevealHandles = (): void => {
+	for (const handle of lineGroupRevealHandles.values()) {
+		window.clearTimeout(handle);
+	}
+
+	lineGroupRevealHandles.clear();
+};
+
 const hasPendingRevealTargets = (): boolean => getRevealTargets().some((target) => target.dataset['reveal'] === 'pending');
 
 const reveal = (target: HTMLElement): void => {
+	if (shouldWaitForLineGroup(target)) {
+		target.dataset['reveal'] = 'waiting';
+		revealObserver?.unobserve(target);
+		return;
+	}
+
 	target.dataset['reveal'] = 'visible';
 	revealObserver?.unobserve(target);
 
 	if (!hasPendingRevealTargets()) clearRevealFallback();
+};
+
+const revealTargetsWaitingForLineGroup = (group: string): void => {
+	const targets = getRevealTargets().filter((target) => target.dataset['reveal'] === 'waiting' && target.dataset['revealAfterLineGroup'] === group);
+
+	targets.forEach((target, index) => {
+		target.style.setProperty('--reveal-index', String(Math.min(index, MAX_REVEAL_INDEX)));
+		reveal(target);
+	});
+};
+
+const scheduleRevealTargetsWaitingForLineGroup = (group: string): void => {
+	const existingHandle = lineGroupRevealHandles.get(group);
+	if (existingHandle !== undefined) {
+		window.clearTimeout(existingHandle);
+	}
+
+	const delayMs = readDuration('--duration-line-reveal-follow-delay', LINE_GROUP_REVEAL_DELAY_MS);
+	const handle = window.setTimeout(() => {
+		lineGroupRevealHandles.delete(group);
+		revealTargetsWaitingForLineGroup(group);
+	}, delayMs);
+
+	lineGroupRevealHandles.set(group, handle);
 };
 
 const revealPendingTargets = (): void => {
@@ -168,6 +217,7 @@ const observeRevealTargets = (): void => {
 
 const initializeReveals = (): void => {
 	clearRevealFallback();
+	clearLineGroupRevealHandles();
 	prepareRevealTargets();
 	observeRevealTargets();
 };
@@ -229,6 +279,10 @@ document.addEventListener('astro:before-swap', (event) => {
 });
 
 document.addEventListener('astro:after-swap', clearExitState);
+document.addEventListener(LINE_GROUP_COMPLETE_EVENT, (event) => {
+	const group = event instanceof CustomEvent && typeof event.detail?.group === 'string' ? event.detail.group : undefined;
+	if (group) scheduleRevealTargetsWaitingForLineGroup(group);
+});
 document.addEventListener('astro:page-load', () => {
 	syncSiteRoute();
 	initializeReveals();

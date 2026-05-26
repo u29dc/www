@@ -36,6 +36,7 @@ type VideoFrameRequester = HTMLVideoElement & {
 
 const TARGET_SELECTOR = '[data-hover-preview-target]';
 const SCOPE_SELECTOR = '[data-hover-preview-scope]';
+const REVEAL_SELECTOR = '[data-reveal]';
 const ENABLE_QUERY = '(hover: hover) and (pointer: fine)';
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 const HIDE_DELAY_MS = 180;
@@ -66,6 +67,11 @@ let previewHeight = 180;
 let hasPosition = false;
 
 const isEnabled = (): boolean => enableQuery.matches;
+
+const isRevealReady = (target: HTMLElement): boolean => {
+	const gate = target.closest<HTMLElement>(REVEAL_SELECTOR);
+	return !gate || gate.dataset['reveal'] === 'visible';
+};
 
 const parseKind = (value: string | undefined): PreviewKind | undefined => {
 	if (value === 'image' || value === 'video') return value;
@@ -419,6 +425,10 @@ const setActiveSlot = (slot: PreviewSlot): void => {
 
 const showPreview = (target: HTMLElement, event: PointerEvent): void => {
 	if (!isEnabled()) return;
+	if (!isRevealReady(target)) {
+		hidePreview(target);
+		return;
+	}
 
 	const config = readConfig(target);
 	if (!config) return;
@@ -507,7 +517,8 @@ const disposePreviewElements = (): void => {
 const targetFromEvent = (event: Event): HTMLElement | undefined => {
 	if (!(event.target instanceof Element)) return undefined;
 	const target = event.target.closest<HTMLElement>(TARGET_SELECTOR);
-	return target ?? undefined;
+	if (!target || !isRevealReady(target)) return undefined;
+	return target;
 };
 
 const handlePointerOver = (event: PointerEvent): void => {
@@ -523,6 +534,10 @@ const handlePointerOver = (event: PointerEvent): void => {
 
 const handlePointerMove = (event: PointerEvent): void => {
 	const target = targetFromEvent(event);
+	if (activeTarget && !isRevealReady(activeTarget)) {
+		hidePreview(activeTarget);
+		return;
+	}
 	if (target && target !== activeTarget) {
 		showPreview(target, event);
 		return;
@@ -533,12 +548,16 @@ const handlePointerMove = (event: PointerEvent): void => {
 
 const handlePointerOut = (event: PointerEvent): void => {
 	if (!activeTarget) return;
+	if (!isRevealReady(activeTarget)) {
+		hidePreview(activeTarget);
+		return;
+	}
 	const relatedTarget = event.relatedTarget;
 
 	if (relatedTarget instanceof Node && activeTarget.contains(relatedTarget)) return;
 	const nextTarget = relatedTarget instanceof Element ? relatedTarget.closest<HTMLElement>(TARGET_SELECTOR) : undefined;
 	if (nextTarget === activeTarget) return;
-	if (nextTarget) return;
+	if (nextTarget && isRevealReady(nextTarget)) return;
 
 	hidePreview(activeTarget);
 };
