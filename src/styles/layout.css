@@ -3,6 +3,20 @@
 		@apply min-h-0;
 	}
 
+	[data-content-panel] {
+		@apply relative isolate;
+	}
+
+	[data-content-panel]::before {
+		@apply pointer-events-none absolute inset-y-0 left-0 z-0 bg-(--site-panel);
+		content: '';
+		width: 100%;
+	}
+
+	[data-content-panel] > * {
+		@apply relative z-[1];
+	}
+
 	.layout-grid {
 		@apply mx-auto grid w-full px-(--space-page);
 		max-width: calc(var(--measure-grid) + (var(--space-page) * 2));
@@ -20,6 +34,11 @@
 }
 
 @media (width >= 64rem) {
+	[data-content-panel]::before {
+		--panel-track: calc((100% - (var(--space-page) * 2) - (var(--grid-gap) * 9)) / 10);
+		width: calc((var(--space-page) * 2) + (var(--panel-track) * 5) + (var(--grid-gap) * 4));
+	}
+
 	.layout-lane {
 		grid-column: 1 / span 5;
 	}

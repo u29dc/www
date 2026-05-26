@@ -48,6 +48,9 @@ export const originLinks = {
 	outernet: {
 		label: 'Outernet London',
 		href: 'https://www.outernet.com/',
+		mark: 'outernet',
+		accent: '#d5a137',
+		accentText: '#111111',
 	},
 	ntmofa: {
 		label: 'National Taiwan Museum of Fine Arts',
@@ -56,6 +59,9 @@ export const originLinks = {
 	akbankSanat: {
 		label: 'Akbank Sanat',
 		href: 'https://www.akbanksanat.com/en',
+		mark: 'akbank-sanat',
+		accent: '#ed1c24',
+		accentText: '#ffffff',
 	},
 	battersea: {
 		label: 'Battersea Power Station',

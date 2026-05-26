@@ -24,6 +24,7 @@
 	color-scheme: light;
 
 	--site-ground: oklch(97.2% 0.0015 250);
+	--site-panel: oklch(99.3% 0.001 250);
 	--site-surface: oklch(99.1% 0.001 250);
 	--site-ink: oklch(17.5% 0.003 250);
 	--site-muted: oklch(51% 0.004 250);
@@ -92,6 +93,7 @@
 	color-scheme: dark;
 
 	--site-ground: oklch(15.5% 0.006 250);
+	--site-panel: oklch(11.5% 0.004 250);
 	--site-surface: oklch(18.5% 0.006 250);
 	--site-ink: oklch(91% 0.003 250);
 	--site-muted: oklch(66% 0.006 250);
@@ -112,6 +114,7 @@
 		color-scheme: dark;
 
 		--site-ground: oklch(15.5% 0.006 250);
+		--site-panel: oklch(11.5% 0.004 250);
 		--site-surface: oklch(18.5% 0.006 250);
 		--site-ink: oklch(91% 0.003 250);
 		--site-muted: oklch(66% 0.006 250);

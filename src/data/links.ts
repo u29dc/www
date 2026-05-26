@@ -1,5 +1,5 @@
 export const LINK_ICONS = ['arrow', 'calendar', 'code', 'file', 'globe', 'layers', 'mail', 'mic', 'play', 'rss', 'youtube'] as const;
-export const LINK_MARKS = ['infinity', 'lotus', 'lusion', 'nohlab', 'porsche', 'salon'] as const;
+export const LINK_MARKS = ['akbank-sanat', 'infinity', 'lotus', 'lusion', 'nohlab', 'outernet', 'porsche', 'salon'] as const;
 
 export type LinkIcon = (typeof LINK_ICONS)[number];
 export type LinkMark = (typeof LINK_MARKS)[number];

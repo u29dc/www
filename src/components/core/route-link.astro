@@ -6,7 +6,7 @@ type Props = {
 	[key: string]: unknown;
 };
 
-const { href, class: className, prefetch = 'tap', ...anchorProps } = Astro.props as Props;
+const { href, class: className, prefetch = false, ...anchorProps } = Astro.props as Props;
 const prefetchStrategy = prefetch === false ? undefined : prefetch;
 ---
 
