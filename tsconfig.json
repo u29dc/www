@@ -36,6 +36,6 @@
 		"noEmit": true,
 		"skipLibCheck": true
 	},
-	"include": [".astro/types.d.ts", "src/**/*.astro", "src/**/*.ts", "src/**/*.mts", "src/**/*.cts"],
+	"include": [".astro/types.d.ts", "astro.config.ts", "scripts/**/*.ts", "src/**/*.astro", "src/**/*.ts", "src/**/*.mts", "src/**/*.cts"],
 	"exclude": ["tmp", "node_modules", "dist", ".astro"]
 }

@@ -19,6 +19,12 @@
 			"rules": {
 				"import/no-unassigned-import": "off"
 			}
+		},
+		{
+			"files": ["scripts/**/*.ts"],
+			"rules": {
+				"no-console": "off"
+			}
 		}
 	],
 	"env": {

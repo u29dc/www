@@ -3,6 +3,7 @@ import mdx from '@astrojs/mdx';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'astro/config';
 import remarkGfm from 'remark-gfm';
+import { glslStringMinify } from './scripts/glsl';
 
 export default defineConfig({
 	site: 'https://u29dc.com',
@@ -26,6 +27,9 @@ export default defineConfig({
 	}),
 	integrations: [mdx({ remarkPlugins: [remarkGfm] })],
 	vite: {
-		plugins: [tailwindcss()],
+		build: {
+			minify: 'oxc',
+		},
+		plugins: [glslStringMinify(), tailwindcss()],
 	},
 });
