@@ -32,12 +32,12 @@ export const resolveArtifactHoverPreview = (entry: ArtifactEntry): HoverPreview 
 		media.kind === 'video' ? (imageSource(entry.data.hoverPosterMedia) ?? imageSource(entry.data.thumbnailMedia) ?? getFirstArtifactImageMediaSource(entry) ?? FALLBACK_PREVIEW_MEDIA) : undefined;
 
 	return {
-		url: media.url,
+		url: media.kind === 'image' ? media.previewUrl : media.displayUrl,
 		kind: media.kind,
 		ratio: media.ratio,
 		fit: entry.data.hoverPreviewFit ?? 'cover',
 		alt: entry.data.hoverPreviewAlt ?? entry.data.title,
-		...(posterSource ? { posterUrl: parseMediaSource(posterSource).url } : {}),
+		...(posterSource ? { posterUrl: parseMediaSource(posterSource).previewUrl } : media.posterUrl ? { posterUrl: media.posterUrl } : {}),
 	};
 };
 
@@ -46,7 +46,7 @@ export const resolveLinkHoverPreview = (source: string | undefined, options?: { 
 
 	const media = parseMediaSource(source);
 	return {
-		url: media.url,
+		url: media.kind === 'image' ? media.previewUrl : media.displayUrl,
 		kind: media.kind,
 		ratio: media.ratio,
 		fit: options?.fit ?? 'cover',

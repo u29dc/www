@@ -68,7 +68,7 @@
 - MDX frontmatter controls artifact type, date, visibility, thumbnails, hover previews, and export metadata. `isArtifactItem: false` hides an artifact from public listings and exports.
 - [`src/lib/markdown.ts`](src/lib/markdown.ts) powers markdown/text exports and first-media extraction. Changes here affect article routes, `llms.txt`, and hover preview defaults.
 - Rich origin copy in [`src/components/home/origin.astro`](src/components/home/origin.astro) and plain origin copy in [`src/data/copy.ts`](src/data/copy.ts) should stay semantically aligned.
-- Local fonts and mark assets live under [`public/fonts`](public/fonts) and [`public/assets/marks`](public/assets/marks). Article media resolves through the configured media base URL, currently `https://storage.u29dc.com/media/`.
+- Local fonts and mark assets live under [`public/fonts`](public/fonts) and [`public/assets/marks`](public/assets/marks). Article media resolves through the configured media base URL, currently `https://storage.u29dc.com/assets/`.
 - This repository is public. Do not add private vault material, client-sensitive detail, secrets, or personal runtime data.
 
 ## 7. Conventions

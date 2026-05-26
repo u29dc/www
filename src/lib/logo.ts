@@ -13,7 +13,6 @@ export interface State {
 	roundness: number;
 	noiseIntensity: number;
 	noiseScale: number;
-	animateNoise: boolean;
 	theme: Theme;
 }
 
@@ -108,7 +107,6 @@ uniform vec3 u_color;
 
 uniform float u_noiseIntensity;
 uniform float u_noiseScale;
-uniform float u_time;
 
 // -----------------------------------------------------------------
 // Hash function: converts 2D input to pseudo-random scalar

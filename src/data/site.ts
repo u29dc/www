@@ -23,7 +23,7 @@ export const SITE = {
 } as const;
 
 export const MEDIA = {
-	baseUrl: normalizeBaseUrl(import.meta.env['PUBLIC_MEDIA_BASE_URL'] ?? 'https://storage.u29dc.com/media/'),
+	baseUrl: normalizeBaseUrl(import.meta.env['PUBLIC_MEDIA_BASE_URL'] ?? 'https://storage.u29dc.com/assets/'),
 } as const;
 
 export const SITE_THEME = import.meta.env['PUBLIC_SITE_THEME'];

@@ -120,7 +120,7 @@ const mediaToMarkdownNodes = (node: MarkdownNode): MarkdownNode[] => {
 		const label = media.kind === 'video' ? 'Video' : 'Image';
 		return {
 			type: 'paragraph',
-			children: [linkNode(media.url, `${label}: ${media.path}`)],
+			children: [linkNode(media.displayUrl, `${label}: ${media.path}`)],
 		};
 	});
 };

@@ -12,6 +12,7 @@ type Props = {
 	controls?: boolean;
 	loop?: boolean;
 	muted?: boolean;
+	fetchPriority?: 'high' | 'low' | 'auto';
 };
 
 const {
@@ -25,9 +26,11 @@ const {
 	controls = false,
 	loop = true,
 	muted = true,
+	fetchPriority,
 } = Astro.props;
 
 const sources = parseMediaSources(src);
+const resolvedFetchPriority = fetchPriority ?? (loading === 'eager' ? 'high' : undefined);
 const totalRatio = sources.reduce((sum, item) => sum + item.ratio, 0);
 const shouldShowControls = controls || !autoplay;
 const figureStyle = [
@@ -53,11 +56,12 @@ const figureStyle = [
 								class="block size-full object-cover pointer-events-none data-[fit=contain]:object-contain"
 								data-media-video
 								data-media-asset
-								data-src={item.url}
+								data-src={item.displayUrl}
 								data-autoplay={autoplay ? 'true' : 'false'}
 								data-fit={fit}
 								aria-label={alt || undefined}
 								preload="none"
+								poster={item.posterUrl}
 								muted={muted}
 								loop={loop}
 								playsinline
@@ -67,11 +71,12 @@ const figureStyle = [
 							<noscript>
 								<video
 									class="block size-full object-cover pointer-events-none data-[fit=contain]:object-contain"
-									src={item.url}
+									src={item.displayUrl}
 									data-media-asset
 									data-fit={fit}
 									aria-label={alt || undefined}
 									preload="metadata"
+									poster={item.posterUrl}
 									muted
 									loop={loop}
 									playsinline
@@ -83,11 +88,14 @@ const figureStyle = [
 					) : (
 						<img
 							class="block size-full object-cover pointer-events-none select-none data-[fit=contain]:object-contain"
-							src={item.url}
+							src={item.displayUrl}
+							srcset={item.srcset}
+							sizes={item.sizes}
 							width={item.width}
 							height={item.height}
 							alt={alt}
 							loading={loading}
+							fetchpriority={resolvedFetchPriority}
 							decoding="async"
 							crossorigin="anonymous"
 							referrerpolicy="origin"

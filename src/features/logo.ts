@@ -15,7 +15,6 @@ type Config = {
 	roundness: number;
 	noiseIntensity: number;
 	noiseScale: number;
-	animateNoise: boolean;
 	theme: ThemePreference;
 	enableObservation: boolean;
 };
@@ -66,7 +65,6 @@ const readConfig = (element: HTMLElement): Config => {
 		roundness: parseNumber(element.dataset['roundness'], 0.5),
 		noiseIntensity: parseNumber(element.dataset['noiseIntensity'], 0.15),
 		noiseScale: parseNumber(element.dataset['noiseScale'], 150),
-		animateNoise: parseBoolean(element.dataset['animateNoise'], false),
 		theme: parseTheme(element.dataset['theme']),
 		enableObservation: parseBoolean(element.dataset['enableObservation'], true),
 	};
@@ -94,7 +92,6 @@ const buildState = (config: Config, isMobile: boolean, theme: Theme): State => {
 		roundness: config.roundness,
 		noiseIntensity: config.noiseIntensity,
 		noiseScale: config.noiseScale,
-		animateNoise: config.animateNoise,
 		theme,
 	};
 };
