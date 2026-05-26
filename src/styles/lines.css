@@ -4,6 +4,10 @@
 		@apply opacity-0;
 	}
 
+	html[data-line-reveal-boot='failed'] [data-line-reveal] {
+		@apply opacity-100;
+	}
+
 	.line-reveal-overlay {
 		@apply pointer-events-none absolute block select-none;
 		contain: layout paint style;

@@ -1,16 +1,9 @@
 import type { TransitionBeforePreparationEvent, TransitionBeforeSwapEvent } from 'astro:transitions/client';
+import { MOTION, readDurationToken } from '../lib/motion';
 
-const DEFAULT_PAGE_EXIT_MS = 400;
-const REVEAL_FALLBACK_MS = 1_500;
-const REVEAL_ROOT_MARGIN = '0px 0px -8% 0px';
-const REVEAL_THRESHOLD = 0.01;
-const MAX_REVEAL_INDEX = 7;
 const REVEAL_TARGET_SELECTOR = ['[data-reveal]', '[data-reveal-group] > :where(header, section, article, footer, h1, h2, h3, p, ul, ol, dl, figure, blockquote, div, li)'].join(',');
-const SITE_ROUTE_MOTION_FALLBACK_MS = 500;
-const SITE_ROUTE_MOTION_BUFFER_MS = 80;
 const COMPLETE_LINE_GROUPS_DATASET_KEY = 'lineRevealCompleteGroups';
 const LINE_GROUP_COMPLETE_EVENT = 'line-reveal-group-complete';
-const LINE_GROUP_REVEAL_DELAY_MS = 0;
 
 const reduceMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
 let revealObserver: IntersectionObserver | undefined;
@@ -50,18 +43,7 @@ const startSiteRouteMotion = (): void => {
 		clearSiteRouteMotion();
 	};
 
-	siteRouteMotionHandle = window.setTimeout(finish, readDuration('--duration-page-exit', SITE_ROUTE_MOTION_FALLBACK_MS) + SITE_ROUTE_MOTION_BUFFER_MS);
-};
-
-const readDuration = (propertyName: string, fallbackMilliseconds: number): number => {
-	const rawValue = getComputedStyle(document.documentElement).getPropertyValue(propertyName).trim();
-	const value = Number.parseFloat(rawValue);
-
-	if (!Number.isFinite(value)) return fallbackMilliseconds;
-	if (rawValue.endsWith('ms')) return value;
-	if (rawValue.endsWith('s')) return value * 1_000;
-
-	return value;
+	siteRouteMotionHandle = window.setTimeout(finish, readDurationToken('--duration-page-exit', MOTION.pageExitMs) + MOTION.siteRouteMotionBufferMs);
 };
 
 const delay = (milliseconds: number, signal?: AbortSignal): Promise<void> => {
@@ -103,7 +85,7 @@ const assignRevealIndexes = (targets: HTMLElement[]): void => {
 		const parentGroup = target.parentElement?.matches('[data-reveal-group]') ? target.parentElement : undefined;
 		const index = parentGroup ? (groupIndexes.get(parentGroup) ?? 0) : looseIndex;
 
-		target.style.setProperty('--reveal-index', String(Math.min(index, MAX_REVEAL_INDEX)));
+		target.style.setProperty('--reveal-index', String(Math.min(index, MOTION.revealMaxIndex)));
 		target.dataset['reveal'] = canAnimate() ? 'pending' : 'visible';
 
 		if (parentGroup) {
@@ -155,7 +137,7 @@ const revealTargetsWaitingForLineGroup = (group: string): void => {
 	const targets = getRevealTargets().filter((target) => target.dataset['reveal'] === 'waiting' && target.dataset['revealAfterLineGroup'] === group);
 
 	targets.forEach((target, index) => {
-		target.style.setProperty('--reveal-index', String(Math.min(index, MAX_REVEAL_INDEX)));
+		target.style.setProperty('--reveal-index', String(Math.min(index, MOTION.revealMaxIndex)));
 		reveal(target);
 	});
 };
@@ -166,7 +148,7 @@ const scheduleRevealTargetsWaitingForLineGroup = (group: string): void => {
 		window.clearTimeout(existingHandle);
 	}
 
-	const delayMs = readDuration('--duration-line-reveal-follow-delay', LINE_GROUP_REVEAL_DELAY_MS);
+	const delayMs = readDurationToken('--duration-line-reveal-follow-delay', MOTION.lineGroupRevealDelayMs);
 	const handle = window.setTimeout(() => {
 		lineGroupRevealHandles.delete(group);
 		revealTargetsWaitingForLineGroup(group);
@@ -202,7 +184,7 @@ const observeRevealTargets = (): void => {
 				}
 			}
 		},
-		{ rootMargin: REVEAL_ROOT_MARGIN, threshold: REVEAL_THRESHOLD },
+		{ rootMargin: MOTION.revealRootMargin, threshold: MOTION.revealThreshold },
 	);
 
 	for (const target of targets) {
@@ -212,7 +194,7 @@ const observeRevealTargets = (): void => {
 	revealFallbackHandle = window.setTimeout(() => {
 		revealFallbackHandle = undefined;
 		revealPendingTargets();
-	}, REVEAL_FALLBACK_MS);
+	}, MOTION.revealFallbackMs);
 };
 
 const initializeReveals = (): void => {
@@ -238,7 +220,7 @@ const playExit = (signal: AbortSignal): Promise<void> => {
 	signal.addEventListener('abort', abort, { once: true });
 	exitAbortCleanup = () => signal.removeEventListener('abort', abort);
 
-	return delay(readDuration('--duration-page-exit', DEFAULT_PAGE_EXIT_MS), signal);
+	return delay(readDurationToken('--duration-page-exit', MOTION.pageExitMs), signal);
 };
 
 const handleBeforePreparation = (event: TransitionBeforePreparationEvent): void => {

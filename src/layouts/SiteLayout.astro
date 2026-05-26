@@ -84,6 +84,7 @@ const themeColorDark = SITE.themeColorDark;
 			(() => {
 				const root = document.documentElement;
 				const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+				const bootTimeoutMs = 1500;
 
 				root.dataset.motion = reduceMotion ? 'reduced' : 'ready';
 				root.dataset.lineRevealBoot = reduceMotion ? 'reduced' : 'pending';
@@ -94,13 +95,13 @@ const themeColorDark = SITE.themeColorDark;
 						if (root.dataset.motionBoot !== 'ready') {
 							root.dataset.motion = 'reduced';
 						}
-					}, 1500);
+					}, bootTimeoutMs);
 
 					window.setTimeout(() => {
 						if (root.dataset.lineRevealBoot === 'pending') {
 							root.dataset.lineRevealBoot = 'failed';
 						}
-					}, 1500);
+					}, bootTimeoutMs);
 				}
 			})();
 		</script>
@@ -113,7 +114,6 @@ const themeColorDark = SITE.themeColorDark;
 			<slot />
 		</div>
 		<script>
-			import '../features/layout';
 			import '../features/logo';
 			import '../features/preview';
 			import '../features/media';

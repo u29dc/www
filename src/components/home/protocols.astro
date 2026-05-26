@@ -8,8 +8,8 @@ import { protocols } from '../../data/copy';
 	</div>
 	<ul class="grid list-none border-t border-edge-soft p-0">
 		{protocols.map((protocol) => (
-			<li class="grid grid-cols-[9.25rem_minmax(0,1fr)] items-baseline gap-x-(--space-4) gap-y-(--space-1) border-b border-edge-soft py-(--space-2) max-[42rem]:grid-cols-1 max-[42rem]:gap-(--space-1)">
-				<div class="grid grid-cols-[3.25rem_minmax(0,1fr)] items-baseline gap-x-(--space-2)">
+			<li class="grid grid-cols-(--protocol-row-columns) items-baseline gap-x-(--space-4) gap-y-(--space-1) border-b border-edge-soft py-(--space-2) max-[42rem]:grid-cols-1 max-[42rem]:gap-(--space-1)">
+				<div class="grid grid-cols-(--protocol-label-columns) items-baseline gap-x-(--space-2)">
 					<span class="font-mono text-(length:--type-label) font-(--weight-strong) leading-(--leading-label) text-ink">{protocol.name}</span>
 					<span class="font-mono text-(length:--type-label) leading-(--leading-label) tabular-nums whitespace-nowrap text-muted">{protocol.meta}</span>
 				</div>

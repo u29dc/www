@@ -1,5 +1,6 @@
 import type { TransitionBeforeSwapEvent } from 'astro:transitions/client';
 import { cancelPreparedLineReveal, measureLineReveal, mountLineReveal, type LineRevealOptions, type LineRevealProfile, type MeasuredLineReveal, type PreparedLineReveal } from '../lib/lines';
+import { MOTION, readDurationToken, readNumberToken } from '../lib/motion';
 
 type NavigatorWithDeviceMemory = Navigator & {
 	deviceMemory?: number;
@@ -7,19 +8,6 @@ type NavigatorWithDeviceMemory = Navigator & {
 
 const TARGET_SELECTOR = '[data-line-reveal]';
 const GROUP_SELECTOR = '[data-line-reveal-group]';
-const INTERSECTION_ROOT_MARGIN = '0px 0px -8% 0px';
-const INTERSECTION_THRESHOLD = 0.01;
-const FONT_WAIT_TIMEOUT_MS = 180;
-const FRAME_WAIT_TIMEOUT_MS = 120;
-const MAX_TOTAL_LINES = 220;
-const MAX_TARGETS = 72;
-const DEFAULT_DURATION_MS = 560;
-const DEFAULT_STAGGER_MS = 26;
-const DEFAULT_TOTAL_MS = 1_150;
-const DEFAULT_HANDOFF_MS = 90;
-const DEFAULT_STAGGERED_LINES = 24;
-const GROUP_COMPLETE_BUFFER_MS = 8;
-const GROUP_FOLLOW_OVERLAP_MS = 140;
 const COMPLETE_GROUPS_DATASET_KEY = 'lineRevealCompleteGroups';
 const GROUP_COMPLETE_EVENT = 'line-reveal-group-complete';
 const LINE_BOOT_DATASET_KEY = 'lineRevealBoot';
@@ -88,6 +76,25 @@ const getLineGroups = (root: Document | Element = document): HTMLElement[] => {
 	return groups;
 };
 
+const fallbackLineRevealDocument = (root: Document | Element = document): void => {
+	const doc = root instanceof Document ? root : root.ownerDocument;
+	for (const target of getLineTargets(root)) {
+		if (!isTerminalLineTarget(target)) markFallback(target);
+	}
+	for (const group of getLineGroups(root)) {
+		markLineGroupComplete(group);
+	}
+	markLineBoot(doc, 'failed');
+};
+
+const runSafely = (callback: () => void, fallbackRoot: Document | Element = document): void => {
+	try {
+		callback();
+	} catch {
+		fallbackLineRevealDocument(fallbackRoot);
+	}
+};
+
 const markLineTargetPending = (target: HTMLElement): void => {
 	if (isTerminalLineTarget(target)) return;
 
@@ -148,22 +155,6 @@ function markLineGroupComplete(root: HTMLElement): void {
 	doc.dispatchEvent(new CustomEvent(GROUP_COMPLETE_EVENT, { detail: { group } }));
 }
 
-const readDuration = (propertyName: string, fallbackMilliseconds: number): number => {
-	const rawValue = getComputedStyle(document.documentElement).getPropertyValue(propertyName).trim();
-	const value = Number.parseFloat(rawValue);
-
-	if (!Number.isFinite(value)) return fallbackMilliseconds;
-	if (rawValue.endsWith('ms')) return value;
-	if (rawValue.endsWith('s')) return value * 1_000;
-
-	return value;
-};
-
-const readNumber = (propertyName: string, fallback: number): number => {
-	const value = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue(propertyName).trim());
-	return Number.isFinite(value) ? value : fallback;
-};
-
 const getProfile = (): LineRevealProfile | undefined => {
 	if (reduceMotionQuery.matches) return undefined;
 
@@ -180,14 +171,15 @@ const getOptions = (): LineRevealOptions | undefined => {
 
 	return {
 		profile,
-		durationMs: readDuration('--duration-line-reveal', DEFAULT_DURATION_MS),
-		staggerMs: readDuration('--duration-line-reveal-stagger', DEFAULT_STAGGER_MS),
-		maxTotalMs: readDuration('--duration-line-reveal-max', DEFAULT_TOTAL_MS),
-		handoffMs: readDuration('--duration-line-reveal-handoff', DEFAULT_HANDOFF_MS),
-		staggeredLines: readNumber('--line-reveal-staggered-lines', DEFAULT_STAGGERED_LINES),
-		maxTokens: profile === 'full' ? 520 : 120,
-		maxLinesPerTarget: profile === 'full' ? 32 : 6,
-		measureBudgetMs: profile === 'full' ? Number.POSITIVE_INFINITY : 10,
+		durationMs: readDurationToken('--duration-line-reveal', MOTION.line.durationMs),
+		staggerMs: readDurationToken('--duration-line-reveal-stagger', MOTION.line.staggerMs),
+		maxTotalMs: readDurationToken('--duration-line-reveal-max', MOTION.line.maxTotalMs),
+		handoffMs: readDurationToken('--duration-line-reveal-handoff', MOTION.line.handoffMs),
+		staggeredLines: readNumberToken('--line-reveal-staggered-lines', MOTION.line.staggeredLines),
+		completionBufferMs: MOTION.line.completionBufferMs,
+		maxTokens: profile === 'full' ? MOTION.line.fullMaxTokens : MOTION.line.liteMaxTokens,
+		maxLinesPerTarget: profile === 'full' ? MOTION.line.fullMaxLinesPerTarget : MOTION.line.liteMaxLinesPerTarget,
+		measureBudgetMs: profile === 'full' ? Number.POSITIVE_INFINITY : MOTION.line.liteMeasureBudgetMs,
 	};
 };
 
@@ -211,7 +203,7 @@ const waitForFonts = async (signal: AbortSignal): Promise<void> => {
 	const fonts = document.fonts;
 	if (!fonts) return;
 
-	await Promise.race([fonts.ready.then(() => undefined), delay(FONT_WAIT_TIMEOUT_MS, signal)]);
+	await Promise.race([fonts.ready.then(() => undefined), delay(MOTION.line.fontWaitMs, signal)]);
 };
 
 const nextFrame = (signal: AbortSignal): Promise<void> =>
@@ -225,7 +217,7 @@ const nextFrame = (signal: AbortSignal): Promise<void> =>
 			resolve();
 		};
 
-		timeout = window.setTimeout(finish, FRAME_WAIT_TIMEOUT_MS);
+		timeout = window.setTimeout(finish, MOTION.line.frameWaitMs);
 		frame = window.requestAnimationFrame(finish);
 		signal.addEventListener('abort', finish, { once: true });
 	});
@@ -307,7 +299,7 @@ const observePreparedWidth = (prepared: PreparedLineReveal): void => {
 
 			const lastWidth = targetWidths.get(target);
 			const nextWidth = entry.contentRect.width;
-			if (lastWidth === undefined || Math.abs(lastWidth - nextWidth) < 1) continue;
+			if (lastWidth === undefined || Math.abs(lastWidth - nextWidth) < MOTION.line.widthChangeTolerancePx) continue;
 
 			const preparedTarget = preparedTargets.get(target);
 			if (preparedTarget) {
@@ -338,7 +330,7 @@ const applySequenceTiming = (sequence: MeasuredLineReveal[], options: LineReveal
 		measured.actualStagger = sequenceStagger;
 		measured.delayOffsetMs = lineDelaysMs[0] ?? 0;
 		measured.lineDelaysMs = lineDelaysMs;
-		measured.animationMs = options.durationMs + maxDelayMs + 80;
+		measured.animationMs = options.durationMs + maxDelayMs + options.completionBufferMs;
 		measured.totalMs = measured.animationMs + options.handoffMs;
 	}
 };
@@ -364,7 +356,7 @@ function playSequence(sequence: PreparedLineReveal[], root: HTMLElement): void {
 					markLineGroupComplete(root);
 				}
 			},
-			Math.max(0, maxAnimationMs - GROUP_FOLLOW_OVERLAP_MS),
+			Math.max(0, maxAnimationMs - MOTION.line.groupFollowOverlapMs),
 		);
 		sequenceFinishHandles.add(groupHandle);
 
@@ -374,7 +366,7 @@ function playSequence(sequence: PreparedLineReveal[], root: HTMLElement): void {
 			for (const prepared of sequence) {
 				untrackPrepared(prepared);
 			}
-		}, maxAnimationMs + GROUP_COMPLETE_BUFFER_MS);
+		}, maxAnimationMs + MOTION.line.groupCompleteBufferMs);
 		sequenceFinishHandles.add(cleanupHandle);
 	});
 }
@@ -424,7 +416,7 @@ const prepareSequence = async (root: HTMLElement, targets: HTMLElement[], signal
 
 	for (const target of pendingTargets) {
 		if (signal.aborted || !target.isConnected || !isPendingLineTarget(target)) continue;
-		if (activeTargetCount >= MAX_TARGETS) {
+		if (activeTargetCount >= MOTION.line.maxTargets) {
 			fallbackTargets.push(target);
 			continue;
 		}
@@ -436,7 +428,7 @@ const prepareSequence = async (root: HTMLElement, targets: HTMLElement[], signal
 				continue;
 			}
 
-			if (totalLineCount + measured.lineCount > MAX_TOTAL_LINES) {
+			if (totalLineCount + measured.lineCount > MOTION.line.maxTotalLines) {
 				fallbackTargets.push(target);
 				continue;
 			}
@@ -528,10 +520,12 @@ const observeTargets = (): void => {
 				if (!entry.isIntersecting || !(entry.target instanceof HTMLElement)) continue;
 
 				intersectionObserver?.unobserve(entry.target);
-				void prepareSequence(entry.target, sequenceTargets.get(entry.target) ?? [], signal);
+				void prepareSequence(entry.target, sequenceTargets.get(entry.target) ?? [], signal).catch(() => {
+					if (!signal.aborted) fallbackLineRevealDocument();
+				});
 			}
 		},
-		{ rootMargin: INTERSECTION_ROOT_MARGIN, threshold: INTERSECTION_THRESHOLD },
+		{ rootMargin: MOTION.line.rootMargin, threshold: MOTION.line.threshold },
 	);
 
 	const sequences = getSequences();
@@ -552,7 +546,7 @@ const scheduleObserveTargets = (): void => {
 
 	observeFrame = window.requestAnimationFrame(() => {
 		observeFrame = undefined;
-		observeTargets();
+		runSafely(observeTargets);
 	});
 };
 
@@ -577,17 +571,24 @@ const handleBeforeSwap = (event: TransitionBeforeSwapEvent): void => {
 };
 
 document.addEventListener('astro:before-swap', (event) => {
-	handleBeforeSwap(event as TransitionBeforeSwapEvent);
+	const transitionEvent = event as TransitionBeforeSwapEvent;
+	runSafely(() => handleBeforeSwap(transitionEvent), transitionEvent.newDocument);
 });
-document.addEventListener('astro:page-load', scheduleObserveTargets);
+document.addEventListener('astro:page-load', () => runSafely(scheduleObserveTargets));
 reduceMotionQuery.addEventListener('change', () => {
-	cleanup();
-	scheduleObserveTargets();
+	runSafely(() => {
+		cleanup();
+		scheduleObserveTargets();
+	});
 });
 coarsePointerQuery.addEventListener('change', () => {
-	cleanup();
-	scheduleObserveTargets();
+	runSafely(() => {
+		cleanup();
+		scheduleObserveTargets();
+	});
 });
 
-prepareLineRevealDocument();
-scheduleObserveTargets();
+runSafely(() => {
+	prepareLineRevealDocument();
+	scheduleObserveTargets();
+});

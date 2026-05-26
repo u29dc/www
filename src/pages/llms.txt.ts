@@ -27,7 +27,7 @@ const officialChannels = [
 	'TikTok: https://tiktok.com/@u29dc',
 	'500px: https://500px.com/p/u29dc',
 	'IMDb: https://www.imdb.com/name/nm10729970',
-	'Last updated: April 2026',
+	'Last updated: May 2026',
 	`Full sitemap: ${SITE.url}/sitemap.xml`,
 ].join('\n');
 

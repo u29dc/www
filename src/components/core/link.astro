@@ -4,7 +4,7 @@ import type { AstroComponent } from '@lucide/astro';
 import { SITE } from '../../data/site';
 import { resolveLinkHoverPreview, type HoverPreviewFit } from '../../lib/hover-preview';
 import type { LinkIcon, LinkMark } from '../../data/links';
-import { markClasses, markImages } from '../../data/marks';
+import { markClasses, markImages, markStyles } from '../../data/marks';
 
 type Props = {
 	href?: string;
@@ -82,11 +82,12 @@ const shouldRenderPill = (variant ?? (isExternal && !isFootnote && showArrow !==
 const targetValue = isExternal ? (target ?? '_blank') : target;
 const relValue = isExternal ? Array.from(new Set([rel, 'noopener', 'noreferrer'].filter(Boolean))).join(' ') : rel;
 const activePreviewMedia = previewMedia ?? firstDefaultLinkPreviewMedia();
+const markStyle = mark ? markStyles[mark] : undefined;
 const pillStyle = [
 	'--link-pill-bg:var(--site-link-pill-bg)',
 	'--link-pill-fg:var(--site-link-pill-fg)',
-	'--link-pill-hover-bg:' + (accent ?? 'var(--site-ink)'),
-	'--link-pill-hover-fg:' + (accentText ?? 'var(--site-ground)'),
+	'--link-pill-hover-bg:' + (accent ?? markStyle?.accent ?? 'var(--site-ink)'),
+	'--link-pill-hover-fg:' + (accentText ?? markStyle?.accentText ?? 'var(--site-ground)'),
 ].join(';');
 const preview = resolveLinkHoverPreview(activePreviewMedia, {
 	...(previewAlt === undefined ? {} : { alt: previewAlt }),
@@ -114,7 +115,7 @@ const ActiveIcon = iconComponents[activeIcon];
 	{
 		shouldRenderPill ? (
 			<a
-				class="group/link inline-flex max-w-full items-center gap-[0.2em] whitespace-nowrap rounded-full border border-[color:var(--site-edge-soft)] bg-[var(--link-pill-bg)] px-[0.38em] py-[0.08em] align-[0.04em] text-[13px] font-(--weight-body) text-[var(--link-pill-fg)] no-underline leading-[1.1] transition-[background-color,border-color,color] duration-(--duration-quick) ease-(--ease-settle) hover:border-[color:var(--link-pill-hover-bg)] hover:bg-[var(--link-pill-hover-bg)] hover:text-[var(--link-pill-hover-fg)]"
+				class="group/link inline-flex max-w-full items-center gap-(--link-pill-gap) whitespace-nowrap rounded-full border border-[color:var(--site-edge-soft)] bg-[var(--link-pill-bg)] px-(--link-pill-pad-x) py-(--link-pill-pad-y) align-[var(--link-pill-align)] text-(length:--link-pill-type) font-(--weight-body) text-[var(--link-pill-fg)] no-underline leading-(--link-pill-leading) transition-[background-color,border-color,color] duration-(--duration-quick) ease-(--ease-settle) hover:border-[color:var(--link-pill-hover-bg)] hover:bg-[var(--link-pill-hover-bg)] hover:text-[var(--link-pill-hover-fg)]"
 				href={href}
 				target={targetValue}
 				rel={relValue}
@@ -128,7 +129,7 @@ const ActiveIcon = iconComponents[activeIcon];
 				{...anchorProps}
 			>
 				{shouldRenderPillIcon && (
-					<span class="inline-block size-[0.92em] shrink-0 select-none text-current [line-height:0] selection:bg-transparent" aria-hidden="true">
+					<span class="inline-block size-(--link-pill-icon-size) shrink-0 select-none text-current [line-height:0] selection:bg-transparent" aria-hidden="true">
 						{mark ? (
 							markImages[mark] ? (
 								<img class="block size-full rounded-none object-contain select-none pointer-events-none" src={markImages[mark]} alt="" width="64" height="64" decoding="async" draggable="false" />
@@ -141,7 +142,7 @@ const ActiveIcon = iconComponents[activeIcon];
 					</span>
 				)}
 				<span class="min-w-0 leading-[inherit]"><slot /></span>
-				{shouldRenderArrow && <ArrowUpRight class="inline-block size-[0.72em] shrink-0 select-none text-current transition-transform duration-(--duration-quick) ease-(--ease-settle) selection:bg-transparent group-hover/link:translate-x-[0.08em] group-hover/link:translate-y-[-0.08em]" stroke-width={2.25} data-link-arrow aria-hidden="true" focusable="false" />}
+				{shouldRenderArrow && <ArrowUpRight class="inline-block size-(--link-pill-arrow-size) shrink-0 select-none text-current transition-transform duration-(--duration-quick) ease-(--ease-settle) selection:bg-transparent group-hover/link:translate-x-(--link-arrow-shift) group-hover/link:-translate-y-(--link-arrow-shift)" stroke-width={2.25} data-link-arrow aria-hidden="true" focusable="false" />}
 			</a>
 		) : (
 			<a
@@ -159,7 +160,7 @@ const ActiveIcon = iconComponents[activeIcon];
 			>
 				<span class="relative inline-block min-w-0 leading-[inherit] group-hover/link:underline"><slot /></span>
 				{shouldRenderIcon && (
-					<span class="ml-[0.12em] inline-block size-[0.98em] select-none align-[-0.14em] text-muted transition-colors duration-(--duration-quick) ease-(--ease-settle) [line-height:0] selection:bg-transparent selection:text-muted group-hover/link:text-ink" aria-hidden="true">
+					<span class="ml-(--link-text-icon-margin) inline-block size-(--link-text-icon-size) select-none align-[var(--link-text-icon-align)] text-muted transition-colors duration-(--duration-quick) ease-(--ease-settle) [line-height:0] selection:bg-transparent selection:text-muted group-hover/link:text-ink" aria-hidden="true">
 						{mark ? (
 							markImages[mark] ? (
 								<img class="block size-full rounded-none object-contain select-none pointer-events-none" src={markImages[mark]} alt="" width="64" height="64" decoding="async" draggable="false" />
@@ -173,7 +174,7 @@ const ActiveIcon = iconComponents[activeIcon];
 				)}
 				{shouldRenderArrow && (
 					<ArrowUpRight
-						class="ml-[0.06em] inline-block size-[0.72em] select-none align-[0.08em] text-muted transition-[color,transform] duration-(--duration-quick) ease-(--ease-settle) selection:bg-transparent selection:text-muted group-hover/link:translate-x-[0.08em] group-hover/link:translate-y-[-0.08em] group-hover/link:text-ink"
+						class="ml-(--link-text-arrow-margin) inline-block size-(--link-pill-arrow-size) select-none align-[var(--link-text-arrow-align)] text-muted transition-[color,transform] duration-(--duration-quick) ease-(--ease-settle) selection:bg-transparent selection:text-muted group-hover/link:translate-x-(--link-arrow-shift) group-hover/link:-translate-y-(--link-arrow-shift) group-hover/link:text-ink"
 						stroke-width={2.25}
 						data-link-arrow
 						aria-hidden="true"

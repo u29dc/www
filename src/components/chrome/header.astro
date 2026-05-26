@@ -8,12 +8,12 @@ import Link from '../core/link.astro';
 		<div class="layout-lane flex items-center justify-between">
 			<Link href="/" showIcon={false} showArrow={false}>
 				<ArrowLeft
-					class="pointer-events-none absolute top-[0.34em] left-0 inline-block size-[0.9em] max-h-none max-w-none -translate-x-[0.55rem] text-muted opacity-0 blur-[0.18rem] transition-[color,opacity,filter,translate] duration-(--duration-page-exit) ease-(--ease-route) [html[data-site-route-motion=running]_&]:will-change-[opacity,filter,translate] [html[data-site-route=detail]_&]:translate-x-0 [html[data-site-route=detail]_&]:opacity-100 [html[data-site-route=detail]_&]:blur-none motion-reduce:transition-none motion-reduce:blur-none"
+					class="pointer-events-none absolute top-(--header-back-icon-top) left-0 inline-block size-(--header-back-icon-size) max-h-none max-w-none translate-x-(--header-back-icon-offset) text-muted opacity-0 blur-[var(--header-back-icon-blur)] transition-[color,opacity,filter,translate] duration-(--duration-page-exit) ease-(--ease-route) [html[data-site-route-motion=running]_&]:will-change-[opacity,filter,translate] [html[data-site-route=detail]_&]:translate-x-0 [html[data-site-route=detail]_&]:opacity-100 [html[data-site-route=detail]_&]:blur-none motion-reduce:transition-none motion-reduce:blur-none"
 					stroke-width={2.35}
 					aria-hidden="true"
 					focusable="false"
 				/>
-				<span class="inline-block translate-x-0 blur-none transition-[color,translate] duration-(--duration-page-exit) ease-(--ease-route) [html[data-site-route-motion=running]_&]:will-change-[translate] [html[data-site-route=detail]_&]:translate-x-[1.15rem] motion-reduce:transition-none motion-reduce:blur-none">Incomplete Infinity</span>
+				<span class="inline-block translate-x-0 blur-none transition-[color,translate] duration-(--duration-page-exit) ease-(--ease-route) [html[data-site-route-motion=running]_&]:will-change-[translate] [html[data-site-route=detail]_&]:translate-x-(--header-title-detail-x) motion-reduce:transition-none motion-reduce:blur-none">Incomplete Infinity</span>
 			</Link>
 		</div>
 	</nav>

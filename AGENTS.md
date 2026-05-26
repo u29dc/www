@@ -18,7 +18,7 @@
 │   ├── content/            authored MDX artifacts
 │   ├── data/               site copy, links, marks, and constants
 │   ├── features/           browser-only enhancement modules
-│   ├── lib/                portable content, media, RAF, WebGL, and markdown utilities
+│   ├── lib/                portable content, media, motion, RAF, WebGL, and markdown utilities
 │   └── styles/             tokens, base, layout, prose, preview, and motion CSS
 ├── public/                 static headers, icons, local fonts, marks, logo, and OG image
 ├── astro.config.mjs        Astro, MDX, Tailwind, and Cloudflare adapter config
@@ -58,14 +58,15 @@
 
 - [`src/layouts/SiteLayout.astro`](src/layouts/SiteLayout.astro) owns global CSS, metadata, canonical/OG/Twitter tags, font preloads, the persistent header, grid guide, page shell, Astro client router, and browser feature imports.
 - [`src/pages/index.astro`](src/pages/index.astro) composes the homepage in this order: origin, protocols, artifact studies, artifact fragments, optional signals, connect.
-- [`src/pages/[slug].astro`](src/pages/[slug].astro) renders artifact detail pages with article metadata, copy-markdown controls, MDX content, hidden metadata, and connect footer.
+- [`src/pages/[slug].astro`](src/pages/[slug].astro) renders artifact detail pages with article metadata, MDX content, hidden metadata, and connect footer.
 - [`src/pages/[slug].md.ts`](src/pages/[slug].md.ts), [`src/pages/[slug].txt.ts`](src/pages/[slug].txt.ts), and [`src/pages/llms.txt.ts`](src/pages/llms.txt.ts) are first-class machine-readable surfaces. Keep them aligned with visible content when copy or MDX behavior changes.
 - Runtime behavior uses `data-*` attributes as the contract between Astro markup, CSS, and `src/features/*`. Prefer extending existing hooks over adding framework state.
+- [`src/lib/motion.ts`](src/lib/motion.ts) centralizes TypeScript-side motion, preview, media, and line-reveal timing defaults. Keep it aligned with [`src/styles/tokens.css`](src/styles/tokens.css) when CSS motion tokens change.
 
 ## 6. Content and Assets
 
 - MDX frontmatter controls artifact type, date, visibility, thumbnails, hover previews, and export metadata. `isArtifactItem: false` hides an artifact from public listings and exports.
-- [`src/lib/markdown.ts`](src/lib/markdown.ts) powers markdown/text exports and first-media extraction. Changes here affect article routes, `llms.txt`, copy buttons, and hover preview defaults.
+- [`src/lib/markdown.ts`](src/lib/markdown.ts) powers markdown/text exports and first-media extraction. Changes here affect article routes, `llms.txt`, and hover preview defaults.
 - Rich origin copy in [`src/components/home/origin.astro`](src/components/home/origin.astro) and plain origin copy in [`src/data/copy.ts`](src/data/copy.ts) should stay semantically aligned.
 - Local fonts and mark assets live under [`public/fonts`](public/fonts) and [`public/assets/marks`](public/assets/marks). Article media resolves through the configured media base URL, currently `https://storage.u29dc.com/media/`.
 - This repository is public. Do not add private vault material, client-sensitive detail, secrets, or personal runtime data.

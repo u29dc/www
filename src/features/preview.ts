@@ -1,3 +1,5 @@
+import { MOTION } from '../lib/motion';
+
 type PreviewKind = 'image' | 'video';
 type PreviewMode = 'artifact' | 'link';
 type PreviewFit = 'cover' | 'contain';
@@ -39,10 +41,6 @@ const SCOPE_SELECTOR = '[data-hover-preview-scope]';
 const REVEAL_SELECTOR = '[data-reveal]';
 const ENABLE_QUERY = '(hover: hover) and (pointer: fine)';
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
-const HIDE_DELAY_MS = 180;
-const PAUSE_DELAY_MS = 180;
-const EDGE_GAP = 12;
-const VIDEO_SLOT_LIMIT = 4;
 
 const enableQuery = window.matchMedia(ENABLE_QUERY);
 const reduceMotionQuery = window.matchMedia(REDUCED_MOTION_QUERY);
@@ -53,7 +51,7 @@ let activeTarget: HTMLElement | undefined;
 let activeScope: HTMLElement | undefined;
 let activeSlot: PreviewSlot | undefined;
 let activeMode: PreviewMode = 'link';
-let activeRatio = 1.6;
+let activeRatio: number = MOTION.preview.defaultRatio;
 let hideHandle: number | undefined;
 let animationFrame = 0;
 let pointerX = 0;
@@ -62,8 +60,8 @@ let currentX = 0;
 let currentY = 0;
 let targetX = 0;
 let targetY = 0;
-let previewWidth = 280;
-let previewHeight = 180;
+let previewWidth: number = MOTION.preview.defaultWidthPx;
+let previewHeight: number = MOTION.preview.defaultHeightPx;
 let hasPosition = false;
 
 const isEnabled = (): boolean => enableQuery.matches;
@@ -84,7 +82,7 @@ const parseFit = (value: string | undefined): PreviewFit => (value === 'contain'
 
 const parseRatio = (value: string | undefined): number => {
 	const ratio = Number.parseFloat(value ?? '');
-	return Number.isFinite(ratio) && ratio > 0 ? ratio : 1.6;
+	return Number.isFinite(ratio) && ratio > 0 ? ratio : MOTION.preview.defaultRatio;
 };
 
 const readConfig = (target: HTMLElement): PreviewConfig | undefined => {
@@ -275,7 +273,7 @@ const pauseVideoSlotSoon = (slot: PreviewSlot): void => {
 	slot.pauseHandle = window.setTimeout(() => {
 		if (slot !== activeSlot) slot.media.pause();
 		delete slot.pauseHandle;
-	}, PAUSE_DELAY_MS);
+	}, MOTION.preview.pauseDelayMs);
 };
 
 const pauseInactiveVideos = (): void => {
@@ -314,7 +312,7 @@ const enforceVideoCacheLimit = (): void => {
 		.filter((slot) => isVideoSlot(slot) && slot !== activeSlot)
 		.toSorted((a, b) => a.lastUsed - b.lastUsed);
 
-	while (videoSlotCount() > VIDEO_SLOT_LIMIT && inactiveVideos.length > 0) {
+	while (videoSlotCount() > MOTION.preview.videoSlotLimit && inactiveVideos.length > 0) {
 		const slot = inactiveVideos.shift();
 		if (slot) removeSlot(slot);
 	}
@@ -332,21 +330,21 @@ const recalculatePreviewSize = (): void => {
 };
 
 const updateTargetPosition = (): void => {
-	const offsetX = activeMode === 'artifact' ? 22 : 14;
-	const offsetY = activeMode === 'artifact' ? 18 : 12;
+	const offsetX = activeMode === 'artifact' ? MOTION.preview.artifactOffsetX : MOTION.preview.linkOffsetX;
+	const offsetY = activeMode === 'artifact' ? MOTION.preview.artifactOffsetY : MOTION.preview.linkOffsetY;
 
 	let x = pointerX + offsetX;
 	let y = pointerY - previewHeight - offsetY;
 
-	if (x + previewWidth > window.innerWidth - EDGE_GAP) {
+	if (x + previewWidth > window.innerWidth - MOTION.preview.edgeGapPx) {
 		x = pointerX - previewWidth - offsetX;
 	}
-	if (y < EDGE_GAP) {
+	if (y < MOTION.preview.edgeGapPx) {
 		y = pointerY + offsetY;
 	}
 
-	targetX = clamp(x, EDGE_GAP, Math.max(EDGE_GAP, window.innerWidth - previewWidth - EDGE_GAP));
-	targetY = clamp(y, EDGE_GAP, Math.max(EDGE_GAP, window.innerHeight - previewHeight - EDGE_GAP));
+	targetX = clamp(x, MOTION.preview.edgeGapPx, Math.max(MOTION.preview.edgeGapPx, window.innerWidth - previewWidth - MOTION.preview.edgeGapPx));
+	targetY = clamp(y, MOTION.preview.edgeGapPx, Math.max(MOTION.preview.edgeGapPx, window.innerHeight - previewHeight - MOTION.preview.edgeGapPx));
 };
 
 const applyPosition = (x: number, y: number): void => {
@@ -366,7 +364,7 @@ const renderPosition = (): void => {
 		currentY = targetY;
 		hasPosition = true;
 	} else {
-		const stiffness = activeMode === 'artifact' ? 0.18 : 0.24;
+		const stiffness = activeMode === 'artifact' ? MOTION.preview.artifactStiffness : MOTION.preview.linkStiffness;
 		currentX += (targetX - currentX) * stiffness;
 		currentY += (targetY - currentY) * stiffness;
 	}
@@ -374,7 +372,7 @@ const renderPosition = (): void => {
 	applyPosition(currentX, currentY);
 
 	const delta = Math.abs(currentX - targetX) + Math.abs(currentY - targetY);
-	if (delta > 0.25) {
+	if (delta > MOTION.preview.settleDeltaPx) {
 		animationFrame = requestAnimationFrame(renderPosition);
 	}
 };
@@ -494,7 +492,7 @@ const hidePreview = (target?: HTMLElement): void => {
 		if (activeTarget) return;
 		elements.root.hidden = true;
 		enforceVideoCacheLimit();
-	}, HIDE_DELAY_MS);
+	}, MOTION.preview.hideDelayMs);
 };
 
 const disposePreviewElements = (): void => {

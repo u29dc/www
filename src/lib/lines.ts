@@ -1,3 +1,5 @@
+import { MOTION } from './motion';
+
 type LineRevealKind = 'body' | 'origin' | 'title' | 'description' | 'quote';
 
 export type LineRevealProfile = 'full' | 'lite';
@@ -9,6 +11,7 @@ export type LineRevealOptions = {
 	maxTotalMs: number;
 	handoffMs: number;
 	staggeredLines: number;
+	completionBufferMs: number;
 	maxTokens: number;
 	maxLinesPerTarget: number;
 	measureBudgetMs: number;
@@ -101,9 +104,9 @@ type OverlayTypography = {
 const ATOMIC_SELECTOR = ['a', 'button', 'canvas', 'code', 'input', 'kbd', 'select', 'svg', 'textarea', 'video', '[data-line-atomic]', '[data-link-arrow]', '[data-footnote-ref]'].join(',');
 const UNSUPPORTED_SELECTOR = 'br, iframe, table, script, style';
 const TOKEN_PATTERN = /\S+/gu;
-const LINE_TOP_TOLERANCE = 3;
-const MIN_RECT_SIZE = 0.2;
-const OVERLAY_EDGE_PAD = 1;
+const LINE_TOP_TOLERANCE = MOTION.line.lineTopTolerancePx;
+const MIN_RECT_SIZE = MOTION.line.minRectSizePx;
+const OVERLAY_EDGE_PAD = MOTION.line.overlayEdgePadPx;
 const parentRecords = new WeakMap<HTMLElement, ParentRecord>();
 
 const isHTMLElement = (node: Node): node is HTMLElement => node instanceof HTMLElement;
@@ -394,7 +397,7 @@ export const measureLineReveal = (target: HTMLElement, options: LineRevealOption
 	const maxStaggerWindow = Math.max(0, options.maxTotalMs - options.durationMs);
 	const delayOffsetMs = options.delayOffsetMs ?? 0;
 	const actualStagger = lines.length > 1 ? Math.min(options.staggerMs, maxStaggerWindow / (lines.length - 1)) : 0;
-	const animationMs = options.durationMs + delayOffsetMs + actualStagger * Math.max(0, lines.length - 1) + 80;
+	const animationMs = options.durationMs + delayOffsetMs + actualStagger * Math.max(0, lines.length - 1) + options.completionBufferMs;
 
 	return {
 		target,

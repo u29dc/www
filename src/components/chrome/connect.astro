@@ -7,8 +7,8 @@ import { connectLinks } from '../../data/copy';
 <footer class="grid gap-(--space-4) pt-(--space-4)" id="connect">
 	<p class="text-(length:--type-label) font-(--weight-strong) leading-(--leading-label) text-muted uppercase">Connect</p>
 	<div class="grid max-w-(--measure-article) gap-(--space-1) text-(length:--type-body-lg) leading-(--leading-body) text-muted">
-		<p class="flex flex-wrap items-center gap-x-[0.4em]">
-			<span class="inline-block size-[0.88em] shrink-0 self-center bg-ink selection:bg-transparent motion-safe:animate-[blink_1.2s_ease-in-out_infinite] motion-safe:will-change-[opacity] motion-reduce:opacity-70" aria-hidden="true"></span>
+		<p class="flex flex-wrap items-center gap-x-(--connect-indicator-gap)">
+			<span class="inline-block size-(--connect-indicator-size) shrink-0 self-center bg-ink selection:bg-transparent motion-safe:animate-[blink_var(--connect-indicator-duration)_ease-in-out_infinite] motion-safe:will-change-[opacity] motion-reduce:opacity-70" aria-hidden="true"></span>
 			<Link class="font-(--weight-strong) text-ink" href={connectLinks.conversation.href} icon={connectLinks.conversation.icon}>Book a call</Link><span class="select-none leading-[inherit] selection:bg-transparent selection:text-muted">, </span>follow and connect on <Link class="font-(--weight-strong) text-ink" href={connectLinks.linkedin.href} icon={connectLinks.linkedin.icon}>LinkedIn</Link> and <Link class="font-(--weight-strong) text-ink" href={connectLinks.instagram.href} icon={connectLinks.instagram.icon}>Instagram</Link>
 		</p>
 		<p>

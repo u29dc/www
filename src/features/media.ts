@@ -1,3 +1,5 @@
+import { MOTION } from '../lib/motion';
+
 const VIDEO_SELECTOR = 'video[data-media-video]';
 const IMAGE_SELECTOR = 'img[data-media-asset]';
 const reduceMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -48,7 +50,7 @@ const observer = new IntersectionObserver(
 			}
 		}
 	},
-	{ rootMargin: '240px 0px', threshold: 0.1 },
+	{ rootMargin: MOTION.media.rootMargin, threshold: MOTION.media.threshold },
 );
 
 const observeVideos = (): void => {
