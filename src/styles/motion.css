@@ -4,7 +4,11 @@
 	}
 
 	html[data-page-state='exiting'] [data-page-shell] {
-		@apply pointer-events-none opacity-0;
+		@apply pointer-events-none;
+	}
+
+	html[data-page-state='exiting'] [data-content-panel] > * {
+		@apply opacity-0;
 		transform: translate3d(0, var(--motion-page-exit-y), 0);
 		will-change: opacity, transform;
 	}
@@ -63,7 +67,7 @@
 		animation: none;
 	}
 
-	[data-page-shell] {
+	[data-content-panel] > * {
 		@apply transition-[opacity,transform];
 		@apply duration-(--duration-page-exit) ease-(--ease-settle);
 	}
@@ -89,6 +93,7 @@
 
 @media (prefers-reduced-motion: reduce) {
 	[data-page-shell],
+	[data-content-panel] > *,
 	html[data-motion='ready'] [data-reveal],
 	html[data-motion='ready'] [data-reveal-group] > :where(header, section, article, footer, h1, h2, h3, p, ul, ol, dl, figure, blockquote, div, li) {
 		@apply opacity-100;

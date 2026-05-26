@@ -76,7 +76,10 @@
 	--ease-reveal-follow: cubic-bezier(0.16, 1, 0.3, 1);
 	--ease-route: cubic-bezier(0.4, 0, 0.2, 1);
 	--ease-line-reveal: cubic-bezier(0.16, 1, 0.3, 1);
+	--ease-panel-intro: cubic-bezier(0.65, 0.22, 0.2, 0.98);
 	--duration-quick: 150ms;
+	--duration-panel-intro: 800ms;
+	--delay-panel-intro: 80ms;
 	--duration-page-exit: 500ms;
 	--duration-reveal: 360ms;
 	--duration-reveal-stagger: 36ms;
@@ -94,6 +97,7 @@
 	--motion-reveal-follow-y: 0.28rem;
 	--motion-reveal-follow-blur: 0.18rem;
 	--motion-line-reveal-y: 115%;
+	--panel-intro-start-scale: 0.005;
 	--hover-preview-artifact-width: clamp(12rem, 22vw, 20rem);
 	--hover-preview-link-width: clamp(8rem, 14vw, 12rem);
 	--hover-preview-peer-opacity: 0.34;

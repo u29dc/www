@@ -6,6 +6,9 @@ export const MOTION = {
 	revealMaxIndex: 7,
 	siteRouteMotionBufferMs: 80,
 	lineGroupRevealDelayMs: 0,
+	panelIntroMs: 800,
+	panelIntroDelayMs: 80,
+	panelIntroBufferMs: 80,
 	line: {
 		rootMargin: '0px 0px -8% 0px',
 		threshold: 0.01,

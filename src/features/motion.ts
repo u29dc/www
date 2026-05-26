@@ -10,6 +10,7 @@ let revealObserver: IntersectionObserver | undefined;
 let revealFallbackHandle: number | undefined;
 let exitAbortCleanup: (() => void) | undefined;
 let siteRouteMotionHandle: number | undefined;
+let panelIntroHandle: number | undefined;
 const lineGroupRevealHandles = new Map<string, number>();
 
 const canAnimate = (): boolean => !reduceMotionQuery.matches;
@@ -31,6 +32,35 @@ const clearSiteRouteMotion = (): void => {
 	}
 
 	delete document.documentElement.dataset['siteRouteMotion'];
+};
+
+const finishPanelIntro = (): void => {
+	if (panelIntroHandle !== undefined) {
+		window.clearTimeout(panelIntroHandle);
+		panelIntroHandle = undefined;
+	}
+
+	document.documentElement.dataset['panelIntro'] = 'done';
+};
+
+const startPanelIntro = (): void => {
+	if (!canAnimate()) {
+		finishPanelIntro();
+		return;
+	}
+
+	const root = document.documentElement;
+	if (root.dataset['panelIntro'] !== 'pending') return;
+
+	window.requestAnimationFrame(() => {
+		if (root.dataset['panelIntro'] !== 'pending') return;
+
+		root.dataset['panelIntro'] = 'running';
+		const durationMs = readDurationToken('--duration-panel-intro', MOTION.panelIntroMs);
+		const delayMs = readDurationToken('--delay-panel-intro', MOTION.panelIntroDelayMs);
+
+		panelIntroHandle = window.setTimeout(finishPanelIntro, durationMs + delayMs + MOTION.panelIntroBufferMs);
+	});
 };
 
 const startSiteRouteMotion = (): void => {
@@ -249,6 +279,7 @@ const handleBeforePreparation = (event: TransitionBeforePreparationEvent): void 
 
 const handleBeforeSwap = (event: TransitionBeforeSwapEvent): void => {
 	delete event.newDocument.documentElement.dataset['pageState'];
+	event.newDocument.documentElement.dataset['panelIntro'] = 'done';
 	prepareRevealTargets(event.newDocument);
 };
 
@@ -269,7 +300,11 @@ document.addEventListener('astro:page-load', () => {
 	syncSiteRoute();
 	initializeReveals();
 });
-reduceMotionQuery.addEventListener('change', initializeReveals);
+reduceMotionQuery.addEventListener('change', () => {
+	finishPanelIntro();
+	initializeReveals();
+});
 
 syncSiteRoute();
+startPanelIntro();
 initializeReveals();
