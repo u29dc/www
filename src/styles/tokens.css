@@ -77,7 +77,10 @@
 	--ease-route: cubic-bezier(0.4, 0, 0.2, 1);
 	--ease-line-reveal: cubic-bezier(0.16, 1, 0.3, 1);
 	--ease-panel-intro: cubic-bezier(0.65, 0.22, 0.2, 0.98);
+	--ease-hover-preview-enter: cubic-bezier(0.16, 1, 0.3, 1);
+	--ease-hover-preview-exit: cubic-bezier(0.72, 0, 0.2, 1);
 	--duration-quick: 150ms;
+	--duration-hover-preview-cut: 260ms;
 	--duration-panel-intro: 800ms;
 	--delay-panel-intro: 80ms;
 	--duration-page-exit: 500ms;

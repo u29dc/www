@@ -35,8 +35,11 @@ export const MOTION = {
 		overlayEdgePadPx: 1,
 	},
 	preview: {
-		hideDelayMs: 180,
-		pauseDelayMs: 180,
+		hideDelayMs: 300,
+		pauseDelayMs: 320,
+		slotCutMs: 260,
+		slotCutBufferMs: 40,
+		directionMemoryMs: 360,
 		edgeGapPx: 12,
 		videoSlotLimit: 4,
 		defaultRatio: 1.6,

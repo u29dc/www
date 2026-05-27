@@ -31,11 +31,41 @@
 
 	[data-hover-preview-slot] {
 		@apply opacity-0;
-		@apply transition-opacity duration-(--duration-quick) ease-(--ease-settle);
+		clip-path: inset(100% 0 0 0);
+		transition:
+			clip-path var(--duration-hover-preview-cut) var(--ease-hover-preview-enter),
+			opacity var(--duration-quick) var(--ease-settle);
 	}
 
+	[data-hover-preview-slot][data-flow='up'] {
+		clip-path: inset(0 0 100% 0);
+	}
+
+	[data-hover-preview-slot][data-state='entering'],
 	[data-hover-preview-slot][data-state='active'] {
 		@apply opacity-100;
+		clip-path: inset(0 0 0 0);
+	}
+
+	[data-hover-preview-slot][data-state='exiting'][data-flow='down'] {
+		@apply opacity-100;
+		clip-path: inset(0 0 100% 0);
+		transition:
+			clip-path var(--duration-hover-preview-cut) var(--ease-hover-preview-exit),
+			opacity var(--duration-quick) var(--ease-settle);
+	}
+
+	[data-hover-preview-slot][data-state='exiting'][data-flow='up'] {
+		@apply opacity-100;
+		clip-path: inset(100% 0 0 0);
+		transition:
+			clip-path var(--duration-hover-preview-cut) var(--ease-hover-preview-exit),
+			opacity var(--duration-quick) var(--ease-settle);
+	}
+
+	[data-hover-preview-slot][data-state='entering'],
+	[data-hover-preview-slot][data-state='exiting'] {
+		will-change: clip-path, opacity;
 	}
 
 	[data-hover-preview-image],
@@ -63,6 +93,11 @@
 
 	html[data-motion='reduced'] [data-hover-preview-slot][data-kind='video'] [data-hover-preview-poster] {
 		@apply opacity-100;
+	}
+
+	html[data-motion='reduced'] [data-hover-preview-slot] {
+		clip-path: inset(0 0 0 0);
+		transition: opacity var(--duration-quick) var(--ease-settle);
 	}
 }
 

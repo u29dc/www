@@ -3,6 +3,7 @@ import { MOTION } from '../lib/motion';
 type PreviewKind = 'image' | 'video';
 type PreviewMode = 'artifact' | 'link';
 type PreviewFit = 'cover' | 'contain';
+type PreviewFlow = 'down' | 'up';
 
 type PreviewConfig = {
 	src: string;
@@ -28,6 +29,7 @@ type PreviewSlot = {
 	kind: PreviewKind;
 	ready: boolean;
 	lastUsed: number;
+	motionHandle?: number;
 	pauseHandle?: number;
 	poster?: HTMLImageElement;
 };
@@ -52,6 +54,10 @@ let activeScope: HTMLElement | undefined;
 let activeSlot: PreviewSlot | undefined;
 let activeMode: PreviewMode = 'link';
 let activeRatio: number = MOTION.preview.defaultRatio;
+let activeFlow: PreviewFlow = 'down';
+let recentTarget: HTMLElement | undefined;
+let recentTargetAt = 0;
+let exitingSlot: PreviewSlot | undefined;
 let hideHandle: number | undefined;
 let animationFrame = 0;
 let pointerX = 0;
@@ -112,6 +118,69 @@ const clearPauseHandle = (slot: PreviewSlot): void => {
 	if (slot.pauseHandle === undefined) return;
 	window.clearTimeout(slot.pauseHandle);
 	delete slot.pauseHandle;
+};
+
+const clearSlotMotionHandle = (slot: PreviewSlot): void => {
+	if (slot.motionHandle === undefined) return;
+	window.clearTimeout(slot.motionHandle);
+	delete slot.motionHandle;
+};
+
+const completeSlotMotionSoon = (slot: PreviewSlot, expectedState: string, completeState: string): void => {
+	clearSlotMotionHandle(slot);
+	slot.motionHandle = window.setTimeout(() => {
+		if (slot.root.dataset['state'] === expectedState) {
+			slot.root.dataset['state'] = completeState;
+			if (completeState === 'idle' && exitingSlot === slot) {
+				exitingSlot = undefined;
+			}
+		}
+		delete slot.motionHandle;
+	}, MOTION.preview.slotCutMs + MOTION.preview.slotCutBufferMs);
+};
+
+const beginSlotEnter = (slot: PreviewSlot, flow: PreviewFlow): void => {
+	clearSlotMotionHandle(slot);
+	if (exitingSlot === slot) exitingSlot = undefined;
+	slot.root.dataset['flow'] = flow;
+
+	if (reduceMotionQuery.matches) {
+		slot.root.dataset['state'] = 'active';
+		return;
+	}
+
+	if (slot.root.dataset['state'] === 'idle') {
+		slot.root.getBoundingClientRect();
+	}
+
+	slot.root.dataset['state'] = 'entering';
+	completeSlotMotionSoon(slot, 'entering', 'active');
+};
+
+const setSlotIdle = (slot: PreviewSlot): void => {
+	clearSlotMotionHandle(slot);
+	slot.root.dataset['state'] = 'idle';
+	if (exitingSlot === slot) exitingSlot = undefined;
+};
+
+const beginSlotExit = (slot: PreviewSlot, flow: PreviewFlow): void => {
+	if (slot.root.dataset['state'] === 'idle') return;
+
+	if (exitingSlot && exitingSlot !== slot) {
+		setSlotIdle(exitingSlot);
+	}
+
+	clearSlotMotionHandle(slot);
+	slot.root.dataset['flow'] = flow;
+
+	if (reduceMotionQuery.matches) {
+		setSlotIdle(slot);
+		return;
+	}
+
+	slot.root.dataset['state'] = 'exiting';
+	exitingSlot = slot;
+	completeSlotMotionSoon(slot, 'exiting', 'idle');
 };
 
 const createPreviewElements = (): PreviewElements => {
@@ -300,6 +369,7 @@ const playVideoSlot = (slot: PreviewSlot): void => {
 };
 
 const removeSlot = (slot: PreviewSlot): void => {
+	clearSlotMotionHandle(slot);
 	pauseVideoSlot(slot);
 	slot.root.remove();
 	slots.delete(slot.key);
@@ -400,21 +470,56 @@ const clearActiveState = (): void => {
 	delete document.documentElement.dataset['hoverPreviewMode'];
 };
 
-const setActiveSlot = (slot: PreviewSlot): void => {
+const rememberRecentTarget = (target: HTMLElement | undefined): void => {
+	if (!target) return;
+	recentTarget = target;
+	recentTargetAt = performance.now();
+};
+
+const recentDirectionTarget = (): HTMLElement | undefined => {
+	if (!recentTarget || performance.now() - recentTargetAt > MOTION.preview.directionMemoryMs) {
+		recentTarget = undefined;
+		return undefined;
+	}
+	return recentTarget;
+};
+
+const directionBetweenTargets = (previousTarget: HTMLElement | undefined, nextTarget: HTMLElement): PreviewFlow => {
+	if (!previousTarget || previousTarget === nextTarget || !previousTarget.isConnected || !nextTarget.isConnected) {
+		return activeFlow;
+	}
+
+	const position = previousTarget.compareDocumentPosition(nextTarget);
+	if (position & Node.DOCUMENT_POSITION_FOLLOWING) return 'down';
+	if (position & Node.DOCUMENT_POSITION_PRECEDING) return 'up';
+	return activeFlow;
+};
+
+const resolvePreviewFlow = (target: HTMLElement, mode: PreviewMode): PreviewFlow => {
+	if (mode !== 'artifact') return 'down';
+	return directionBetweenTargets(activeTarget ?? recentDirectionTarget(), target);
+};
+
+const setActiveSlot = (slot: PreviewSlot, flow: PreviewFlow): void => {
+	activeFlow = flow;
+
 	if (activeSlot === slot) {
 		slot.lastUsed = performance.now();
+		if (slot.root.dataset['state'] !== 'active' && slot.root.dataset['state'] !== 'entering') {
+			beginSlotEnter(slot, flow);
+		}
 		if (isVideoSlot(slot) && slot.media.paused) playVideoSlot(slot);
 		return;
 	}
 
 	if (activeSlot && activeSlot !== slot) {
-		activeSlot.root.dataset['state'] = 'idle';
+		beginSlotExit(activeSlot, flow);
 		pauseVideoSlotSoon(activeSlot);
 	}
 
 	activeSlot = slot;
 	slot.lastUsed = performance.now();
-	slot.root.dataset['state'] = 'active';
+	beginSlotEnter(slot, flow);
 
 	if (isVideoSlot(slot)) {
 		playVideoSlot(slot);
@@ -433,6 +538,7 @@ const showPreview = (target: HTMLElement, event: PointerEvent): void => {
 
 	const elements = getPreviewElements();
 	clearHideHandle();
+	const flow = resolvePreviewFlow(target, config.mode);
 
 	if (activeTarget && activeTarget !== target) {
 		delete activeTarget.dataset['hoverPreviewActive'];
@@ -457,7 +563,7 @@ const showPreview = (target: HTMLElement, event: PointerEvent): void => {
 	elements.card.style.setProperty('--hover-preview-ratio', String(config.ratio));
 
 	recalculatePreviewSize();
-	setActiveSlot(getSlot(config));
+	setActiveSlot(getSlot(config), flow);
 	storePointer(event);
 
 	if (!hasPosition) {
@@ -472,12 +578,13 @@ const showPreview = (target: HTMLElement, event: PointerEvent): void => {
 const hidePreview = (target?: HTMLElement): void => {
 	if (target && target !== activeTarget) return;
 
+	rememberRecentTarget(activeTarget);
 	clearActiveState();
 	hasPosition = false;
 	stopAnimation();
 
 	if (activeSlot) {
-		activeSlot.root.dataset['state'] = 'idle';
+		beginSlotExit(activeSlot, activeFlow);
 		pauseVideoSlotSoon(activeSlot);
 		activeSlot = undefined;
 	}
@@ -485,12 +592,15 @@ const hidePreview = (target?: HTMLElement): void => {
 	const elements = previewElements;
 	if (!elements) return;
 
-	elements.root.dataset['state'] = 'hidden';
+	elements.root.dataset['state'] = 'visible';
 
 	clearHideHandle();
 	hideHandle = window.setTimeout(() => {
 		if (activeTarget) return;
+		elements.root.dataset['state'] = 'hidden';
 		elements.root.hidden = true;
+		recentTarget = undefined;
+		activeFlow = 'down';
 		enforceVideoCacheLimit();
 	}, MOTION.preview.hideDelayMs);
 };
@@ -502,11 +612,15 @@ const disposePreviewElements = (): void => {
 	clearHideHandle();
 
 	for (const slot of slots.values()) {
+		clearSlotMotionHandle(slot);
 		pauseVideoSlot(slot);
 		slot.root.remove();
 	}
 	slots.clear();
 	activeSlot = undefined;
+	exitingSlot = undefined;
+	recentTarget = undefined;
+	activeFlow = 'down';
 
 	previewElements?.root.remove();
 	previewElements = undefined;
