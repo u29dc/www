@@ -14,6 +14,10 @@ const LINE_BOOT_DATASET_KEY = 'lineRevealBoot';
 
 type LineRevealState = 'pending' | 'ready' | 'running' | 'complete' | 'fallback';
 type LineRevealBootState = 'pending' | 'ready' | 'reduced' | 'failed';
+type ObserveTargetsOptions = {
+	immediateVisible?: boolean;
+	waitForLayout?: boolean;
+};
 
 const reduceMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
 const coarsePointerQuery = window.matchMedia('(hover: none), (pointer: coarse)');
@@ -222,6 +226,14 @@ const nextFrame = (signal: AbortSignal): Promise<void> =>
 		signal.addEventListener('abort', finish, { once: true });
 	});
 
+const isInViewport = (element: HTMLElement): boolean => {
+	const rect = element.getBoundingClientRect();
+	const height = window.innerHeight || document.documentElement.clientHeight;
+	const width = window.innerWidth || document.documentElement.clientWidth;
+
+	return rect.bottom >= 0 && rect.right >= 0 && rect.top <= height && rect.left <= width;
+};
+
 const getRevealGate = (target: HTMLElement): HTMLElement | undefined => {
 	const gate = target.closest('[data-reveal]');
 	return gate instanceof HTMLElement ? gate : undefined;
@@ -338,6 +350,7 @@ const applySequenceTiming = (sequence: MeasuredLineReveal[], options: LineReveal
 function playSequence(sequence: PreparedLineReveal[], root: HTMLElement): void {
 	window.requestAnimationFrame(() => {
 		let maxAnimationMs = 0;
+		let maxTotalMs = 0;
 
 		for (const prepared of sequence) {
 			if (!prepared.target.isConnected) {
@@ -347,6 +360,7 @@ function playSequence(sequence: PreparedLineReveal[], root: HTMLElement): void {
 
 			prepared.play();
 			maxAnimationMs = Math.max(maxAnimationMs, prepared.animationMs);
+			maxTotalMs = Math.max(maxTotalMs, prepared.totalMs);
 		}
 
 		const groupHandle = window.setTimeout(
@@ -366,7 +380,7 @@ function playSequence(sequence: PreparedLineReveal[], root: HTMLElement): void {
 			for (const prepared of sequence) {
 				untrackPrepared(prepared);
 			}
-		}, maxAnimationMs + MOTION.line.groupCompleteBufferMs);
+		}, maxTotalMs + MOTION.line.groupCompleteBufferMs);
 		sequenceFinishHandles.add(cleanupHandle);
 	});
 }
@@ -395,19 +409,21 @@ const queueOrPlay = (root: HTMLElement, sequence: PreparedLineReveal[]): void =>
 	ensureMutationObserver();
 };
 
-const prepareSequence = async (root: HTMLElement, targets: HTMLElement[], signal: AbortSignal): Promise<void> => {
+const prepareSequence = async (root: HTMLElement, targets: HTMLElement[], signal: AbortSignal, options: { waitForLayout: boolean }): Promise<void> => {
 	const pendingTargets = targets.filter(isPendingLineTarget);
 	if (pendingTargets.length === 0) return;
 
-	const options = getOptions();
-	if (!options) {
+	const lineOptions = getOptions();
+	if (!lineOptions) {
 		for (const target of pendingTargets) markFallback(target);
 		markLineGroupComplete(root);
 		return;
 	}
 
-	await waitForFonts(signal);
-	await nextFrame(signal);
+	if (options.waitForLayout) {
+		await waitForFonts(signal);
+		await nextFrame(signal);
+	}
 
 	if (signal.aborted) return;
 
@@ -422,7 +438,7 @@ const prepareSequence = async (root: HTMLElement, targets: HTMLElement[], signal
 		}
 
 		try {
-			const measured = measureLineReveal(target, options);
+			const measured = measureLineReveal(target, lineOptions);
 			if (!measured) {
 				fallbackTargets.push(target);
 				continue;
@@ -445,7 +461,7 @@ const prepareSequence = async (root: HTMLElement, targets: HTMLElement[], signal
 		markFallback(target);
 	}
 
-	applySequenceTiming(measuredSequence, options);
+	applySequenceTiming(measuredSequence, lineOptions);
 
 	const preparedSequence = measuredSequence.map((measured) => {
 		const prepared = mountLineReveal(measured);
@@ -491,7 +507,7 @@ const getSequences = (): Array<{ root: HTMLElement; targets: HTMLElement[] }> =>
 	return sequences;
 };
 
-const observeTargets = (): void => {
+const observeTargets = (observeOptions: ObserveTargetsOptions = {}): void => {
 	if (hasObservedCurrentDocument) return;
 
 	hasObservedCurrentDocument = true;
@@ -520,7 +536,7 @@ const observeTargets = (): void => {
 				if (!entry.isIntersecting || !(entry.target instanceof HTMLElement)) continue;
 
 				intersectionObserver?.unobserve(entry.target);
-				void prepareSequence(entry.target, sequenceTargets.get(entry.target) ?? [], signal).catch(() => {
+				void prepareSequence(entry.target, sequenceTargets.get(entry.target) ?? [], signal, { waitForLayout: true }).catch(() => {
 					if (!signal.aborted) fallbackLineRevealDocument();
 				});
 			}
@@ -535,6 +551,14 @@ const observeTargets = (): void => {
 		for (const target of sequence.targets) {
 			markLineTargetPending(target);
 		}
+
+		if (observeOptions.immediateVisible && isInViewport(sequence.root)) {
+			void prepareSequence(sequence.root, sequence.targets, signal, { waitForLayout: observeOptions.waitForLayout ?? false }).catch(() => {
+				if (!signal.aborted) fallbackLineRevealDocument();
+			});
+			return;
+		}
+
 		intersectionObserver?.observe(sequence.root);
 	});
 };
@@ -567,7 +591,11 @@ const cleanup = (): void => {
 
 const handleBeforeSwap = (event: TransitionBeforeSwapEvent): void => {
 	cleanup();
-	prepareLineRevealDocument(event.newDocument);
+	const swap = event.swap;
+	event.swap = () => {
+		swap();
+		runSafely(() => observeTargets({ immediateVisible: true, waitForLayout: false }));
+	};
 };
 
 document.addEventListener('astro:before-swap', (event) => {

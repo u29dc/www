@@ -52,7 +52,8 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-	.line-reveal-overlay[data-line-reveal-state='running'] .line-reveal-inner {
+	.line-reveal-overlay[data-line-reveal-state='running'] .line-reveal-inner,
+	.line-reveal-overlay[data-line-reveal-state='settling'] .line-reveal-inner {
 		@apply opacity-100 transition-[opacity,transform];
 		@apply duration-(--duration-line-reveal) ease-(--ease-line-reveal);
 		transition-delay: var(--line-reveal-delay, 0ms);
@@ -61,9 +62,7 @@
 	}
 
 	.line-reveal-overlay[data-line-reveal-state='settling'] {
-		@apply opacity-0 transition-opacity;
-		@apply duration-(--duration-line-reveal-handoff) ease-(--ease-line-reveal);
-		will-change: opacity;
+		@apply opacity-100;
 	}
 }
 

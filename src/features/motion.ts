@@ -14,6 +14,7 @@ let panelIntroHandle: number | undefined;
 const lineGroupRevealHandles = new Map<string, number>();
 
 const canAnimate = (): boolean => !reduceMotionQuery.matches;
+const isPageExiting = (): boolean => document.documentElement.dataset['pageState'] === 'exiting';
 
 const readSiteRoute = (url: URL | Location = window.location): 'home' | 'detail' => (url.pathname === '/' ? 'home' : 'detail');
 
@@ -151,6 +152,11 @@ const clearLineGroupRevealHandles = (): void => {
 const hasPendingRevealTargets = (): boolean => getRevealTargets().some((target) => target.dataset['reveal'] === 'pending');
 
 const reveal = (target: HTMLElement): void => {
+	if (isPageExiting()) {
+		revealObserver?.unobserve(target);
+		return;
+	}
+
 	if (shouldWaitForLineGroup(target)) {
 		target.dataset['reveal'] = 'waiting';
 		revealObserver?.unobserve(target);
@@ -173,6 +179,8 @@ const revealTargetsWaitingForLineGroup = (group: string): void => {
 };
 
 const scheduleRevealTargetsWaitingForLineGroup = (group: string): void => {
+	if (isPageExiting()) return;
+
 	const existingHandle = lineGroupRevealHandles.get(group);
 	if (existingHandle !== undefined) {
 		window.clearTimeout(existingHandle);
@@ -245,6 +253,8 @@ const playExit = (signal: AbortSignal): Promise<void> => {
 
 	exitAbortCleanup?.();
 	document.documentElement.dataset['pageState'] = 'exiting';
+	clearRevealFallback();
+	clearLineGroupRevealHandles();
 
 	const abort = (): void => clearExitState();
 	signal.addEventListener('abort', abort, { once: true });

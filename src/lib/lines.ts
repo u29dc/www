@@ -451,6 +451,7 @@ export const mountLineReveal = (measured: MeasuredLineReveal): PreparedLineRevea
 	let finishHandle: number | undefined;
 	let handoffHandle: number | undefined;
 	let isDone = false;
+	let isCompleting = false;
 
 	const clearFinishHandle = (): void => {
 		if (finishHandle === undefined) return;
@@ -458,28 +459,42 @@ export const mountLineReveal = (measured: MeasuredLineReveal): PreparedLineRevea
 		finishHandle = undefined;
 	};
 
-	const restore = (state: 'complete' | 'fallback'): void => {
-		if (isDone) return;
-		isDone = true;
-		clearFinishHandle();
+	const removeOverlay = (): void => {
+		overlay.remove();
+		releaseParent(parent);
+	};
+
+	const revealTarget = (state: 'complete' | 'fallback'): void => {
 		target.style.opacity = originalOpacity;
 		target.dataset['lineRevealState'] = state;
+	};
 
-		const removeOverlay = (): void => {
-			overlay.remove();
-			releaseParent(parent);
-		};
+	const finishComplete = (): void => {
+		if (isDone) return;
+		isDone = true;
+		handoffHandle = undefined;
+		revealTarget('complete');
+		removeOverlay();
+	};
+
+	const restore = (state: 'complete' | 'fallback'): void => {
+		if (isDone) return;
+		clearFinishHandle();
+		if (handoffHandle !== undefined) {
+			window.clearTimeout(handoffHandle);
+			handoffHandle = undefined;
+		}
 
 		if (state === 'complete') {
+			if (isCompleting) return;
+			isCompleting = true;
 			overlay.dataset['lineRevealState'] = 'settling';
-			handoffHandle = window.setTimeout(removeOverlay, handoffMs);
+			handoffHandle = window.setTimeout(finishComplete, handoffMs);
 			return;
 		}
 
-		if (handoffHandle !== undefined) {
-			window.clearTimeout(handoffHandle);
-		}
-
+		isDone = true;
+		revealTarget('fallback');
 		removeOverlay();
 	};
 
