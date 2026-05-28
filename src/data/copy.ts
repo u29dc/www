@@ -67,17 +67,14 @@ export const originParagraphs = [
 export const protocols = [
 	{
 		name: 'MAP',
-		meta: '£2k/48h',
 		description: 'Audit coherence and return actionable routes forward',
 	},
 	{
 		name: 'ARC',
-		meta: '£15/40k',
 		description: 'Architecture for strategy, direction, and scalable artifacts',
 	},
 	{
 		name: 'ADV',
-		meta: '£4k/8k',
 		description: 'Ongoing counsel to keep shipped work narratively coherent',
 	},
 ] as const;

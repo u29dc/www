@@ -34,7 +34,7 @@ const officialChannels = [
 const buildProtocols = (): string =>
 	protocols
 		.map((protocol) => {
-			return `- ${protocol.name}: ${protocol.meta}. ${protocol.description}.`;
+			return `- ${protocol.name}: ${protocol.description}.`;
 		})
 		.join('\n');
 

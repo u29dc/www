@@ -57,7 +57,6 @@ let activeRatio: number = MOTION.preview.defaultRatio;
 let activeFlow: PreviewFlow = 'down';
 let recentTarget: HTMLElement | undefined;
 let recentTargetAt = 0;
-let exitingSlot: PreviewSlot | undefined;
 let hideHandle: number | undefined;
 let animationFrame = 0;
 let pointerX = 0;
@@ -130,45 +129,82 @@ const completeSlotMotionSoon = (slot: PreviewSlot, expectedState: string, comple
 	clearSlotMotionHandle(slot);
 	slot.motionHandle = window.setTimeout(() => {
 		if (slot.root.dataset['state'] === expectedState) {
-			slot.root.dataset['state'] = completeState;
-			if (completeState === 'idle' && exitingSlot === slot) {
-				exitingSlot = undefined;
+			if (completeState === 'idle') {
+				resetSlotToIdle(slot, true);
+			} else {
+				slot.root.dataset['state'] = completeState;
 			}
 		}
 		delete slot.motionHandle;
-	}, MOTION.preview.slotCutMs + MOTION.preview.slotCutBufferMs);
+	}, MOTION.preview.slotReelMs + MOTION.preview.slotReelBufferMs);
+};
+
+const signedSlotOffset = (direction: 1 | -1): string => {
+	const gap = MOTION.preview.slotGapPx;
+	if (gap === 0) return `${direction * 100}%`;
+	return `calc(${direction * 100}% + ${direction * gap}px)`;
+};
+
+const slotEnterOffset = (flow: PreviewFlow): string => signedSlotOffset(flow === 'down' ? 1 : -1);
+
+const slotExitOffset = (flow: PreviewFlow): string => signedSlotOffset(flow === 'down' ? -1 : 1);
+
+const setSlotOffset = (slot: PreviewSlot, offset: string): void => {
+	slot.root.style.setProperty('--hover-preview-slot-y', offset);
+};
+
+const primeSlotOffset = (slot: PreviewSlot, offset: string): void => {
+	slot.root.dataset['motion'] = 'instant';
+	setSlotOffset(slot, offset);
+	slot.root.getBoundingClientRect();
+	delete slot.root.dataset['motion'];
+};
+
+const resetSlotToIdle = (slot: PreviewSlot, instant: boolean): void => {
+	if (instant) {
+		slot.root.dataset['motion'] = 'instant';
+	}
+	slot.root.dataset['state'] = 'idle';
+	setSlotOffset(slot, '0%');
+	if (!instant) return;
+
+	slot.root.getBoundingClientRect();
+	requestAnimationFrame(() => {
+		if (slot.root.dataset['motion'] === 'instant') {
+			delete slot.root.dataset['motion'];
+		}
+	});
 };
 
 const beginSlotEnter = (slot: PreviewSlot, flow: PreviewFlow): void => {
 	clearSlotMotionHandle(slot);
-	if (exitingSlot === slot) exitingSlot = undefined;
 	slot.root.dataset['flow'] = flow;
 
 	if (reduceMotionQuery.matches) {
 		slot.root.dataset['state'] = 'active';
+		setSlotOffset(slot, '0%');
 		return;
 	}
 
-	if (slot.root.dataset['state'] === 'idle') {
-		slot.root.getBoundingClientRect();
+	const state = slot.root.dataset['state'];
+	if (state === 'idle') {
+		slot.root.dataset['state'] = 'moving';
+		primeSlotOffset(slot, slotEnterOffset(flow));
+	} else {
+		slot.root.dataset['state'] = 'moving';
 	}
 
-	slot.root.dataset['state'] = 'entering';
-	completeSlotMotionSoon(slot, 'entering', 'active');
+	setSlotOffset(slot, '0%');
+	completeSlotMotionSoon(slot, 'moving', 'active');
 };
 
 const setSlotIdle = (slot: PreviewSlot): void => {
 	clearSlotMotionHandle(slot);
-	slot.root.dataset['state'] = 'idle';
-	if (exitingSlot === slot) exitingSlot = undefined;
+	resetSlotToIdle(slot, false);
 };
 
 const beginSlotExit = (slot: PreviewSlot, flow: PreviewFlow): void => {
 	if (slot.root.dataset['state'] === 'idle') return;
-
-	if (exitingSlot && exitingSlot !== slot) {
-		setSlotIdle(exitingSlot);
-	}
 
 	clearSlotMotionHandle(slot);
 	slot.root.dataset['flow'] = flow;
@@ -179,7 +215,7 @@ const beginSlotExit = (slot: PreviewSlot, flow: PreviewFlow): void => {
 	}
 
 	slot.root.dataset['state'] = 'exiting';
-	exitingSlot = slot;
+	setSlotOffset(slot, slotExitOffset(flow));
 	completeSlotMotionSoon(slot, 'exiting', 'idle');
 };
 
@@ -505,7 +541,7 @@ const setActiveSlot = (slot: PreviewSlot, flow: PreviewFlow): void => {
 
 	if (activeSlot === slot) {
 		slot.lastUsed = performance.now();
-		if (slot.root.dataset['state'] !== 'active' && slot.root.dataset['state'] !== 'entering') {
+		if (slot.root.dataset['state'] !== 'active' && slot.root.dataset['state'] !== 'moving') {
 			beginSlotEnter(slot, flow);
 		}
 		if (isVideoSlot(slot) && slot.media.paused) playVideoSlot(slot);
@@ -592,7 +628,7 @@ const hidePreview = (target?: HTMLElement): void => {
 	const elements = previewElements;
 	if (!elements) return;
 
-	elements.root.dataset['state'] = 'visible';
+	elements.root.dataset['state'] = 'hiding';
 
 	clearHideHandle();
 	hideHandle = window.setTimeout(() => {
@@ -618,7 +654,6 @@ const disposePreviewElements = (): void => {
 	}
 	slots.clear();
 	activeSlot = undefined;
-	exitingSlot = undefined;
 	recentTarget = undefined;
 	activeFlow = 'down';
 
