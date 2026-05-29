@@ -29,6 +29,8 @@ const officialChannels = [
 	'IMDb: https://www.imdb.com/name/nm10729970',
 	'Last updated: May 2026',
 	`Full sitemap: ${SITE.url}/sitemap.xml`,
+	`RSS: ${SITE.url}/rss.xml`,
+	`JSON Feed: ${SITE.url}/feed.json`,
 ].join('\n');
 
 const buildProtocols = (): string =>

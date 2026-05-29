@@ -48,6 +48,8 @@ const themeColorDark = SITE.themeColorDark;
 		}
 		<link rel="canonical" href={canonicalUrl} />
 		<link rel="alternate" type="text/plain" href="/llms.txt" title="LLMS context" />
+		<link rel="alternate" type="application/rss+xml" href="/rss.xml" title="Incomplete Infinity RSS" />
+		<link rel="alternate" type="application/feed+json" href="/feed.json" title="Incomplete Infinity JSON Feed" />
 		{markdownHref && <link rel="alternate" type="text/markdown" href={markdownHref} title={`${title} markdown`} />}
 		<link rel="preconnect" href={MEDIA.baseUrl} crossorigin="anonymous" />
 		<link rel="preload" href="/fonts/geist/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin="anonymous" />

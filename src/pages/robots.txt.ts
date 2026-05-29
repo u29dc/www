@@ -7,6 +7,8 @@ const robots = [
 	'User-agent: *',
 	'Allow: /',
 	'Allow: /llms.txt',
+	'Allow: /rss.xml',
+	'Allow: /feed.json',
 	'',
 	'# Explicit AI bot policy: training and retrieval crawlers are allowed.',
 	'User-agent: GPTBot',

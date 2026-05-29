@@ -29,6 +29,7 @@ const buildSitemap = (entries: SitemapEntry[]): string => {
 
 export const GET: APIRoute = async () => {
 	const artifacts = await getPublicArtifacts();
+	const latestArtifactDate = artifacts[0]?.data.date ?? new Date();
 	const entries: SitemapEntry[] = [
 		{
 			url: new URL('/', SITE.url).toString(),
@@ -38,6 +39,16 @@ export const GET: APIRoute = async () => {
 		{
 			url: new URL('/llms.txt', SITE.url).toString(),
 			lastModified: new Date(),
+			changeFrequency: 'monthly',
+		},
+		{
+			url: new URL('/rss.xml', SITE.url).toString(),
+			lastModified: latestArtifactDate,
+			changeFrequency: 'monthly',
+		},
+		{
+			url: new URL('/feed.json', SITE.url).toString(),
+			lastModified: latestArtifactDate,
 			changeFrequency: 'monthly',
 		},
 		...artifacts.map((entry) => ({

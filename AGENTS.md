@@ -59,7 +59,7 @@
 - [`src/layouts/SiteLayout.astro`](src/layouts/SiteLayout.astro) owns global CSS, metadata, canonical/OG/Twitter tags, font preloads, the persistent header, grid guide, page shell, Astro client router, and browser feature imports.
 - [`src/pages/index.astro`](src/pages/index.astro) composes the homepage in this order: origin, protocols, artifact studies, artifact fragments, optional signals, connect.
 - [`src/pages/[slug].astro`](src/pages/[slug].astro) renders artifact detail pages with article metadata, MDX content, hidden metadata, and connect footer.
-- [`src/pages/[slug].md.ts`](src/pages/[slug].md.ts), [`src/pages/[slug].txt.ts`](src/pages/[slug].txt.ts), and [`src/pages/llms.txt.ts`](src/pages/llms.txt.ts) are first-class machine-readable surfaces. Keep them aligned with visible content when copy or MDX behavior changes.
+- [`src/pages/[slug].md.ts`](src/pages/[slug].md.ts), [`src/pages/[slug].txt.ts`](src/pages/[slug].txt.ts), [`src/pages/llms.txt.ts`](src/pages/llms.txt.ts), [`src/pages/rss.xml.ts`](src/pages/rss.xml.ts), and [`src/pages/feed.json.ts`](src/pages/feed.json.ts) are first-class machine-readable surfaces. Keep them aligned with visible content when copy or MDX behavior changes.
 - Runtime behavior uses `data-*` attributes as the contract between Astro markup, CSS, and `src/features/*`. Prefer extending existing hooks over adding framework state.
 - [`src/lib/motion.ts`](src/lib/motion.ts) centralizes TypeScript-side motion, preview, media, and line-reveal timing defaults. Keep it aligned with [`src/styles/tokens.css`](src/styles/tokens.css) when CSS motion tokens change.
 
