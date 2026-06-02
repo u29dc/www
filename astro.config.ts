@@ -29,7 +29,7 @@ export default defineConfig({
 	integrations: [mdx({ remarkPlugins: [remarkGfm, remarkMediaPriority] })],
 	vite: {
 		build: {
-			minify: 'oxc',
+			minify: 'esbuild',
 		},
 		plugins: [glslStringMinify(), tailwindcss()],
 	},
