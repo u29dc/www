@@ -23,7 +23,7 @@ export const MOTION = {
 		staggeredLines: 24,
 		completionBufferMs: 80,
 		groupCompleteBufferMs: 8,
-		groupFollowOverlapMs: 140,
+		groupFollowOverlapMs: 400,
 		fullMaxTokens: 520,
 		liteMaxTokens: 120,
 		fullMaxLinesPerTarget: 32,
