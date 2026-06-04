@@ -76,6 +76,15 @@ const observeImages = (): void => {
 	}
 };
 
+const cleanupMedia = (): void => {
+	for (const video of videos) {
+		pauseVideo(video);
+		observer.unobserve(video);
+	}
+	videos.clear();
+	images.clear();
+};
+
 const handleMotionChange = (): void => {
 	const profile = getDeviceProfile();
 	const shouldStopMotion = reduceMotionQuery.matches || profile.motionQuality === 'reduced' || profile.networkProfile === 'save-data';
@@ -98,6 +107,7 @@ observeImages();
 reduceMotionQuery.addEventListener('change', handleMotionChange);
 subscribeDeviceProfile(handleMotionChange);
 
+document.addEventListener('astro:before-swap', cleanupMedia);
 document.addEventListener('astro:page-load', () => {
 	observeVideos();
 	observeImages();

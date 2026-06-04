@@ -32,6 +32,12 @@ const hasActiveTask = (): boolean => {
 
 const shouldRun = (): boolean => tasks.size > 0 && hasActiveTask();
 
+const reportTaskError = (error: unknown): void => {
+	window.setTimeout(() => {
+		throw error;
+	}, 0);
+};
+
 const stopLoop = (): void => {
 	if (!isLoopActive) return;
 	if (rafId !== null) {
@@ -49,11 +55,15 @@ const tick = (timestamp: number): void => {
 	lastTime = timestamp;
 
 	tasks.forEach((entry) => {
-		if (entry.isActive) {
+		if (!entry.isActive) return;
+		try {
 			const shouldStayActive = entry.task(timestamp, deltaSeconds);
 			if (shouldStayActive === false) {
 				entry.isActive = false;
 			}
+		} catch (error) {
+			entry.isActive = false;
+			reportTaskError(error);
 		}
 	});
 

@@ -19,37 +19,43 @@ const destroySmoothScroll = (): void => {
 };
 
 const startSmoothScroll = async (): Promise<void> => {
-	if (lenis || isLoading || !shouldUseSmoothScroll()) {
-		if (!lenis) document.documentElement.dataset['smoothScroll'] = 'native';
+	const shouldEnhance = shouldUseSmoothScroll();
+	if (lenis || isLoading || !shouldEnhance) {
+		document.documentElement.dataset['smoothScroll'] = lenis && shouldEnhance ? 'enhanced' : 'native';
 		return;
 	}
 
 	isLoading = true;
-	const { default: LenisConstructor } = await import('lenis');
-	isLoading = false;
+	try {
+		const { default: LenisConstructor } = await import('lenis');
 
-	if (!shouldUseSmoothScroll()) {
+		if (!shouldUseSmoothScroll()) {
+			document.documentElement.dataset['smoothScroll'] = 'native';
+			return;
+		}
+
+		lenis = new LenisConstructor({
+			anchors: true,
+			autoRaf: false,
+			autoResize: true,
+			lerp: 0.12,
+			smoothWheel: true,
+			syncTouch: false,
+			gestureOrientation: 'vertical',
+			prevent: (node) => node.hasAttribute('data-native-scroll'),
+			virtualScroll: ({ event }) => !(event instanceof WheelEvent && (event.shiftKey || event.ctrlKey || event.metaKey)),
+		});
+		lenisRaf = registerRafTask((timestamp) => {
+			if (!lenis) return false;
+			lenis.raf(timestamp);
+			return true;
+		});
+		document.documentElement.dataset['smoothScroll'] = 'enhanced';
+	} catch {
 		document.documentElement.dataset['smoothScroll'] = 'native';
-		return;
+	} finally {
+		isLoading = false;
 	}
-
-	lenis = new LenisConstructor({
-		anchors: true,
-		autoRaf: false,
-		autoResize: true,
-		lerp: 0.12,
-		smoothWheel: true,
-		syncTouch: false,
-		gestureOrientation: 'vertical',
-		prevent: (node) => node.hasAttribute('data-native-scroll'),
-		virtualScroll: ({ event }) => !(event instanceof WheelEvent && (event.shiftKey || event.ctrlKey || event.metaKey)),
-	});
-	lenisRaf = registerRafTask((timestamp) => {
-		if (!lenis) return false;
-		lenis.raf(timestamp);
-		return true;
-	});
-	document.documentElement.dataset['smoothScroll'] = 'enhanced';
 };
 
 const syncSmoothScroll = (): void => {

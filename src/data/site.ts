@@ -3,7 +3,24 @@ const normalizeBaseUrl = (value: string): string => {
 	if (trimmed.length === 0) {
 		throw new Error('PUBLIC_MEDIA_BASE_URL cannot be empty');
 	}
-	return trimmed.endsWith('/') ? trimmed : `${trimmed}/`;
+
+	let url: URL;
+	try {
+		url = new URL(trimmed);
+	} catch {
+		throw new Error('PUBLIC_MEDIA_BASE_URL must be an absolute URL');
+	}
+
+	if (url.protocol !== 'https:' && url.protocol !== 'http:') {
+		throw new Error('PUBLIC_MEDIA_BASE_URL must use http or https');
+	}
+
+	if (url.username || url.password || url.search || url.hash) {
+		throw new Error('PUBLIC_MEDIA_BASE_URL must not include credentials, query, or hash');
+	}
+
+	url.pathname = url.pathname.endsWith('/') ? url.pathname : `${url.pathname}/`;
+	return url.toString();
 };
 
 export const SITE = {

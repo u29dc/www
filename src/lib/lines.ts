@@ -103,6 +103,7 @@ type OverlayTypography = {
 };
 
 const ATOMIC_SELECTOR = ['a', 'button', 'canvas', 'code', 'input', 'kbd', 'select', 'svg', 'textarea', 'video', '[data-line-atomic]', '[data-link-arrow]', '[data-footnote-ref]'].join(',');
+const FOCUSABLE_CLONE_SELECTOR = ['a[href]', 'button', 'input', 'select', 'textarea', 'video[controls]', '[tabindex]', '[contenteditable]:not([contenteditable="false"])'].join(',');
 const UNSUPPORTED_SELECTOR = 'br, iframe, table, script, style';
 const TOKEN_PATTERN = /\S+/gu;
 const LINE_TOP_TOLERANCE = MOTION.line.lineTopTolerancePx;
@@ -164,6 +165,8 @@ const shouldTreatElementAsAtomic = (element: HTMLElement): boolean => {
 
 const sanitizeClone = (element: HTMLElement): HTMLElement => {
 	const clone = element.cloneNode(true) as HTMLElement;
+	clone.inert = true;
+	clone.setAttribute('aria-hidden', 'true');
 	clone.removeAttribute('id');
 	clone.removeAttribute('data-line-reveal');
 	clone.removeAttribute('data-line-reveal-state');
@@ -180,6 +183,12 @@ const sanitizeClone = (element: HTMLElement): HTMLElement => {
 		child.removeAttribute('data-line-reveal-state');
 		child.removeAttribute('data-reveal');
 		child.removeAttribute('data-reveal-once');
+	}
+
+	for (const child of clone.querySelectorAll<HTMLElement>(FOCUSABLE_CLONE_SELECTOR)) {
+		child.tabIndex = -1;
+		if (child instanceof HTMLMediaElement) child.controls = false;
+		if (child.hasAttribute('contenteditable')) child.setAttribute('contenteditable', 'false');
 	}
 
 	return clone;

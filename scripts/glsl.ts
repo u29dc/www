@@ -1,4 +1,5 @@
 const GLSL_MARKER = '/* glsl */';
+const MULTI_CHARACTER_OPERATORS = new Set(['++', '--', '<=', '>=', '==', '!=', '&&', '||', '^^', '<<', '>>', '+=', '-=', '*=', '/=', '%=', '&=', '|=', '^=', '<<=', '>>=']);
 
 type TokenKind = 'none' | 'symbol' | 'word';
 
@@ -29,6 +30,22 @@ function isDigit(character: string): boolean {
 	return /[0-9]/.test(character);
 }
 
+function isHexDigit(character: string): boolean {
+	return /[0-9A-Fa-f]/.test(character);
+}
+
+function isTokenLikeCharacter(character: string): boolean {
+	return isIdentifierPart(character) || character === '.';
+}
+
+function wouldMergeTokens(previous: string, next: string): boolean {
+	return MULTI_CHARACTER_OPERATORS.has(`${previous}${next}`) || previous + next === '//' || previous + next === '/*';
+}
+
+function needsRemovedCommentSpace(previous: string, next: string): boolean {
+	return (isTokenLikeCharacter(previous) && isTokenLikeCharacter(next)) || wouldMergeTokens(previous, next);
+}
+
 function stripComments(source: string): string {
 	let output = '';
 	let index = 0;
@@ -51,15 +68,22 @@ function stripComments(source: string): string {
 
 		if (character === '/' && next === '*') {
 			index += 2;
+			let hasNewline = false;
 			while (index < source.length) {
 				if (source.charAt(index) === '\n') {
 					output += '\n';
+					hasNewline = true;
 				}
 				if (source.charAt(index) === '*' && source.charAt(index + 1) === '/') {
 					index += 2;
 					break;
 				}
 				index += 1;
+			}
+			const previous = output.at(-1);
+			const nextSource = source.charAt(index);
+			if (!hasNewline && previous && nextSource && !isWhitespace(previous) && !isWhitespace(nextSource) && needsRemovedCommentSpace(previous, nextSource)) {
+				output += ' ';
 			}
 			continue;
 		}
@@ -81,6 +105,17 @@ function readIdentifier(source: string, start: number): number {
 
 function readNumber(source: string, start: number): number {
 	let end = start;
+
+	if (source.charAt(start) === '0' && (source.charAt(start + 1) === 'x' || source.charAt(start + 1) === 'X')) {
+		end = start + 2;
+		while (end < source.length && isHexDigit(source.charAt(end))) {
+			end += 1;
+		}
+		if (source.charAt(end) === 'u' || source.charAt(end) === 'U') {
+			end += 1;
+		}
+		return end;
+	}
 
 	while (end < source.length && isDigit(source.charAt(end))) {
 		end += 1;
@@ -108,6 +143,10 @@ function readNumber(source: string, start: number): number {
 		}
 	}
 
+	if (source.charAt(end) === 'u' || source.charAt(end) === 'U' || source.charAt(end) === 'f' || source.charAt(end) === 'F') {
+		end += 1;
+	}
+
 	return end;
 }
 
@@ -119,7 +158,16 @@ function tokenKind(token: string | undefined): TokenKind {
 }
 
 function needsSpace(previous: string | undefined, next: string): boolean {
-	return tokenKind(previous) === 'word' && tokenKind(next) === 'word';
+	if (tokenKind(previous) === 'word' && tokenKind(next) === 'word') return true;
+	return previous !== undefined && previous.length === 1 && next.length === 1 && wouldMergeTokens(previous, next);
+}
+
+function readSymbol(source: string, start: number): number {
+	for (const length of [3, 2]) {
+		const candidate = source.slice(start, start + length);
+		if (MULTI_CHARACTER_OPERATORS.has(candidate)) return start + length;
+	}
+	return start + 1;
 }
 
 function minifyCodeLine(source: string): string {
@@ -148,16 +196,19 @@ function minifyCodeLine(source: string): string {
 			continue;
 		}
 
-		tokens.push(character);
-		index += 1;
+		const end = readSymbol(source, index);
+		tokens.push(source.slice(index, end));
+		index = end;
 	}
 
 	let output = '';
+	let previousToken: string | undefined;
 	for (const token of tokens) {
-		if (needsSpace(output.at(-1), token)) {
+		if (needsSpace(previousToken, token)) {
 			output += ' ';
 		}
 		output += token;
+		previousToken = token;
 	}
 	return output;
 }
@@ -166,10 +217,20 @@ function normalizeDirective(line: string): string {
 	return line.trim().replace(/[ \t]+/g, ' ');
 }
 
+function hasDirectiveContinuation(line: string): boolean {
+	const trimmed = line.trimEnd();
+	let backslashes = 0;
+	for (let index = trimmed.length - 1; index >= 0 && trimmed.charAt(index) === '\\'; index -= 1) {
+		backslashes += 1;
+	}
+	return backslashes % 2 === 1;
+}
+
 export function minifyGlsl(source: string): string {
 	const stripped = stripComments(source);
 	const output: string[] = [];
 	let codeLines: string[] = [];
+	let isDirectiveContinuation = false;
 
 	const flushCode = () => {
 		if (codeLines.length === 0) return;
@@ -182,11 +243,18 @@ export function minifyGlsl(source: string): string {
 
 	for (const line of stripped.split(/\r?\n/)) {
 		const trimmed = line.trim();
-		if (!trimmed) continue;
+		if (!trimmed) {
+			if (isDirectiveContinuation) {
+				output.push('');
+				isDirectiveContinuation = false;
+			}
+			continue;
+		}
 
-		if (trimmed.startsWith('#')) {
+		if (trimmed.startsWith('#') || isDirectiveContinuation) {
 			flushCode();
 			output.push(normalizeDirective(trimmed));
+			isDirectiveContinuation = hasDirectiveContinuation(line);
 			continue;
 		}
 

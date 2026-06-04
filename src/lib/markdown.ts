@@ -168,6 +168,10 @@ const transformFlowComponent = (node: MarkdownNode): MarkdownNode[] => {
 };
 
 const transformNode = (node: MarkdownNode): MarkdownNode[] => {
+	if (node.type === 'mdxjsEsm') {
+		return [];
+	}
+
 	if (node.type === 'mdxJsxFlowElement') {
 		return transformFlowComponent(node);
 	}
@@ -184,15 +188,6 @@ const transformNode = (node: MarkdownNode): MarkdownNode[] => {
 };
 
 const transformNodes = (nodes: MarkdownNode[]): MarkdownNode[] => nodes.flatMap(transformNode);
-
-const stripMdxModuleSyntax = (raw: string): string =>
-	raw
-		.split('\n')
-		.filter((line) => {
-			const trimmed = line.trimStart();
-			return !trimmed.startsWith('import ') && !trimmed.startsWith('export ');
-		})
-		.join('\n');
 
 const findFirstMdxMediaSource = (nodes: MarkdownNode[], predicate: (source: string) => boolean = () => true): string | undefined => {
 	for (const node of nodes) {
@@ -218,20 +213,20 @@ export const getRawArtifactMarkdown = (slug: string): string => {
 
 export const getFirstArtifactMediaSource = (entry: ArtifactEntry): string | undefined => {
 	const raw = getRawArtifactMarkdown(entry.data.slug);
-	const tree = markdownParser.parse(stripMdxModuleSyntax(stripFrontmatter(raw))) as unknown as MarkdownNode;
+	const tree = markdownParser.parse(stripFrontmatter(raw)) as unknown as MarkdownNode;
 
 	return findFirstMdxMediaSource(tree.children ?? []);
 };
 
 export const getFirstArtifactImageMediaSource = (entry: ArtifactEntry): string | undefined => {
 	const raw = getRawArtifactMarkdown(entry.data.slug);
-	const tree = markdownParser.parse(stripMdxModuleSyntax(stripFrontmatter(raw))) as unknown as MarkdownNode;
+	const tree = markdownParser.parse(stripFrontmatter(raw)) as unknown as MarkdownNode;
 
 	return findFirstMdxMediaSource(tree.children ?? [], (source) => parseMediaSource(source).kind === 'image');
 };
 
 export const toMarkdownBody = (raw: string): string => {
-	const tree = markdownParser.parse(stripMdxModuleSyntax(stripFrontmatter(raw))) as unknown as MarkdownNode;
+	const tree = markdownParser.parse(stripFrontmatter(raw)) as unknown as MarkdownNode;
 	tree.children = transformNodes(tree.children ?? []);
 	const body = markdownStringifier.stringify(tree as never);
 
