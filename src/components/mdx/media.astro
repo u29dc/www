@@ -35,12 +35,13 @@ const totalRatio = sources.reduce((sum, item) => sum + item.ratio, 0);
 const shouldShowControls = controls || !autoplay;
 const figureStyle = [
 	`--media-ratio:${totalRatio}`,
+	'--render-skip-intrinsic-size:calc(min(calc(100vw - (var(--space-page) * 2)), var(--measure-media)) / var(--media-ratio))',
 	'width:min(calc(100vw - (var(--space-page) * 2)), var(--measure-media))',
 	'margin-inline:calc((100% - min(calc(100vw - (var(--space-page) * 2)), var(--measure-media))) / 2)',
 ].join(';');
 ---
 
-<figure class="my-(--space-5) grid gap-(--space-2)" style={figureStyle} data-count={sources.length} data-reveal>
+<figure class="my-(--space-5) grid gap-(--space-2)" style={figureStyle} data-count={sources.length} data-reveal data-render-skip="auto">
 	<div class="flex w-full overflow-hidden bg-surface max-[42rem]:grid max-[42rem]:[aspect-ratio:auto]" style="aspect-ratio:var(--media-ratio);">
 		{
 			sources.map((item) => (
@@ -53,7 +54,7 @@ const figureStyle = [
 					{item.kind === 'video' ? (
 						<>
 							<video
-								class="block size-full object-cover pointer-events-none data-[fit=contain]:object-contain"
+								class="block size-full object-cover pointer-events-none select-none data-[fit=contain]:object-contain"
 								data-media-video
 								data-media-asset
 								data-src={item.displayUrl}
@@ -67,10 +68,11 @@ const figureStyle = [
 								playsinline
 								controls={shouldShowControls}
 								crossorigin="anonymous"
+								draggable="false"
 							/>
 							<noscript>
 								<video
-									class="block size-full object-cover pointer-events-none data-[fit=contain]:object-contain"
+									class="block size-full object-cover pointer-events-none select-none data-[fit=contain]:object-contain"
 									src={item.displayUrl}
 									data-media-asset
 									data-fit={fit}
@@ -82,6 +84,7 @@ const figureStyle = [
 									playsinline
 									controls
 									crossorigin="anonymous"
+									draggable="false"
 								/>
 							</noscript>
 						</>

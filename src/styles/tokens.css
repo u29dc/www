@@ -129,6 +129,12 @@
 	--protocol-row-columns: 3.25rem minmax(0, 1fr);
 }
 
+:root[data-motion-quality='no-blur'] {
+	--motion-reveal-blur: 0px;
+	--motion-reveal-follow-blur: 0px;
+	--header-back-icon-blur: 0px;
+}
+
 :root[data-theme='light'] {
 	color-scheme: light;
 }

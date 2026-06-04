@@ -1,10 +1,8 @@
 import type { TransitionBeforeSwapEvent } from 'astro:transitions/client';
+import { getDeviceProfile, getLineRevealProfile, initDeviceProfile, subscribeDeviceProfile } from '../lib/device';
+import { initLinePlanCache } from '../lib/cache';
 import { cancelPreparedLineReveal, measureLineReveal, mountLineReveal, type LineRevealOptions, type LineRevealProfile, type MeasuredLineReveal, type PreparedLineReveal } from '../lib/lines';
 import { MOTION, readDurationToken, readNumberToken } from '../lib/motion';
-
-type NavigatorWithDeviceMemory = Navigator & {
-	deviceMemory?: number;
-};
 
 const TARGET_SELECTOR = '[data-line-reveal]';
 const GROUP_SELECTOR = '[data-line-reveal-group]';
@@ -19,8 +17,8 @@ type ObserveTargetsOptions = {
 	waitForLayout?: boolean;
 };
 
-const reduceMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-const coarsePointerQuery = window.matchMedia('(hover: none), (pointer: coarse)');
+initDeviceProfile();
+initLinePlanCache();
 const preparedTargets = new Map<HTMLElement, PreparedLineReveal>();
 const queuedSequences = new Set<PreparedLineReveal[]>();
 const sequenceFinishHandles = new Set<number>();
@@ -36,6 +34,7 @@ let totalLineCount = 0;
 let activeTargetCount = 0;
 let observeFrame: number | undefined;
 let hasObservedCurrentDocument = false;
+let activeLineProfileKey = `${getDeviceProfile().motionQuality}:${getDeviceProfile().lineProfile}`;
 
 const readLineState = (target: HTMLElement): LineRevealState | undefined => {
 	const state = target.dataset['lineRevealState'];
@@ -107,7 +106,7 @@ const markLineTargetPending = (target: HTMLElement): void => {
 };
 
 const prepareLineRevealDocument = (root: Document | Element = document): void => {
-	const canAnimateLines = !reduceMotionQuery.matches;
+	const canAnimateLines = getDeviceProfile().motionQuality !== 'reduced';
 	for (const group of getLineGroups(root)) {
 		markLineGroupPending(group);
 	}
@@ -160,13 +159,9 @@ function markLineGroupComplete(root: HTMLElement): void {
 }
 
 const getProfile = (): LineRevealProfile | undefined => {
-	if (reduceMotionQuery.matches) return undefined;
-
-	const navigatorWithMemory = navigator as NavigatorWithDeviceMemory;
-	const lowCpu = navigator.hardwareConcurrency !== undefined && navigator.hardwareConcurrency <= 4;
-	const lowMemory = navigatorWithMemory.deviceMemory !== undefined && navigatorWithMemory.deviceMemory <= 4;
-
-	return coarsePointerQuery.matches || lowCpu || lowMemory ? 'lite' : 'full';
+	const profile = getDeviceProfile();
+	if (profile.motionQuality === 'reduced') return undefined;
+	return getLineRevealProfile(profile);
 };
 
 const getOptions = (): LineRevealOptions | undefined => {
@@ -411,7 +406,10 @@ const queueOrPlay = (root: HTMLElement, sequence: PreparedLineReveal[]): void =>
 
 const prepareSequence = async (root: HTMLElement, targets: HTMLElement[], signal: AbortSignal, options: { waitForLayout: boolean }): Promise<void> => {
 	const pendingTargets = targets.filter(isPendingLineTarget);
-	if (pendingTargets.length === 0) return;
+	if (pendingTargets.length === 0) {
+		markLineGroupComplete(root);
+		return;
+	}
 
 	const lineOptions = getOptions();
 	if (!lineOptions) {
@@ -603,13 +601,10 @@ document.addEventListener('astro:before-swap', (event) => {
 	runSafely(() => handleBeforeSwap(transitionEvent), transitionEvent.newDocument);
 });
 document.addEventListener('astro:page-load', () => runSafely(scheduleObserveTargets));
-reduceMotionQuery.addEventListener('change', () => {
-	runSafely(() => {
-		cleanup();
-		scheduleObserveTargets();
-	});
-});
-coarsePointerQuery.addEventListener('change', () => {
+subscribeDeviceProfile((profile) => {
+	const nextLineProfileKey = `${profile.motionQuality}:${profile.lineProfile}`;
+	if (nextLineProfileKey === activeLineProfileKey) return;
+	activeLineProfileKey = nextLineProfileKey;
 	runSafely(() => {
 		cleanup();
 		scheduleObserveTargets();

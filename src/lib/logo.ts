@@ -1,5 +1,5 @@
 import { registerRafTask } from './raf';
-import { detectDeviceTier, getDprCap, recordWebglDiagnostic, type DeviceTier } from './webgl';
+import { detectDeviceTier, getDprCap, getWebglDiagnosticsMode, recordWebglDiagnostic, shouldRunFullWebglDiagnostics, type DeviceTier, type WebglDiagnosticsMode } from './webgl';
 
 export type Theme = 'light' | 'dark';
 
@@ -38,6 +38,11 @@ export interface Renderer {
 	renderOnce(): void;
 	dispose(): void;
 }
+
+export type RendererOptions = {
+	diagnosticsMode?: WebglDiagnosticsMode;
+	dprCap?: number;
+};
 
 const logEvent = (scope: string, topic: string, event: string, data?: Record<string, unknown>): void => {
 	const diagnosticData: Record<string, string | number | boolean | null> = {};
@@ -469,7 +474,13 @@ function setUniform3f(location: WebGLUniformLocation | null, x: number, y: numbe
 	gl.uniform3f(location, x, y, z);
 }
 
-export function createRenderer(canvas: HTMLCanvasElement, initialState: State, onFatalContextError?: (reason: 'context-lost' | 'context-restored' | 'gl-error') => void): Renderer {
+export function createRenderer(
+	canvas: HTMLCanvasElement,
+	initialState: State,
+	onFatalContextError?: (reason: 'context-lost' | 'context-restored' | 'gl-error') => void,
+	options: RendererOptions = {},
+): Renderer {
+	const diagnosticsMode = options.diagnosticsMode ?? getWebglDiagnosticsMode();
 	const gl = createGraphicsContext(canvas);
 	const program = createProgram(gl, {
 		vertex: LOGO_VERTEX_SHADER,
@@ -503,7 +514,7 @@ export function createRenderer(canvas: HTMLCanvasElement, initialState: State, o
 	gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
 	const uniforms = resolveUniforms(gl, program, UNIFORM_NAMES);
-	const dprCap = getDprCap({ mobileAware: false });
+	const dprCap = options.dprCap ?? getDprCap({ mobileAware: false });
 
 	let state = { ...initialState };
 	let dimensions = measureCanvas(state.width, state.height, dprCap);
@@ -527,6 +538,8 @@ export function createRenderer(canvas: HTMLCanvasElement, initialState: State, o
 	};
 
 	const checkGlError = (phase: string): boolean => {
+		if (!shouldRunFullWebglDiagnostics(diagnosticsMode)) return true;
+
 		const error = gl.getError();
 		if (error !== gl.NO_ERROR) {
 			logEvent('WEBGL', 'LOGO', 'GL-ERROR', {
@@ -695,6 +708,7 @@ export function createRenderer(canvas: HTMLCanvasElement, initialState: State, o
 	}
 
 	function validateFrameOutput(): void {
+		if (!shouldRunFullWebglDiagnostics(diagnosticsMode)) return;
 		if (hasValidatedFrame || hasContextFailure) return;
 		hasValidatedFrame = true;
 

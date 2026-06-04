@@ -115,4 +115,17 @@
 		@apply !ml-[0.08em] !inline-block !size-[0.72em] !align-[0.08em] !text-muted;
 		display: inline-block !important;
 	}
+
+	[data-media-asset],
+	[data-hover-preview-media] {
+		@apply select-none;
+		-webkit-user-drag: none;
+	}
+
+	@supports (content-visibility: auto) {
+		[data-render-skip='auto']:not([data-line-reveal]) {
+			content-visibility: auto;
+			contain-intrinsic-size: auto var(--render-skip-intrinsic-size, 40rem);
+		}
+	}
 }

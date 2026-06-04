@@ -1,8 +1,10 @@
+import { getDeviceProfile, initDeviceProfile, subscribeDeviceProfile } from '../lib/device';
 import { MOTION } from '../lib/motion';
 
 const VIDEO_SELECTOR = 'video[data-media-video]';
 const IMAGE_SELECTOR = 'img[data-media-asset]';
 const reduceMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+initDeviceProfile();
 
 const loadVideo = (video: HTMLVideoElement): void => {
 	if (video.src) return;
@@ -12,7 +14,10 @@ const loadVideo = (video: HTMLVideoElement): void => {
 	video.load();
 };
 
-const shouldAutoplay = (video: HTMLVideoElement): boolean => video.dataset['autoplay'] === 'true' && !reduceMotionQuery.matches;
+const shouldAutoplay = (video: HTMLVideoElement): boolean => {
+	const profile = getDeviceProfile();
+	return video.dataset['autoplay'] === 'true' && profile.motionQuality !== 'reduced' && profile.networkProfile !== 'save-data' && !reduceMotionQuery.matches;
+};
 
 const playVideo = (video: HTMLVideoElement): void => {
 	loadVideo(video);
@@ -72,8 +77,11 @@ const observeImages = (): void => {
 };
 
 const handleMotionChange = (): void => {
+	const profile = getDeviceProfile();
+	const shouldStopMotion = reduceMotionQuery.matches || profile.motionQuality === 'reduced' || profile.networkProfile === 'save-data';
+
 	for (const video of videos) {
-		if (reduceMotionQuery.matches) {
+		if (shouldStopMotion) {
 			video.controls = true;
 			pauseVideo(video);
 			continue;
@@ -88,6 +96,7 @@ const handleMotionChange = (): void => {
 observeVideos();
 observeImages();
 reduceMotionQuery.addEventListener('change', handleMotionChange);
+subscribeDeviceProfile(handleMotionChange);
 
 document.addEventListener('astro:page-load', () => {
 	observeVideos();

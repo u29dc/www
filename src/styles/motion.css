@@ -89,6 +89,15 @@
 		transition-delay: calc(var(--reveal-index, 0) * var(--duration-reveal-stagger-current));
 	}
 
+	html[data-motion-quality='no-blur'] [data-content-panel] > *,
+	html[data-motion-quality='no-blur'] [data-reveal],
+	html[data-motion-quality='no-blur'] [data-reveal-group] > :where(header, section, article, footer, h1, h2, h3, p, ul, ol, dl, figure, blockquote, div, li),
+	html[data-motion-quality='no-blur'] [data-reveal][data-reveal='visible'],
+	html[data-motion-quality='no-blur'] [data-reveal-group] > [data-reveal='visible'],
+	html[data-motion-quality='no-blur'] [data-site-header] svg {
+		transition-property: opacity, transform;
+	}
+
 	a {
 		@apply transition-colors;
 		@apply duration-(--duration-quick) ease-(--ease-settle);

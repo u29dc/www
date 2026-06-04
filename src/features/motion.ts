@@ -1,4 +1,5 @@
 import type { TransitionBeforePreparationEvent, TransitionBeforeSwapEvent } from 'astro:transitions/client';
+import { getDeviceProfile, initDeviceProfile, subscribeDeviceProfile } from '../lib/device';
 import { MOTION, readDurationToken } from '../lib/motion';
 
 const REVEAL_TARGET_SELECTOR = ['[data-reveal]', '[data-reveal-group] > :where(header, section, article, footer, h1, h2, h3, p, ul, ol, dl, figure, blockquote, div, li)'].join(',');
@@ -6,14 +7,16 @@ const COMPLETE_LINE_GROUPS_DATASET_KEY = 'lineRevealCompleteGroups';
 const LINE_GROUP_COMPLETE_EVENT = 'line-reveal-group-complete';
 
 const reduceMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+initDeviceProfile();
 let revealObserver: IntersectionObserver | undefined;
 let revealFallbackHandle: number | undefined;
 let exitAbortCleanup: (() => void) | undefined;
 let siteRouteMotionHandle: number | undefined;
 let panelIntroHandle: number | undefined;
+let activeCanAnimate = getDeviceProfile().motionQuality !== 'reduced';
 const lineGroupRevealHandles = new Map<string, number>();
 
-const canAnimate = (): boolean => !reduceMotionQuery.matches;
+const canAnimate = (): boolean => getDeviceProfile().motionQuality !== 'reduced';
 const isPageExiting = (): boolean => document.documentElement.dataset['pageState'] === 'exiting';
 
 const readSiteRoute = (url: URL | Location = window.location): 'home' | 'detail' => (url.pathname === '/' ? 'home' : 'detail');
@@ -312,6 +315,15 @@ document.addEventListener('astro:page-load', () => {
 });
 reduceMotionQuery.addEventListener('change', () => {
 	finishPanelIntro();
+	initializeReveals();
+});
+subscribeDeviceProfile((profile) => {
+	const nextCanAnimate = profile.motionQuality !== 'reduced';
+	if (nextCanAnimate === activeCanAnimate) return;
+	activeCanAnimate = nextCanAnimate;
+	if (!nextCanAnimate) {
+		finishPanelIntro();
+	}
 	initializeReveals();
 });
 

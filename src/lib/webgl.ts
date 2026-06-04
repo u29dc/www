@@ -1,42 +1,16 @@
-export type DeviceTier = 'high' | 'medium' | 'low';
+import { getDeviceProfile, getDprCap as getProfileDprCap, initDeviceProfile, type PerformanceTier } from './device';
 
-const inBrowser = (): boolean => typeof window !== 'undefined' && typeof navigator !== 'undefined';
-
-const safeMatchMedia = (query: string): boolean => (inBrowser() ? (window.matchMedia?.(query).matches ?? false) : false);
-
-const getDeviceMemory = (): number => (inBrowser() ? ((navigator as { deviceMemory?: number }).deviceMemory ?? 4) : 4);
-
-const getHardwareConcurrency = (): number => (inBrowser() ? (navigator.hardwareConcurrency ?? 4) : 4);
-
-export function detectDeviceTier(): DeviceTier {
-	const memory = getDeviceMemory();
-	const cores = getHardwareConcurrency();
-	const prefersReducedMotion = safeMatchMedia('(prefers-reduced-motion: reduce)');
-
-	if (prefersReducedMotion || memory <= 2 || cores <= 2) {
-		return 'low';
-	}
-	if (memory <= 4 || cores <= 4) {
-		return 'medium';
-	}
-	return 'high';
-}
-
-export function getDprCap(options?: { tier?: DeviceTier; mobileAware?: boolean }): number {
-	const tier = options?.tier ?? detectDeviceTier();
-	const mobileAware = options?.mobileAware ?? false;
-	const isMobile = mobileAware && safeMatchMedia('(max-width: 768px)');
-
-	if (tier === 'low') return 1;
-	if (tier === 'medium') return isMobile ? 1.25 : 1.5;
-	return isMobile ? 1.5 : 2;
-}
+export type DeviceTier = PerformanceTier;
+export type WebglDiagnosticsMode = 'off' | 'critical' | 'full';
 
 type DiagnosticValue = string | number | boolean | null;
 type DiagnosticPayload = Record<string, DiagnosticValue>;
 
 const STORAGE_DIAGNOSTICS_KEY = 'u29dc:webgl:diagnostics:astro';
+const STORAGE_DEBUG_KEY = 'u29dc:webgl:debug';
 const MAX_DIAGNOSTIC_EVENTS = 50;
+
+const inBrowser = (): boolean => typeof window !== 'undefined' && typeof navigator !== 'undefined';
 
 const canUseStorage = (): boolean => {
 	if (!inBrowser()) return false;
@@ -47,8 +21,49 @@ const canUseStorage = (): boolean => {
 	}
 };
 
-export const recordWebglDiagnostic = ({ feature, stage, result, data }: { feature: 'logo'; stage: string; result: string; data?: DiagnosticPayload }): void => {
-	if (!canUseStorage()) return;
+const readStorageValue = (key: string): string | undefined => {
+	if (!canUseStorage()) return undefined;
+	try {
+		return window.localStorage.getItem(key) ?? undefined;
+	} catch {
+		return undefined;
+	}
+};
+
+const isDevelopment = (): boolean => import.meta.env.DEV;
+
+export function getWebglDiagnosticsMode(): WebglDiagnosticsMode {
+	if (readStorageValue(STORAGE_DEBUG_KEY) === '1') return 'full';
+	if (isDevelopment()) return 'full';
+	return 'critical';
+}
+
+export function shouldRunFullWebglDiagnostics(mode: WebglDiagnosticsMode = getWebglDiagnosticsMode()): boolean {
+	return mode === 'full';
+}
+
+export function shouldRecordWebglDiagnostics(mode: WebglDiagnosticsMode = getWebglDiagnosticsMode()): boolean {
+	return mode !== 'off';
+}
+
+export function detectDeviceTier(): DeviceTier {
+	initDeviceProfile();
+	return getDeviceProfile().tier;
+}
+
+export function getDprCap(options?: { tier?: DeviceTier; mobileAware?: boolean }): number {
+	if (options?.tier) {
+		if (options.tier === 'low') return 1;
+		if (options.tier === 'medium') return options.mobileAware ? 1.25 : 1.5;
+		return options.mobileAware ? 1.5 : 2;
+	}
+
+	initDeviceProfile();
+	return getProfileDprCap(getDeviceProfile(), options?.mobileAware === undefined ? undefined : { mobileAware: options.mobileAware });
+}
+
+export const recordWebglDiagnostic = ({ feature, stage, result, data, mode }: { feature: 'logo'; stage: string; result: string; data?: DiagnosticPayload; mode?: WebglDiagnosticsMode }): void => {
+	if (!canUseStorage() || !shouldRecordWebglDiagnostics(mode)) return;
 
 	const event = {
 		feature,

@@ -1,3 +1,4 @@
+import { canUseHoverVideo, getDeviceProfile, initDeviceProfile, subscribeDeviceProfile } from '../lib/device';
 import { MOTION } from '../lib/motion';
 
 type PreviewKind = 'image' | 'video';
@@ -46,6 +47,7 @@ const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 
 const enableQuery = window.matchMedia(ENABLE_QUERY);
 const reduceMotionQuery = window.matchMedia(REDUCED_MOTION_QUERY);
+initDeviceProfile();
 const slots = new Map<string, PreviewSlot>();
 
 let previewElements: PreviewElements | undefined;
@@ -68,8 +70,12 @@ let targetY = 0;
 let previewWidth: number = MOTION.preview.defaultWidthPx;
 let previewHeight: number = MOTION.preview.defaultHeightPx;
 let hasPosition = false;
+let cardResizeObserver: ResizeObserver | undefined;
+let hasPrewarmedImages = false;
 
 const isEnabled = (): boolean => enableQuery.matches;
+
+const canPlayPreviewVideo = (): boolean => canUseHoverVideo(getDeviceProfile()) && !reduceMotionQuery.matches && !document.hidden;
 
 const isRevealReady = (target: HTMLElement): boolean => {
 	const gate = target.closest<HTMLElement>(REVEAL_SELECTOR);
@@ -236,6 +242,18 @@ const createPreviewElements = (): PreviewElements => {
 	root.append(card);
 	document.body.append(root);
 
+	if (typeof ResizeObserver !== 'undefined') {
+		cardResizeObserver?.disconnect();
+		cardResizeObserver = new ResizeObserver(([entry]) => {
+			const rect = entry?.contentRect;
+			if (!rect || rect.width <= 0 || rect.height <= 0) return;
+			previewWidth = rect.width;
+			previewHeight = rect.height;
+			requestPositionFrame();
+		});
+		cardResizeObserver.observe(card);
+	}
+
 	return { root, card, deck };
 };
 
@@ -257,6 +275,7 @@ const markSlotReady = (slot: PreviewSlot): void => {
 const createImageElement = (config: PreviewConfig): HTMLImageElement => {
 	const image = document.createElement('img');
 	image.dataset['hoverPreviewImage'] = '';
+	image.dataset['hoverPreviewMedia'] = '';
 	image.alt = config.alt;
 	image.decoding = 'async';
 	image.draggable = false;
@@ -270,6 +289,7 @@ const createPosterElement = (config: PreviewConfig): HTMLImageElement | undefine
 
 	const image = document.createElement('img');
 	image.dataset['hoverPreviewPoster'] = '';
+	image.dataset['hoverPreviewMedia'] = '';
 	image.alt = '';
 	image.decoding = 'async';
 	image.draggable = false;
@@ -281,11 +301,13 @@ const createPosterElement = (config: PreviewConfig): HTMLImageElement | undefine
 const createVideoElement = (config: PreviewConfig): HTMLVideoElement => {
 	const video = document.createElement('video');
 	video.dataset['hoverPreviewVideo'] = '';
+	video.dataset['hoverPreviewMedia'] = '';
 	video.muted = true;
 	video.loop = true;
 	video.playsInline = true;
 	video.preload = 'metadata';
 	video.crossOrigin = 'anonymous';
+	video.draggable = false;
 	video.src = config.src;
 	video.style.objectFit = config.fit;
 	return video;
@@ -394,7 +416,7 @@ const pauseAllVideos = (): void => {
 };
 
 const playVideoSlot = (slot: PreviewSlot): void => {
-	if (!isVideoSlot(slot) || reduceMotionQuery.matches || document.hidden) return;
+	if (!isVideoSlot(slot) || !canPlayPreviewVideo()) return;
 
 	clearPauseHandle(slot);
 	if (!slot.ready) {
@@ -433,6 +455,40 @@ const recalculatePreviewSize = (): void => {
 	const rect = elements.card.getBoundingClientRect();
 	previewWidth = rect.width || previewWidth;
 	previewHeight = rect.height || previewWidth / activeRatio;
+};
+
+const idle = (callback: () => void): void => {
+	const win = window as Window & {
+		requestIdleCallback?: (idleCallback: IdleRequestCallback, options?: IdleRequestOptions) => number;
+	};
+	if (typeof win.requestIdleCallback === 'function') {
+		win.requestIdleCallback(callback, { timeout: 900 });
+		return;
+	}
+	window.setTimeout(callback, 300);
+};
+
+const prewarmImagePreviews = (): void => {
+	if (hasPrewarmedImages || document.hidden || reduceMotionQuery.matches) return;
+	const profile = getDeviceProfile();
+	if (profile.tier === 'low' || profile.networkProfile === 'save-data') return;
+
+	const targets = Array.from(document.querySelectorAll<HTMLElement>(`${TARGET_SELECTOR}[data-hover-preview-kind="image"]`))
+		.filter(isRevealReady)
+		.slice(0, 3);
+	if (targets.length === 0) return;
+
+	hasPrewarmedImages = true;
+	idle(() => {
+		for (const target of targets) {
+			const src = target.dataset['hoverPreviewSrc'];
+			if (!src) continue;
+			const image = new Image();
+			image.decoding = 'async';
+			image.src = src;
+			void image.decode?.().catch(() => {});
+		}
+	});
 };
 
 const updateTargetPosition = (): void => {
@@ -656,6 +712,8 @@ const disposePreviewElements = (): void => {
 	activeSlot = undefined;
 	recentTarget = undefined;
 	activeFlow = 'down';
+	cardResizeObserver?.disconnect();
+	cardResizeObserver = undefined;
 
 	previewElements?.root.remove();
 	previewElements = undefined;
@@ -726,6 +784,13 @@ const handleMotionChange = (): void => {
 	requestPositionFrame();
 };
 
+const handleDeviceProfileChange = (): void => {
+	if (!canPlayPreviewVideo()) {
+		pauseAllVideos();
+	}
+	prewarmImagePreviews();
+};
+
 window.addEventListener('resize', () => {
 	recalculatePreviewSize();
 	requestPositionFrame();
@@ -738,4 +803,10 @@ document.addEventListener('visibilitychange', () => {
 });
 enableQuery.addEventListener('change', handleCapabilityChange);
 reduceMotionQuery.addEventListener('change', handleMotionChange);
+document.addEventListener('line-reveal-group-complete', prewarmImagePreviews);
+document.addEventListener('astro:page-load', () => {
+	hasPrewarmedImages = false;
+	prewarmImagePreviews();
+});
+subscribeDeviceProfile(handleDeviceProfileChange);
 document.addEventListener('astro:before-swap', disposePreviewElements);

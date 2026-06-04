@@ -11,7 +11,7 @@ const hasCaption = Boolean(author || source || reference);
 const isExternal = href ? /^https?:\/\//.test(href) : false;
 ---
 
-<figure class="grid gap-(--space-3) border-l border-edge pl-(--space-4)" data-reveal>
+<figure class="grid gap-(--space-3) border-l border-edge pl-(--space-4)" data-reveal data-render-skip="auto" style="--render-skip-intrinsic-size:12rem">
 	<blockquote class="font-serif-condensed text-(length:--type-quote) font-(--weight-title) leading-(--leading-title)" data-mdx-quote>
 		<slot />
 	</blockquote>

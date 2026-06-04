@@ -1,4 +1,5 @@
 import { MOTION } from './motion';
+import { createLinePlanSignature, readCachedLinePlan, readLineTypographySignature, writeCachedLinePlan, type CachedLinePlan } from './cache';
 
 type LineRevealKind = 'body' | 'origin' | 'title' | 'description' | 'quote';
 
@@ -260,6 +261,23 @@ const readLineKind = (target: HTMLElement): LineRevealKind | undefined => {
 	return undefined;
 };
 
+const linesFromCachedPlan = (plan: CachedLinePlan, targetRect: Rect): Line[] =>
+	plan.lineRects.map((rect) => {
+		const top = targetRect.top + rect.top;
+		const bottom = top + rect.height;
+		return {
+			tokens: [],
+			rect: {
+				top,
+				right: targetRect.right,
+				bottom,
+				left: targetRect.left,
+				width: targetRect.width,
+				height: rect.height,
+			},
+		};
+	});
+
 export const shouldPrepareLineReveal = (target: HTMLElement, options: LineRevealOptions): boolean => {
 	const kind = readLineKind(target);
 	if (!kind) return false;
@@ -374,14 +392,31 @@ export const measureLineReveal = (target: HTMLElement, options: LineRevealOption
 	if (!parent) return undefined;
 
 	const start = performance.now();
-	const tokens: Token[] = [];
-	collectTokens(target, tokens);
+	const targetRect = toRect(target.getBoundingClientRect());
+	if (!isVisibleRect(targetRect)) return undefined;
 
-	if (tokens.length === 0 || tokens.length > options.maxTokens) {
-		throw new Error('line-reveal-token-budget');
-	}
+	const typography = readOverlayTypography(target);
+	const typographySignature = readLineTypographySignature(target);
+	const signature = createLinePlanSignature(target, targetRect, options.profile, typographySignature);
+	const cachedPlan = readCachedLinePlan(signature, targetRect);
+	const lines = cachedPlan
+		? linesFromCachedPlan(cachedPlan, targetRect)
+		: (() => {
+				const tokens: Token[] = [];
+				collectTokens(target, tokens);
 
-	const lines = groupTokensIntoLines(tokens);
+				if (tokens.length === 0 || tokens.length > options.maxTokens) {
+					throw new Error('line-reveal-token-budget');
+				}
+
+				const measuredLines = groupTokensIntoLines(tokens);
+				if (measuredLines.length === 0 || measuredLines.length > options.maxLinesPerTarget) {
+					throw new Error('line-reveal-line-budget');
+				}
+
+				return measuredLines;
+			})();
+
 	if (lines.length === 0 || lines.length > options.maxLinesPerTarget) {
 		throw new Error('line-reveal-line-budget');
 	}
@@ -390,9 +425,15 @@ export const measureLineReveal = (target: HTMLElement, options: LineRevealOption
 		throw new Error('line-reveal-measure-budget');
 	}
 
-	const targetRect = toRect(target.getBoundingClientRect());
+	if (!cachedPlan) {
+		writeCachedLinePlan(
+			signature,
+			targetRect,
+			lines.map((line) => line.rect),
+		);
+	}
+
 	const parentRect = toRect(parent.getBoundingClientRect());
-	if (!isVisibleRect(targetRect)) return undefined;
 
 	const maxStaggerWindow = Math.max(0, options.maxTotalMs - options.durationMs);
 	const delayOffsetMs = options.delayOffsetMs ?? 0;
@@ -410,7 +451,7 @@ export const measureLineReveal = (target: HTMLElement, options: LineRevealOption
 		parentScrollTop: parent.scrollTop,
 		parentInlinePosition: parent.style.position,
 		parentComputedPosition: getComputedStyle(parent).position,
-		typography: readOverlayTypography(target),
+		typography,
 		lines,
 		lineCount: lines.length,
 		options,

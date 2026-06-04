@@ -1,5 +1,6 @@
-import { createRenderer, evaluatePolicy, type Renderer, type State, type Theme } from '../lib/logo';
-import { recordWebglDiagnostic, type DeviceTier } from '../lib/webgl';
+import { canUseWebglMotion, getDeviceProfile, getDprCap, initDeviceProfile, subscribeDeviceProfile, type DeviceProfile } from '../lib/device';
+import { createRenderer, type Renderer, type State, type Theme } from '../lib/logo';
+import { getWebglDiagnosticsMode, recordWebglDiagnostic } from '../lib/webgl';
 
 type ThemePreference = Theme | 'system';
 
@@ -30,6 +31,7 @@ const DARK_QUERY = '(prefers-color-scheme: dark)';
 
 const controllers = new WeakMap<HTMLElement, Controller>();
 const activeControllers = new Set<Controller>();
+initDeviceProfile();
 
 const parseNumber = (value: string | undefined, fallback: number): number => {
 	if (!value) return fallback;
@@ -138,19 +140,33 @@ const createController = (element: HTMLElement): Controller | undefined => {
 	let isFallbackVisible = false;
 	let isDisposed = false;
 	let renderer: Renderer | null = null;
-	let deviceTier: DeviceTier = evaluatePolicy(config.enableObservation);
+	let deviceProfile = getDeviceProfile();
+	let rendererDprCap = getDprCap(deviceProfile);
 	let observer: IntersectionObserver | null = null;
 	let themeObserver: MutationObserver | null = null;
+	let unsubscribeProfile: (() => void) | undefined;
 
 	const currentState = (): State => buildState(config, isMobile, resolveTheme(config.theme, darkQuery));
 
-	const shouldUseStaticFallback = (): boolean => deviceTier === 'low' || prefersReducedMotion;
+	const shouldUseStaticFallback = (): boolean => !canUseWebglMotion(deviceProfile) || prefersReducedMotion;
 
 	const applyActivity = (): void => {
+		if (renderer && shouldUseStaticFallback()) {
+			renderer.dispose();
+			renderer = null;
+			hasRenderedStatic = false;
+			isFallbackVisible = true;
+			showFallback(element, canvas, fallback, currentState(), {
+				failed: false,
+				reason: prefersReducedMotion ? 'reduced-motion' : 'low-tier',
+			});
+			return;
+		}
+
 		maybeMount();
 		if (!renderer || isDisposed) return;
 
-		const isActive = deviceTier !== 'low' && isPageVisible && !prefersReducedMotion && (config.enableObservation ? isInView : true);
+		const isActive = canUseWebglMotion(deviceProfile) && isPageVisible && !prefersReducedMotion && (config.enableObservation ? isInView : true);
 
 		if (isActive) {
 			hasRenderedStatic = false;
@@ -176,7 +192,7 @@ const createController = (element: HTMLElement): Controller | undefined => {
 		if (!renderer || isDisposed) return;
 		renderer.setState(nextState);
 		renderer.resize({ width: nextState.width, height: nextState.height });
-		if (!renderer || deviceTier === 'low' || prefersReducedMotion) {
+		if (!renderer || !canUseWebglMotion(deviceProfile) || prefersReducedMotion) {
 			renderer.renderOnce();
 			hasRenderedStatic = true;
 		}
@@ -206,12 +222,16 @@ const createController = (element: HTMLElement): Controller | undefined => {
 		isFallbackVisible = false;
 
 		try {
-			renderer = createRenderer(canvas, state, handleFatalContextError);
+			rendererDprCap = getDprCap(deviceProfile);
+			renderer = createRenderer(canvas, state, handleFatalContextError, {
+				diagnosticsMode: getWebglDiagnosticsMode(),
+				dprCap: rendererDprCap,
+			});
 			recordWebglDiagnostic({
 				feature: 'logo',
 				stage: 'mount',
 				result: 'SUCCESS',
-				data: { deviceTier },
+				data: { deviceTier: deviceProfile.tier },
 			});
 		} catch (error) {
 			recordWebglDiagnostic({
@@ -259,11 +279,32 @@ const createController = (element: HTMLElement): Controller | undefined => {
 
 	const handleMotionChange = (): void => {
 		prefersReducedMotion = motionQuery.matches;
-		deviceTier = evaluatePolicy(config.enableObservation);
 		if (!prefersReducedMotion && isFallbackVisible && !hasFatalFallback) {
 			isFallbackVisible = false;
 			hideFallback(element, canvas, fallback);
 		}
+		applyActivity();
+	};
+
+	const handleDeviceProfileChange = (nextProfile: DeviceProfile): void => {
+		const previousCanUseWebgl = canUseWebglMotion(deviceProfile);
+		const previousDprCap = rendererDprCap;
+		deviceProfile = nextProfile;
+		const nextDprCap = getDprCap(deviceProfile);
+
+		if (renderer && previousDprCap !== nextDprCap) {
+			renderer.dispose();
+			renderer = null;
+			hasRenderedStatic = false;
+			rendererDprCap = nextDprCap;
+		}
+
+		if (!previousCanUseWebgl && canUseWebglMotion(deviceProfile) && isFallbackVisible && !hasFatalFallback && !prefersReducedMotion) {
+			isFallbackVisible = false;
+			hideFallback(element, canvas, fallback);
+		}
+
+		applyState();
 		applyActivity();
 	};
 
@@ -300,6 +341,7 @@ const createController = (element: HTMLElement): Controller | undefined => {
 	});
 
 	maybeMount();
+	unsubscribeProfile = subscribeDeviceProfile(handleDeviceProfileChange);
 
 	const controller: Controller = {
 		dispose: () => {
@@ -313,6 +355,7 @@ const createController = (element: HTMLElement): Controller | undefined => {
 			motionQuery.removeEventListener('change', handleMotionChange);
 			darkQuery.removeEventListener('change', handleThemeChange);
 			document.removeEventListener('visibilitychange', handleVisibilityChange);
+			unsubscribeProfile?.();
 			controllers.delete(element);
 			activeControllers.delete(controller);
 		},
