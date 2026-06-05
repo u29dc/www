@@ -3,7 +3,7 @@
 ## 1. Documentation
 
 - Primary references: [Astro](https://docs.astro.build/en/getting-started/), [Astro MDX](https://docs.astro.build/en/guides/integrations-guide/mdx/), [Astro content collections](https://docs.astro.build/en/guides/content-collections/), [Vite](https://vite.dev/guide/), [MDX](https://mdxjs.com/), [Tailwind CSS](https://tailwindcss.com/docs), [Cloudflare Workers](https://developers.cloudflare.com/workers/), [WebGL](https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API), [WebGPU](https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API)
-- Local source-of-truth files: [`package.json`](package.json), [`astro.config.ts`](astro.config.ts), [`wrangler.jsonc`](wrangler.jsonc), [`public/_headers`](public/_headers), [`src/layouts/SiteLayout.astro`](src/layouts/SiteLayout.astro), [`src/content.config.ts`](src/content.config.ts)
+- Local source-of-truth files: [`package.json`](package.json), [`astro.config.ts`](astro.config.ts), [`wrangler.jsonc`](wrangler.jsonc), [`public/_headers`](public/_headers), [`src/layouts/layout.astro`](src/layouts/layout.astro), [`src/content.config.ts`](src/content.config.ts)
 - Edit [`AGENTS.md`](AGENTS.md) only; [`README.md`](README.md) and [`CLAUDE.md`](CLAUDE.md) are symlinks to it for tool compatibility.
 - Do not push from this repo. Commits, when requested, are local-only unless Han gives explicit later approval to publish.
 
@@ -26,7 +26,7 @@
 └── AGENTS.md               canonical repo-level agent instructions
 ```
 
-- Start with [`src/layouts/SiteLayout.astro`](src/layouts/SiteLayout.astro) for shell, metadata, header persistence, and client feature imports.
+- Start with [`src/layouts/layout.astro`](src/layouts/layout.astro) for shell, metadata, header persistence, and client feature imports.
 - Start with [`src/pages/index.astro`](src/pages/index.astro) for homepage composition and [`src/pages/[slug].astro`](src/pages/[slug].astro) for artifact pages.
 - Start with [`src/content.config.ts`](src/content.config.ts), [`src/lib/artifacts.ts`](src/lib/artifacts.ts), and [`src/lib/markdown.ts`](src/lib/markdown.ts) for content collection, visibility, sorting, and markdown export behavior.
 
@@ -37,7 +37,7 @@
 | Routing / render | Astro static output                    | Cloudflare adapter emits Worker-compatible static assets                                                         |
 | Content          | MDX content collections                | authored artifacts in `src/content/*.mdx`                                                                        |
 | Styling          | Tailwind CSS v4 + CSS tokens           | inline utilities for component-local styling; shared CSS for tokens, layout, global selectors, and runtime hooks |
-| Browser logic    | raw TypeScript modules                 | imported once from `SiteLayout.astro` and reinitialized around Astro swaps                                       |
+| Browser logic    | raw TypeScript modules                 | imported once from `layout.astro` and reinitialized around Astro swaps                                           |
 | Motion / scroll  | Astro transitions + shared RAF + Lenis | keep motion transform/opacity-based and reduced-motion aware                                                     |
 | Graphics         | standalone WebGL utilities             | keep canvas logic portable outside Astro                                                                         |
 | Deployment       | Cloudflare Workers                     | headers live in `public/_headers`; Worker config lives in `wrangler.jsonc`                                       |
@@ -56,7 +56,7 @@
 
 ## 5. Architecture
 
-- [`src/layouts/SiteLayout.astro`](src/layouts/SiteLayout.astro) owns global CSS, metadata, canonical/OG/Twitter tags, font preloads, the persistent header, grid guide, page shell, Astro client router, and browser feature imports.
+- [`src/layouts/layout.astro`](src/layouts/layout.astro) owns global CSS, metadata, canonical/OG/Twitter tags, font preloads, the persistent header, grid guide, page shell, Astro client router, and browser feature imports.
 - [`src/pages/index.astro`](src/pages/index.astro) composes the homepage in this order: origin, protocols, artifact studies, artifact fragments, optional signals, connect.
 - [`src/pages/[slug].astro`](src/pages/[slug].astro) renders artifact detail pages with article metadata, MDX content, hidden metadata, and connect footer.
 - [`src/pages/[slug].md.ts`](src/pages/[slug].md.ts), [`src/pages/[slug].txt.ts`](src/pages/[slug].txt.ts), [`src/pages/llms.txt.ts`](src/pages/llms.txt.ts), [`src/pages/rss.xml.ts`](src/pages/rss.xml.ts), and [`src/pages/feed.json.ts`](src/pages/feed.json.ts) are first-class machine-readable surfaces. Keep them aligned with visible content when copy or MDX behavior changes.
@@ -85,7 +85,7 @@
 
 - Treat [`src/styles/layout.css`](src/styles/layout.css), `layout-grid`, `layout-lane`, and `layout-lane-wide` as high blast-radius. They align the header, homepage, article pages, connect footer, and grid guide.
 - Treat [`src/lib/logo.ts`](src/lib/logo.ts), [`src/features/logo.ts`](src/features/logo.ts), and [`src/lib/webgl.ts`](src/lib/webgl.ts) as fragile visual code. Preserve reduced-motion, low-power fallback, canvas visibility, and nonblank rendering.
-- Treat [`src/features/preview.ts`](src/features/preview.ts), [`src/lib/hover-preview.ts`](src/lib/hover-preview.ts), and [`src/lib/raf.ts`](src/lib/raf.ts) as performance-sensitive interaction code. Keep pointer work RAF-batched and transform/opacity-only.
+- Treat [`src/features/preview.ts`](src/features/preview.ts), [`src/lib/hover.ts`](src/lib/hover.ts), and [`src/lib/raf.ts`](src/lib/raf.ts) as performance-sensitive interaction code. Keep pointer work RAF-batched and transform/opacity-only.
 - Treat [`public/_headers`](public/_headers), [`wrangler.jsonc`](wrangler.jsonc), and [`astro.config.ts`](astro.config.ts) as deployment/security-sensitive. Run the full quality gate after config changes.
 - Do not edit generated output such as `dist/`, `.astro/`, `.wrangler/`, `node_modules/`, or cache directories.
 

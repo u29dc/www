@@ -1,7 +1,7 @@
 ---
-import RouteLink from '../core/route-link.astro';
+import Route from '../core/route.astro';
 import type { ArtifactEntry } from '../../lib/artifacts';
-import { resolveArtifactHoverPreview } from '../../lib/hover-preview';
+import { resolveArtifactHoverPreview } from '../../lib/hover';
 
 type Props = {
 	entry: ArtifactEntry;
@@ -13,7 +13,7 @@ const preview = resolveArtifactHoverPreview(entry);
 ---
 
 <li>
-	<RouteLink
+	<Route
 		class="group relative grid grid-cols-[minmax(0,1fr)_max-content] items-baseline gap-(--space-4) border-b border-edge-soft py-(--space-2) text-current no-underline transition-opacity duration-(--duration-quick) ease-(--ease-settle) touch-manipulation max-[42rem]:grid-cols-1 max-[42rem]:gap-(--space-1)"
 		href={`/${entry.data.slug}`}
 		data-artifact
@@ -27,5 +27,5 @@ const preview = resolveArtifactHoverPreview(entry);
 	>
 		<span class="font-mono text-(length:--type-label) font-(--weight-strong) leading-(--leading-label) motion-safe:transition-transform motion-safe:duration-(--duration-quick) motion-safe:ease-(--ease-settle) motion-safe:group-hover:translate-x-1">{entry.data.title}</span>
 		<span class="text-right font-mono text-(length:--type-label) leading-(--leading-label) tabular-nums text-muted max-[42rem]:text-left">{meta}</span>
-	</RouteLink>
+	</Route>
 </li>
