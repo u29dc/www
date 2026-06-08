@@ -5,7 +5,6 @@
 - Primary references: [Astro](https://docs.astro.build/en/getting-started/), [Astro MDX](https://docs.astro.build/en/guides/integrations-guide/mdx/), [Astro content collections](https://docs.astro.build/en/guides/content-collections/), [Vite](https://vite.dev/guide/), [MDX](https://mdxjs.com/), [Tailwind CSS](https://tailwindcss.com/docs), [Cloudflare Workers](https://developers.cloudflare.com/workers/), [WebGL](https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API), [WebGPU](https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API)
 - Local source-of-truth files: [`package.json`](package.json), [`astro.config.ts`](astro.config.ts), [`wrangler.jsonc`](wrangler.jsonc), [`public/_headers`](public/_headers), [`src/layouts/layout.astro`](src/layouts/layout.astro), [`src/content.config.ts`](src/content.config.ts)
 - Edit [`AGENTS.md`](AGENTS.md) only; [`README.md`](README.md) and [`CLAUDE.md`](CLAUDE.md) are symlinks to it for tool compatibility.
-- Do not push from this repo. Commits, when requested, are local-only unless Han gives explicit later approval to publish.
 
 ## 2. Repository Structure
 
