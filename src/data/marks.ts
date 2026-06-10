@@ -17,6 +17,18 @@ export const markStyles: Record<LinkMark, MarkStyle> = {
 	infinity: {
 		fallbackClass: 'bg-ink',
 	},
+	instagram: {
+		fallbackClass: 'bg-[#e4405f]',
+		image: '/assets/marks/instagram.webp',
+		accent: '#e4405f',
+		accentText: '#ffffff',
+	},
+	linkedin: {
+		fallbackClass: 'bg-[#2867b2]',
+		image: '/assets/marks/linkedin.webp',
+		accent: '#2867b2',
+		accentText: '#ffffff',
+	},
 	lotus: {
 		fallbackClass: 'bg-[oklch(96.86%_0.2046_109.77)]',
 		image: '/assets/marks/lotus.webp',

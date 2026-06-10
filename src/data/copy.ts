@@ -96,12 +96,12 @@ export const connectLinks = {
 		label: 'LinkedIn',
 		href: 'https://linkedin.com/in/u29dc',
 		meta: '@u29dc',
-		icon: 'globe',
+		mark: 'linkedin',
 	},
 	instagram: {
 		label: 'Instagram',
 		href: 'https://instagram.com/u29dc',
 		meta: '@u29dc',
-		icon: 'globe',
+		mark: 'instagram',
 	},
 } as const satisfies Record<string, SiteLink>;

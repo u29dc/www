@@ -9,7 +9,7 @@ import { connectLinks } from '../../data/copy';
 	<div class="grid max-w-(--measure-article) gap-(--space-1) text-(length:--type-body-lg) leading-(--leading-body) text-muted">
 		<p class="flex flex-wrap items-center gap-x-(--connect-indicator-gap)">
 			<span class="inline-block size-(--connect-indicator-size) shrink-0 self-center bg-ink selection:bg-transparent motion-safe:animate-[blink_var(--connect-indicator-duration)_ease-in-out_infinite] motion-safe:will-change-[opacity] motion-reduce:opacity-70" aria-hidden="true"></span>
-			<Link class="font-(--weight-strong) text-ink" href={connectLinks.conversation.href} icon={connectLinks.conversation.icon}>Book a call</Link><span class="select-none leading-[inherit] selection:bg-transparent selection:text-muted">, </span>follow and connect on <Link class="font-(--weight-strong) text-ink" href={connectLinks.linkedin.href} icon={connectLinks.linkedin.icon}>LinkedIn</Link> and <Link class="font-(--weight-strong) text-ink" href={connectLinks.instagram.href} icon={connectLinks.instagram.icon}>Instagram</Link>
+			<Link class="font-(--weight-strong) text-ink" href={connectLinks.conversation.href} icon={connectLinks.conversation.icon}>Book a call</Link><span class="select-none leading-[inherit] selection:bg-transparent selection:text-muted">, </span>follow and connect on <Link class="font-(--weight-strong) text-ink" href={connectLinks.linkedin.href} mark={connectLinks.linkedin.mark}>LinkedIn</Link> and <Link class="font-(--weight-strong) text-ink" href={connectLinks.instagram.href} mark={connectLinks.instagram.mark}>Instagram</Link>
 		</p>
 		<p>
 			or write to <Link class="font-(--weight-strong) text-ink" href={connectLinks.email.href} icon={connectLinks.email.icon} variant="pill">han@u29dc.com</Link>
