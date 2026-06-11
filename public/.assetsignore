@@ -1,0 +1,13 @@
+.DS_Store
+._*
+Thumbs.db
+desktop.ini
+.env
+.env.*
+*.log
+.git/
+node_modules/
+.astro/
+.wrangler/
+.tmp/
+.cache/
