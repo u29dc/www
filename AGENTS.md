@@ -15,11 +15,12 @@
 │   ├── layouts/            global document shell and metadata
 │   ├── components/         chrome, home, artifacts, MDX, logo, and core UI components
 │   ├── content/            authored MDX artifacts
-│   ├── data/               site copy, links, marks, and constants
+│   ├── data/               site copy, links, mark metadata, and constants
+│   ├── assets/             flat imported source assets such as tiny inlined mark WebPs
 │   ├── app/                browser runtime, lifecycle owners, route bridge, loop, scroll, motion, and WebGL
 │   ├── lib/                portable content, media URL, markdown, and build/export utilities
 │   └── styles/             tokens, base, layout, prose, preview, and motion CSS
-├── public/                 static headers, icons, local fonts, marks, logo, and OG image
+├── public/                 static headers, icons, local fonts, logo, and OG image
 ├── astro.config.ts         Astro, MDX, Tailwind, GLSL string minification, and Cloudflare adapter config
 ├── wrangler.jsonc          Cloudflare Worker and asset deployment config
 └── AGENTS.md               canonical repo-level agent instructions
@@ -83,7 +84,7 @@ Runtime philosophy:
 - MDX frontmatter controls artifact type, date, visibility, thumbnails, hover previews, and export metadata. `isArtifactItem: false` hides an artifact from public listings and exports.
 - [`src/lib/markdown.ts`](src/lib/markdown.ts) powers markdown/text exports and first-media extraction. Changes here affect article routes, `llms.txt`, and hover preview defaults.
 - Rich origin copy in [`src/components/home/origin.astro`](src/components/home/origin.astro) and plain origin copy in [`src/data/copy.ts`](src/data/copy.ts) should stay semantically aligned.
-- Local fonts and mark assets live under [`public/fonts`](public/fonts) and [`public/assets/marks`](public/assets/marks). Article media resolves through the configured media base URL, currently `https://storage.u29dc.com/assets/`.
+- Local fonts live under [`public/fonts`](public/fonts). Tiny link mark WebPs live flat under [`src/assets`](src/assets) and are imported inline by [`src/data/marks.ts`](src/data/marks.ts). Article media resolves through the configured media base URL, currently `https://storage.u29dc.com/assets/`.
 - This repository is public. Do not add private vault material, client-sensitive detail, secrets, or personal runtime data.
 
 ## 7. Conventions
