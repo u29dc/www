@@ -1,4 +1,5 @@
 import cloudflare from '@astrojs/cloudflare';
+import { unified } from '@astrojs/markdown-remark';
 import mdx from '@astrojs/mdx';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'astro/config';
@@ -18,7 +19,9 @@ export default defineConfig({
 		inlineStylesheets: 'never',
 	},
 	markdown: {
-		remarkPlugins: [remarkGfm, remarkMediaPriority],
+		processor: unified({
+			remarkPlugins: [remarkGfm, remarkMediaPriority],
+		}),
 	},
 	server: {
 		host: 'localhost',
