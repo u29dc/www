@@ -28,6 +28,10 @@
 		@apply max-w-[24ch] px-(--space-4) text-center font-mono text-(length:--type-label) leading-(--leading-label) text-muted;
 	}
 
+	[data-media-frame] {
+		box-shadow: var(--artifact-media-shadow);
+	}
+
 	[data-prose] [data-footnote-ref] {
 		@apply font-mono text-muted no-underline;
 	}

@@ -100,6 +100,8 @@
 	--motion-reveal-follow-blur: 0.18rem;
 	--motion-line-reveal-y: 115%;
 	--panel-intro-start-scale: 0.005;
+	--content-panel-shadow: 0 1.5rem 4rem oklch(0% 0 0 / 0.035);
+	--artifact-media-shadow: 0 1.25rem 3.5rem oklch(0% 0 0 / 0.055);
 	--hover-preview-artifact-width: clamp(12rem, 22vw, 20rem);
 	--hover-preview-link-width: clamp(8rem, 14vw, 12rem);
 	--hover-preview-peer-opacity: 0.34;
