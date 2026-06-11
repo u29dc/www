@@ -14,6 +14,12 @@
 		"enabled": true,
 		"head_sampling_rate": 1,
 	},
+	"kv_namespaces": [
+		{
+			"binding": "SESSION",
+			"id": "b660e37269ed4b158f654fcbc1080ff6",
+		},
+	],
 	"assets": {
 		"html_handling": "auto-trailing-slash",
 		"not_found_handling": "404-page",
