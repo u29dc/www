@@ -1,4 +1,4 @@
-import { getDeviceProfile, getDprCap as getProfileDprCap, initDeviceProfile, type PerformanceTier } from './device';
+import { getDeviceProfile, getDprCap as getProfileDprCap, initDeviceProfile, type PerformanceTier } from '../device/device';
 
 export type DeviceTier = PerformanceTier;
 export type WebglDiagnosticsMode = 'off' | 'critical' | 'full';
@@ -7,7 +7,6 @@ type DiagnosticValue = string | number | boolean | null;
 type DiagnosticPayload = Record<string, DiagnosticValue>;
 
 const STORAGE_DIAGNOSTICS_KEY = 'u29dc:webgl:diagnostics:astro';
-const STORAGE_DEBUG_KEY = 'u29dc:webgl:debug';
 const MAX_DIAGNOSTIC_EVENTS = 50;
 
 const inBrowser = (): boolean => typeof window !== 'undefined' && typeof navigator !== 'undefined';
@@ -21,19 +20,9 @@ const canUseStorage = (): boolean => {
 	}
 };
 
-const readStorageValue = (key: string): string | undefined => {
-	if (!canUseStorage()) return undefined;
-	try {
-		return window.localStorage.getItem(key) ?? undefined;
-	} catch {
-		return undefined;
-	}
-};
-
 const isDevelopment = (): boolean => import.meta.env.DEV;
 
 export function getWebglDiagnosticsMode(): WebglDiagnosticsMode {
-	if (readStorageValue(STORAGE_DEBUG_KEY) === '1') return 'full';
 	if (isDevelopment()) return 'full';
 	return 'critical';
 }

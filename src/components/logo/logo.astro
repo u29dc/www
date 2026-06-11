@@ -14,7 +14,6 @@ type Props = {
 	class?: string;
 	theme?: 'light' | 'dark' | 'system';
 	enableObservation?: boolean;
-	debug?: boolean;
 };
 
 const {
@@ -32,7 +31,6 @@ const {
 	class: className = '',
 	theme = 'system',
 	enableObservation = true,
-	debug = false,
 } = Astro.props;
 
 const resolvedMobileWidth = mobileWidth ?? width;
@@ -43,7 +41,6 @@ const style = [
 	`--logo-height:${height}px`,
 	`--logo-mobile-width:${resolvedMobileWidth}px`,
 	`--logo-mobile-height:${mobileHeight}px`,
-	debug ? 'outline:2px solid red' : '',
 ]
 	.filter(Boolean)
 	.join(';');

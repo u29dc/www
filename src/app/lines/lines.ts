@@ -1,8 +1,11 @@
-import type { TransitionBeforeSwapEvent } from 'astro:transitions/client';
-import { getDeviceProfile, getLineRevealProfile, initDeviceProfile, subscribeDeviceProfile } from '../lib/device';
-import { initLinePlanCache } from '../lib/cache';
-import { cancelPreparedLineReveal, measureLineReveal, mountLineReveal, type LineRevealOptions, type LineRevealProfile, type MeasuredLineReveal, type PreparedLineReveal } from '../lib/lines';
-import { MOTION, readDurationToken, readNumberToken } from '../lib/motion';
+import { getDeviceProfile, getLineRevealProfile, initDeviceProfile, subscribeDeviceProfile } from '../device/device';
+import { onNextFrame } from '../runtime/loop';
+import { createTask } from '../runtime/task';
+import { delayTimer, setTimer, type TimerHandle } from '../runtime/timer';
+import { onRouteBeforeSwap, onRouteLoad, type RouteSwap } from '../route/route';
+import { initLinePlanCache } from './cache';
+import { cancelPreparedLineReveal, measureLineReveal, mountLineReveal, type LineRevealOptions, type LineRevealProfile, type MeasuredLineReveal, type PreparedLineReveal } from './measure';
+import { MOTION, readDurationToken, readNumberToken } from '../motion/tokens';
 
 const TARGET_SELECTOR = '[data-line-reveal]';
 const GROUP_SELECTOR = '[data-line-reveal-group]';
@@ -17,24 +20,46 @@ type ObserveTargetsOptions = {
 	waitForLayout?: boolean;
 };
 
-initDeviceProfile();
-initLinePlanCache();
-const preparedTargets = new Map<HTMLElement, PreparedLineReveal>();
-const queuedSequences = new Set<PreparedLineReveal[]>();
-const sequenceFinishHandles = new Set<number>();
-let targetWidths = new WeakMap<HTMLElement, number>();
-let sequenceTargets = new WeakMap<HTMLElement, HTMLElement[]>();
-let queuedSequenceRoots = new WeakMap<PreparedLineReveal[], HTMLElement>();
+const lineState = {
+	preparedTargets: new Map<HTMLElement, PreparedLineReveal>(),
+	queuedSequences: new Set<PreparedLineReveal[]>(),
+	sequenceFinishHandles: new Set<TimerHandle>(),
+	sequenceFrameCancels: new Set<() => void>(),
+	targetWidths: new WeakMap<HTMLElement, number>(),
+	sequenceTargets: new WeakMap<HTMLElement, HTMLElement[]>(),
+	queuedSequenceRoots: new WeakMap<PreparedLineReveal[], HTMLElement>(),
+	intersectionObserver: undefined as IntersectionObserver | undefined,
+	mutationObserver: undefined as MutationObserver | undefined,
+	resizeObserver: undefined as ResizeObserver | undefined,
+	abortController: new AbortController(),
+	totalLineCount: 0,
+	activeTargetCount: 0,
+	observeFrameCancel: undefined as (() => void) | undefined,
+	observedCurrentDocument: false,
+	activeProfileKey: `${getDeviceProfile().motionQuality}:${getDeviceProfile().lineProfile}`,
+	initialized: false,
+	cleanups: [] as Array<() => void>,
+};
 
-let intersectionObserver: IntersectionObserver | undefined;
-let mutationObserver: MutationObserver | undefined;
-let resizeObserver: ResizeObserver | undefined;
-let abortController = new AbortController();
-let totalLineCount = 0;
-let activeTargetCount = 0;
-let observeFrame: number | undefined;
-let hasObservedCurrentDocument = false;
-let activeLineProfileKey = `${getDeviceProfile().motionQuality}:${getDeviceProfile().lineProfile}`;
+export const lines = createTask({
+	name: 'lines',
+	order: 50,
+	state: lineState,
+	preinit() {
+		bindLines();
+	},
+	init() {
+		runSafely(() => {
+			prepareLineRevealDocument();
+			scheduleObserveTargets();
+		});
+	},
+	dispose() {
+		for (const cleanup of lineState.cleanups.splice(0)) cleanup();
+		cleanup();
+		lineState.initialized = false;
+	},
+});
 
 const readLineState = (target: HTMLElement): LineRevealState | undefined => {
 	const state = target.dataset['lineRevealState'];
@@ -183,19 +208,7 @@ const getOptions = (): LineRevealOptions | undefined => {
 };
 
 const delay = (milliseconds: number, signal: AbortSignal): Promise<void> => {
-	if (milliseconds <= 0 || signal.aborted) return Promise.resolve();
-
-	return new Promise((resolve) => {
-		let timeout = 0;
-		const finish = (): void => {
-			window.clearTimeout(timeout);
-			signal.removeEventListener('abort', finish);
-			resolve();
-		};
-
-		timeout = window.setTimeout(finish, milliseconds);
-		signal.addEventListener('abort', finish, { once: true });
-	});
+	return delayTimer('lines.delay', milliseconds, signal);
 };
 
 const waitForFonts = async (signal: AbortSignal): Promise<void> => {
@@ -207,17 +220,17 @@ const waitForFonts = async (signal: AbortSignal): Promise<void> => {
 
 const nextFrame = (signal: AbortSignal): Promise<void> =>
 	new Promise((resolve) => {
-		let timeout = 0;
-		let frame = 0;
+		let timeout: TimerHandle | undefined;
+		let cancelFrame: (() => void) | undefined;
 		const finish = (): void => {
-			window.clearTimeout(timeout);
-			window.cancelAnimationFrame(frame);
+			timeout?.cancel();
+			cancelFrame?.();
 			signal.removeEventListener('abort', finish);
 			resolve();
 		};
 
-		timeout = window.setTimeout(finish, MOTION.line.frameWaitMs);
-		frame = window.requestAnimationFrame(finish);
+		timeout = setTimer('lines.next-frame.fallback', MOTION.line.frameWaitMs, finish, { signal });
+		cancelFrame = onNextFrame('lines.next-frame', finish);
 		signal.addEventListener('abort', finish, { once: true });
 	});
 
@@ -245,8 +258,8 @@ function markFallback(target: HTMLElement): void {
 }
 
 const untrackPrepared = (prepared: PreparedLineReveal): void => {
-	preparedTargets.delete(prepared.target);
-	resizeObserver?.unobserve(prepared.target);
+	lineState.preparedTargets.delete(prepared.target);
+	lineState.resizeObserver?.unobserve(prepared.target);
 };
 
 const cancelPrepared = (prepared: PreparedLineReveal): void => {
@@ -255,29 +268,33 @@ const cancelPrepared = (prepared: PreparedLineReveal): void => {
 };
 
 const cancelAllPrepared = (): void => {
-	for (const prepared of preparedTargets.values()) {
+	for (const prepared of lineState.preparedTargets.values()) {
 		cancelPreparedLineReveal(prepared);
 	}
 
-	preparedTargets.clear();
-	queuedSequences.clear();
-	for (const handle of sequenceFinishHandles) {
-		window.clearTimeout(handle);
+	lineState.preparedTargets.clear();
+	lineState.queuedSequences.clear();
+	for (const handle of lineState.sequenceFinishHandles) {
+		handle.cancel();
 	}
-	sequenceFinishHandles.clear();
-	targetWidths = new WeakMap<HTMLElement, number>();
-	sequenceTargets = new WeakMap<HTMLElement, HTMLElement[]>();
-	queuedSequenceRoots = new WeakMap<PreparedLineReveal[], HTMLElement>();
-	totalLineCount = 0;
-	activeTargetCount = 0;
-	resizeObserver?.disconnect();
+	lineState.sequenceFinishHandles.clear();
+	for (const cancel of lineState.sequenceFrameCancels) {
+		cancel();
+	}
+	lineState.sequenceFrameCancels.clear();
+	lineState.targetWidths = new WeakMap<HTMLElement, number>();
+	lineState.sequenceTargets = new WeakMap<HTMLElement, HTMLElement[]>();
+	lineState.queuedSequenceRoots = new WeakMap<PreparedLineReveal[], HTMLElement>();
+	lineState.totalLineCount = 0;
+	lineState.activeTargetCount = 0;
+	lineState.resizeObserver?.disconnect();
 };
 
 const ensureMutationObserver = (): void => {
-	if (mutationObserver) return;
+	if (lineState.mutationObserver) return;
 
-	mutationObserver = new MutationObserver(() => {
-		for (const sequence of Array.from(queuedSequences)) {
+	lineState.mutationObserver = new MutationObserver(() => {
+		for (const sequence of Array.from(lineState.queuedSequences)) {
 			const first = sequence[0];
 			if (!first || !first.target.isConnected) {
 				cancelSequence(sequence);
@@ -285,13 +302,13 @@ const ensureMutationObserver = (): void => {
 			}
 
 			if (isRevealGateOpen(first.target)) {
-				queuedSequences.delete(sequence);
-				playSequence(sequence, queuedSequenceRoots.get(sequence) ?? first.target);
+				lineState.queuedSequences.delete(sequence);
+				playSequence(sequence, lineState.queuedSequenceRoots.get(sequence) ?? first.target);
 			}
 		}
 	});
 
-	mutationObserver.observe(document.documentElement, {
+	lineState.mutationObserver.observe(document.documentElement, {
 		attributes: true,
 		attributeFilter: ['data-reveal'],
 		subtree: true,
@@ -299,24 +316,24 @@ const ensureMutationObserver = (): void => {
 };
 
 const observePreparedWidth = (prepared: PreparedLineReveal): void => {
-	resizeObserver ??= new ResizeObserver((entries) => {
+	lineState.resizeObserver ??= new ResizeObserver((entries) => {
 		for (const entry of entries) {
 			const target = entry.target;
 			if (!(target instanceof HTMLElement)) continue;
 
-			const lastWidth = targetWidths.get(target);
+			const lastWidth = lineState.targetWidths.get(target);
 			const nextWidth = entry.contentRect.width;
 			if (lastWidth === undefined || Math.abs(lastWidth - nextWidth) < MOTION.line.widthChangeTolerancePx) continue;
 
-			const preparedTarget = preparedTargets.get(target);
+			const preparedTarget = lineState.preparedTargets.get(target);
 			if (preparedTarget) {
 				cancelPrepared(preparedTarget);
 			}
 		}
 	});
 
-	targetWidths.set(prepared.target, prepared.width);
-	resizeObserver.observe(prepared.target);
+	lineState.targetWidths.set(prepared.target, prepared.width);
+	lineState.resizeObserver.observe(prepared.target);
 };
 
 const applySequenceTiming = (sequence: MeasuredLineReveal[], options: LineRevealOptions): void => {
@@ -343,7 +360,8 @@ const applySequenceTiming = (sequence: MeasuredLineReveal[], options: LineReveal
 };
 
 function playSequence(sequence: PreparedLineReveal[], root: HTMLElement): void {
-	window.requestAnimationFrame(() => {
+	const cancelFrame = onNextFrame('lines.play', () => {
+		lineState.sequenceFrameCancels.delete(cancelFrame);
 		let maxAnimationMs = 0;
 		let maxTotalMs = 0;
 
@@ -358,30 +376,28 @@ function playSequence(sequence: PreparedLineReveal[], root: HTMLElement): void {
 			maxTotalMs = Math.max(maxTotalMs, prepared.totalMs);
 		}
 
-		const groupHandle = window.setTimeout(
-			() => {
-				sequenceFinishHandles.delete(groupHandle);
-				if (root.isConnected) {
-					markLineGroupComplete(root);
-				}
-			},
-			Math.max(0, maxAnimationMs - MOTION.line.groupFollowOverlapMs),
-		);
-		sequenceFinishHandles.add(groupHandle);
+		const groupHandle = setTimer('lines.group.complete', Math.max(0, maxAnimationMs - MOTION.line.groupFollowOverlapMs), () => {
+			lineState.sequenceFinishHandles.delete(groupHandle);
+			if (root.isConnected) {
+				markLineGroupComplete(root);
+			}
+		});
+		lineState.sequenceFinishHandles.add(groupHandle);
 
-		const cleanupHandle = window.setTimeout(() => {
-			sequenceFinishHandles.delete(cleanupHandle);
+		const cleanupHandle = setTimer('lines.cleanup', maxTotalMs + MOTION.line.groupCompleteBufferMs, () => {
+			lineState.sequenceFinishHandles.delete(cleanupHandle);
 
 			for (const prepared of sequence) {
 				untrackPrepared(prepared);
 			}
-		}, maxTotalMs + MOTION.line.groupCompleteBufferMs);
-		sequenceFinishHandles.add(cleanupHandle);
+		});
+		lineState.sequenceFinishHandles.add(cleanupHandle);
 	});
+	lineState.sequenceFrameCancels.add(cancelFrame);
 }
 
 const cancelSequence = (sequence: PreparedLineReveal[]): void => {
-	queuedSequences.delete(sequence);
+	lineState.queuedSequences.delete(sequence);
 	for (const prepared of sequence) {
 		cancelPrepared(prepared);
 	}
@@ -399,8 +415,8 @@ const queueOrPlay = (root: HTMLElement, sequence: PreparedLineReveal[]): void =>
 		return;
 	}
 
-	queuedSequences.add(sequence);
-	queuedSequenceRoots.set(sequence, root);
+	lineState.queuedSequences.add(sequence);
+	lineState.queuedSequenceRoots.set(sequence, root);
 	ensureMutationObserver();
 };
 
@@ -430,7 +446,7 @@ const prepareSequence = async (root: HTMLElement, targets: HTMLElement[], signal
 
 	for (const target of pendingTargets) {
 		if (signal.aborted || !target.isConnected || !isPendingLineTarget(target)) continue;
-		if (activeTargetCount >= MOTION.line.maxTargets) {
+		if (lineState.activeTargetCount >= MOTION.line.maxTargets) {
 			fallbackTargets.push(target);
 			continue;
 		}
@@ -442,13 +458,13 @@ const prepareSequence = async (root: HTMLElement, targets: HTMLElement[], signal
 				continue;
 			}
 
-			if (totalLineCount + measured.lineCount > MOTION.line.maxTotalLines) {
+			if (lineState.totalLineCount + measured.lineCount > MOTION.line.maxTotalLines) {
 				fallbackTargets.push(target);
 				continue;
 			}
 
-			totalLineCount += measured.lineCount;
-			activeTargetCount += 1;
+			lineState.totalLineCount += measured.lineCount;
+			lineState.activeTargetCount += 1;
 			measuredSequence.push(measured);
 		} catch {
 			fallbackTargets.push(target);
@@ -463,7 +479,7 @@ const prepareSequence = async (root: HTMLElement, targets: HTMLElement[], signal
 
 	const preparedSequence = measuredSequence.map((measured) => {
 		const prepared = mountLineReveal(measured);
-		preparedTargets.set(measured.target, prepared);
+		lineState.preparedTargets.set(measured.target, prepared);
 		observePreparedWidth(prepared);
 		return prepared;
 	});
@@ -506,12 +522,12 @@ const getSequences = (): Array<{ root: HTMLElement; targets: HTMLElement[] }> =>
 };
 
 const observeTargets = (observeOptions: ObserveTargetsOptions = {}): void => {
-	if (hasObservedCurrentDocument) return;
+	if (lineState.observedCurrentDocument) return;
 
-	hasObservedCurrentDocument = true;
-	intersectionObserver?.disconnect();
-	mutationObserver?.disconnect();
-	mutationObserver = undefined;
+	lineState.observedCurrentDocument = true;
+	lineState.intersectionObserver?.disconnect();
+	lineState.mutationObserver?.disconnect();
+	lineState.mutationObserver = undefined;
 	cancelAllPrepared();
 	prepareLineRevealDocument();
 
@@ -524,17 +540,17 @@ const observeTargets = (observeOptions: ObserveTargetsOptions = {}): void => {
 		return;
 	}
 
-	abortController.abort();
-	abortController = new AbortController();
-	const { signal } = abortController;
+	lineState.abortController.abort();
+	lineState.abortController = new AbortController();
+	const { signal } = lineState.abortController;
 
-	intersectionObserver = new IntersectionObserver(
+	lineState.intersectionObserver = new IntersectionObserver(
 		(entries) => {
 			for (const entry of entries) {
 				if (!entry.isIntersecting || !(entry.target instanceof HTMLElement)) continue;
 
-				intersectionObserver?.unobserve(entry.target);
-				void prepareSequence(entry.target, sequenceTargets.get(entry.target) ?? [], signal, { waitForLayout: true }).catch(() => {
+				lineState.intersectionObserver?.unobserve(entry.target);
+				void prepareSequence(entry.target, lineState.sequenceTargets.get(entry.target) ?? [], signal, { waitForLayout: true }).catch(() => {
 					if (!signal.aborted) fallbackLineRevealDocument();
 				});
 			}
@@ -545,7 +561,7 @@ const observeTargets = (observeOptions: ObserveTargetsOptions = {}): void => {
 	const sequences = getSequences();
 	sequences.forEach((sequence) => {
 		markLineGroupPending(sequence.root);
-		sequenceTargets.set(sequence.root, sequence.targets);
+		lineState.sequenceTargets.set(sequence.root, sequence.targets);
 		for (const target of sequence.targets) {
 			markLineTargetPending(target);
 		}
@@ -557,61 +573,61 @@ const observeTargets = (observeOptions: ObserveTargetsOptions = {}): void => {
 			return;
 		}
 
-		intersectionObserver?.observe(sequence.root);
+		lineState.intersectionObserver?.observe(sequence.root);
 	});
 };
 
 const scheduleObserveTargets = (): void => {
-	if (observeFrame !== undefined) {
-		window.cancelAnimationFrame(observeFrame);
-	}
+	lineState.observeFrameCancel?.();
 
-	observeFrame = window.requestAnimationFrame(() => {
-		observeFrame = undefined;
+	lineState.observeFrameCancel = onNextFrame('lines.observe', () => {
+		lineState.observeFrameCancel = undefined;
 		runSafely(observeTargets);
 	});
 };
 
 const cleanup = (): void => {
-	hasObservedCurrentDocument = false;
+	lineState.observedCurrentDocument = false;
 
-	if (observeFrame !== undefined) {
-		window.cancelAnimationFrame(observeFrame);
-		observeFrame = undefined;
-	}
+	lineState.observeFrameCancel?.();
+	lineState.observeFrameCancel = undefined;
 
-	abortController.abort();
-	intersectionObserver?.disconnect();
-	mutationObserver?.disconnect();
-	mutationObserver = undefined;
+	lineState.abortController.abort();
+	lineState.intersectionObserver?.disconnect();
+	lineState.mutationObserver?.disconnect();
+	lineState.mutationObserver = undefined;
 	cancelAllPrepared();
 };
 
-const handleBeforeSwap = (event: TransitionBeforeSwapEvent): void => {
+const handleBeforeSwap = (event: RouteSwap): void => {
 	cleanup();
-	const swap = event.swap;
-	event.swap = () => {
+	event.wrapSwap((swap) => {
 		swap();
 		runSafely(() => observeTargets({ immediateVisible: true, waitForLayout: false }));
-	};
+	});
 };
 
-document.addEventListener('astro:before-swap', (event) => {
-	const transitionEvent = event as TransitionBeforeSwapEvent;
-	runSafely(() => handleBeforeSwap(transitionEvent), transitionEvent.newDocument);
-});
-document.addEventListener('astro:page-load', () => runSafely(scheduleObserveTargets));
-subscribeDeviceProfile((profile) => {
-	const nextLineProfileKey = `${profile.motionQuality}:${profile.lineProfile}`;
-	if (nextLineProfileKey === activeLineProfileKey) return;
-	activeLineProfileKey = nextLineProfileKey;
-	runSafely(() => {
-		cleanup();
-		scheduleObserveTargets();
-	});
-});
+const bindLines = (): void => {
+	if (lineState.initialized) return;
+	lineState.initialized = true;
 
-runSafely(() => {
-	prepareLineRevealDocument();
-	scheduleObserveTargets();
-});
+	initDeviceProfile();
+	initLinePlanCache();
+	lineState.cleanups.push(
+		onRouteBeforeSwap((event) => {
+			runSafely(() => handleBeforeSwap(event), event.newDocument);
+		}),
+	);
+	lineState.cleanups.push(onRouteLoad(() => runSafely(scheduleObserveTargets)));
+	lineState.cleanups.push(
+		subscribeDeviceProfile((profile) => {
+			const nextLineProfileKey = `${profile.motionQuality}:${profile.lineProfile}`;
+			if (nextLineProfileKey === lineState.activeProfileKey) return;
+			lineState.activeProfileKey = nextLineProfileKey;
+			runSafely(() => {
+				cleanup();
+				scheduleObserveTargets();
+			});
+		}),
+	);
+};

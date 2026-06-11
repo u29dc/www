@@ -1,4 +1,5 @@
-import { MOTION } from './motion';
+import { MOTION } from '../motion/tokens';
+import { setTimer, type TimerHandle } from '../runtime/timer';
 import { createLinePlanSignature, readCachedLinePlan, readLineTypographySignature, writeCachedLinePlan, type CachedLinePlan } from './cache';
 
 type LineRevealKind = 'body' | 'origin' | 'title' | 'description' | 'quote';
@@ -498,14 +499,14 @@ export const mountLineReveal = (measured: MeasuredLineReveal): PreparedLineRevea
 	target.dataset['lineRevealState'] = 'ready';
 	target.style.opacity = '0';
 
-	let finishHandle: number | undefined;
-	let handoffHandle: number | undefined;
+	let finishHandle: TimerHandle | undefined;
+	let handoffHandle: TimerHandle | undefined;
 	let isDone = false;
 	let isCompleting = false;
 
 	const clearFinishHandle = (): void => {
 		if (finishHandle === undefined) return;
-		window.clearTimeout(finishHandle);
+		finishHandle.cancel();
 		finishHandle = undefined;
 	};
 
@@ -531,7 +532,7 @@ export const mountLineReveal = (measured: MeasuredLineReveal): PreparedLineRevea
 		if (isDone) return;
 		clearFinishHandle();
 		if (handoffHandle !== undefined) {
-			window.clearTimeout(handoffHandle);
+			handoffHandle.cancel();
 			handoffHandle = undefined;
 		}
 
@@ -539,7 +540,7 @@ export const mountLineReveal = (measured: MeasuredLineReveal): PreparedLineRevea
 			if (isCompleting) return;
 			isCompleting = true;
 			overlay.dataset['lineRevealState'] = 'settling';
-			handoffHandle = window.setTimeout(finishComplete, handoffMs);
+			handoffHandle = setTimer('lines.handoff', handoffMs, finishComplete);
 			return;
 		}
 
@@ -560,7 +561,7 @@ export const mountLineReveal = (measured: MeasuredLineReveal): PreparedLineRevea
 
 			target.dataset['lineRevealState'] = 'running';
 			overlay.dataset['lineRevealState'] = 'running';
-			finishHandle = window.setTimeout(() => restore('complete'), animationMs);
+			finishHandle = setTimer('lines.finish', animationMs, () => restore('complete'));
 		},
 		cancel: () => restore('fallback'),
 		complete: () => restore('complete'),

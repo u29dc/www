@@ -1,20 +1,51 @@
-import type { TransitionBeforePreparationEvent, TransitionBeforeSwapEvent } from 'astro:transitions/client';
-import { getDeviceProfile, initDeviceProfile, subscribeDeviceProfile } from '../lib/device';
-import { MOTION, readDurationToken } from '../lib/motion';
+import { getDeviceProfile, initDeviceProfile, subscribeDeviceProfile } from '../device/device';
+import { onNextFrame } from '../runtime/loop';
+import { createTask } from '../runtime/task';
+import { delayTimer, setTimer, type TimerHandle } from '../runtime/timer';
+import { onRouteAbort, onRouteAfterSwap, onRouteBeforeSwap, onRouteLoad, onRoutePreparation, type RoutePreparation, type RouteSwap } from '../route/route';
+import { MOTION, readDurationToken } from './tokens';
 
 const REVEAL_TARGET_SELECTOR = ['[data-reveal]', '[data-reveal-group] > :where(header, section, article, footer, h1, h2, h3, p, ul, ol, dl, figure, blockquote, div, li)'].join(',');
 const COMPLETE_LINE_GROUPS_DATASET_KEY = 'lineRevealCompleteGroups';
 const LINE_GROUP_COMPLETE_EVENT = 'line-reveal-group-complete';
 
-const reduceMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-initDeviceProfile();
-let revealObserver: IntersectionObserver | undefined;
-let revealFallbackHandle: number | undefined;
-let exitAbortCleanup: (() => void) | undefined;
-let siteRouteMotionHandle: number | undefined;
-let panelIntroHandle: number | undefined;
-let activeCanAnimate = getDeviceProfile().motionQuality !== 'reduced';
-const lineGroupRevealHandles = new Map<string, number>();
+const state = {
+	initialized: false,
+	reduceMotionQuery: window.matchMedia('(prefers-reduced-motion: reduce)'),
+	activeCanAnimate: getDeviceProfile().motionQuality !== 'reduced',
+	revealObserver: undefined as IntersectionObserver | undefined,
+	revealFallbackHandle: undefined as TimerHandle | undefined,
+	lineGroupRevealHandles: new Map<string, TimerHandle>(),
+	exitAbortCleanup: undefined as (() => void) | undefined,
+	siteRouteMotionHandle: undefined as TimerHandle | undefined,
+	panelIntroHandle: undefined as TimerHandle | undefined,
+	panelIntroFrameCancel: undefined as (() => void) | undefined,
+	cleanups: [] as Array<() => void>,
+};
+
+export const motion = createTask({
+	name: 'motion',
+	order: 40,
+	state,
+	preinit() {
+		bindMotion();
+	},
+	init() {
+		syncSiteRoute();
+		startPanelIntro();
+		initializeReveals();
+	},
+	dispose() {
+		for (const cleanup of state.cleanups.splice(0)) cleanup();
+		clearRevealFallback();
+		clearLineGroupRevealHandles();
+		clearExitState();
+		clearSiteRouteMotion();
+		state.revealObserver?.disconnect();
+		state.revealObserver = undefined;
+		state.initialized = false;
+	},
+});
 
 const canAnimate = (): boolean => getDeviceProfile().motionQuality !== 'reduced';
 const isPageExiting = (): boolean => document.documentElement.dataset['pageState'] === 'exiting';
@@ -30,18 +61,21 @@ const syncSiteRoute = (): void => {
 };
 
 const clearSiteRouteMotion = (): void => {
-	if (siteRouteMotionHandle !== undefined) {
-		window.clearTimeout(siteRouteMotionHandle);
-		siteRouteMotionHandle = undefined;
+	if (state.siteRouteMotionHandle !== undefined) {
+		state.siteRouteMotionHandle.cancel();
+		state.siteRouteMotionHandle = undefined;
 	}
 
 	delete document.documentElement.dataset['siteRouteMotion'];
 };
 
 const finishPanelIntro = (): void => {
-	if (panelIntroHandle !== undefined) {
-		window.clearTimeout(panelIntroHandle);
-		panelIntroHandle = undefined;
+	state.panelIntroFrameCancel?.();
+	state.panelIntroFrameCancel = undefined;
+
+	if (state.panelIntroHandle !== undefined) {
+		state.panelIntroHandle.cancel();
+		state.panelIntroHandle = undefined;
 	}
 
 	document.documentElement.dataset['panelIntro'] = 'done';
@@ -56,14 +90,15 @@ const startPanelIntro = (): void => {
 	const root = document.documentElement;
 	if (root.dataset['panelIntro'] !== 'pending') return;
 
-	window.requestAnimationFrame(() => {
+	state.panelIntroFrameCancel = onNextFrame('motion.panel.start', () => {
+		state.panelIntroFrameCancel = undefined;
 		if (root.dataset['panelIntro'] !== 'pending') return;
 
 		root.dataset['panelIntro'] = 'running';
 		const durationMs = readDurationToken('--duration-panel-intro', MOTION.panelIntroMs);
 		const delayMs = readDurationToken('--delay-panel-intro', MOTION.panelIntroDelayMs);
 
-		panelIntroHandle = window.setTimeout(finishPanelIntro, durationMs + delayMs + MOTION.panelIntroBufferMs);
+		state.panelIntroHandle = setTimer('motion.panel.complete', durationMs + delayMs + MOTION.panelIntroBufferMs, finishPanelIntro);
 	});
 };
 
@@ -77,23 +112,11 @@ const startSiteRouteMotion = (): void => {
 		clearSiteRouteMotion();
 	};
 
-	siteRouteMotionHandle = window.setTimeout(finish, readDurationToken('--duration-page-exit', MOTION.pageExitMs) + MOTION.siteRouteMotionBufferMs);
+	state.siteRouteMotionHandle = setTimer('motion.route.complete', readDurationToken('--duration-page-exit', MOTION.pageExitMs) + MOTION.siteRouteMotionBufferMs, finish);
 };
 
 const delay = (milliseconds: number, signal?: AbortSignal): Promise<void> => {
-	if (milliseconds <= 0 || signal?.aborted) return Promise.resolve();
-
-	return new Promise((resolve) => {
-		let timeout = 0;
-		const finish = (): void => {
-			window.clearTimeout(timeout);
-			signal?.removeEventListener('abort', finish);
-			resolve();
-		};
-
-		timeout = window.setTimeout(finish, milliseconds);
-		signal?.addEventListener('abort', finish, { once: true });
-	});
+	return delayTimer('motion.delay', milliseconds, signal);
 };
 
 const isRevealTarget = (element: Element): element is HTMLElement => element instanceof HTMLElement && !element.closest('[hidden], [aria-hidden="true"], [data-no-reveal]');
@@ -138,36 +161,36 @@ const prepareRevealTargets = (root: Document | Element = document): void => {
 };
 
 const clearRevealFallback = (): void => {
-	if (revealFallbackHandle === undefined) return;
+	if (state.revealFallbackHandle === undefined) return;
 
-	window.clearTimeout(revealFallbackHandle);
-	revealFallbackHandle = undefined;
+	state.revealFallbackHandle.cancel();
+	state.revealFallbackHandle = undefined;
 };
 
 const clearLineGroupRevealHandles = (): void => {
-	for (const handle of lineGroupRevealHandles.values()) {
-		window.clearTimeout(handle);
+	for (const handle of state.lineGroupRevealHandles.values()) {
+		handle.cancel();
 	}
 
-	lineGroupRevealHandles.clear();
+	state.lineGroupRevealHandles.clear();
 };
 
 const hasPendingRevealTargets = (): boolean => getRevealTargets().some((target) => target.dataset['reveal'] === 'pending');
 
 const reveal = (target: HTMLElement): void => {
 	if (isPageExiting()) {
-		revealObserver?.unobserve(target);
+		state.revealObserver?.unobserve(target);
 		return;
 	}
 
 	if (shouldWaitForLineGroup(target)) {
 		target.dataset['reveal'] = 'waiting';
-		revealObserver?.unobserve(target);
+		state.revealObserver?.unobserve(target);
 		return;
 	}
 
 	target.dataset['reveal'] = 'visible';
-	revealObserver?.unobserve(target);
+	state.revealObserver?.unobserve(target);
 
 	if (!hasPendingRevealTargets()) clearRevealFallback();
 };
@@ -184,18 +207,18 @@ const revealTargetsWaitingForLineGroup = (group: string): void => {
 const scheduleRevealTargetsWaitingForLineGroup = (group: string): void => {
 	if (isPageExiting()) return;
 
-	const existingHandle = lineGroupRevealHandles.get(group);
+	const existingHandle = state.lineGroupRevealHandles.get(group);
 	if (existingHandle !== undefined) {
-		window.clearTimeout(existingHandle);
+		existingHandle.cancel();
 	}
 
 	const delayMs = readDurationToken('--duration-line-reveal-follow-delay', MOTION.lineGroupRevealDelayMs);
-	const handle = window.setTimeout(() => {
-		lineGroupRevealHandles.delete(group);
+	const handle = setTimer('motion.line-group.reveal', delayMs, () => {
+		state.lineGroupRevealHandles.delete(group);
 		revealTargetsWaitingForLineGroup(group);
-	}, delayMs);
+	});
 
-	lineGroupRevealHandles.set(group, handle);
+	state.lineGroupRevealHandles.set(group, handle);
 };
 
 const revealPendingTargets = (): void => {
@@ -205,7 +228,7 @@ const revealPendingTargets = (): void => {
 };
 
 const observeRevealTargets = (): void => {
-	revealObserver?.disconnect();
+	state.revealObserver?.disconnect();
 	clearRevealFallback();
 
 	const targets = getRevealTargets().filter((target) => target.dataset['reveal'] === 'pending');
@@ -217,7 +240,7 @@ const observeRevealTargets = (): void => {
 		return;
 	}
 
-	revealObserver = new IntersectionObserver(
+	state.revealObserver = new IntersectionObserver(
 		(entries) => {
 			for (const entry of entries) {
 				if (entry.isIntersecting && entry.target instanceof HTMLElement) {
@@ -229,13 +252,13 @@ const observeRevealTargets = (): void => {
 	);
 
 	for (const target of targets) {
-		revealObserver.observe(target);
+		state.revealObserver.observe(target);
 	}
 
-	revealFallbackHandle = window.setTimeout(() => {
-		revealFallbackHandle = undefined;
+	state.revealFallbackHandle = setTimer('motion.reveal.fallback', MOTION.revealFallbackMs, () => {
+		state.revealFallbackHandle = undefined;
 		revealPendingTargets();
-	}, MOTION.revealFallbackMs);
+	});
 };
 
 const initializeReveals = (): void => {
@@ -247,86 +270,82 @@ const initializeReveals = (): void => {
 
 const clearExitState = (): void => {
 	delete document.documentElement.dataset['pageState'];
-	exitAbortCleanup?.();
-	exitAbortCleanup = undefined;
+	state.exitAbortCleanup?.();
+	state.exitAbortCleanup = undefined;
 };
 
 const playExit = (signal: AbortSignal): Promise<void> => {
 	if (!canAnimate()) return Promise.resolve();
 
-	exitAbortCleanup?.();
+	state.exitAbortCleanup?.();
 	document.documentElement.dataset['pageState'] = 'exiting';
 	clearRevealFallback();
 	clearLineGroupRevealHandles();
 
 	const abort = (): void => clearExitState();
 	signal.addEventListener('abort', abort, { once: true });
-	exitAbortCleanup = () => signal.removeEventListener('abort', abort);
+	state.exitAbortCleanup = () => signal.removeEventListener('abort', abort);
 
 	return delay(readDurationToken('--duration-page-exit', MOTION.pageExitMs), signal);
 };
 
-const handleBeforePreparation = (event: TransitionBeforePreparationEvent): void => {
-	const originalLoader = event.loader;
-	const previousRoute = document.documentElement.dataset['siteRoute'];
-	const nextRoute = readSiteRoute(event.to);
-
-	if (previousRoute !== nextRoute) {
-		setSiteRoute(nextRoute);
+const handleBeforePreparation = (event: RoutePreparation): Promise<void> => {
+	if (event.previousRoute !== event.nextRoute) {
+		setSiteRoute(event.nextRoute);
 		startSiteRouteMotion();
 	}
 
-	event.loader = async (): Promise<void> => {
-		const exit = playExit(event.signal);
-		try {
-			await originalLoader();
-			await exit;
-		} catch (error) {
-			clearExitState();
-			clearSiteRouteMotion();
-			syncSiteRoute();
-			throw error;
-		}
-	};
+	return playExit(event.signal);
 };
 
-const handleBeforeSwap = (event: TransitionBeforeSwapEvent): void => {
+const handleRouteAbort = (): void => {
+	clearExitState();
+	clearSiteRouteMotion();
+	syncSiteRoute();
+};
+
+const handleBeforeSwap = (event: RouteSwap): void => {
 	delete event.newDocument.documentElement.dataset['pageState'];
 	event.newDocument.documentElement.dataset['panelIntro'] = 'done';
 	prepareRevealTargets(event.newDocument);
 };
 
-document.addEventListener('astro:before-preparation', (event) => {
-	handleBeforePreparation(event as TransitionBeforePreparationEvent);
-});
+const bindMotion = (): void => {
+	if (state.initialized) return;
+	state.initialized = true;
 
-document.addEventListener('astro:before-swap', (event) => {
-	handleBeforeSwap(event as TransitionBeforeSwapEvent);
-});
-
-document.addEventListener('astro:after-swap', clearExitState);
-document.addEventListener(LINE_GROUP_COMPLETE_EVENT, (event) => {
-	const group = event instanceof CustomEvent && typeof event.detail?.group === 'string' ? event.detail.group : undefined;
-	if (group) scheduleRevealTargetsWaitingForLineGroup(group);
-});
-document.addEventListener('astro:page-load', () => {
-	syncSiteRoute();
-	initializeReveals();
-});
-reduceMotionQuery.addEventListener('change', () => {
-	finishPanelIntro();
-	initializeReveals();
-});
-subscribeDeviceProfile((profile) => {
-	const nextCanAnimate = profile.motionQuality !== 'reduced';
-	if (nextCanAnimate === activeCanAnimate) return;
-	activeCanAnimate = nextCanAnimate;
-	if (!nextCanAnimate) {
+	initDeviceProfile();
+	state.cleanups.push(onRoutePreparation(handleBeforePreparation));
+	state.cleanups.push(onRouteBeforeSwap(handleBeforeSwap));
+	state.cleanups.push(onRouteAfterSwap(clearExitState));
+	state.cleanups.push(onRouteAbort(handleRouteAbort));
+	state.cleanups.push(
+		onRouteLoad(() => {
+			syncSiteRoute();
+			initializeReveals();
+		}),
+	);
+	const handleLineGroupComplete = (event: Event): void => {
+		const group = event instanceof CustomEvent && typeof event.detail?.group === 'string' ? event.detail.group : undefined;
+		if (group) scheduleRevealTargetsWaitingForLineGroup(group);
+	};
+	document.addEventListener(LINE_GROUP_COMPLETE_EVENT, handleLineGroupComplete);
+	state.cleanups.push(() => document.removeEventListener(LINE_GROUP_COMPLETE_EVENT, handleLineGroupComplete));
+	const handleReducedMotion = (): void => {
 		finishPanelIntro();
-	}
-	initializeReveals();
-});
-
-syncSiteRoute();
-startPanelIntro();
-initializeReveals();
+		initializeReveals();
+	};
+	state.reduceMotionQuery.addEventListener('change', handleReducedMotion);
+	state.cleanups.push(() => state.reduceMotionQuery.removeEventListener('change', handleReducedMotion));
+	state.cleanups.push(
+		subscribeDeviceProfile((profile) => {
+			const nextCanAnimate = profile.motionQuality !== 'reduced';
+			if (nextCanAnimate === state.activeCanAnimate) return;
+			state.activeCanAnimate = nextCanAnimate;
+			if (!nextCanAnimate) {
+				finishPanelIntro();
+			}
+			initializeReveals();
+		}),
+	);
+};

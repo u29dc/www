@@ -1,6 +1,8 @@
-import { canUseWebglMotion, getDeviceProfile, getDprCap, initDeviceProfile, subscribeDeviceProfile, type DeviceProfile } from '../lib/device';
-import { createRenderer, type Renderer, type State, type Theme } from '../lib/logo';
-import { getWebglDiagnosticsMode, recordWebglDiagnostic } from '../lib/webgl';
+import { canUseWebglMotion, getDeviceProfile, getDprCap, initDeviceProfile, subscribeDeviceProfile, type DeviceProfile } from '../device/device';
+import { createTask } from '../runtime/task';
+import { onRouteBeforeSwap, onRouteLoad } from '../route/route';
+import { createRenderer, type Renderer, type State, type Theme } from './renderer';
+import { getWebglDiagnosticsMode, recordWebglDiagnostic } from './webgl';
 
 type ThemePreference = Theme | 'system';
 
@@ -29,9 +31,29 @@ const MOBILE_QUERY = '(max-width: 767px)';
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 const DARK_QUERY = '(prefers-color-scheme: dark)';
 
-const controllers = new WeakMap<HTMLElement, Controller>();
-const activeControllers = new Set<Controller>();
-initDeviceProfile();
+const logoState = {
+	controllers: new WeakMap<HTMLElement, Controller>(),
+	activeControllers: new Set<Controller>(),
+	initialized: false,
+	cleanups: [] as Array<() => void>,
+};
+
+export const logo = createTask({
+	name: 'logo',
+	order: 80,
+	state: logoState,
+	preinit() {
+		bindLogo();
+	},
+	init() {
+		setupLogos();
+	},
+	dispose() {
+		for (const cleanup of logoState.cleanups.splice(0)) cleanup();
+		disposeLogos();
+		logoState.initialized = false;
+	},
+});
 
 const parseNumber = (value: string | undefined, fallback: number): number => {
 	if (!value) return fallback;
@@ -120,7 +142,7 @@ const hideFallback = (element: HTMLElement, canvas: HTMLCanvasElement, fallback:
 };
 
 const createController = (element: HTMLElement): Controller | undefined => {
-	if (controllers.has(element)) return undefined;
+	if (logoState.controllers.has(element)) return undefined;
 
 	const canvas = element.querySelector<HTMLCanvasElement>('[data-logo-canvas]');
 	const fallback = element.querySelector<HTMLElement>('[data-logo-fallback]');
@@ -356,13 +378,13 @@ const createController = (element: HTMLElement): Controller | undefined => {
 			darkQuery.removeEventListener('change', handleThemeChange);
 			document.removeEventListener('visibilitychange', handleVisibilityChange);
 			unsubscribeProfile?.();
-			controllers.delete(element);
-			activeControllers.delete(controller);
+			logoState.controllers.delete(element);
+			logoState.activeControllers.delete(controller);
 		},
 	};
 
-	controllers.set(element, controller);
-	activeControllers.add(controller);
+	logoState.controllers.set(element, controller);
+	logoState.activeControllers.add(controller);
 	return controller;
 };
 
@@ -371,12 +393,16 @@ const setupLogos = (root: ParentNode = document): void => {
 };
 
 const disposeLogos = (): void => {
-	for (const controller of Array.from(activeControllers)) {
+	for (const controller of Array.from(logoState.activeControllers)) {
 		controller.dispose();
 	}
 };
 
-setupLogos();
+const bindLogo = (): void => {
+	if (logoState.initialized) return;
+	logoState.initialized = true;
 
-document.addEventListener('astro:page-load', () => setupLogos());
-document.addEventListener('astro:before-swap', disposeLogos);
+	initDeviceProfile();
+	logoState.cleanups.push(onRouteLoad(() => setupLogos()));
+	logoState.cleanups.push(onRouteBeforeSwap(disposeLogos));
+};

@@ -1,8 +1,8 @@
 ---
 import '../styles/app.css';
-import { ClientRouter } from 'astro:transitions';
 import Guide from '../components/chrome/guide.astro';
 import Header from '../components/chrome/header.astro';
+import RouteRouter from '../app/route/router.astro';
 import { MEDIA, SITE, SITE_THEME } from '../data/site';
 
 type Props = {
@@ -84,7 +84,7 @@ const themeColorDark = SITE.themeColorDark;
 		<meta name="twitter:image" content={ogImageUrl} />
 		<meta name="twitter:image:alt" content={`${SITE.name} social card`} />
 		<script is:inline src="/boot.js" crossorigin="anonymous"></script>
-		<ClientRouter fallback="swap" />
+		<RouteRouter />
 		<title>{title}</title>
 	</head>
 	<body class="min-h-dvh">
@@ -94,13 +94,7 @@ const themeColorDark = SITE.themeColorDark;
 			<slot />
 		</div>
 		<script>
-			import '../features/device';
-			import '../features/logo';
-			import '../features/preview';
-			import '../features/media';
-			import '../features/motion';
-			import '../features/lines';
-			import '../features/scroll';
+			import '../app/app';
 		</script>
 	</body>
 </html>

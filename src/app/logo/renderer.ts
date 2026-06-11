@@ -1,4 +1,5 @@
-import { registerRafTask } from './raf';
+import { registerTask } from '../runtime/loop';
+import type { TaskHandle } from '../runtime/task';
 import { detectDeviceTier, getDprCap, getWebglDiagnosticsMode, recordWebglDiagnostic, shouldRunFullWebglDiagnostics, type DeviceTier, type WebglDiagnosticsMode } from './webgl';
 
 export type Theme = 'light' | 'dark';
@@ -694,7 +695,16 @@ export function createRenderer(
 		return true;
 	};
 
-	const rafTask = registerRafTask(tick, { autoStart: false });
+	let frameTask: TaskHandle | undefined;
+	frameTask = registerTask({
+		name: 'logo-renderer',
+		order: 80,
+		update(frame) {
+			if (!tick(frame.now, frame.dt)) {
+				frameTask?.sleep();
+			}
+		},
+	});
 	let isAnimating = false;
 
 	function shouldAnimate(): boolean {
@@ -704,7 +714,7 @@ export function createRenderer(
 	function requestFrameLoop(): void {
 		if (!isRunning || isAnimating || isDisposed || hasContextFailure) return;
 		isAnimating = true;
-		rafTask.wake();
+		frameTask?.wake('logo:pointer');
 	}
 
 	function validateFrameOutput(): void {
@@ -751,7 +761,7 @@ export function createRenderer(
 		if (!isRunning) return;
 		isRunning = false;
 		isAnimating = false;
-		rafTask.sleep();
+		frameTask?.sleep();
 	};
 
 	const renderOnce = (): void => {
@@ -822,7 +832,8 @@ export function createRenderer(
 		isDisposed = true;
 
 		stop();
-		rafTask.dispose();
+		frameTask?.dispose();
+		frameTask = undefined;
 
 		canvas.removeEventListener('pointerenter', handlePointerEnter);
 		canvas.removeEventListener('pointerleave', handlePointerLeave);

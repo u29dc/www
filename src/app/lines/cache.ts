@@ -1,5 +1,5 @@
-import type { LineRevealProfile } from './lines';
-import { MOTION } from './motion';
+import type { LineRevealProfile } from './measure';
+import { MOTION } from '../motion/tokens';
 
 type Rect = {
 	top: number;

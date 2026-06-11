@@ -1,9 +1,13 @@
+import { onRouteAfterSwap, onRouteLoad } from '../route/route';
+import { createTask } from '../runtime/task';
+import { setTimer, type TimerHandle } from '../runtime/timer';
+
 export type PerformanceTier = 'low' | 'medium' | 'high';
 export type MotionQuality = 'reduced' | 'no-blur' | 'full';
 export type InputProfile = 'coarse' | 'fine' | 'mixed' | 'unknown';
 export type NetworkProfile = 'save-data' | 'slow' | 'normal' | 'unknown';
 export type DisplayProfile = 'small' | 'standard' | 'large';
-export type DeviceProfileSource = 'ssr' | 'boot' | 'static-signals' | 'calibrated' | 'override' | 'fallback';
+export type DeviceProfileSource = 'ssr' | 'boot' | 'static-signals' | 'calibrated' | 'fallback';
 export type DeviceProfileConfidence = 'low' | 'medium' | 'high';
 export type LineDeviceProfile = 'lite' | 'full';
 
@@ -83,8 +87,6 @@ export const DEVICE_THRESHOLDS = {
 	longTaskLowCount: 8,
 } as const;
 
-const STORAGE_TIER_KEY = 'u29dc:device:tier';
-const STORAGE_MOTION_KEY = 'u29dc:device:motion';
 const DEFAULT_DPR = 1;
 const DEFAULT_VIEWPORT_WIDTH = 1024;
 const DEFAULT_VIEWPORT_HEIGHT = 768;
@@ -124,36 +126,64 @@ const createDefaultProfile = (): DeviceProfile => ({
 	},
 });
 
-const subscribers = new Set<DeviceSubscriber>();
-let profile = createDefaultProfile();
-let initialized = false;
-let resizeHandle = 0;
-let calibrationStarted = false;
-let calibrationFps: number | undefined;
-let longTaskCount = 0;
-let lastLongTaskTier: PerformanceTier = 'high';
-let longTaskObserver: PerformanceObserver | undefined;
-let reducedMotionQuery: MediaQueryList | undefined;
-let coarsePointerQuery: MediaQueryList | undefined;
-let finePointerQuery: MediaQueryList | undefined;
-let hoverQuery: MediaQueryList | undefined;
-let lastDprBucket = 0;
-
-const safeMatchMedia = (query: string): boolean => (isBrowser() ? (window.matchMedia?.(query).matches ?? false) : false);
-
-const readStorageValue = (key: string): string | undefined => {
-	if (!isBrowser()) return undefined;
-
-	try {
-		return window.localStorage.getItem(key) ?? undefined;
-	} catch {
-		return undefined;
-	}
+const state = {
+	subscribers: new Set<DeviceSubscriber>(),
+	profile: createDefaultProfile(),
+	initialized: false,
+	taskInitialized: false,
+	resizeHandle: undefined as TimerHandle | undefined,
+	calibrationStarted: false,
+	calibrationFps: undefined as number | undefined,
+	calibrationDelayHandle: undefined as TimerHandle | undefined,
+	calibrationSamples: [] as number[],
+	calibrationPrevious: 0,
+	calibrating: false,
+	longTaskCount: 0,
+	lastLongTaskTier: 'high' as PerformanceTier,
+	longTaskObserver: undefined as PerformanceObserver | undefined,
+	reducedMotionQuery: undefined as MediaQueryList | undefined,
+	coarsePointerQuery: undefined as MediaQueryList | undefined,
+	finePointerQuery: undefined as MediaQueryList | undefined,
+	hoverQuery: undefined as MediaQueryList | undefined,
+	lastDprBucket: 0,
+	wake: (() => {}) as (reason?: string) => void,
 };
 
-const isPerformanceTier = (value: string | undefined): value is PerformanceTier => value === 'low' || value === 'medium' || value === 'high';
+export const device = createTask({
+	name: 'device',
+	order: 10,
+	state,
+	preinit(context) {
+		state.wake = context.wake;
+		initDeviceProfile();
+		if (state.taskInitialized) return;
+		state.taskInitialized = true;
+		onRouteAfterSwap(() => applyDeviceProfileToDocument());
+		onRouteLoad(() => applyDeviceProfileToDocument());
+	},
+	update(frame) {
+		if (!state.calibrating) return false;
 
-const isMotionQuality = (value: string | undefined): value is MotionQuality => value === 'reduced' || value === 'no-blur' || value === 'full';
+		if (state.calibrationPrevious > 0 && frame.now > state.calibrationPrevious) {
+			state.calibrationSamples.push(frame.now - state.calibrationPrevious);
+		}
+		state.calibrationPrevious = frame.now;
+
+		if (state.calibrationSamples.length < DEVICE_THRESHOLDS.calibrationFrames) return;
+
+		state.calibrating = false;
+		const average = state.calibrationSamples.reduce((sum, value) => sum + value, 0) / state.calibrationSamples.length;
+		state.calibrationSamples = [];
+		state.calibrationPrevious = 0;
+		if (average > 0) {
+			state.calibrationFps = 1000 / average;
+			refreshDeviceProfile('calibration:raf');
+		}
+		return false;
+	},
+});
+
+const safeMatchMedia = (query: string): boolean => (isBrowser() ? (window.matchMedia?.(query).matches ?? false) : false);
 
 const readHardwareConcurrency = (): number | undefined => {
 	if (!isBrowser()) return undefined;
@@ -255,15 +285,14 @@ const applyTierHysteresis = (previous: DeviceProfile, next: PerformanceTier, rea
 	if (!previous.signals.clientReady || previous.tier === next) return next;
 	if (previous.signals.reducedMotion) return next;
 	if (next === 'low') return next;
-	if (previous.tier === 'low' && next === 'medium' && calibrationFps !== undefined && calibrationFps < DEVICE_THRESHOLDS.mediumRafFps) {
+	if (previous.tier === 'low' && next === 'medium' && state.calibrationFps !== undefined && state.calibrationFps < DEVICE_THRESHOLDS.mediumRafFps) {
 		reasons.push('hysteresis:hold-low');
 		return 'low';
 	}
 	return next;
 };
 
-const deriveMotionQuality = (tier: PerformanceTier, reducedMotion: boolean, saveData: boolean | undefined, override?: MotionQuality): MotionQuality => {
-	if (override) return override;
+const deriveMotionQuality = (tier: PerformanceTier, reducedMotion: boolean, saveData: boolean | undefined): MotionQuality => {
 	if (reducedMotion) return 'reduced';
 	if (saveData || tier !== 'high') return 'no-blur';
 	return 'full';
@@ -276,13 +305,13 @@ const deriveDprCap = (tier: PerformanceTier, displayProfile: DisplayProfile, dpr
 };
 
 const buildProfile = (source: DeviceProfileSource, reason: string): DeviceProfile => {
-	if (!isBrowser()) return profile;
+	if (!isBrowser()) return state.profile;
 
 	const connection = readConnection();
-	const reducedMotion = reducedMotionQuery?.matches ?? safeMatchMedia('(prefers-reduced-motion: reduce)');
-	const coarsePointer = coarsePointerQuery?.matches ?? safeMatchMedia('(hover: none), (pointer: coarse)');
-	const finePointer = finePointerQuery?.matches ?? safeMatchMedia('(hover: hover), (pointer: fine)');
-	const hover = hoverQuery?.matches ?? safeMatchMedia('(hover: hover)');
+	const reducedMotion = state.reducedMotionQuery?.matches ?? safeMatchMedia('(prefers-reduced-motion: reduce)');
+	const coarsePointer = state.coarsePointerQuery?.matches ?? safeMatchMedia('(hover: none), (pointer: coarse)');
+	const finePointer = state.finePointerQuery?.matches ?? safeMatchMedia('(hover: hover), (pointer: fine)');
+	const hover = state.hoverQuery?.matches ?? safeMatchMedia('(hover: hover)');
 	const hardwareConcurrency = readHardwareConcurrency();
 	const deviceMemory = readDeviceMemory();
 	const devicePixelRatio = readDpr();
@@ -293,34 +322,27 @@ const buildProfile = (source: DeviceProfileSource, reason: string): DeviceProfil
 	const networkProfile = readNetworkProfile(saveData, effectiveType);
 	const displayProfile = readDisplayProfile(viewportWidth);
 	const reasons = [reason];
-	const overrideTier = readStorageValue(STORAGE_TIER_KEY);
-	const overrideMotion = readStorageValue(STORAGE_MOTION_KEY);
-	const motionOverride = isMotionQuality(overrideMotion) ? overrideMotion : undefined;
 	const tierCandidate = scoreTier(reasons, {
 		reducedMotion,
 		...(hardwareConcurrency !== undefined ? { cores: hardwareConcurrency } : {}),
 		...(deviceMemory !== undefined ? { memory: deviceMemory } : {}),
 		...(saveData !== undefined ? { saveData } : {}),
-		...(calibrationFps !== undefined ? { rafFps: calibrationFps } : {}),
-		...(longTaskCount > 0 ? { longTasks: longTaskCount } : {}),
+		...(state.calibrationFps !== undefined ? { rafFps: state.calibrationFps } : {}),
+		...(state.longTaskCount > 0 ? { longTasks: state.longTaskCount } : {}),
 	});
-	const tier = isPerformanceTier(overrideTier) ? overrideTier : applyTierHysteresis(profile, tierCandidate, reasons);
-	const motionQuality = deriveMotionQuality(tier, reducedMotion, saveData, motionOverride);
+	const tier = applyTierHysteresis(state.profile, tierCandidate, reasons);
+	const motionQuality = deriveMotionQuality(tier, reducedMotion, saveData);
 	const inputProfile = readInputProfile(coarsePointer, finePointer);
 	const dprCap = deriveDprCap(tier, displayProfile, devicePixelRatio);
-	const isOverride = isPerformanceTier(overrideTier) || Boolean(motionOverride);
-	if (isPerformanceTier(overrideTier)) reasons.push(`override:tier=${overrideTier}`);
-	if (motionOverride) reasons.push(`override:motion=${motionOverride}`);
 
-	const resolvedSource: DeviceProfileSource = isOverride ? 'override' : source;
-	const confidence: DeviceProfileConfidence = resolvedSource === 'calibrated' || isOverride ? 'high' : hardwareConcurrency !== undefined || deviceMemory !== undefined ? 'medium' : 'low';
+	const confidence: DeviceProfileConfidence = source === 'calibrated' ? 'high' : hardwareConcurrency !== undefined || deviceMemory !== undefined ? 'medium' : 'low';
 	const allowFineHover = hover && inputProfile !== 'coarse';
 
 	return {
 		version: 1,
-		source: resolvedSource,
+		source,
 		confidence,
-		generation: profile.generation + 1,
+		generation: state.profile.generation + 1,
 		updatedAt: performance.now(),
 		tier,
 		motionQuality,
@@ -348,28 +370,28 @@ const buildProfile = (source: DeviceProfileSource, reason: string): DeviceProfil
 			...(effectiveType ? { effectiveType } : {}),
 			viewportWidth,
 			viewportHeight,
-			...(calibrationFps !== undefined ? { rafFps: calibrationFps } : {}),
-			...(longTaskCount > 0 ? { longTaskCount } : {}),
+			...(state.calibrationFps !== undefined ? { rafFps: state.calibrationFps } : {}),
+			...(state.longTaskCount > 0 ? { longTaskCount: state.longTaskCount } : {}),
 		},
 	};
 };
 
 const notify = (): void => {
-	for (const subscriber of subscribers) {
-		subscriber(profile);
+	for (const subscriber of state.subscribers) {
+		subscriber(state.profile);
 	}
 };
 
 const setProfile = (nextProfile: DeviceProfile): DeviceProfile => {
-	profile = nextProfile;
-	applyDeviceProfileToDocument(profile);
+	state.profile = nextProfile;
+	applyDeviceProfileToDocument(state.profile);
 	notify();
-	return profile;
+	return state.profile;
 };
 
-export const getDeviceProfile = (): DeviceProfile => profile;
+export const getDeviceProfile = (): DeviceProfile => state.profile;
 
-export const applyDeviceProfileToDocument = (nextProfile: DeviceProfile = profile): void => {
+export const applyDeviceProfileToDocument = (nextProfile: DeviceProfile = state.profile): void => {
 	if (!isBrowser()) return;
 	const root = document.documentElement;
 	root.dataset['performanceTier'] = nextProfile.tier;
@@ -380,46 +402,46 @@ export const applyDeviceProfileToDocument = (nextProfile: DeviceProfile = profil
 	root.dataset['deviceProfileSource'] = nextProfile.source;
 };
 
-export const refreshDeviceProfile = (reason = 'refresh'): DeviceProfile => setProfile(buildProfile(calibrationFps === undefined ? 'static-signals' : 'calibrated', reason));
+export const refreshDeviceProfile = (reason = 'refresh'): DeviceProfile => setProfile(buildProfile(state.calibrationFps === undefined ? 'static-signals' : 'calibrated', reason));
 
 export const subscribeDeviceProfile = (callback: DeviceSubscriber): (() => void) => {
-	subscribers.add(callback);
-	callback(profile);
+	state.subscribers.add(callback);
+	callback(state.profile);
 	return () => {
-		subscribers.delete(callback);
+		state.subscribers.delete(callback);
 	};
 };
 
-export const getDprCap = (nextProfile: DeviceProfile = profile, options?: { mobileAware?: boolean }): number => {
+export const getDprCap = (nextProfile: DeviceProfile = state.profile, options?: { mobileAware?: boolean }): number => {
 	if (!options?.mobileAware) return nextProfile.dprCap;
 	if (nextProfile.displayProfile === 'small') return Math.min(nextProfile.dprCap, nextProfile.tier === 'high' ? 1.5 : 1.25);
 	return nextProfile.dprCap;
 };
 
-export const getLineRevealProfile = (nextProfile: DeviceProfile = profile): LineDeviceProfile => nextProfile.lineProfile;
+export const getLineRevealProfile = (nextProfile: DeviceProfile = state.profile): LineDeviceProfile => nextProfile.lineProfile;
 
-export const canUseBlurMotion = (nextProfile: DeviceProfile = profile): boolean => nextProfile.motionQuality === 'full';
+export const canUseBlurMotion = (nextProfile: DeviceProfile = state.profile): boolean => nextProfile.motionQuality === 'full';
 
-export const canUseWebglMotion = (nextProfile: DeviceProfile = profile): boolean => nextProfile.allowWebglMotion;
+export const canUseWebglMotion = (nextProfile: DeviceProfile = state.profile): boolean => nextProfile.allowWebglMotion;
 
-export const canUseHoverVideo = (nextProfile: DeviceProfile = profile): boolean => nextProfile.allowHoverVideo;
+export const canUseHoverVideo = (nextProfile: DeviceProfile = state.profile): boolean => nextProfile.allowHoverVideo;
 
-export const canUsePixelReveal = (nextProfile: DeviceProfile = profile): boolean => nextProfile.allowPixelReveal;
+export const canUsePixelReveal = (nextProfile: DeviceProfile = state.profile): boolean => nextProfile.allowPixelReveal;
 
 const queueRefresh = (reason: string): void => {
 	if (!isBrowser()) return;
 
-	window.clearTimeout(resizeHandle);
-	resizeHandle = window.setTimeout(() => {
-		resizeHandle = 0;
+	state.resizeHandle?.cancel();
+	state.resizeHandle = setTimer('device.refresh', DEVICE_THRESHOLDS.resizeRecomputeMs, () => {
+		state.resizeHandle = undefined;
 		refreshDeviceProfile(reason);
-	}, DEVICE_THRESHOLDS.resizeRecomputeMs);
+	});
 };
 
 const handleResize = (): void => {
 	const nextDprBucket = bucketDpr(readDpr());
-	if (nextDprBucket !== lastDprBucket) {
-		lastDprBucket = nextDprBucket;
+	if (nextDprBucket !== state.lastDprBucket) {
+		state.lastDprBucket = nextDprBucket;
 		queueRefresh('resize:dpr');
 		return;
 	}
@@ -427,28 +449,14 @@ const handleResize = (): void => {
 };
 
 const scheduleCalibration = (): void => {
-	if (!isBrowser() || calibrationStarted || profile.signals.reducedMotion) return;
-	calibrationStarted = true;
+	if (!isBrowser() || state.calibrationStarted || state.profile.signals.reducedMotion) return;
+	state.calibrationStarted = true;
 
 	const run = (): void => {
-		const samples: number[] = [];
-		let previous = 0;
-		const sample = (timestamp: number): void => {
-			if (previous > 0) samples.push(timestamp - previous);
-			previous = timestamp;
-			if (samples.length < DEVICE_THRESHOLDS.calibrationFrames) {
-				window.requestAnimationFrame(sample);
-				return;
-			}
-
-			const average = samples.reduce((sum, value) => sum + value, 0) / samples.length;
-			if (average > 0) {
-				calibrationFps = 1000 / average;
-				refreshDeviceProfile('calibration:raf');
-			}
-		};
-
-		window.requestAnimationFrame(sample);
+		state.calibrationSamples = [];
+		state.calibrationPrevious = 0;
+		state.calibrating = true;
+		state.wake('device:calibration');
 	};
 
 	const win = window as WindowWithIdle;
@@ -457,23 +465,27 @@ const scheduleCalibration = (): void => {
 		return;
 	}
 
-	window.setTimeout(run, DEVICE_THRESHOLDS.calibrationDelayMs);
+	state.calibrationDelayHandle?.cancel();
+	state.calibrationDelayHandle = setTimer('device.calibration.delay', DEVICE_THRESHOLDS.calibrationDelayMs, () => {
+		state.calibrationDelayHandle = undefined;
+		run();
+	});
 };
 
 const observeLongTasks = (): void => {
 	if (!isBrowser() || typeof PerformanceObserver === 'undefined') return;
 
 	try {
-		longTaskObserver = new PerformanceObserver((list) => {
-			const previousTier = lastLongTaskTier;
-			longTaskCount += list.getEntries().length;
-			lastLongTaskTier = readLongTaskTier(longTaskCount);
-			if (lastLongTaskTier === previousTier) return;
+		state.longTaskObserver = new PerformanceObserver((list) => {
+			const previousTier = state.lastLongTaskTier;
+			state.longTaskCount += list.getEntries().length;
+			state.lastLongTaskTier = readLongTaskTier(state.longTaskCount);
+			if (state.lastLongTaskTier === previousTier) return;
 			refreshDeviceProfile('observer:longtask');
 		});
-		longTaskObserver.observe({ entryTypes: ['longtask'] });
+		state.longTaskObserver.observe({ entryTypes: ['longtask'] });
 	} catch {
-		longTaskObserver = undefined;
+		state.longTaskObserver = undefined;
 	}
 };
 
@@ -490,19 +502,19 @@ const addMediaQueryListener = (query: MediaQueryList, callback: () => void): voi
 const setupListeners = (): void => {
 	if (!isBrowser()) return;
 
-	reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-	coarsePointerQuery = window.matchMedia('(hover: none), (pointer: coarse)');
-	finePointerQuery = window.matchMedia('(hover: hover), (pointer: fine)');
-	hoverQuery = window.matchMedia('(hover: hover)');
-	lastDprBucket = bucketDpr(readDpr());
+	state.reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+	state.coarsePointerQuery = window.matchMedia('(hover: none), (pointer: coarse)');
+	state.finePointerQuery = window.matchMedia('(hover: hover), (pointer: fine)');
+	state.hoverQuery = window.matchMedia('(hover: hover)');
+	state.lastDprBucket = bucketDpr(readDpr());
 
 	const refreshStatic = (): void => {
 		refreshDeviceProfile('media-query:change');
 	};
-	addMediaQueryListener(reducedMotionQuery, refreshStatic);
-	addMediaQueryListener(coarsePointerQuery, refreshStatic);
-	addMediaQueryListener(finePointerQuery, refreshStatic);
-	addMediaQueryListener(hoverQuery, refreshStatic);
+	addMediaQueryListener(state.reducedMotionQuery, refreshStatic);
+	addMediaQueryListener(state.coarsePointerQuery, refreshStatic);
+	addMediaQueryListener(state.finePointerQuery, refreshStatic);
+	addMediaQueryListener(state.hoverQuery, refreshStatic);
 
 	const connection = readConnection();
 	connection?.addEventListener?.('change', () => refreshDeviceProfile('network:change'));
@@ -515,23 +527,21 @@ const setupListeners = (): void => {
 	document.addEventListener('visibilitychange', () => {
 		if (!document.hidden) refreshDeviceProfile('visibility:visible');
 	});
-	document.addEventListener('astro:after-swap', () => applyDeviceProfileToDocument());
-	document.addEventListener('astro:page-load', () => applyDeviceProfileToDocument());
 	observeLongTasks();
 };
 
 export const initDeviceProfile = (options: DeviceProfileOptions = {}): DeviceProfile => {
-	if (!isBrowser()) return profile;
+	if (!isBrowser()) return state.profile;
 
-	if (initialized) {
+	if (state.initialized) {
 		applyDeviceProfileToDocument();
-		return profile;
+		return state.profile;
 	}
 
-	initialized = true;
+	state.initialized = true;
 	setupListeners();
 	setProfile(buildProfile('static-signals', 'init:static-signals'));
 
 	if (options.calibrate ?? true) scheduleCalibration();
-	return profile;
+	return state.profile;
 };
