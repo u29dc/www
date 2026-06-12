@@ -24,7 +24,7 @@ const normalizeBaseUrl = (value: string): string => {
 };
 
 export const SITE = {
-	title: 'Incomplete Infinity',
+	title: 'Han (Incomplete Infinity)',
 	name: 'Incomplete Infinity',
 	description: 'We turn complex futures into decision-grade narratives',
 	url: 'https://u29dc.com',
