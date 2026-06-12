@@ -1,5 +1,5 @@
 import { enqueueRuntimeCallback, setTimerTraceProvider } from './loop';
-import type { RuntimeTraceTimer } from './task';
+import type { RuntimeTraceTimer } from './owner';
 
 export type TimerHandle = {
 	id: number;

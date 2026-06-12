@@ -1,6 +1,5 @@
-import { registerTask } from '../runtime/loop';
-import type { TaskHandle } from '../runtime/task';
-import { detectDeviceTier, getDprCap, getWebglDiagnosticsMode, recordWebglDiagnostic, shouldRunFullWebglDiagnostics, type DeviceTier, type WebglDiagnosticsMode } from './webgl';
+import { registerTask } from '../core/loop';
+import type { TaskHandle } from '../core/owner';
 
 export type Theme = 'light' | 'dark';
 
@@ -43,6 +42,66 @@ export interface Renderer {
 export type RendererOptions = {
 	diagnosticsMode?: WebglDiagnosticsMode;
 	dprCap?: number;
+};
+
+export type WebglDiagnosticsMode = 'off' | 'critical' | 'full';
+
+type DiagnosticValue = string | number | boolean | null;
+type DiagnosticPayload = Record<string, DiagnosticValue>;
+
+const STORAGE_DIAGNOSTICS_KEY = 'u29dc:webgl:diagnostics:astro';
+const MAX_DIAGNOSTIC_EVENTS = 50;
+
+const inBrowser = (): boolean => typeof window !== 'undefined' && typeof navigator !== 'undefined';
+
+const canUseStorage = (): boolean => {
+	if (!inBrowser()) return false;
+	try {
+		return typeof window.localStorage !== 'undefined';
+	} catch {
+		return false;
+	}
+};
+
+const isDevelopment = (): boolean => import.meta.env.DEV;
+
+export function getWebglDiagnosticsMode(): WebglDiagnosticsMode {
+	if (isDevelopment()) return 'full';
+	return 'critical';
+}
+
+function shouldRunFullWebglDiagnostics(mode: WebglDiagnosticsMode = getWebglDiagnosticsMode()): boolean {
+	return mode === 'full';
+}
+
+function shouldRecordWebglDiagnostics(mode: WebglDiagnosticsMode = getWebglDiagnosticsMode()): boolean {
+	return mode !== 'off';
+}
+
+export const recordWebglDiagnostic = ({ feature, stage, result, data, mode }: { feature: 'logo'; stage: string; result: string; data?: DiagnosticPayload; mode?: WebglDiagnosticsMode }): void => {
+	if (!canUseStorage() || !shouldRecordWebglDiagnostics(mode)) return;
+
+	const event = {
+		feature,
+		stage,
+		result,
+		data: data ?? {},
+		timestamp: Date.now(),
+		build: 'astro',
+	};
+
+	try {
+		const raw = window.localStorage.getItem(STORAGE_DIAGNOSTICS_KEY);
+		const parsed = raw ? (JSON.parse(raw) as unknown) : [];
+		const list = Array.isArray(parsed) ? parsed : [];
+		list.push(event);
+		if (list.length > MAX_DIAGNOSTIC_EVENTS) {
+			list.splice(0, list.length - MAX_DIAGNOSTIC_EVENTS);
+		}
+		window.localStorage.setItem(STORAGE_DIAGNOSTICS_KEY, JSON.stringify(list));
+	} catch {
+		// Storage may be disabled; diagnostics must never affect rendering.
+	}
 };
 
 const logEvent = (scope: string, topic: string, event: string, data?: Record<string, unknown>): void => {
@@ -515,7 +574,7 @@ export function createRenderer(
 	gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
 	const uniforms = resolveUniforms(gl, program, UNIFORM_NAMES);
-	const dprCap = options.dprCap ?? getDprCap({ mobileAware: false });
+	const dprCap = options.dprCap ?? 1.5;
 
 	let state = { ...initialState };
 	let dimensions = measureCanvas(state.width, state.height, dprCap);
@@ -870,17 +929,3 @@ export function createRenderer(
 		dispose,
 	};
 }
-
-export const evaluatePolicy = (enableObservation: boolean): DeviceTier => {
-	const deviceTier = detectDeviceTier();
-	recordWebglDiagnostic({
-		feature: 'logo',
-		stage: 'policy',
-		result: 'EVALUATED',
-		data: {
-			deviceTier,
-			enableObservation,
-		},
-	});
-	return deviceTier;
-};

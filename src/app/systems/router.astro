@@ -1,0 +1,9 @@
+---
+import { ClientRouter } from 'astro:transitions';
+---
+
+<script is:inline>
+	// Astro otherwise prefers native View Transitions over the configured swap fallback.
+	Object.defineProperty(document, 'startViewTransition', { value: undefined, configurable: true });
+</script>
+<ClientRouter fallback="swap" />

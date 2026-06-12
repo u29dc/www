@@ -1,17 +1,17 @@
-import { device, getDeviceProfile } from './device/device';
-import { lines } from './lines/lines';
-import { logo } from './logo/logo';
-import { media } from './media/media';
-import { motion } from './motion/motion';
-import { preview } from './preview/preview';
-import { initAstroRouteAdapter } from './route/astro';
-import { getRouteState, route } from './route/route';
-import { startRuntime } from './runtime/loop';
-import { scroll } from './scroll/scroll';
+import { App } from './core/app';
+import { device, getDeviceProfile } from './systems/device';
+import { motion } from './systems/motion';
+import { getRouteState, route } from './systems/route';
+import { scroll } from './systems/scroll';
+import { lines } from './ui/lines';
+import { logo } from './ui/logo';
+import { media } from './ui/media';
+import { preview } from './ui/preview';
 
-initAstroRouteAdapter();
+const systems = [device, route, scroll, motion] as const;
+const ui = [lines, media, preview, logo] as const;
 
-startRuntime([device, route, scroll, motion, lines, media, preview, logo], {
+new App([...systems, ...ui], {
 	getProfile: getDeviceProfile,
 	getRoute: getRouteState,
-});
+}).start();

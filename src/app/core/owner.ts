@@ -1,5 +1,4 @@
-import type { DeviceProfile } from '../device/device';
-import type { RouteState } from '../route/route';
+import type { DeviceProfile, RouteState } from './state';
 
 export type Phase = 'read' | 'update' | 'write' | 'post';
 
@@ -20,11 +19,10 @@ export type Context = {
 	sleep: () => void;
 };
 
-export type Task<TState = unknown> = {
-	name: string;
+export type Owner = {
+	readonly name: string;
 	order?: number;
-	state?: TState;
-	preinit?: (context: Context) => void | Promise<void>;
+	preinit?: (context: Context) => void;
 	init?: (context: Context) => void;
 	resize?: (context: Context) => void;
 	read?: (frame: Frame) => void | false;
@@ -33,6 +31,28 @@ export type Task<TState = unknown> = {
 	post?: (frame: Frame) => void | false;
 	dispose?: () => void;
 };
+
+export abstract class AppOwner implements Owner {
+	abstract readonly name: string;
+	readonly order: number = 0;
+
+	protected context?: Context;
+	protected cleanups: Array<() => void> = [];
+
+	preinit(context: Context): void {
+		this.context = context;
+	}
+
+	dispose(): void {
+		for (const cleanup of this.cleanups.splice(0)) cleanup();
+	}
+
+	protected addCleanup(cleanup: () => void): void {
+		this.cleanups.push(cleanup);
+	}
+}
+
+export type Task = Owner;
 
 export type TaskHandle = {
 	name: string;
@@ -66,5 +86,3 @@ export type RuntimeTrace = {
 	pendingTimers: RuntimeTraceTimer[];
 	route: RouteState;
 };
-
-export const createTask = <TTask extends Task>(task: TTask): TTask => task;

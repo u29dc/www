@@ -1,4 +1,4 @@
-import type { Context, Frame, Phase, RuntimeTrace, RuntimeTraceTimer, Task, TaskHandle } from './task';
+import type { Context, Frame, Owner, Phase, RuntimeTrace, RuntimeTraceTimer, TaskHandle } from './owner';
 
 type RuntimeConfig = {
 	getProfile: () => Context['profile'];
@@ -7,7 +7,7 @@ type RuntimeConfig = {
 
 type TaskEntry = {
 	id: number;
-	task: Task;
+	task: Owner;
 	active: boolean;
 	disposed: boolean;
 	context: Context;
@@ -113,14 +113,7 @@ const runLifecycle = (entry: TaskEntry, method: 'preinit' | 'init' | 'resize'): 
 	if (!callback) return;
 
 	try {
-		const result = callback(entry.context);
-		if (result instanceof Promise) {
-			void result.catch((error: unknown) => {
-				entry.lastError = error instanceof Error ? error.message : String(error);
-				entry.active = false;
-				reportTaskError(error);
-			});
-		}
+		callback.call(entry.task, entry.context);
 	} catch (error) {
 		entry.lastError = error instanceof Error ? error.message : String(error);
 		entry.active = false;
@@ -146,7 +139,7 @@ const runPhase = (phase: Phase, frame: Frame): void => {
 		if (!callback) continue;
 
 		try {
-			const result = callback(frame);
+			const result = callback.call(entry.task, frame);
 			if (result === false) entry.active = false;
 		} catch (error) {
 			entry.lastError = error instanceof Error ? error.message : String(error);
@@ -186,7 +179,7 @@ function tick(timestamp: number): void {
 	lastTime = 0;
 }
 
-export const registerTask = (task: Task, options?: { active?: boolean }): TaskHandle => {
+export const registerTask = (task: Owner, options?: { active?: boolean }): TaskHandle => {
 	if (!isBrowser) {
 		return {
 			name: task.name,
@@ -229,7 +222,7 @@ export const registerTask = (task: Task, options?: { active?: boolean }): TaskHa
 	};
 };
 
-export const startRuntime = (tasks: readonly Task[], runtimeConfig: RuntimeConfig): void => {
+export const startRuntime = (tasks: readonly Owner[], runtimeConfig: RuntimeConfig): void => {
 	if (!isBrowser || started) return;
 	started = true;
 	config = runtimeConfig;
