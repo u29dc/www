@@ -39,7 +39,7 @@
 | Content          | MDX content collections                   | authored artifacts in `src/content/*.mdx`                                                                        |
 | Styling          | Tailwind CSS v4 + CSS tokens              | inline utilities for component-local styling; shared CSS for tokens, layout, global selectors, and runtime hooks |
 | Browser logic    | raw TypeScript runtime in `src/app`       | one app bootstrap, explicit lifecycle owners, and a single shared frame loop                                     |
-| Motion / scroll  | Astro route bridge + custom app loop      | no Lenis; keep hot motion transform/opacity-based, native-scroll compatible, and reduced-motion aware            |
+| Motion / scroll  | Astro route bridge + custom app loop      | custom scroll owner; keep hot motion transform/opacity-based, native-scroll compatible, and reduced-motion aware |
 | Graphics         | standalone WebGL under `src/app/graphics` | keep canvas logic portable outside Astro and routed through the app runtime                                      |
 | Deployment       | Cloudflare Workers                        | headers live in `public/_headers`; Worker config lives in `wrangler.jsonc`                                       |
 
@@ -62,14 +62,14 @@
 - [`src/pages/index.astro`](src/pages/index.astro) composes the homepage in this order: origin, protocols, artifact studies, artifact fragments, optional signals, connect.
 - [`src/pages/[slug].astro`](src/pages/[slug].astro) renders artifact detail pages with article metadata, MDX content, hidden metadata, and connect footer.
 - [`src/pages/[slug].md.ts`](src/pages/[slug].md.ts), [`src/pages/[slug].txt.ts`](src/pages/[slug].txt.ts), [`src/pages/llms.txt.ts`](src/pages/llms.txt.ts), [`src/pages/rss.xml.ts`](src/pages/rss.xml.ts), and [`src/pages/feed.json.ts`](src/pages/feed.json.ts) are first-class machine-readable surfaces. Keep them aligned with visible content when copy or MDX behavior changes.
-- Runtime behavior uses `data-*` attributes as the contract between Astro markup, CSS, and `src/app/*`. Prefer extending existing hooks over adding framework state.
+- Runtime behavior uses `data-*` attributes as the contract between Astro markup, CSS, and `src/app/*`. Extend the existing hook contract for new runtime state.
 - [`src/app/app.ts`](src/app/app.ts) is the browser composition root. It starts systems first (`device`, `route`, `scroll`, `motion`) and UI owners second (`lines`, `media`, `preview`, `logo`).
 - [`src/app/core/loop.ts`](src/app/core/loop.ts) is the only app-owned `requestAnimationFrame` scheduler. Runtime owners wake it when work exists and sleep when idle.
 - [`src/app/core/owner.ts`](src/app/core/owner.ts) defines the lifecycle owner contract. Owner files should read in this order: imports, types/constants, class fields, lifecycle methods `preinit`, `init`, `resize`, `read`, `update`, `write`, `post`, `dispose`, then private helpers and exports.
 - [`src/app/core/state.ts`](src/app/core/state.ts) owns stable cross-owner state types so `core` does not import downstream systems or UI.
 - [`src/app/core/tokens.ts`](src/app/core/tokens.ts) centralizes TypeScript-side motion, preview, media, and line-reveal timing defaults. Keep it aligned with [`src/styles/tokens.css`](src/styles/tokens.css) when CSS motion tokens change.
 - [`src/app/systems/route.ts`](src/app/systems/route.ts) owns route state and the Astro transition bridge. Other owners subscribe to route state instead of importing `astro:transitions/client`.
-- [`src/app/systems/scroll.ts`](src/app/systems/scroll.ts) owns custom smooth scroll. Do not reintroduce Lenis; keep the model explicit with actual, animated, target, velocity, direction, limit, and native fallback state.
+- [`src/app/systems/scroll.ts`](src/app/systems/scroll.ts) owns custom smooth scroll. Keep the model explicit with actual, animated, target, velocity, direction, limit, and native fallback state.
 - [`src/app/ui/lines.ts`](src/app/ui/lines.ts), [`src/app/ui/media.ts`](src/app/ui/media.ts), [`src/app/ui/preview.ts`](src/app/ui/preview.ts), and [`src/app/ui/logo.ts`](src/app/ui/logo.ts) own DOM enhancement behavior.
 - [`src/app/graphics/canvas.ts`](src/app/graphics/canvas.ts) owns logo canvas/WebGL rendering, diagnostics, and fallback safety. It must use the shared core loop, not a second RAF loop.
 
@@ -87,21 +87,20 @@ Runtime philosophy:
 - [`src/lib/markdown.ts`](src/lib/markdown.ts) powers markdown/text exports and first-media extraction. Changes here affect article routes, `llms.txt`, and hover preview defaults.
 - Rich origin copy in [`src/components/home/origin.astro`](src/components/home/origin.astro) and plain origin copy in [`src/data/copy.ts`](src/data/copy.ts) should stay semantically aligned.
 - Local fonts live under [`public/fonts`](public/fonts). Tiny link mark WebPs live flat under [`src/assets`](src/assets) and are imported inline by [`src/data/marks.ts`](src/data/marks.ts). Article media resolves through the configured media base URL, currently `https://storage.u29dc.com/assets/`.
-- This repository is public. Do not add private vault material, client-sensitive detail, secrets, or personal runtime data.
+- This repository is public. Keep private vault material, client-sensitive detail, secrets, and personal runtime data in private systems outside the repo.
 
 ## 7. Conventions
 
 - Keep content portable. Prefer MDX frontmatter and content collections over framework-specific data machinery.
 - Keep creative effects portable. Put browser runtime, canvas, WebGL, WebGPU, scroll, preview, and motion logic in `src/app` modules that can survive a future framework migration.
-- Keep Astro pages mostly static. Add client JavaScript only for visible interaction, media, graphics, or progressive enhancement.
-- Do not reintroduce Svelte, React, Vue, or another UI framework unless a specific interactive component justifies the dependency.
-- Do not reintroduce Lenis or another scroll dependency unless a measured, reviewed need beats the custom runtime owner.
+- Keep Astro pages mostly static. Client JavaScript belongs to visible interaction, media, graphics, and progressive enhancement paths.
+- The browser experience is an Astro-rendered document plus raw TypeScript owners under `src/app`; route, scroll, motion, preview, media, and graphics behavior should fit that ownership model.
 - Prefer plain `.astro`, `.mdx`, `.ts`, and CSS files until a heavier abstraction is clearly useful.
 - Prefer one-word filenames for runtime owners and helpers where they stay clear: `scroll.ts`, `motion.ts`, `lines.ts`, `media.ts`, `logo.ts`, `route.ts`, `loop.ts`, `owner.ts`, `canvas.ts`.
 - Keep `src/app` import direction simple: `app -> core/systems/ui`, `systems -> core/utils`, `ui -> core/systems/graphics/utils`, `graphics -> core/utils`, and `utils -> no app owners`.
 - Keep `src/lib` free of browser runtime ownership. It is for portable content/export utilities, not app lifecycle, frame scheduling, or visual controllers.
 - Prefer inline Tailwind utilities for component-local styling. Keep shared CSS for tokens, document defaults, layout primitives, MDX prose, animation selectors, and runtime state selectors.
-- Use Lucide icons where an icon is needed. Avoid manually drawn one-off SVGs unless a logo or effect requires custom drawing.
+- Use Lucide icons for standard interface icons. Reserve custom drawing for logos, graphics, and bespoke visual effects.
 
 ## 8. Constraints
 
@@ -111,7 +110,7 @@ Runtime philosophy:
 - Treat [`src/app/ui/preview.ts`](src/app/ui/preview.ts), [`src/lib/hover.ts`](src/lib/hover.ts), and [`src/app/ui/lines.ts`](src/app/ui/lines.ts) as performance-sensitive interaction code. Keep pointer work loop-batched and hot writes transform/opacity-oriented.
 - Treat [`src/app/ui/logo.ts`](src/app/ui/logo.ts) and [`src/app/graphics/canvas.ts`](src/app/graphics/canvas.ts) as fragile visual code. Preserve reduced-motion, low-power fallback, canvas visibility, and nonblank rendering.
 - Treat [`public/_headers`](public/_headers), [`wrangler.jsonc`](wrangler.jsonc), and [`astro.config.ts`](astro.config.ts) as deployment/security-sensitive. Run the full quality gate after config changes.
-- Do not edit generated output such as `dist/`, `.astro/`, `.wrangler/`, `node_modules/`, or cache directories.
+- Generated output such as `dist/`, `.astro/`, `.wrangler/`, `node_modules/`, and cache directories is regenerated from source.
 
 ## 9. Validation
 
