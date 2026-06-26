@@ -71,6 +71,7 @@ class PreviewOwner extends BaseModule {
 	private height = MOTION.preview.defaultHeightPx as number;
 	private hasPosition = false;
 	private cardResizeObserver: ResizeObserver | undefined;
+	private readonly idleCancels = new Set<() => void>();
 	private hasPrewarmedImages = false;
 	private initialized = false;
 	private positionActive = false;
@@ -521,12 +522,46 @@ class PreviewOwner extends BaseModule {
 	private idle(callback: () => void): void {
 		const win = window as Window & {
 			requestIdleCallback?: (idleCallback: IdleRequestCallback, options?: IdleRequestOptions) => number;
+			cancelIdleCallback?: (handle: number) => void;
 		};
+		let finished = false;
+		let cancel: (() => void) | undefined;
+		const run = (): void => {
+			if (finished) return;
+			finished = true;
+			if (cancel) this.idleCancels.delete(cancel);
+			callback();
+		};
+
 		if (typeof win.requestIdleCallback === 'function') {
-			win.requestIdleCallback(callback, { timeout: 900 });
+			const handle = win.requestIdleCallback(run, { timeout: 900 });
+			const cancelIdle = (): void => {
+				if (finished) return;
+				finished = true;
+				win.cancelIdleCallback?.(handle);
+				this.idleCancels.delete(cancelIdle);
+			};
+			cancel = cancelIdle;
+			this.idleCancels.add(cancelIdle);
 			return;
 		}
-		setTimer('preview.idle', 300, callback);
+
+		const handle = setTimer('preview.idle', 300, run);
+		const cancelTimer = (): void => {
+			if (finished) return;
+			finished = true;
+			handle.cancel();
+			this.idleCancels.delete(cancelTimer);
+		};
+		cancel = cancelTimer;
+		this.idleCancels.add(cancelTimer);
+	}
+
+	private clearIdleCallbacks(): void {
+		for (const cancel of this.idleCancels) {
+			cancel();
+		}
+		this.idleCancels.clear();
 	}
 
 	private readonly prewarmImagePreviews = (): void => {
@@ -768,6 +803,7 @@ class PreviewOwner extends BaseModule {
 		this.hasPosition = false;
 		this.stopAnimation();
 		this.clearHideHandle();
+		this.clearIdleCallbacks();
 
 		for (const slot of this.slots.values()) {
 			this.clearSlotMotionHandle(slot);

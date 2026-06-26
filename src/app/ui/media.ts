@@ -32,6 +32,9 @@ class MediaOwner extends BaseModule {
 	override dispose(): void {
 		super.dispose();
 		this.cleanupMedia();
+		this.observer?.disconnect();
+		this.observer = undefined;
+		this.initialized = false;
 	}
 
 	private bind(): void {

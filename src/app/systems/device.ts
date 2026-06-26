@@ -69,12 +69,14 @@ class DeviceOwner extends BaseModule {
 	private calibrationStarted = false;
 	private calibrationFps: number | undefined;
 	private calibrationDelayHandle: TimerHandle | undefined;
+	private calibrationIdleHandle: number | undefined;
 	private calibrationSamples: number[] = [];
 	private calibrationPrevious = 0;
 	private calibrating = false;
 	private longTaskCount = 0;
 	private lastLongTaskTier: PerformanceTier = 'high';
 	private longTaskObserver: PerformanceObserver | undefined;
+	private connection: NetworkInformationLike | undefined;
 	private reducedMotionQuery: MediaQueryList | undefined;
 	private coarsePointerQuery: MediaQueryList | undefined;
 	private finePointerQuery: MediaQueryList | undefined;
@@ -109,6 +111,25 @@ class DeviceOwner extends BaseModule {
 			this.refreshProfile('calibration:raf');
 		}
 		return false;
+	}
+
+	override dispose(): void {
+		super.dispose();
+		this.resizeHandle?.cancel();
+		this.resizeHandle = undefined;
+		this.calibrationDelayHandle?.cancel();
+		this.calibrationDelayHandle = undefined;
+		this.cancelCalibrationIdleCallback();
+		this.longTaskObserver?.disconnect();
+		this.longTaskObserver = undefined;
+		this.connection = undefined;
+		this.subscribers.clear();
+		this.calibrationSamples = [];
+		this.calibrationPrevious = 0;
+		this.calibrating = false;
+		this.calibrationStarted = false;
+		this.initialized = false;
+		this.routeBound = false;
 	}
 
 	getProfile(): DeviceProfile {
@@ -297,11 +318,32 @@ class DeviceOwner extends BaseModule {
 		this.queueRefresh('resize');
 	};
 
+	private readonly handleConnectionChange = (): void => {
+		this.refreshProfile('network:change');
+	};
+
+	private readonly handlePageShow = (event: PageTransitionEvent): void => {
+		if (event.persisted) this.refreshProfile('pageshow:bf-cache');
+		this.applyToDocument();
+	};
+
+	private readonly handleVisibilityChange = (): void => {
+		if (!document.hidden) this.refreshProfile('visibility:visible');
+	};
+
+	private cancelCalibrationIdleCallback(): void {
+		if (this.calibrationIdleHandle === undefined || !isBrowser()) return;
+		const win = window as WindowWithIdle;
+		win.cancelIdleCallback?.(this.calibrationIdleHandle);
+		this.calibrationIdleHandle = undefined;
+	}
+
 	private scheduleCalibration(): void {
 		if (!isBrowser() || this.calibrationStarted || this.profile.signals.reducedMotion) return;
 		this.calibrationStarted = true;
 
 		const run = (): void => {
+			this.calibrationIdleHandle = undefined;
 			this.calibrationSamples = [];
 			this.calibrationPrevious = 0;
 			this.calibrating = true;
@@ -310,7 +352,7 @@ class DeviceOwner extends BaseModule {
 
 		const win = window as WindowWithIdle;
 		if (typeof win.requestIdleCallback === 'function') {
-			win.requestIdleCallback(() => run(), { timeout: DEVICE_THRESHOLDS.calibrationDelayMs });
+			this.calibrationIdleHandle = win.requestIdleCallback(() => run(), { timeout: DEVICE_THRESHOLDS.calibrationDelayMs });
 			return;
 		}
 
@@ -350,22 +392,21 @@ class DeviceOwner extends BaseModule {
 		const refreshStatic = (): void => {
 			this.refreshProfile('media-query:change');
 		};
-		addMediaQueryListener(this.reducedMotionQuery, refreshStatic);
-		addMediaQueryListener(this.coarsePointerQuery, refreshStatic);
-		addMediaQueryListener(this.finePointerQuery, refreshStatic);
-		addMediaQueryListener(this.hoverQuery, refreshStatic);
+		this.addCleanup(addMediaQueryListener(this.reducedMotionQuery, refreshStatic));
+		this.addCleanup(addMediaQueryListener(this.coarsePointerQuery, refreshStatic));
+		this.addCleanup(addMediaQueryListener(this.finePointerQuery, refreshStatic));
+		this.addCleanup(addMediaQueryListener(this.hoverQuery, refreshStatic));
 
-		const connection = readConnection();
-		connection?.addEventListener?.('change', () => this.refreshProfile('network:change'));
+		this.connection = readConnection();
+		this.connection?.addEventListener?.('change', this.handleConnectionChange);
+		this.addCleanup(() => this.connection?.removeEventListener?.('change', this.handleConnectionChange));
 
 		window.addEventListener('resize', this.handleResize, { passive: true });
-		window.addEventListener('pageshow', (event) => {
-			if (event.persisted) this.refreshProfile('pageshow:bf-cache');
-			this.applyToDocument();
-		});
-		document.addEventListener('visibilitychange', () => {
-			if (!document.hidden) this.refreshProfile('visibility:visible');
-		});
+		window.addEventListener('pageshow', this.handlePageShow);
+		document.addEventListener('visibilitychange', this.handleVisibilityChange);
+		this.addCleanup(() => window.removeEventListener('resize', this.handleResize));
+		this.addCleanup(() => window.removeEventListener('pageshow', this.handlePageShow));
+		this.addCleanup(() => document.removeEventListener('visibilitychange', this.handleVisibilityChange));
 		this.observeLongTasks();
 	}
 }
@@ -515,14 +556,18 @@ const deriveDprCap = (tier: PerformanceTier, displayProfile: DisplayProfile, dpr
 	return displayProfile === 'small' ? 1.5 : 2;
 };
 
-const addMediaQueryListener = (query: MediaQueryList, callback: () => void): void => {
+const addMediaQueryListener = (query: MediaQueryList, callback: () => void): (() => void) => {
 	if (typeof query.addEventListener === 'function') {
 		query.addEventListener('change', callback);
-		return;
+		return () => query.removeEventListener('change', callback);
 	}
 
-	const legacyQuery = query as unknown as { addListener?: (listener: () => void) => void };
+	const legacyQuery = query as unknown as {
+		addListener?: (listener: () => void) => void;
+		removeListener?: (listener: () => void) => void;
+	};
 	legacyQuery.addListener?.(callback);
+	return () => legacyQuery.removeListener?.(callback);
 };
 
 export const device = new DeviceOwner();
