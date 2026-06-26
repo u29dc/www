@@ -1,6 +1,3 @@
-import { registerTask } from '../core/loop';
-import type { TaskHandle } from '../core/owner';
-
 export type Theme = 'light' | 'dark';
 
 export interface State {
@@ -33,8 +30,10 @@ interface BufferDescriptor {
 export interface Renderer {
 	resize(dimensions?: Partial<Pick<CanvasDimensions, 'width' | 'height'>>): void;
 	setState(state: State): void;
+	setPointer(x: number, y: number): void;
 	start(): void;
 	stop(): void;
+	update(timestamp: number, deltaSeconds: number): boolean;
 	renderOnce(): void;
 	dispose(): void;
 }
@@ -659,47 +658,13 @@ export function createRenderer(
 		checkGlError('applyThemeUniforms');
 	};
 
-	const updatePointer = (event: PointerEvent | MouseEvent): void => {
+	const setPointer = (clientX: number, clientY: number): void => {
 		const rect = canvas.getBoundingClientRect();
-		mousePosition.x = event.clientX - rect.left;
-		mousePosition.y = event.clientY - rect.top;
+		mousePosition.x = clientX - rect.left;
+		mousePosition.y = clientY - rect.top;
 		hasPointerInteraction = true;
 	};
 
-	const handlePointerMove = (event: PointerEvent | MouseEvent): void => {
-		updatePointer(event);
-		checkGlError('pointerMove');
-		requestFrameLoop();
-	};
-
-	let isTracking = false;
-
-	const handlePointerEnter = (): void => {
-		if (!isTracking) {
-			canvas.addEventListener('pointermove', handlePointerMove, {
-				passive: true,
-			});
-			canvas.addEventListener('mousemove', handlePointerMove, {
-				passive: true,
-			});
-			isTracking = true;
-		}
-	};
-
-	const handlePointerLeave = (): void => {
-		if (isTracking) {
-			canvas.removeEventListener('pointermove', handlePointerMove);
-			canvas.removeEventListener('mousemove', handlePointerMove);
-			isTracking = false;
-		}
-	};
-
-	canvas.addEventListener('pointerenter', handlePointerEnter, {
-		passive: true,
-	});
-	canvas.addEventListener('pointerleave', handlePointerLeave, {
-		passive: true,
-	});
 	canvas.addEventListener('webglcontextlost', handleContextLost, {
 		passive: false,
 	});
@@ -741,39 +706,16 @@ export function createRenderer(
 		validateFrameOutput();
 	};
 
-	const tick = (timestamp: number, deltaSeconds: number): false | true => {
+	const update = (timestamp: number, deltaSeconds: number): boolean => {
 		if (!isRunning || isDisposed || hasContextFailure) {
-			isAnimating = false;
 			return false;
 		}
 		drawFrame(timestamp, deltaSeconds);
-		if (!shouldAnimate()) {
-			isAnimating = false;
-			return false;
-		}
-		return true;
+		return shouldAnimate();
 	};
-
-	let frameTask: TaskHandle | undefined;
-	frameTask = registerTask({
-		name: 'logo-renderer',
-		order: 80,
-		update(frame) {
-			if (!tick(frame.now, frame.dt)) {
-				frameTask?.sleep();
-			}
-		},
-	});
-	let isAnimating = false;
 
 	function shouldAnimate(): boolean {
 		return Math.abs(dampedMouse.x - mousePosition.x) > 0.001 || Math.abs(dampedMouse.y - mousePosition.y) > 0.001;
-	}
-
-	function requestFrameLoop(): void {
-		if (!isRunning || isAnimating || isDisposed || hasContextFailure) return;
-		isAnimating = true;
-		frameTask?.wake('logo:pointer');
 	}
 
 	function validateFrameOutput(): void {
@@ -811,16 +753,11 @@ export function createRenderer(
 		if (isRunning || isDisposed) return;
 		isRunning = true;
 		renderOnce();
-		if (shouldAnimate()) {
-			requestFrameLoop();
-		}
 	};
 
 	const stop = (): void => {
 		if (!isRunning) return;
 		isRunning = false;
-		isAnimating = false;
-		frameTask?.sleep();
 	};
 
 	const renderOnce = (): void => {
@@ -847,9 +784,6 @@ export function createRenderer(
 		mousePosition.y = Math.min(Math.max(mousePosition.y, 0), dimensions.height);
 		if (isRunning) {
 			renderOnce();
-			if (shouldAnimate()) {
-				requestFrameLoop();
-			}
 		}
 	};
 
@@ -880,9 +814,6 @@ export function createRenderer(
 		}
 		if (isRunning) {
 			renderOnce();
-			if (shouldAnimate()) {
-				requestFrameLoop();
-			}
 		}
 	};
 
@@ -891,15 +822,7 @@ export function createRenderer(
 		isDisposed = true;
 
 		stop();
-		frameTask?.dispose();
-		frameTask = undefined;
 
-		canvas.removeEventListener('pointerenter', handlePointerEnter);
-		canvas.removeEventListener('pointerleave', handlePointerLeave);
-		if (isTracking) {
-			canvas.removeEventListener('pointermove', handlePointerMove);
-			canvas.removeEventListener('mousemove', handlePointerMove);
-		}
 		canvas.removeEventListener('webglcontextlost', handleContextLost);
 		canvas.removeEventListener('webglcontextrestored', handleContextRestored);
 
@@ -923,8 +846,10 @@ export function createRenderer(
 	return {
 		resize,
 		setState,
+		setPointer,
 		start,
 		stop,
+		update,
 		renderOnce,
 		dispose,
 	};

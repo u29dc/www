@@ -1,8 +1,8 @@
-import { AppOwner, type Context } from '../core/owner';
+import { BaseModule, type Context, type Frame } from '../core/module';
 import type { DeviceProfile } from '../core/state';
 import { createRenderer, getWebglDiagnosticsMode, recordWebglDiagnostic, type Renderer, type State, type Theme } from '../graphics/canvas';
-import { canUseWebglMotion, getDeviceProfile, getDprCap, initDeviceProfile, subscribeDeviceProfile } from '../systems/device';
-import { onRouteBeforeSwap, onRouteLoad } from '../systems/route';
+import { canUseWebglMotion, getDeviceProfile, getDprCap, initDeviceProfile } from '../systems/device';
+import { onRouteBeforeSwap } from '../systems/route';
 
 type ThemePreference = Theme | 'system';
 
@@ -23,17 +23,16 @@ type Config = {
 };
 
 type Controller = {
+	update: (frame: Frame) => boolean;
+	resize: () => void;
 	dispose: () => void;
 };
 
 const LOGO_SELECTOR = '[data-logo]';
-const MOBILE_QUERY = '(max-width: 767px)';
-const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
-const DARK_QUERY = '(prefers-color-scheme: dark)';
+const MOBILE_WIDTH_PX = 767;
 
-class LogoOwner extends AppOwner {
+class LogoOwner extends BaseModule {
 	readonly name = 'logo';
-	override readonly order = 80;
 
 	private readonly controllers = new WeakMap<HTMLElement, Controller>();
 	private readonly activeControllers = new Set<Controller>();
@@ -44,8 +43,25 @@ class LogoOwner extends AppOwner {
 		this.bind();
 	}
 
-	init(): void {
+	override init(): void {
 		this.setupLogos();
+	}
+
+	override refresh(): void {
+		this.setupLogos();
+	}
+
+	override resize(): void {
+		for (const controller of this.activeControllers) controller.resize();
+		this.requestFrame('logo:resize');
+	}
+
+	override update(frame: Frame): boolean | void {
+		let needsNextFrame = false;
+		for (const controller of this.activeControllers) {
+			needsNextFrame = controller.update(frame) || needsNextFrame;
+		}
+		return needsNextFrame;
 	}
 
 	override dispose(): void {
@@ -59,7 +75,6 @@ class LogoOwner extends AppOwner {
 		this.initialized = true;
 
 		initDeviceProfile();
-		this.addCleanup(onRouteLoad(() => this.setupLogos()));
 		this.addCleanup(onRouteBeforeSwap(() => this.disposeLogos()));
 	}
 
@@ -81,12 +96,8 @@ class LogoOwner extends AppOwner {
 		if (!canvas || !fallback) return undefined;
 
 		const config = readConfig(element);
-		const mobileQuery = window.matchMedia(MOBILE_QUERY);
-		const motionQuery = window.matchMedia(REDUCED_MOTION_QUERY);
-		const darkQuery = window.matchMedia(DARK_QUERY);
-
-		let isMobile = mobileQuery.matches;
-		let prefersReducedMotion = motionQuery.matches;
+		let isMobile = readIsMobile();
+		let prefersReducedMotion = getDeviceProfile().motionQuality === 'reduced';
 		let isPageVisible = document.visibilityState === 'visible';
 		let isInView = !config.enableObservation || typeof IntersectionObserver === 'undefined';
 		let hasRenderedStatic = false;
@@ -96,11 +107,12 @@ class LogoOwner extends AppOwner {
 		let renderer: Renderer | null = null;
 		let deviceProfile = getDeviceProfile();
 		let rendererDprCap = getDprCap(deviceProfile);
+		let activeTheme: Theme = resolveTheme(config.theme, readDocumentTheme());
+		let activeStateKey = '';
+		let activeCapabilityKey = '';
 		let observer: IntersectionObserver | null = null;
-		let themeObserver: MutationObserver | null = null;
-		let unsubscribeProfile: (() => void) | undefined;
 
-		const currentState = (): State => buildState(config, isMobile, resolveTheme(config.theme, darkQuery));
+		const currentState = (): State => buildState(config, isMobile, activeTheme);
 
 		const shouldUseStaticFallback = (): boolean => !canUseWebglMotion(deviceProfile) || prefersReducedMotion;
 
@@ -137,6 +149,9 @@ class LogoOwner extends AppOwner {
 
 		const applyState = (): void => {
 			const nextState = currentState();
+			const nextStateKey = JSON.stringify(nextState);
+			if (nextStateKey === activeStateKey) return;
+			activeStateKey = nextStateKey;
 			if (isFallbackVisible) {
 				showFallback(element, canvas, fallback, nextState, {
 					failed: hasFatalFallback,
@@ -210,8 +225,6 @@ class LogoOwner extends AppOwner {
 
 		const maybeMount = (): void => {
 			if (isDisposed || renderer || hasFatalFallback || !isPageVisible) return;
-			if (config.enableObservation && !isInView) return;
-
 			const state = currentState();
 			if (shouldUseStaticFallback()) {
 				isFallbackVisible = true;
@@ -221,29 +234,16 @@ class LogoOwner extends AppOwner {
 				});
 				return;
 			}
+			if (config.enableObservation && !isInView) return;
 
 			mountRenderer();
 		};
 
-		const handleMobileChange = (): void => {
-			isMobile = mobileQuery.matches;
-			applyState();
-			applyActivity();
-		};
-
-		const handleMotionChange = (): void => {
-			prefersReducedMotion = motionQuery.matches;
-			if (!prefersReducedMotion && isFallbackVisible && !hasFatalFallback) {
-				isFallbackVisible = false;
-				hideFallback(element, canvas, fallback);
-			}
-			applyActivity();
-		};
-
-		const handleDeviceProfileChange = (nextProfile: DeviceProfile): void => {
+		const applyDeviceProfile = (nextProfile: DeviceProfile): void => {
 			const previousCanUseWebgl = canUseWebglMotion(deviceProfile);
 			const previousDprCap = rendererDprCap;
 			deviceProfile = nextProfile;
+			prefersReducedMotion = deviceProfile.motionQuality === 'reduced';
 			const nextDprCap = getDprCap(deviceProfile);
 
 			if (renderer && previousDprCap !== nextDprCap) {
@@ -262,54 +262,69 @@ class LogoOwner extends AppOwner {
 			applyActivity();
 		};
 
-		const handleThemeChange = (): void => {
+		const applyTheme = (theme: Theme): void => {
+			activeTheme = theme;
 			applyState();
 			applyActivity();
 		};
 
-		const handleVisibilityChange = (): void => {
-			isPageVisible = document.visibilityState === 'visible';
+		const applyMobile = (mobile: boolean): void => {
+			isMobile = mobile;
+			applyState();
 			applyActivity();
 		};
 
-		mobileQuery.addEventListener('change', handleMobileChange);
-		motionQuery.addEventListener('change', handleMotionChange);
-		darkQuery.addEventListener('change', handleThemeChange);
-		document.addEventListener('visibilitychange', handleVisibilityChange);
+		const applyVisibility = (visible: boolean): void => {
+			isPageVisible = visible;
+			applyActivity();
+		};
 
 		if (config.enableObservation && typeof IntersectionObserver !== 'undefined') {
 			observer = new IntersectionObserver(
 				([entry]) => {
 					isInView = Boolean(entry?.isIntersecting);
 					applyActivity();
+					this.requestFrame('logo:intersection');
 				},
 				{ rootMargin: '200px', threshold: 0 },
 			);
 			observer.observe(element);
 		}
 
-		themeObserver = new MutationObserver(handleThemeChange);
-		themeObserver.observe(document.documentElement, {
-			attributes: true,
-			attributeFilter: ['data-theme'],
-		});
-
 		maybeMount();
-		unsubscribeProfile = subscribeDeviceProfile(handleDeviceProfileChange);
 
 		const controller: Controller = {
+			update: (frame) => {
+				const nextTheme = resolveTheme(config.theme, frame.theme.scheme);
+				const nextMobile = frame.profile.signals.viewportWidth <= MOBILE_WIDTH_PX;
+				const nextCapabilityKey = [frame.profile.generation, frame.visible ? 'visible' : 'hidden', isInView ? 'in-view' : 'out-of-view', nextMobile ? 'mobile' : 'desktop', nextTheme].join(
+					':',
+				);
+
+				if (nextCapabilityKey !== activeCapabilityKey) {
+					activeCapabilityKey = nextCapabilityKey;
+					applyDeviceProfile(frame.profile);
+					applyTheme(nextTheme);
+					applyMobile(nextMobile);
+					applyVisibility(frame.visible);
+				}
+
+				if (renderer && canUseWebglMotion(deviceProfile) && !prefersReducedMotion && frame.input.pointer.path.includes(element)) {
+					renderer.setPointer(frame.input.pointer.x, frame.input.pointer.y);
+				}
+
+				return renderer?.update(frame.now, frame.dt) ?? false;
+			},
+			resize: () => {
+				applyMobile(readIsMobile());
+				renderer?.resize({ width: currentState().width, height: currentState().height });
+			},
 			dispose: () => {
 				if (isDisposed) return;
 				isDisposed = true;
 				renderer?.dispose();
 				renderer = null;
 				observer?.disconnect();
-				themeObserver?.disconnect();
-				mobileQuery.removeEventListener('change', handleMobileChange);
-				motionQuery.removeEventListener('change', handleMotionChange);
-				darkQuery.removeEventListener('change', handleThemeChange);
-				document.removeEventListener('visibilitychange', handleVisibilityChange);
-				unsubscribeProfile?.();
 				this.controllers.delete(element);
 				this.activeControllers.delete(controller);
 			},
@@ -360,14 +375,22 @@ const readConfig = (element: HTMLElement): Config => {
 	};
 };
 
-const resolveTheme = (preference: ThemePreference, darkQuery: MediaQueryList): Theme => {
+const resolveTheme = (preference: ThemePreference, scheme: Theme): Theme => {
 	if (preference === 'light' || preference === 'dark') return preference;
 
 	const rootTheme = document.documentElement.dataset['theme'];
 	if (rootTheme === 'light' || rootTheme === 'dark') return rootTheme;
 
-	return darkQuery.matches ? 'dark' : 'light';
+	return scheme;
 };
+
+const readDocumentTheme = (): Theme => {
+	const rootTheme = document.documentElement.dataset['theme'];
+	if (rootTheme === 'light' || rootTheme === 'dark') return rootTheme;
+	return 'light';
+};
+
+const readIsMobile = (): boolean => window.innerWidth <= MOBILE_WIDTH_PX;
 
 const buildState = (config: Config, isMobile: boolean, theme: Theme): State => {
 	const width = isMobile ? config.mobileWidth : config.width;

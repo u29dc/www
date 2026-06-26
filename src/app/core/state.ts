@@ -45,9 +45,76 @@ export type DeviceProfile = {
 };
 
 export type SiteRoute = 'home' | 'detail';
+export type RoutePageState = 'idle' | 'exiting' | 'swapping' | 'loaded';
 
 export type RouteState = {
 	current: SiteRoute;
-	page: 'idle' | 'exiting' | 'swapping' | 'loaded';
+	pathname: string;
+	hash: string;
+	page: RoutePageState;
+	pageState: RoutePageState;
+	generation: number;
+	from?: SiteRoute;
 	to?: SiteRoute;
+};
+
+export type PointerState = {
+	x: number;
+	y: number;
+	nx: number;
+	ny: number;
+	dx: number;
+	dy: number;
+	vx: number;
+	vy: number;
+	isDown: boolean;
+	wasPressed: boolean;
+	wasReleased: boolean;
+	activePointerType: string;
+	target: EventTarget | null;
+	relatedTarget: EventTarget | null;
+	path: EventTarget[];
+	exited: boolean;
+};
+
+export type WheelState = {
+	dx: number;
+	dy: number;
+	source: 'none' | 'wheel';
+};
+
+export type KeyboardState = {
+	lastKey: string;
+	hadKeyboardInput: boolean;
+	activeKeys: string[];
+};
+
+export type InputState = {
+	generation: number;
+	pointer: PointerState;
+	wheel: WheelState;
+	keyboard: KeyboardState;
+};
+
+export type ScrollSource = 'wheel' | 'anchor' | 'route' | 'native';
+export type ScrollDirection = -1 | 0 | 1;
+
+export type ScrollState = {
+	actual: number;
+	animated: number;
+	target: number;
+	velocity: number;
+	direction: ScrollDirection;
+	limit: number;
+	active: boolean;
+	source: ScrollSource;
+	enabled: boolean;
+};
+
+export type ThemeScheme = 'light' | 'dark';
+
+export type ThemeState = {
+	scheme: ThemeScheme;
+	mode: ThemeScheme | 'system';
+	generation: number;
 };

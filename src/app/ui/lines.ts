@@ -1,9 +1,8 @@
-import { onNextFrame } from '../core/loop';
-import { AppOwner, type Context } from '../core/owner';
+import { BaseModule, type Context } from '../core/module';
 import { delayTimer, setTimer, type TimerHandle } from '../core/timer';
 import { MOTION, readDurationToken, readNumberToken } from '../core/tokens';
 import { getDeviceProfile, getLineRevealProfile, initDeviceProfile, subscribeDeviceProfile } from '../systems/device';
-import { onRouteBeforeSwap, onRouteLoad, type RouteSwap } from '../systems/route';
+import { onRouteBeforeSwap, type RouteSwap } from '../systems/route';
 import {
 	cancelPreparedLineReveal,
 	initLinePlanCache,
@@ -28,9 +27,8 @@ type ObserveTargetsOptions = {
 	waitForLayout?: boolean;
 };
 
-class LinesOwner extends AppOwner {
+class LinesOwner extends BaseModule {
 	readonly name = 'lines';
-	override readonly order = 50;
 
 	private preparedTargets = new Map<HTMLElement, PreparedLineReveal>();
 	private queuedSequences = new Set<PreparedLineReveal[]>();
@@ -55,7 +53,14 @@ class LinesOwner extends AppOwner {
 		this.bind();
 	}
 
-	init(): void {
+	override init(): void {
+		this.runSafely(() => {
+			this.prepareDocument();
+			this.scheduleObserveTargets();
+		});
+	}
+
+	override refresh(): void {
 		this.runSafely(() => {
 			this.prepareDocument();
 			this.scheduleObserveTargets();
@@ -75,7 +80,6 @@ class LinesOwner extends AppOwner {
 		initDeviceProfile();
 		initLinePlanCache();
 		this.addCleanup(onRouteBeforeSwap(this.handleBeforeSwap));
-		this.addCleanup(onRouteLoad(() => this.runSafely(() => this.scheduleObserveTargets())));
 		this.addCleanup(
 			subscribeDeviceProfile((profile) => {
 				const nextLineProfileKey = `${profile.motionQuality}:${profile.lineProfile}`;
@@ -164,7 +168,7 @@ class LinesOwner extends AppOwner {
 	private scheduleObserveTargets(): void {
 		this.observeFrameCancel?.();
 
-		this.observeFrameCancel = onNextFrame('lines.observe', () => {
+		this.observeFrameCancel = this.nextFrame('lines.observe', () => {
 			this.observeFrameCancel = undefined;
 			this.runSafely(() => this.observeTargets());
 		});
@@ -186,7 +190,7 @@ class LinesOwner extends AppOwner {
 
 		if (options.waitForLayout) {
 			await waitForFonts(signal);
-			await nextFrame(signal);
+			await this.waitForNextFrame(signal);
 		}
 
 		if (signal.aborted) return;
@@ -255,7 +259,7 @@ class LinesOwner extends AppOwner {
 	}
 
 	private playSequence(sequence: PreparedLineReveal[], root: HTMLElement): void {
-		const cancelFrame = onNextFrame('lines.play', () => {
+		const cancelFrame = this.nextFrame('lines.play', () => {
 			this.sequenceFrameCancels.delete(cancelFrame);
 			let maxAnimationMs = 0;
 			let maxTotalMs = 0;
@@ -414,6 +418,23 @@ class LinesOwner extends AppOwner {
 			this.fallbackDocument(fallbackRoot);
 		}
 	}
+
+	private waitForNextFrame(signal: AbortSignal): Promise<void> {
+		return new Promise((resolve) => {
+			let timeout: TimerHandle | undefined;
+			let cancelFrame: (() => void) | undefined;
+			const finish = (): void => {
+				timeout?.cancel();
+				cancelFrame?.();
+				signal.removeEventListener('abort', finish);
+				resolve();
+			};
+
+			timeout = setTimer('lines.next-frame.fallback', MOTION.line.frameWaitMs, finish, { signal });
+			cancelFrame = this.nextFrame('lines.next-frame', finish);
+			signal.addEventListener('abort', finish, { once: true });
+		});
+	}
 }
 
 const readLineState = (target: HTMLElement): LineRevealState | undefined => {
@@ -539,22 +560,6 @@ const waitForFonts = async (signal: AbortSignal): Promise<void> => {
 
 	await Promise.race([fonts.ready.then(() => undefined), delay(MOTION.line.fontWaitMs, signal)]);
 };
-
-const nextFrame = (signal: AbortSignal): Promise<void> =>
-	new Promise((resolve) => {
-		let timeout: TimerHandle | undefined;
-		let cancelFrame: (() => void) | undefined;
-		const finish = (): void => {
-			timeout?.cancel();
-			cancelFrame?.();
-			signal.removeEventListener('abort', finish);
-			resolve();
-		};
-
-		timeout = setTimer('lines.next-frame.fallback', MOTION.line.frameWaitMs, finish, { signal });
-		cancelFrame = onNextFrame('lines.next-frame', finish);
-		signal.addEventListener('abort', finish, { once: true });
-	});
 
 const isInViewport = (element: HTMLElement): boolean => {
 	const rect = element.getBoundingClientRect();

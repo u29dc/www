@@ -1,4 +1,4 @@
-import { AppOwner, type Context, type Frame } from '../core/owner';
+import { BaseModule, type Context, type Frame } from '../core/module';
 import {
 	type DeviceProfile,
 	type DeviceProfileConfidence,
@@ -58,9 +58,8 @@ const DEFAULT_DPR = 1;
 const DEFAULT_VIEWPORT_WIDTH = 1024;
 const DEFAULT_VIEWPORT_HEIGHT = 768;
 
-class DeviceOwner extends AppOwner {
+class DeviceOwner extends BaseModule {
 	readonly name = 'device';
-	override readonly order = 10;
 
 	private subscribers = new Set<DeviceSubscriber>();
 	private profile = createDefaultProfile();
@@ -81,11 +80,9 @@ class DeviceOwner extends AppOwner {
 	private finePointerQuery: MediaQueryList | undefined;
 	private hoverQuery: MediaQueryList | undefined;
 	private lastDprBucket = 0;
-	private wake: (reason?: string) => void = () => {};
 
 	override preinit(context: Context): void {
 		super.preinit(context);
-		this.wake = context.wake;
 		this.initProfile();
 		if (this.routeBound) return;
 		this.routeBound = true;
@@ -93,7 +90,7 @@ class DeviceOwner extends AppOwner {
 		this.addCleanup(onRouteLoad(() => this.applyToDocument()));
 	}
 
-	update(frame: Frame): void | false {
+	override update(frame: Frame): boolean | void {
 		if (!this.calibrating) return false;
 
 		if (this.calibrationPrevious > 0 && frame.now > this.calibrationPrevious) {
@@ -101,7 +98,7 @@ class DeviceOwner extends AppOwner {
 		}
 		this.calibrationPrevious = frame.now;
 
-		if (this.calibrationSamples.length < DEVICE_THRESHOLDS.calibrationFrames) return;
+		if (this.calibrationSamples.length < DEVICE_THRESHOLDS.calibrationFrames) return true;
 
 		this.calibrating = false;
 		const average = this.calibrationSamples.reduce((sum, value) => sum + value, 0) / this.calibrationSamples.length;
@@ -193,6 +190,7 @@ class DeviceOwner extends AppOwner {
 		this.profile = nextProfile;
 		this.applyToDocument(this.profile);
 		this.notify();
+		this.requestFrame('device:profile');
 		return this.profile;
 	}
 
@@ -307,7 +305,7 @@ class DeviceOwner extends AppOwner {
 			this.calibrationSamples = [];
 			this.calibrationPrevious = 0;
 			this.calibrating = true;
-			this.wake('device:calibration');
+			this.requestFrame('device:calibration');
 		};
 
 		const win = window as WindowWithIdle;

@@ -1,6 +1,3 @@
-import { enqueueRuntimeCallback, setTimerTraceProvider } from './loop';
-import type { RuntimeTraceTimer } from './owner';
-
 export type TimerHandle = {
 	id: number;
 	name: string;
@@ -17,23 +14,20 @@ type TimerEntry = {
 	cancelled: boolean;
 };
 
+type TimerScheduler = (name: string, callback: () => void) => void;
+
 const timers = new Map<number, TimerEntry>();
 let nextTimerId = 0;
+let scheduleTimerCallback: TimerScheduler = (_name, callback) => callback();
 
-const getTimerTrace = (): RuntimeTraceTimer[] => {
-	const now = performance.now();
-	return Array.from(timers.values())
-		.filter((timer) => !timer.cancelled)
-		.map((timer) => ({
-			id: timer.id,
-			name: timer.name,
-			dueAt: timer.dueAt,
-			remainingMs: Math.max(0, timer.dueAt - now),
-		}))
-		.toSorted((a, b) => a.dueAt - b.dueAt || a.id - b.id);
+export const setTimerScheduler = (scheduler: TimerScheduler): (() => void) => {
+	scheduleTimerCallback = scheduler;
+	return () => {
+		if (scheduleTimerCallback === scheduler) {
+			scheduleTimerCallback = (_name, callback) => callback();
+		}
+	};
 };
-
-setTimerTraceProvider(getTimerTrace);
 
 export const setTimer = (name: string, delayMs: number, callback: () => void, options?: { signal?: AbortSignal }): TimerHandle => {
 	nextTimerId += 1;
@@ -55,7 +49,7 @@ export const setTimer = (name: string, delayMs: number, callback: () => void, op
 			if (!timer || timer.cancelled) return;
 			timers.delete(id);
 			options?.signal?.removeEventListener('abort', cancel);
-			enqueueRuntimeCallback(`timer:${name}`, timer.callback);
+			scheduleTimerCallback(`timer:${name}`, timer.callback);
 		},
 		Math.max(0, delayMs),
 	);

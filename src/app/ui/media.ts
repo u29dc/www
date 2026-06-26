@@ -1,27 +1,30 @@
-import { AppOwner, type Context } from '../core/owner';
+import { BaseModule, type Context } from '../core/module';
 import { MOTION } from '../core/tokens';
 import { getDeviceProfile, initDeviceProfile, subscribeDeviceProfile } from '../systems/device';
-import { onRouteBeforeSwap, onRouteLoad } from '../systems/route';
+import { onRouteBeforeSwap } from '../systems/route';
 
 const VIDEO_SELECTOR = 'video[data-media-video]';
 const IMAGE_SELECTOR = 'img[data-media-asset]';
 
-class MediaOwner extends AppOwner {
+class MediaOwner extends BaseModule {
 	readonly name = 'media';
-	override readonly order = 60;
 
 	private initialized = false;
 	private readonly videos = new Set<HTMLVideoElement>();
 	private readonly images = new Set<HTMLImageElement>();
 	private observer: IntersectionObserver | undefined;
-	private readonly reduceMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
 
 	override preinit(context: Context): void {
 		super.preinit(context);
 		this.bind();
 	}
 
-	init(): void {
+	override init(): void {
+		this.observeVideos();
+		this.observeImages();
+	}
+
+	override refresh(): void {
 		this.observeVideos();
 		this.observeImages();
 	}
@@ -36,16 +39,8 @@ class MediaOwner extends AppOwner {
 		this.initialized = true;
 
 		initDeviceProfile();
-		this.reduceMotionQuery.addEventListener('change', this.handleMotionChange);
-		this.addCleanup(() => this.reduceMotionQuery.removeEventListener('change', this.handleMotionChange));
 		this.addCleanup(subscribeDeviceProfile(this.handleMotionChange));
 		this.addCleanup(onRouteBeforeSwap(() => this.cleanupMedia()));
-		this.addCleanup(
-			onRouteLoad(() => {
-				this.observeVideos();
-				this.observeImages();
-			}),
-		);
 	}
 
 	private ensureObserver(): IntersectionObserver {
@@ -75,7 +70,7 @@ class MediaOwner extends AppOwner {
 
 	private shouldAutoplay(video: HTMLVideoElement): boolean {
 		const profile = getDeviceProfile();
-		return video.dataset['autoplay'] === 'true' && profile.motionQuality !== 'reduced' && profile.networkProfile !== 'save-data' && !this.reduceMotionQuery.matches;
+		return video.dataset['autoplay'] === 'true' && profile.motionQuality !== 'reduced' && profile.networkProfile !== 'save-data';
 	}
 
 	private playVideo(video: HTMLVideoElement): void {
@@ -130,7 +125,7 @@ class MediaOwner extends AppOwner {
 
 	private readonly handleMotionChange = (): void => {
 		const profile = getDeviceProfile();
-		const shouldStopMotion = this.reduceMotionQuery.matches || profile.motionQuality === 'reduced' || profile.networkProfile === 'save-data';
+		const shouldStopMotion = profile.motionQuality === 'reduced' || profile.networkProfile === 'save-data';
 
 		for (const video of this.videos) {
 			if (shouldStopMotion) {

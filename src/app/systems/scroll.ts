@@ -1,38 +1,22 @@
-import { AppOwner, type Context, type Frame } from '../core/owner';
+import { BaseModule, type Context, type Frame } from '../core/module';
+import type { ScrollDirection, ScrollSource, ScrollState } from '../core/state';
+import { focusElement, pathClosest } from '../utils/dom';
 import { clamp, damp } from '../utils/math';
-import { getDeviceProfile, initDeviceProfile, subscribeDeviceProfile } from './device';
-import { onRouteAfterSwap, onRouteLoad } from './route';
-
-type ScrollSource = 'wheel' | 'anchor' | 'route' | 'native';
-type ScrollDirection = -1 | 0 | 1;
-type ScrollStateSnapshot = {
-	actual: number;
-	animated: number;
-	target: number;
-	velocity: number;
-	direction: ScrollDirection;
-	limit: number;
-	active: boolean;
-	source: ScrollSource;
-	enabled: boolean;
-};
+import { initDeviceProfile, subscribeDeviceProfile } from './device';
+import { type InputClickIntent, type InputWheelIntent, onInputClickIntent, onInputWheelIntent } from './input';
+import { onRouteAfterSwap, onRouteLoad, setRouteHash } from './route';
 
 type AnimatorOptions = {
 	lerp: number;
 	settlePx: number;
 };
 
-const ENABLE_QUERY = '(hover: hover) and (pointer: fine)';
-const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 const SCROLL_LERP = 0.1;
 const SETTLE_PX = 0.5;
-const LINE_HEIGHT = 100 / 6;
-const PAGE_RATIO = 0.9;
-const NATIVE_SCROLL_SELECTOR = '[data-native-scroll], [data-scroll-native], textarea, select, iframe';
+const NATIVE_SCROLL_SELECTOR = '[data-native-scroll], [data-scroll-native], textarea, select, iframe, [contenteditable=""], [contenteditable="true"]';
 
-class ScrollOwner extends AppOwner {
+class ScrollOwner extends BaseModule {
 	readonly name = 'scroll';
-	override readonly order = 30;
 
 	private initialized = false;
 	private enabled = false;
@@ -45,34 +29,30 @@ class ScrollOwner extends AppOwner {
 	private direction: ScrollDirection = 0;
 	private limit = 0;
 	private programmatic = false;
-	private writeY: number | undefined;
-	private wake: (reason?: string) => void = () => {};
-	private sleep: () => void = () => {};
-	private readonly enableQuery = window.matchMedia(ENABLE_QUERY);
-	private readonly reduceMotionQuery = window.matchMedia(REDUCED_MOTION_QUERY);
 	private readonly animator = new ScrollAnimator({ lerp: SCROLL_LERP, settlePx: SETTLE_PX });
 
 	override preinit(context: Context): void {
 		super.preinit(context);
-		this.wake = context.wake;
-		this.sleep = context.sleep;
 		this.bind();
 	}
 
-	init(): void {
+	override init(): void {
 		this.syncFromWindow('route');
 		this.applyCapability();
 	}
 
-	resize(): void {
+	override resize(): void {
 		this.measureLimit();
 		this.clampModelToLimit();
 	}
 
-	update(frame: Frame): void | false {
+	override update(frame: Frame): boolean | void {
+		if (frame.input.pointer.wasPressed || frame.input.keyboard.hadKeyboardInput) {
+			this.handleInterrupt();
+		}
+
 		if (!this.active || !frame.visible) {
-			this.sleep();
-			return;
+			return false;
 		}
 
 		this.animator.retarget(this.target);
@@ -80,31 +60,22 @@ class ScrollOwner extends AppOwner {
 		this.animated = this.animator.value;
 		this.velocity = this.animator.velocity;
 		this.direction = Math.sign(this.velocity) as ScrollDirection;
-		this.writeY = this.animated;
 
 		if (done) {
 			this.active = false;
 			this.source = 'native';
 		}
-	}
 
-	write(): void {
-		if (this.writeY === undefined) return;
+		this.actual = this.animated;
+		if (Math.abs(window.scrollY - this.animated) > 0.1) {
+			this.programmatic = true;
+			window.scrollTo(0, this.animated);
+		}
 
-		const y = this.writeY;
-		this.writeY = undefined;
-		this.actual = y;
-		if (Math.abs(window.scrollY - y) <= 0.1) return;
-
-		this.programmatic = true;
-		window.scrollTo(0, y);
-	}
-
-	post(): void {
-		if (this.active) return;
+		if (this.active) return true;
 		this.programmatic = false;
 		this.source = 'native';
-		this.sleep();
+		return false;
 	}
 
 	override dispose(): void {
@@ -112,7 +83,7 @@ class ScrollOwner extends AppOwner {
 		this.syncFromWindow('native');
 	}
 
-	getState(): ScrollStateSnapshot {
+	getState(): ScrollState {
 		return {
 			actual: this.actual,
 			animated: this.animated,
@@ -131,18 +102,10 @@ class ScrollOwner extends AppOwner {
 		this.initialized = true;
 
 		initDeviceProfile();
-		window.addEventListener('wheel', this.handleWheel, { passive: false });
-		this.addCleanup(() => window.removeEventListener('wheel', this.handleWheel));
 		window.addEventListener('scroll', this.handleNativeScroll, { passive: true });
 		this.addCleanup(() => window.removeEventListener('scroll', this.handleNativeScroll));
-		window.addEventListener('keydown', this.handleInterrupt, { passive: true });
-		this.addCleanup(() => window.removeEventListener('keydown', this.handleInterrupt));
-		window.addEventListener('pointerdown', this.handleInterrupt, { passive: true });
-		this.addCleanup(() => window.removeEventListener('pointerdown', this.handleInterrupt));
-		this.enableQuery.addEventListener('change', this.applyCapability);
-		this.addCleanup(() => this.enableQuery.removeEventListener('change', this.applyCapability));
-		this.reduceMotionQuery.addEventListener('change', this.applyCapability);
-		this.addCleanup(() => this.reduceMotionQuery.removeEventListener('change', this.applyCapability));
+		this.addCleanup(onInputWheelIntent(this.handleWheelIntent));
+		this.addCleanup(onInputClickIntent(this.handleClickIntent));
 		this.addCleanup(subscribeDeviceProfile(this.applyCapability));
 		this.addCleanup(onRouteAfterSwap(this.handleRouteSync));
 		this.addCleanup(onRouteLoad(this.handleRouteSync));
@@ -179,19 +142,18 @@ class ScrollOwner extends AppOwner {
 		this.direction = 0;
 		this.source = source;
 		this.active = false;
-		this.writeY = undefined;
 		this.programmatic = false;
 		this.animator.sync(y);
-		this.sleep();
 	}
 
-	private shouldEnhance(): boolean {
-		const profile = getDeviceProfile();
+	private shouldEnhance(frameProfile = this.context?.profile): boolean {
+		const profile = frameProfile;
+		if (!profile) return false;
 		return (
-			this.enableQuery.matches &&
-			!this.reduceMotionQuery.matches &&
+			profile.signals.hover &&
 			profile.motionQuality !== 'reduced' &&
 			profile.inputProfile !== 'coarse' &&
+			profile.inputProfile !== 'unknown' &&
 			profile.displayProfile !== 'small' &&
 			profile.networkProfile !== 'save-data' &&
 			profile.tier !== 'low'
@@ -202,9 +164,10 @@ class ScrollOwner extends AppOwner {
 		this.enabled = this.shouldEnhance();
 		document.documentElement.dataset['smoothScroll'] = this.enabled ? 'enhanced' : 'native';
 		if (!this.enabled) this.syncFromWindow('native');
+		this.requestFrame('scroll:capability');
 	};
 
-	private startWheelScroll(deltaY: number): void {
+	private startScroll(deltaY: number, source: ScrollSource): void {
 		this.measureLimit();
 		if (!this.active) {
 			const y = clamp(window.scrollY, 0, this.limit);
@@ -215,17 +178,52 @@ class ScrollOwner extends AppOwner {
 		}
 
 		this.target = clamp(this.target + deltaY, 0, this.limit);
-		this.source = 'wheel';
+		this.source = source;
 		this.active = true;
 		this.animator.retarget(this.target);
-		this.wake('scroll:wheel');
+		this.requestFrame(`scroll:${source}`);
 	}
 
-	private readonly handleWheel = (event: WheelEvent): void => {
-		if (shouldUseNativeWheel(event, this.enabled)) return;
+	private scrollTo(y: number, source: ScrollSource): void {
+		this.measureLimit();
+		const target = clamp(y, 0, this.limit);
+		if (!this.enabled) {
+			window.scrollTo(0, target);
+			this.syncFromWindow(source);
+			return;
+		}
 
-		event.preventDefault();
-		this.startWheelScroll(normalizeWheelDeltaY(event));
+		const current = clamp(window.scrollY, 0, this.limit);
+		this.actual = current;
+		this.animated = current;
+		this.target = target;
+		this.source = source;
+		this.active = true;
+		this.animator.start(current, target);
+		this.requestFrame(`scroll:${source}`);
+	}
+
+	private readonly handleWheelIntent = (intent: InputWheelIntent): void => {
+		if (shouldUseNativeWheel(intent, this.enabled)) return;
+
+		intent.preventDefault();
+		this.startScroll(intent.dy, 'wheel');
+	};
+
+	private readonly handleClickIntent = (intent: InputClickIntent): void => {
+		if (!intent.isPrimary || intent.defaultPrevented || intent.isModified) return;
+		const anchor = pathClosest<HTMLAnchorElement>(intent.path, 'a[href]');
+		if (!anchor || anchor.target || anchor.download) return;
+		const url = new URL(anchor.href, window.location.href);
+		if (url.origin !== window.location.origin || url.pathname !== window.location.pathname || url.search !== window.location.search || !url.hash) return;
+		const target = findAnchorTarget(url.hash);
+		if (!target) return;
+
+		intent.preventDefault();
+		const y = target === document.documentElement ? 0 : target.getBoundingClientRect().top + window.scrollY;
+		this.scrollTo(y, 'anchor');
+		setRouteHash(url.hash);
+		focusElement(target);
 	};
 
 	private readonly handleNativeScroll = (): void => {
@@ -309,18 +307,19 @@ class ScrollAnimator {
 	}
 }
 
-const normalizeWheelDeltaY = (event: WheelEvent): number => {
-	if (event.deltaMode === WheelEvent.DOM_DELTA_LINE) return event.deltaY * LINE_HEIGHT;
-	if (event.deltaMode === WheelEvent.DOM_DELTA_PAGE) return event.deltaY * window.innerHeight * PAGE_RATIO;
-	return event.deltaY;
+const shouldUseNativeWheel = (intent: InputWheelIntent, enabled: boolean): boolean => {
+	if (!enabled || intent.defaultPrevented) return true;
+	if (intent.ctrlKey || intent.metaKey || intent.shiftKey) return true;
+	return Boolean(pathClosest<Element>(intent.path, NATIVE_SCROLL_SELECTOR));
 };
 
-const shouldUseNativeWheel = (event: WheelEvent, enabled: boolean): boolean => {
-	if (!enabled || event.defaultPrevented) return true;
-	if (event.ctrlKey || event.metaKey || event.shiftKey) return true;
-	if (!(event.target instanceof Element)) return false;
-	return Boolean(event.target.closest(NATIVE_SCROLL_SELECTOR));
+const findAnchorTarget = (hash: string): HTMLElement | undefined => {
+	if (hash === '#top') return document.documentElement;
+	const id = decodeURIComponent(hash.slice(1));
+	if (!id) return document.documentElement;
+	const target = document.getElementById(id) ?? document.querySelector<HTMLElement>(`[name="${CSS.escape(id)}"]`);
+	return target instanceof HTMLElement ? target : undefined;
 };
 
 export const scroll = new ScrollOwner();
-export const getScrollState = (): ScrollStateSnapshot => scroll.getState();
+export const getScrollState = (): ScrollState => scroll.getState();

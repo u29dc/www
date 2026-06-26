@@ -1,10 +1,10 @@
-import { onNextFrame } from '../core/loop';
-import { AppOwner, type Context } from '../core/owner';
+import { BaseModule, type Context, type Frame } from '../core/module';
 import { setTimer, type TimerHandle } from '../core/timer';
 import { MOTION } from '../core/tokens';
 import { clamp } from '../utils/math';
 import { canUseHoverVideo, getDeviceProfile, initDeviceProfile, subscribeDeviceProfile } from '../systems/device';
-import { onRouteBeforeSwap, onRouteLoad } from '../systems/route';
+import { type InputPointerIntent, onInputPointerIntent } from '../systems/input';
+import { onRouteBeforeSwap } from '../systems/route';
 
 type PreviewKind = 'image' | 'video';
 type PreviewMode = 'artifact' | 'link';
@@ -47,15 +47,9 @@ type VideoFrameRequester = HTMLVideoElement & {
 const TARGET_SELECTOR = '[data-hover-preview-target]';
 const SCOPE_SELECTOR = '[data-hover-preview-scope]';
 const REVEAL_SELECTOR = '[data-reveal]';
-const ENABLE_QUERY = '(hover: hover) and (pointer: fine)';
-const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
-
-class PreviewOwner extends AppOwner {
+class PreviewOwner extends BaseModule {
 	readonly name = 'preview';
-	override readonly order = 70;
 
-	private readonly enableQuery = window.matchMedia(ENABLE_QUERY);
-	private readonly reduceMotionQuery = window.matchMedia(REDUCED_MOTION_QUERY);
 	private readonly slots = new Map<string, PreviewSlot>();
 	private elements: PreviewElements | undefined;
 	private activeTarget: HTMLElement | undefined;
@@ -82,39 +76,42 @@ class PreviewOwner extends AppOwner {
 	private positionActive = false;
 	private shouldWritePosition = false;
 	private shouldSleepAfterWrite = false;
-	private wake: (reason?: string) => void = () => {};
-	private sleep: () => void = () => {};
 
 	override preinit(context: Context): void {
 		super.preinit(context);
-		this.wake = context.wake;
-		this.sleep = context.sleep;
 		this.bind();
 	}
 
-	init(): void {
+	override init(): void {
 		this.hasPrewarmedImages = false;
 		this.prewarmImagePreviews();
 	}
 
-	update(): void {
+	override refresh(): void {
+		this.hasPrewarmedImages = false;
+		this.prewarmImagePreviews();
+	}
+
+	override resize(): void {
+		this.recalculatePreviewSize();
+		this.requestPositionFrame();
+	}
+
+	override update(frame: Frame): boolean | void {
+		if (!frame.visible) this.pauseAllVideos();
 		if (!this.positionActive) {
-			this.sleep();
-			return;
+			return false;
 		}
 		this.updatePosition();
-	}
-
-	write(): void {
-		if (!this.shouldWritePosition) return;
-		this.shouldWritePosition = false;
-		this.applyPosition(this.currentX, this.currentY);
-	}
-
-	post(): void {
-		if (!this.shouldSleepAfterWrite) return;
-		this.shouldSleepAfterWrite = false;
-		this.sleep();
+		if (this.shouldWritePosition) {
+			this.shouldWritePosition = false;
+			this.applyPosition(this.currentX, this.currentY);
+		}
+		if (this.shouldSleepAfterWrite) {
+			this.shouldSleepAfterWrite = false;
+			return false;
+		}
+		return this.positionActive;
 	}
 
 	override dispose(): void {
@@ -128,38 +125,24 @@ class PreviewOwner extends AppOwner {
 		this.initialized = true;
 
 		initDeviceProfile();
-		window.addEventListener('resize', this.handleResize, { passive: true });
-		this.addCleanup(() => window.removeEventListener('resize', this.handleResize));
-		document.addEventListener('pointerover', this.handlePointerOver, { passive: true });
-		this.addCleanup(() => document.removeEventListener('pointerover', this.handlePointerOver));
-		document.addEventListener('pointermove', this.handlePointerMove, { passive: true });
-		this.addCleanup(() => document.removeEventListener('pointermove', this.handlePointerMove));
-		document.addEventListener('pointerout', this.handlePointerOut, { passive: true });
-		this.addCleanup(() => document.removeEventListener('pointerout', this.handlePointerOut));
-		document.addEventListener('visibilitychange', this.handleVisibilityChange);
-		this.addCleanup(() => document.removeEventListener('visibilitychange', this.handleVisibilityChange));
-		this.enableQuery.addEventListener('change', this.handleCapabilityChange);
-		this.addCleanup(() => this.enableQuery.removeEventListener('change', this.handleCapabilityChange));
-		this.reduceMotionQuery.addEventListener('change', this.handleMotionChange);
-		this.addCleanup(() => this.reduceMotionQuery.removeEventListener('change', this.handleMotionChange));
+		this.addCleanup(onInputPointerIntent(this.handlePointerIntent));
 		document.addEventListener('line-reveal-group-complete', this.prewarmImagePreviews);
 		this.addCleanup(() => document.removeEventListener('line-reveal-group-complete', this.prewarmImagePreviews));
-		this.addCleanup(
-			onRouteLoad(() => {
-				this.hasPrewarmedImages = false;
-				this.prewarmImagePreviews();
-			}),
-		);
 		this.addCleanup(onRouteBeforeSwap(() => this.disposePreviewElements()));
 		this.addCleanup(subscribeDeviceProfile(this.handleDeviceProfileChange));
 	}
 
 	private isEnabled(): boolean {
-		return this.enableQuery.matches;
+		const profile = getDeviceProfile();
+		return profile.signals.hover && profile.inputProfile !== 'coarse' && profile.inputProfile !== 'unknown';
 	}
 
 	private canPlayPreviewVideo(): boolean {
-		return canUseHoverVideo(getDeviceProfile()) && !this.reduceMotionQuery.matches && !document.hidden;
+		return canUseHoverVideo(getDeviceProfile()) && !document.hidden;
+	}
+
+	private isReducedMotion(): boolean {
+		return getDeviceProfile().motionQuality === 'reduced';
 	}
 
 	private isRevealReady(target: HTMLElement): boolean {
@@ -250,7 +233,7 @@ class PreviewOwner extends AppOwner {
 		if (!instant) return;
 
 		slot.root.getBoundingClientRect();
-		onNextFrame('preview.slot.instant', () => {
+		this.nextFrame('preview.slot.instant', () => {
 			if (slot.root.dataset['motion'] === 'instant') {
 				delete slot.root.dataset['motion'];
 			}
@@ -261,7 +244,7 @@ class PreviewOwner extends AppOwner {
 		this.clearSlotMotionHandle(slot);
 		slot.root.dataset['flow'] = flow;
 
-		if (this.reduceMotionQuery.matches) {
+		if (this.isReducedMotion()) {
 			slot.root.dataset['state'] = 'active';
 			this.setSlotOffset(slot, '0%');
 			return;
@@ -290,7 +273,7 @@ class PreviewOwner extends AppOwner {
 		this.clearSlotMotionHandle(slot);
 		slot.root.dataset['flow'] = flow;
 
-		if (this.reduceMotionQuery.matches) {
+		if (this.isReducedMotion()) {
 			this.setSlotIdle(slot);
 			return;
 		}
@@ -464,7 +447,6 @@ class PreviewOwner extends AppOwner {
 	private stopAnimation(): void {
 		this.positionActive = false;
 		this.shouldWritePosition = false;
-		this.sleep();
 	}
 
 	private pauseVideoSlot(slot: PreviewSlot): void {
@@ -548,7 +530,7 @@ class PreviewOwner extends AppOwner {
 	}
 
 	private readonly prewarmImagePreviews = (): void => {
-		if (this.hasPrewarmedImages || document.hidden || this.reduceMotionQuery.matches) return;
+		if (this.hasPrewarmedImages || document.hidden || this.isReducedMotion()) return;
 		const profile = getDeviceProfile();
 		if (profile.tier === 'low' || profile.networkProfile === 'save-data') return;
 
@@ -603,7 +585,7 @@ class PreviewOwner extends AppOwner {
 
 		this.updateTargetPosition();
 
-		if (!this.hasPosition || this.reduceMotionQuery.matches) {
+		if (!this.hasPosition || this.isReducedMotion()) {
 			this.currentX = this.targetX;
 			this.currentY = this.targetY;
 			this.hasPosition = true;
@@ -625,12 +607,12 @@ class PreviewOwner extends AppOwner {
 	private requestPositionFrame(): void {
 		this.positionActive = true;
 		this.shouldSleepAfterWrite = false;
-		this.wake('preview:position');
+		this.requestFrame('preview:position');
 	}
 
-	private storePointer(event: PointerEvent): void {
-		this.pointerX = event.clientX;
-		this.pointerY = event.clientY;
+	private storePointer(pointer: { x: number; y: number }): void {
+		this.pointerX = pointer.x;
+		this.pointerY = pointer.y;
 		this.requestPositionFrame();
 	}
 
@@ -702,7 +684,7 @@ class PreviewOwner extends AppOwner {
 		}
 	}
 
-	private showPreview(target: HTMLElement, event: PointerEvent): void {
+	private showPreview(target: HTMLElement, pointer: { x: number; y: number }): void {
 		if (!this.isEnabled()) return;
 		if (!this.isRevealReady(target)) {
 			this.hidePreview(target);
@@ -740,7 +722,7 @@ class PreviewOwner extends AppOwner {
 
 		this.recalculatePreviewSize();
 		this.setActiveSlot(this.getSlot(config), flow);
-		this.storePointer(event);
+		this.storePointer(pointer);
 
 		if (!this.hasPosition) {
 			this.updateTargetPosition();
@@ -803,45 +785,61 @@ class PreviewOwner extends AppOwner {
 		this.elements = undefined;
 	}
 
-	private targetFromEvent(event: Event): HTMLElement | undefined {
-		if (!(event.target instanceof Element)) return undefined;
-		const target = event.target.closest<HTMLElement>(TARGET_SELECTOR);
+	private targetFromPath(path: readonly EventTarget[]): HTMLElement | undefined {
+		const target = path
+			.filter((item): item is Element => item instanceof Element)
+			.map((element) => element.closest<HTMLElement>(TARGET_SELECTOR))
+			.find((element): element is HTMLElement => Boolean(element));
 		if (!target || !this.isRevealReady(target)) return undefined;
 		return target;
 	}
 
-	private readonly handlePointerOver = (event: PointerEvent): void => {
-		const target = this.targetFromEvent(event);
+	private readonly handlePointerIntent = (intent: InputPointerIntent): void => {
+		if (intent.type === 'over') {
+			this.handlePointerOver(intent);
+			return;
+		}
+		if (intent.type === 'move') {
+			this.handlePointerMove(intent);
+			return;
+		}
+		if (intent.type === 'out' || intent.type === 'cancel') {
+			this.handlePointerOut(intent);
+		}
+	};
+
+	private handlePointerOver(intent: InputPointerIntent): void {
+		const target = this.targetFromPath(intent.path);
 		if (!target) return;
 		if (target === this.activeTarget) {
-			this.storePointer(event);
+			this.storePointer(intent);
 			return;
 		}
 
-		this.showPreview(target, event);
-	};
+		this.showPreview(target, intent);
+	}
 
-	private readonly handlePointerMove = (event: PointerEvent): void => {
-		const target = this.targetFromEvent(event);
+	private handlePointerMove(intent: InputPointerIntent): void {
+		const target = this.targetFromPath(intent.path);
 		if (this.activeTarget && !this.isRevealReady(this.activeTarget)) {
 			this.hidePreview(this.activeTarget);
 			return;
 		}
 		if (target && target !== this.activeTarget) {
-			this.showPreview(target, event);
+			this.showPreview(target, intent);
 			return;
 		}
 		if (!this.activeTarget || target !== this.activeTarget) return;
-		this.storePointer(event);
-	};
+		this.storePointer(intent);
+	}
 
-	private readonly handlePointerOut = (event: PointerEvent): void => {
+	private handlePointerOut(intent: InputPointerIntent): void {
 		if (!this.activeTarget) return;
 		if (!this.isRevealReady(this.activeTarget)) {
 			this.hidePreview(this.activeTarget);
 			return;
 		}
-		const relatedTarget = event.relatedTarget;
+		const relatedTarget = intent.relatedTarget;
 
 		if (relatedTarget instanceof Node && this.activeTarget.contains(relatedTarget)) return;
 		const nextTarget = relatedTarget instanceof Element ? relatedTarget.closest<HTMLElement>(TARGET_SELECTOR) : undefined;
@@ -849,26 +847,10 @@ class PreviewOwner extends AppOwner {
 		if (nextTarget && this.isRevealReady(nextTarget)) return;
 
 		this.hidePreview(this.activeTarget);
-	};
-
-	private readonly handleResize = (): void => {
-		this.recalculatePreviewSize();
-		this.requestPositionFrame();
-	};
-
-	private readonly handleVisibilityChange = (): void => {
-		if (document.hidden) this.pauseAllVideos();
-	};
-
-	private readonly handleCapabilityChange = (): void => {
-		if (!this.isEnabled()) {
-			this.hidePreview();
-			return;
-		}
-	};
+	}
 
 	private readonly handleMotionChange = (): void => {
-		if (this.reduceMotionQuery.matches) {
+		if (this.isReducedMotion()) {
 			this.pauseInactiveVideos();
 			if (this.activeSlot) this.pauseVideoSlot(this.activeSlot);
 			return;
@@ -878,9 +860,14 @@ class PreviewOwner extends AppOwner {
 	};
 
 	private readonly handleDeviceProfileChange = (): void => {
+		if (!this.isEnabled()) {
+			this.hidePreview();
+			return;
+		}
 		if (!this.canPlayPreviewVideo()) {
 			this.pauseAllVideos();
 		}
+		this.handleMotionChange();
 		this.prewarmImagePreviews();
 	};
 }

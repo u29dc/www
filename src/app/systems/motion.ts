@@ -1,21 +1,18 @@
-import { onNextFrame } from '../core/loop';
-import { AppOwner, type Context } from '../core/owner';
+import { BaseModule, type Context } from '../core/module';
 import type { SiteRoute } from '../core/state';
 import { delayTimer, setTimer, type TimerHandle } from '../core/timer';
 import { MOTION, readDurationToken } from '../core/tokens';
 import { getDeviceProfile, initDeviceProfile, subscribeDeviceProfile } from './device';
-import { onRouteAbort, onRouteAfterSwap, onRouteBeforeSwap, onRouteLoad, onRoutePreparation, type RoutePreparation, type RouteSwap } from './route';
+import { onRouteAbort, onRouteAfterSwap, onRouteBeforeSwap, onRoutePreparation, type RoutePreparation, type RouteSwap } from './route';
 
 const REVEAL_TARGET_SELECTOR = ['[data-reveal]', '[data-reveal-group] > :where(header, section, article, footer, h1, h2, h3, p, ul, ol, dl, figure, blockquote, div, li)'].join(',');
 const COMPLETE_LINE_GROUPS_DATASET_KEY = 'lineRevealCompleteGroups';
 const LINE_GROUP_COMPLETE_EVENT = 'line-reveal-group-complete';
 
-class MotionOwner extends AppOwner {
+class MotionOwner extends BaseModule {
 	readonly name = 'motion';
-	override readonly order = 40;
 
 	private initialized = false;
-	private readonly reduceMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
 	private activeCanAnimate = getDeviceProfile().motionQuality !== 'reduced';
 	private revealObserver: IntersectionObserver | undefined;
 	private revealFallbackHandle: TimerHandle | undefined;
@@ -30,7 +27,7 @@ class MotionOwner extends AppOwner {
 		this.bind();
 	}
 
-	init(): void {
+	override init(): void {
 		this.syncSiteRoute();
 		this.startPanelIntro();
 		this.initializeReveals();
@@ -56,16 +53,8 @@ class MotionOwner extends AppOwner {
 		this.addCleanup(onRouteBeforeSwap(this.handleBeforeSwap));
 		this.addCleanup(onRouteAfterSwap(this.clearExitState));
 		this.addCleanup(onRouteAbort(this.handleRouteAbort));
-		this.addCleanup(
-			onRouteLoad(() => {
-				this.syncSiteRoute();
-				this.initializeReveals();
-			}),
-		);
 		document.addEventListener(LINE_GROUP_COMPLETE_EVENT, this.handleLineGroupComplete);
 		this.addCleanup(() => document.removeEventListener(LINE_GROUP_COMPLETE_EVENT, this.handleLineGroupComplete));
-		this.reduceMotionQuery.addEventListener('change', this.handleReducedMotion);
-		this.addCleanup(() => this.reduceMotionQuery.removeEventListener('change', this.handleReducedMotion));
 		this.addCleanup(
 			subscribeDeviceProfile((profile) => {
 				const nextCanAnimate = profile.motionQuality !== 'reduced';
@@ -77,6 +66,11 @@ class MotionOwner extends AppOwner {
 				this.initializeReveals();
 			}),
 		);
+	}
+
+	override refresh(): void {
+		this.syncSiteRoute();
+		this.initializeReveals();
 	}
 
 	private canAnimate(): boolean {
@@ -129,7 +123,7 @@ class MotionOwner extends AppOwner {
 		const root = document.documentElement;
 		if (root.dataset['panelIntro'] !== 'pending') return;
 
-		this.panelIntroFrameCancel = onNextFrame('motion.panel.start', () => {
+		this.panelIntroFrameCancel = this.nextFrame('motion.panel.start', () => {
 			this.panelIntroFrameCancel = undefined;
 			if (root.dataset['panelIntro'] !== 'pending') return;
 
@@ -358,11 +352,6 @@ class MotionOwner extends AppOwner {
 	private readonly handleLineGroupComplete = (event: Event): void => {
 		const group = event instanceof CustomEvent && typeof event.detail?.group === 'string' ? event.detail.group : undefined;
 		if (group) this.scheduleRevealTargetsWaitingForLineGroup(group);
-	};
-
-	private readonly handleReducedMotion = (): void => {
-		this.finishPanelIntro();
-		this.initializeReveals();
 	};
 }
 

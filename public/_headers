@@ -1,5 +1,5 @@
 /*
-  Content-Security-Policy: base-uri 'self'; default-src 'self'; connect-src 'self'; font-src 'self'; form-action 'self'; frame-ancestors 'none'; img-src 'self' data: blob: https://storage.u29dc.com; manifest-src 'self'; media-src 'self' https://storage.u29dc.com; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; worker-src 'self'; upgrade-insecure-requests
+  Content-Security-Policy: base-uri 'self'; default-src 'self'; connect-src 'self'; font-src 'self'; form-action 'self'; frame-ancestors 'none'; img-src 'self' data: blob: https://storage.u29dc.com; manifest-src 'self'; media-src 'self' https://storage.u29dc.com; object-src 'none'; script-src 'self' 'sha256-POHC5Rsb1H6lPza+F5QJ6s22rEe2zgSgV8LEkfQYsQw='; style-src 'self' 'unsafe-inline'; worker-src 'self'; upgrade-insecure-requests
   Cross-Origin-Opener-Policy: same-origin
   Permissions-Policy: accelerometer=(), autoplay=(self), camera=(), display-capture=(), encrypted-media=(), fullscreen=(self), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), usb=(), xr-spatial-tracking=()
   Referrer-Policy: strict-origin-when-cross-origin

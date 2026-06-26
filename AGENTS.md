@@ -3,7 +3,7 @@
 ## 1. Documentation
 
 - Primary references: [Astro](https://docs.astro.build/en/getting-started/), [Astro MDX](https://docs.astro.build/en/guides/integrations-guide/mdx/), [Astro content collections](https://docs.astro.build/en/guides/content-collections/), [Vite](https://vite.dev/guide/), [MDX](https://mdxjs.com/), [Tailwind CSS](https://tailwindcss.com/docs), [Cloudflare Workers](https://developers.cloudflare.com/workers/), [WebGL](https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API), [WebGPU](https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API)
-- Local source-of-truth files: [`package.json`](package.json), [`astro.config.ts`](astro.config.ts), [`wrangler.jsonc`](wrangler.jsonc), [`public/_headers`](public/_headers), [`src/layouts/layout.astro`](src/layouts/layout.astro), [`src/app/app.ts`](src/app/app.ts), [`src/app/core/loop.ts`](src/app/core/loop.ts), [`src/content.config.ts`](src/content.config.ts)
+- Local source-of-truth files: [`package.json`](package.json), [`astro.config.ts`](astro.config.ts), [`wrangler.jsonc`](wrangler.jsonc), [`public/_headers`](public/_headers), [`src/layouts/layout.astro`](src/layouts/layout.astro), [`src/app/app.ts`](src/app/app.ts), [`src/app/core/app.ts`](src/app/core/app.ts), [`src/app/core/module.ts`](src/app/core/module.ts), [`src/content.config.ts`](src/content.config.ts)
 - Edit [`AGENTS.md`](AGENTS.md) only; [`README.md`](README.md) and [`CLAUDE.md`](CLAUDE.md) are symlinks to it for tool compatibility.
 
 ## 2. Repository Structure
@@ -27,7 +27,7 @@
 ```
 
 - Start with [`src/layouts/layout.astro`](src/layouts/layout.astro) for shell, metadata, header persistence, grid guide, route router, and the single browser app import.
-- Start with [`src/app/app.ts`](src/app/app.ts), [`src/app/core/owner.ts`](src/app/core/owner.ts), and [`src/app/core/loop.ts`](src/app/core/loop.ts) for browser runtime ownership, owner order, and frame-loop behavior.
+- Start with [`src/app/app.ts`](src/app/app.ts), [`src/app/core/app.ts`](src/app/core/app.ts), and [`src/app/core/module.ts`](src/app/core/module.ts) for browser runtime ownership, module order, and frame-loop behavior.
 - Start with [`src/pages/index.astro`](src/pages/index.astro) for homepage composition and [`src/pages/[slug].astro`](src/pages/[slug].astro) for artifact pages.
 - Start with [`src/content.config.ts`](src/content.config.ts), [`src/lib/artifacts.ts`](src/lib/artifacts.ts), and [`src/lib/markdown.ts`](src/lib/markdown.ts) for content collection, visibility, sorting, and markdown export behavior.
 
@@ -63,12 +63,14 @@
 - [`src/pages/[slug].astro`](src/pages/[slug].astro) renders artifact detail pages with article metadata, MDX content, hidden metadata, and connect footer.
 - [`src/pages/[slug].md.ts`](src/pages/[slug].md.ts), [`src/pages/[slug].txt.ts`](src/pages/[slug].txt.ts), [`src/pages/llms.txt.ts`](src/pages/llms.txt.ts), [`src/pages/rss.xml.ts`](src/pages/rss.xml.ts), and [`src/pages/feed.json.ts`](src/pages/feed.json.ts) are first-class machine-readable surfaces. Keep them aligned with visible content when copy or MDX behavior changes.
 - Runtime behavior uses `data-*` attributes as the contract between Astro markup, CSS, and `src/app/*`. Extend the existing hook contract for new runtime state.
-- [`src/app/app.ts`](src/app/app.ts) is the browser composition root. It starts systems first (`device`, `route`, `scroll`, `motion`) and UI owners second (`lines`, `media`, `preview`, `logo`).
-- [`src/app/core/loop.ts`](src/app/core/loop.ts) is the only app-owned `requestAnimationFrame` scheduler. Runtime owners wake it when work exists and sleep when idle.
-- [`src/app/core/owner.ts`](src/app/core/owner.ts) defines the lifecycle owner contract. Owner files should read in this order: imports, types/constants, class fields, lifecycle methods `preinit`, `init`, `resize`, `read`, `update`, `write`, `post`, `dispose`, then private helpers and exports.
+- [`src/app/app.ts`](src/app/app.ts) is the browser composition root. It starts systems first (`device`, `theme`, `route`, `input`, `scroll`, `motion`) and UI owners second (`lines`, `media`, `preview`, `logo`).
+- [`src/app/core/app.ts`](src/app/core/app.ts) is the only app-owned `requestAnimationFrame` scheduler. Runtime modules request frames through context and return `true` from `update()` only while they need continuous work.
+- [`src/app/core/module.ts`](src/app/core/module.ts) defines the lifecycle module contract. Owner files should read in this order: imports, types/constants, class fields, lifecycle methods `preinit`, `init`, `refresh`, `resize`, `update`, `dispose`, then private helpers and exports.
 - [`src/app/core/state.ts`](src/app/core/state.ts) owns stable cross-owner state types so `core` does not import downstream systems or UI.
 - [`src/app/core/tokens.ts`](src/app/core/tokens.ts) centralizes TypeScript-side motion, preview, media, and line-reveal timing defaults. Keep it aligned with [`src/styles/tokens.css`](src/styles/tokens.css) when CSS motion tokens change.
+- [`src/app/systems/input.ts`](src/app/systems/input.ts) owns global browser input listeners and exposes frame input state plus cancellable wheel/click intents.
 - [`src/app/systems/route.ts`](src/app/systems/route.ts) owns route state and the Astro transition bridge. Other owners subscribe to route state instead of importing `astro:transitions/client`.
+- [`src/app/systems/theme.ts`](src/app/systems/theme.ts) owns runtime theme/color-scheme state and subscriptions.
 - [`src/app/systems/scroll.ts`](src/app/systems/scroll.ts) owns custom smooth scroll. Keep the model explicit with actual, animated, target, velocity, direction, limit, and native fallback state.
 - [`src/app/ui/lines.ts`](src/app/ui/lines.ts), [`src/app/ui/media.ts`](src/app/ui/media.ts), [`src/app/ui/preview.ts`](src/app/ui/preview.ts), and [`src/app/ui/logo.ts`](src/app/ui/logo.ts) own DOM enhancement behavior.
 - [`src/app/graphics/canvas.ts`](src/app/graphics/canvas.ts) owns logo canvas/WebGL rendering, diagnostics, and fallback safety. It must use the shared core loop, not a second RAF loop.
@@ -96,7 +98,7 @@ Runtime philosophy:
 - Keep Astro pages mostly static. Client JavaScript belongs to visible interaction, media, graphics, and progressive enhancement paths.
 - The browser experience is an Astro-rendered document plus raw TypeScript owners under `src/app`; route, scroll, motion, preview, media, and graphics behavior should fit that ownership model.
 - Prefer plain `.astro`, `.mdx`, `.ts`, and CSS files until a heavier abstraction is clearly useful.
-- Prefer one-word filenames for runtime owners and helpers where they stay clear: `scroll.ts`, `motion.ts`, `lines.ts`, `media.ts`, `logo.ts`, `route.ts`, `loop.ts`, `owner.ts`, `canvas.ts`.
+- Prefer one-word filenames for runtime owners and helpers where they stay clear: `app.ts`, `module.ts`, `input.ts`, `theme.ts`, `scroll.ts`, `motion.ts`, `lines.ts`, `media.ts`, `logo.ts`, `route.ts`, `canvas.ts`.
 - Keep `src/app` import direction simple: `app -> core/systems/ui`, `systems -> core/utils`, `ui -> core/systems/graphics/utils`, `graphics -> core/utils`, and `utils -> no app owners`.
 - Keep `src/lib` free of browser runtime ownership. It is for portable content/export utilities, not app lifecycle, frame scheduling, or visual controllers.
 - Prefer inline Tailwind utilities for component-local styling. Keep shared CSS for tokens, document defaults, layout primitives, MDX prose, animation selectors, and runtime state selectors.
@@ -105,7 +107,7 @@ Runtime philosophy:
 ## 8. Constraints
 
 - Treat [`src/styles/layout.css`](src/styles/layout.css), `layout-grid`, `layout-lane`, and `layout-lane-wide` as high blast-radius. They align the header, homepage, article pages, connect footer, and grid guide.
-- Treat [`src/app/core/loop.ts`](src/app/core/loop.ts), [`src/app/core/owner.ts`](src/app/core/owner.ts), and [`src/app/core/timer.ts`](src/app/core/timer.ts) as high blast-radius. They define frame order, lifecycle semantics, wake/sleep behavior, and timer handoff for the whole client runtime.
+- Treat [`src/app/core/app.ts`](src/app/core/app.ts), [`src/app/core/module.ts`](src/app/core/module.ts), and [`src/app/core/timer.ts`](src/app/core/timer.ts) as high blast-radius. They define frame order, lifecycle semantics, request-frame behavior, and timer handoff for the whole client runtime.
 - Treat [`src/app/systems/scroll.ts`](src/app/systems/scroll.ts) as performance-sensitive interaction code. Preserve native fallback, reduced-motion behavior, keyboard/bar/route scroll compatibility, and minimal wheel-handler work.
 - Treat [`src/app/ui/preview.ts`](src/app/ui/preview.ts), [`src/lib/hover.ts`](src/lib/hover.ts), and [`src/app/ui/lines.ts`](src/app/ui/lines.ts) as performance-sensitive interaction code. Keep pointer work loop-batched and hot writes transform/opacity-oriented.
 - Treat [`src/app/ui/logo.ts`](src/app/ui/logo.ts) and [`src/app/graphics/canvas.ts`](src/app/graphics/canvas.ts) as fragile visual code. Preserve reduced-motion, low-power fallback, canvas visibility, and nonblank rendering.
