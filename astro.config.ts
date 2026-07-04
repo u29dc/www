@@ -7,11 +7,25 @@ import remarkGfm from 'remark-gfm';
 import { glslStringMinify } from './scripts/glsl';
 import { remarkMediaPriority } from './scripts/media';
 
+const site = 'https://u29dc.com';
+const siteUrl = new URL(site);
+
 export default defineConfig({
-	site: 'https://u29dc.com',
+	site,
 	output: 'static',
 	compressHTML: true,
 	prerenderConflictBehavior: 'error',
+	security: {
+		checkOrigin: true,
+		allowedDomains: [
+			{
+				protocol: 'https',
+				hostname: siteUrl.hostname,
+			},
+		],
+		actionBodySizeLimit: 1024 * 1024,
+		serverIslandBodySizeLimit: 1024 * 1024,
+	},
 	devToolbar: {
 		enabled: false,
 	},
@@ -30,12 +44,15 @@ export default defineConfig({
 	adapter: cloudflare({
 		configPath: './wrangler.jsonc',
 		imageService: 'passthrough',
-		prerenderEnvironment: 'node',
+		prerenderEnvironment: 'workerd',
 	}),
 	integrations: [mdx()],
 	vite: {
 		build: {
-			minify: 'esbuild',
+			target: 'baseline-widely-available',
+			minify: 'oxc',
+			cssMinify: 'lightningcss',
+			sourcemap: false,
 		},
 		plugins: [glslStringMinify(), tailwindcss()],
 	},

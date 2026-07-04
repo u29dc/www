@@ -159,7 +159,10 @@ function tokenKind(token: string | undefined): TokenKind {
 
 function needsSpace(previous: string | undefined, next: string): boolean {
 	if (tokenKind(previous) === 'word' && tokenKind(next) === 'word') return true;
-	return previous !== undefined && previous.length === 1 && next.length === 1 && wouldMergeTokens(previous, next);
+	if (previous === undefined) return false;
+	const previousLast = previous.at(-1);
+	const nextFirst = next.charAt(0);
+	return Boolean(previousLast && nextFirst && wouldMergeTokens(previousLast, nextFirst));
 }
 
 function readSymbol(source: string, start: number): number {

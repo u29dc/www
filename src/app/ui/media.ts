@@ -76,14 +76,20 @@ class MediaOwner extends BaseModule {
 		return video.dataset['autoplay'] === 'true' && profile.motionQuality !== 'reduced' && profile.networkProfile !== 'save-data';
 	}
 
+	private enableVideoControls(video: HTMLVideoElement): void {
+		video.controls = true;
+		video.classList.remove('pointer-events-none');
+		video.classList.add('pointer-events-auto');
+	}
+
 	private playVideo(video: HTMLVideoElement): void {
 		this.loadVideo(video);
 		if (!this.shouldAutoplay(video)) {
-			video.controls = true;
+			this.enableVideoControls(video);
 			return;
 		}
 		video.play().catch(() => {
-			video.controls = true;
+			this.enableVideoControls(video);
 		});
 	}
 
@@ -132,7 +138,7 @@ class MediaOwner extends BaseModule {
 
 		for (const video of this.videos) {
 			if (shouldStopMotion) {
-				video.controls = true;
+				this.enableVideoControls(video);
 				this.pauseVideo(video);
 				continue;
 			}

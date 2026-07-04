@@ -84,6 +84,8 @@ const createInputState = (): InputState => ({
 	keyboard: emptyKeyboard(),
 });
 
+const keyboardKeyId = (event: KeyboardEvent): string => (event.code.length > 0 ? event.code : `key:${event.key}`);
+
 class InputOwner extends BaseModule {
 	readonly name = 'input';
 
@@ -91,7 +93,7 @@ class InputOwner extends BaseModule {
 	private previousX = 0;
 	private previousY = 0;
 	private generation = 0;
-	private activeKeys = new Set<string>();
+	private activeKeys = new Map<string, string>();
 	private readonly pointerHandlers = new Set<InputIntentHandler<InputPointerIntent>>();
 	private readonly wheelHandlers = new Set<InputIntentHandler<InputWheelIntent>>();
 	private readonly clickHandlers = new Set<InputIntentHandler<InputClickIntent>>();
@@ -108,6 +110,9 @@ class InputOwner extends BaseModule {
 		document.addEventListener('click', this.handleClick, { capture: true });
 		document.addEventListener('keydown', this.handleKeyDown);
 		document.addEventListener('keyup', this.handleKeyUp);
+		window.addEventListener('blur', this.handleInputLoss, { passive: true });
+		window.addEventListener('pagehide', this.handleInputLoss, { passive: true });
+		document.addEventListener('visibilitychange', this.handleVisibilityChange);
 		this.addCleanup(() => document.removeEventListener('pointerover', this.handlePointerOver));
 		this.addCleanup(() => document.removeEventListener('pointermove', this.handlePointerMove));
 		this.addCleanup(() => document.removeEventListener('pointerout', this.handlePointerOut));
@@ -118,6 +123,9 @@ class InputOwner extends BaseModule {
 		this.addCleanup(() => document.removeEventListener('click', this.handleClick, { capture: true }));
 		this.addCleanup(() => document.removeEventListener('keydown', this.handleKeyDown));
 		this.addCleanup(() => document.removeEventListener('keyup', this.handleKeyUp));
+		this.addCleanup(() => window.removeEventListener('blur', this.handleInputLoss));
+		this.addCleanup(() => window.removeEventListener('pagehide', this.handleInputLoss));
+		this.addCleanup(() => document.removeEventListener('visibilitychange', this.handleVisibilityChange));
 	}
 
 	override dispose(): void {
@@ -179,6 +187,10 @@ class InputOwner extends BaseModule {
 		return this.generation;
 	}
 
+	private activeKeyValues(): string[] {
+		return Array.from(new Set(this.activeKeys.values()));
+	}
+
 	private updatePointer(event: PointerEvent, type: InputPointerIntent['type'], options?: { pressed?: boolean; released?: boolean; exited?: boolean }): InputPointerIntent {
 		const x = event.clientX;
 		const y = event.clientY;
@@ -204,8 +216,8 @@ class InputOwner extends BaseModule {
 				vx: dx,
 				vy: dy,
 				isDown,
-				wasPressed: options?.pressed ?? false,
-				wasReleased: options?.released ?? false,
+				wasPressed: this.state.pointer.wasPressed || options?.pressed === true,
+				wasReleased: this.state.pointer.wasReleased || options?.released === true,
 				activePointerType: event.pointerType || 'unknown',
 				target: event.target,
 				relatedTarget,
@@ -217,8 +229,42 @@ class InputOwner extends BaseModule {
 		return { type, x, y, target: event.target, relatedTarget, path };
 	}
 
+	private releaseActiveInput(): void {
+		const hasActiveInput = this.state.pointer.isDown || this.activeKeys.size > 0 || this.state.keyboard.activeKeys.length > 0;
+		if (!hasActiveInput) return;
+		this.activeKeys.clear();
+		this.state = {
+			...this.state,
+			generation: this.nextGeneration(),
+			pointer: {
+				...this.state.pointer,
+				dx: 0,
+				dy: 0,
+				vx: 0,
+				vy: 0,
+				isDown: false,
+				wasPressed: false,
+				wasReleased: false,
+				relatedTarget: null,
+				exited: false,
+			},
+			keyboard: {
+				...this.state.keyboard,
+				hadKeyboardInput: false,
+				activeKeys: [],
+			},
+		};
+		this.requestFrame('input:release');
+	}
+
 	private emitPointerIntent(intent: InputPointerIntent): void {
-		for (const handler of this.pointerHandlers) handler(intent);
+		for (const handler of Array.from(this.pointerHandlers)) {
+			try {
+				handler(intent);
+			} catch (error) {
+				this.reportError('input.pointer', error);
+			}
+		}
 	}
 
 	private readonly handlePointerOver = (event: PointerEvent): void => this.emitPointerIntent(this.updatePointer(event, 'over'));
@@ -246,33 +292,42 @@ class InputOwner extends BaseModule {
 			},
 		};
 		const intent = createWheelIntent(event, dx, dy);
-		for (const handler of this.wheelHandlers) handler(intent);
-		this.requestFrame('input:wheel');
+		try {
+			for (const handler of Array.from(this.wheelHandlers)) {
+				try {
+					handler(intent);
+				} catch (error) {
+					this.reportError('input.wheel', error);
+				}
+			}
+		} finally {
+			this.requestFrame('input:wheel');
+		}
 	};
 
 	private readonly handleKeyDown = (event: KeyboardEvent): void => {
-		this.activeKeys.add(event.key);
+		this.activeKeys.set(keyboardKeyId(event), event.key);
 		this.state = {
 			...this.state,
 			generation: this.nextGeneration(),
 			keyboard: {
 				lastKey: event.key,
 				hadKeyboardInput: true,
-				activeKeys: Array.from(this.activeKeys),
+				activeKeys: this.activeKeyValues(),
 			},
 		};
 		this.requestFrame('input:keydown');
 	};
 
 	private readonly handleKeyUp = (event: KeyboardEvent): void => {
-		this.activeKeys.delete(event.key);
+		this.activeKeys.delete(keyboardKeyId(event));
 		this.state = {
 			...this.state,
 			generation: this.nextGeneration(),
 			keyboard: {
 				lastKey: event.key,
 				hadKeyboardInput: true,
-				activeKeys: Array.from(this.activeKeys),
+				activeKeys: this.activeKeyValues(),
 			},
 		};
 		this.requestFrame('input:keyup');
@@ -280,8 +335,23 @@ class InputOwner extends BaseModule {
 
 	private readonly handleClick = (event: MouseEvent): void => {
 		const intent = createClickIntent(event);
-		for (const handler of this.clickHandlers) handler(intent);
-		this.requestFrame('input:click');
+		try {
+			for (const handler of Array.from(this.clickHandlers)) {
+				try {
+					handler(intent);
+				} catch (error) {
+					this.reportError('input.click', error);
+				}
+			}
+		} finally {
+			this.requestFrame('input:click');
+		}
+	};
+
+	private readonly handleInputLoss = (): void => this.releaseActiveInput();
+
+	private readonly handleVisibilityChange = (): void => {
+		if (document.visibilityState !== 'visible') this.releaseActiveInput();
 	};
 }
 

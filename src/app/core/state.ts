@@ -45,7 +45,7 @@ export type DeviceProfile = {
 };
 
 export type SiteRoute = 'home' | 'detail';
-export type RoutePageState = 'idle' | 'exiting' | 'swapping' | 'loaded';
+export type RoutePageState = 'idle' | 'exiting' | 'swapping' | 'entering' | 'loaded';
 
 export type RouteState = {
 	current: SiteRoute;

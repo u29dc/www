@@ -2,14 +2,9 @@ import type { APIRoute } from 'astro';
 import { getPublicArtifacts, type ArtifactEntry } from '../lib/artifacts';
 import { SITE } from '../data/site';
 import { artifactUrl } from '../lib/markdown';
+import { absoluteSiteUrl, escapeXml } from '../lib/seo';
 
-const FEED_PATH = '/rss.xml';
-
-const escapeXml = (value: string): string => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&apos;');
-
-const feedUrl = (): string => new URL(FEED_PATH, SITE.url).toString();
-
-const getLastBuildDate = (artifacts: ArtifactEntry[]): Date => artifacts[0]?.data.date ?? new Date();
+const getLastBuildDate = (artifacts: ArtifactEntry[]): Date => artifacts[0]?.data.date ?? SITE.updatedAt;
 
 const getArtifactType = (entry: ArtifactEntry): string => (entry.data.type === 'study' ? 'Study' : 'Writing');
 
@@ -46,7 +41,7 @@ const buildFeed = (artifacts: ArtifactEntry[]): string => {
 	<lastBuildDate>${getLastBuildDate(artifacts).toUTCString()}</lastBuildDate>
 	<generator>Astro</generator>
 	<ttl>1440</ttl>
-	<atom:link href="${escapeXml(feedUrl())}" rel="self" type="application/rss+xml" />
+	<atom:link href="${escapeXml(absoluteSiteUrl(SITE.feeds.rss))}" rel="self" type="application/rss+xml" />
 ${items}
 </channel>
 </rss>

@@ -310,15 +310,26 @@ class ScrollAnimator {
 const shouldUseNativeWheel = (intent: InputWheelIntent, enabled: boolean): boolean => {
 	if (!enabled || intent.defaultPrevented) return true;
 	if (intent.ctrlKey || intent.metaKey || intent.shiftKey) return true;
+	if (isHorizontalWheelIntent(intent)) return true;
 	return Boolean(pathClosest<Element>(intent.path, NATIVE_SCROLL_SELECTOR));
 };
 
+const isHorizontalWheelIntent = (intent: InputWheelIntent): boolean => Math.abs(intent.dx) > Math.abs(intent.dy) * 1.2;
+
 const findAnchorTarget = (hash: string): HTMLElement | undefined => {
 	if (hash === '#top') return document.documentElement;
-	const id = decodeURIComponent(hash.slice(1));
+	const id = decodeHash(hash);
 	if (!id) return document.documentElement;
 	const target = document.getElementById(id) ?? document.querySelector<HTMLElement>(`[name="${CSS.escape(id)}"]`);
 	return target instanceof HTMLElement ? target : undefined;
+};
+
+const decodeHash = (hash: string): string => {
+	try {
+		return decodeURIComponent(hash.slice(1));
+	} catch {
+		return hash.slice(1);
+	}
 };
 
 export const scroll = new ScrollOwner();

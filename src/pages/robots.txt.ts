@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { SITE } from '../data/site';
+import { absoluteSiteUrl } from '../lib/seo';
 
 const CONTENT_SIGNAL_DIRECTIVE = 'Content-Signal: ai-train=yes, search=yes, ai-input=yes';
 
@@ -39,7 +39,7 @@ const robots = [
 	'Allow: /',
 	'',
 	CONTENT_SIGNAL_DIRECTIVE,
-	`Sitemap: ${SITE.url}/sitemap.xml`,
+	`Sitemap: ${absoluteSiteUrl('/sitemap.xml')}`,
 	'',
 ].join('\n');
 
@@ -48,5 +48,6 @@ export const GET: APIRoute = () =>
 		headers: {
 			'Cache-Control': 'public, max-age=0, must-revalidate',
 			'Content-Type': 'text/plain; charset=utf-8',
+			'X-Content-Type-Options': 'nosniff',
 		},
 	});

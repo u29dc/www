@@ -3,7 +3,7 @@
 ## 1. Documentation
 
 - Primary references: [Astro](https://docs.astro.build/en/getting-started/), [Astro MDX](https://docs.astro.build/en/guides/integrations-guide/mdx/), [Astro content collections](https://docs.astro.build/en/guides/content-collections/), [Vite](https://vite.dev/guide/), [MDX](https://mdxjs.com/), [Tailwind CSS](https://tailwindcss.com/docs), [Cloudflare Workers](https://developers.cloudflare.com/workers/), [WebGL](https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API), [WebGPU](https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API)
-- Local source-of-truth files: [`package.json`](package.json), [`astro.config.ts`](astro.config.ts), [`wrangler.jsonc`](wrangler.jsonc), [`public/_headers`](public/_headers), [`src/layouts/layout.astro`](src/layouts/layout.astro), [`src/app/app.ts`](src/app/app.ts), [`src/app/core/app.ts`](src/app/core/app.ts), [`src/app/core/module.ts`](src/app/core/module.ts), [`src/content.config.ts`](src/content.config.ts)
+- Local source-of-truth files: [`package.json`](package.json), [`astro.config.ts`](astro.config.ts), [`wrangler.jsonc`](wrangler.jsonc), [`wrangler.d.ts`](wrangler.d.ts), [`public/_headers`](public/_headers), [`src/layouts/layout.astro`](src/layouts/layout.astro), [`src/app/app.ts`](src/app/app.ts), [`src/app/core/app.ts`](src/app/core/app.ts), [`src/app/core/module.ts`](src/app/core/module.ts), [`src/content.config.ts`](src/content.config.ts), [`src/lib/seo.ts`](src/lib/seo.ts)
 - Edit [`AGENTS.md`](AGENTS.md) only; [`README.md`](README.md) and [`CLAUDE.md`](CLAUDE.md) are symlinks to it for tool compatibility.
 
 ## 2. Repository Structure
@@ -50,10 +50,18 @@
 - `bun run build` - build the Astro site.
 - `bun run preview` - preview the production build.
 - `bun run deploy` - run `bun run util:check`, then deploy with Wrangler.
-- `bun run update` - update normal packages, then re-pin Astro, MDX, and the Cloudflare adapter to alpha.
+- `bun run cf:deploy:dry` - run the full quality gate, then run a Wrangler dry-run deploy.
+- `bun run cf:dev` - build and run the Cloudflare Worker locally with Wrangler.
+- `bun run cf:types` - regenerate [`wrangler.d.ts`](wrangler.d.ts) from [`wrangler.jsonc`](wrangler.jsonc).
+- `bun run cf:types:check` - verify generated Cloudflare types are current.
+- `bun run astro:check` - run Astro diagnostics.
+- `bun run util:fix` - apply formatting and lint auto-fixes.
 - `bun run util:format` - apply and verify formatting with Oxfmt.
+- `bun run util:format:check` - verify formatting without writing files.
 - `bun run util:lint` - lint and auto-fix with Oxlint.
-- `bun run util:check` - format, lint-fix, type-check, and build.
+- `bun run util:lint:check` - lint without writing files.
+- `bun run util:types` - run Astro diagnostics plus script, Cloudflare, and generated Worker type checks.
+- `bun run util:check` - verify formatting, lint, type-check, and build without writing source files.
 - `bun run util:clean` - remove Astro/build caches.
 
 ## 5. Architecture
@@ -62,14 +70,15 @@
 - [`src/pages/index.astro`](src/pages/index.astro) composes the homepage in this order: origin, protocols, artifact studies, artifact fragments, optional signals, connect.
 - [`src/pages/[slug].astro`](src/pages/[slug].astro) renders artifact detail pages with article metadata, MDX content, hidden metadata, and connect footer.
 - [`src/pages/[slug].md.ts`](src/pages/[slug].md.ts), [`src/pages/[slug].txt.ts`](src/pages/[slug].txt.ts), [`src/pages/llms.txt.ts`](src/pages/llms.txt.ts), [`src/pages/rss.xml.ts`](src/pages/rss.xml.ts), and [`src/pages/feed.json.ts`](src/pages/feed.json.ts) are first-class machine-readable surfaces. Keep them aligned with visible content when copy or MDX behavior changes.
+- [`src/lib/seo.ts`](src/lib/seo.ts) centralizes site-local path validation, absolute URL construction, XML escaping, feed sorting, and fallback feed dates for generated routes.
 - Runtime behavior uses `data-*` attributes as the contract between Astro markup, CSS, and `src/app/*`. Extend the existing hook contract for new runtime state.
 - [`src/app/app.ts`](src/app/app.ts) is the browser composition root. It starts systems first (`device`, `theme`, `route`, `input`, `scroll`, `motion`) and UI owners second (`lines`, `media`, `preview`, `logo`).
-- [`src/app/core/app.ts`](src/app/core/app.ts) is the only app-owned `requestAnimationFrame` scheduler. Runtime modules request frames through context and return `true` from `update()` only while they need continuous work.
+- [`src/app/core/app.ts`](src/app/core/app.ts) is the only app-owned `requestAnimationFrame` scheduler. Runtime modules request frames through context and return `true` from `update()` only while they need continuous work; frame callbacks must be isolated so one owner cannot leave the loop in a stuck ticking state.
 - [`src/app/core/module.ts`](src/app/core/module.ts) defines the lifecycle module contract. Owner files should read in this order: imports, types/constants, class fields, lifecycle methods `preinit`, `init`, `refresh`, `resize`, `update`, `dispose`, then private helpers and exports.
 - [`src/app/core/state.ts`](src/app/core/state.ts) owns stable cross-owner state types so `core` does not import downstream systems or UI.
 - [`src/app/core/tokens.ts`](src/app/core/tokens.ts) centralizes TypeScript-side motion, preview, media, and line-reveal timing defaults. Keep it aligned with [`src/styles/tokens.css`](src/styles/tokens.css) when CSS motion tokens change.
-- [`src/app/systems/input.ts`](src/app/systems/input.ts) owns global browser input listeners and exposes frame input state plus cancellable wheel/click intents.
-- [`src/app/systems/route.ts`](src/app/systems/route.ts) owns route state and the Astro transition bridge. Other owners subscribe to route state instead of importing `astro:transitions/client`.
+- [`src/app/systems/input.ts`](src/app/systems/input.ts) owns global browser input listeners and exposes frame input state plus cancellable pointer/wheel/click intents. It also releases active input on blur, pagehide, and hidden visibility states.
+- [`src/app/systems/route.ts`](src/app/systems/route.ts) owns route state and the Astro transition bridge. Other owners subscribe to route state instead of importing `astro:transitions/client`; route transitions carry IDs so stale transition work can be ignored.
 - [`src/app/systems/theme.ts`](src/app/systems/theme.ts) owns runtime theme/color-scheme state and subscriptions.
 - [`src/app/systems/scroll.ts`](src/app/systems/scroll.ts) owns custom smooth scroll. Keep the model explicit with actual, animated, target, velocity, direction, limit, and native fallback state.
 - [`src/app/ui/lines.ts`](src/app/ui/lines.ts), [`src/app/ui/media.ts`](src/app/ui/media.ts), [`src/app/ui/preview.ts`](src/app/ui/preview.ts), and [`src/app/ui/logo.ts`](src/app/ui/logo.ts) own DOM enhancement behavior.

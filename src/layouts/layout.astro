@@ -3,7 +3,7 @@ import '../styles/app.css';
 import Guide from '../components/chrome/guide.astro';
 import Header from '../components/chrome/header.astro';
 import RouteRouter from '../app/systems/router.astro';
-import { MEDIA, SITE, SITE_THEME } from '../data/site';
+import { MEDIA, SITE } from '../data/site';
 
 type Props = {
 	title?: string;
@@ -11,14 +11,14 @@ type Props = {
 	ogType?: 'website' | 'article';
 	publishedTime?: Date;
 	markdownUrl?: string;
+	robots?: string;
+	preconnectMedia?: boolean;
 };
 
-const { title = SITE.title, description = SITE.description, ogType = 'website', publishedTime, markdownUrl } = Astro.props;
-const rawTheme = SITE_THEME;
-const forcedTheme = rawTheme === 'light' || rawTheme === 'dark' ? rawTheme : undefined;
+const { title = SITE.title, description = SITE.description, ogType = 'website', publishedTime, markdownUrl, robots = 'index, follow', preconnectMedia } = Astro.props;
 const canonicalUrl = new URL(Astro.url.pathname, SITE.url).toString();
 const siteRoute = Astro.url.pathname === '/' ? 'home' : 'detail';
-const shouldPreconnectMedia = siteRoute === 'detail';
+const shouldPreconnectMedia = preconnectMedia ?? siteRoute === 'detail';
 const markdownHref = markdownUrl ? new URL(markdownUrl, SITE.url).toString() : undefined;
 const ogImageUrl = new URL(SITE.ogImagePath, SITE.url).toString();
 const themeColorLight = SITE.themeColorLight;
@@ -26,7 +26,7 @@ const themeColorDark = SITE.themeColorDark;
 ---
 
 <!doctype html>
-<html lang={SITE.lang} data-theme={forcedTheme} data-site-route={siteRoute} data-panel-intro="pending">
+<html lang={SITE.lang} data-site-route={siteRoute} data-panel-intro="pending">
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -36,17 +36,9 @@ const themeColorDark = SITE.themeColorDark;
 		<meta name="creator" content={SITE.creator} />
 		<meta name="application-name" content={SITE.name} />
 		<meta name="keywords" content={SITE.keywords.join(', ')} />
-		<meta name="robots" content="index, follow" />
-		{
-			forcedTheme ? (
-				<meta name="theme-color" content={forcedTheme === 'dark' ? themeColorDark : themeColorLight} />
-			) : (
-				<>
-					<meta name="theme-color" content={themeColorLight} media="(prefers-color-scheme: light)" />
-					<meta name="theme-color" content={themeColorDark} media="(prefers-color-scheme: dark)" />
-				</>
-			)
-		}
+		<meta name="robots" content={robots} />
+		<meta name="theme-color" content={themeColorLight} media="(prefers-color-scheme: light)" />
+		<meta name="theme-color" content={themeColorDark} media="(prefers-color-scheme: dark)" />
 		<link rel="canonical" href={canonicalUrl} />
 		<link rel="alternate" type="text/plain" href="/llms.txt" title="LLMS context" />
 		<link rel="alternate" type="application/rss+xml" href="/rss.xml" title="Incomplete Infinity RSS" />

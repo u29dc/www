@@ -22,7 +22,8 @@ const componentSources = (sourceExpression: string): string[] => {
 };
 
 const mediaExtension = (source: string): string => {
-	const path = source.split('@', 1)[0]?.split(/[?#]/, 1)[0] ?? source;
+	const pathWithQueryRemoved = source.split(/[?#]/, 1)[0] ?? source;
+	const path = pathWithQueryRemoved.replace(/@([0-9]+(?:\.[0-9]+)?)$/, '');
 	const dotIndex = path.lastIndexOf('.');
 	return dotIndex === -1 ? '' : path.slice(dotIndex).toLowerCase();
 };

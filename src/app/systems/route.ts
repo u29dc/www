@@ -1,22 +1,31 @@
 import type { TransitionBeforePreparationEvent, TransitionBeforeSwapEvent } from 'astro:transitions/client';
 import { BaseModule, type Context } from '../core/module';
 import type { RoutePageState, RouteState, SiteRoute } from '../core/state';
+import { setDataset } from '../utils/dom';
 
 export type RoutePreparation = {
+	id: number;
 	to: URL;
 	signal: AbortSignal;
 	previousRoute: SiteRoute;
 	nextRoute: SiteRoute;
+	fromPathname: string;
+	toPathname: string;
 };
 
 export type RouteSwap = {
+	id: number;
 	newDocument: Document;
 	wrapSwap: (wrapper: (swap: () => void) => void) => void;
 };
 
+export type RouteEvent = {
+	id: number;
+};
+
 type PreparationHandler = (event: RoutePreparation) => void | Promise<void>;
 type SwapHandler = (event: RouteSwap) => void;
-type RouteHandler = () => void;
+type RouteHandler = (event: RouteEvent) => void;
 
 class RouteOwner extends BaseModule {
 	readonly name = 'route';
@@ -28,6 +37,9 @@ class RouteOwner extends BaseModule {
 	private readonly afterSwapHandlers = new Set<RouteHandler>();
 	private readonly loadHandlers = new Set<RouteHandler>();
 	private readonly abortHandlers = new Set<RouteHandler>();
+	private nextTransitionId = 0;
+	private activeTransitionId: number | undefined;
+	private readonly transitionIds = new WeakMap<AbortSignal, number>();
 
 	override preinit(context: Context): void {
 		super.preinit(context);
@@ -39,6 +51,18 @@ class RouteOwner extends BaseModule {
 	override init(): void {
 		this.refreshState('idle');
 		this.applyToDocument();
+	}
+
+	override dispose(): void {
+		this.preparationHandlers.clear();
+		this.beforeSwapHandlers.clear();
+		this.afterSwapHandlers.clear();
+		this.loadHandlers.clear();
+		this.abortHandlers.clear();
+		this.initialized = false;
+		this.activeTransitionId = undefined;
+		this.nextTransitionId = 0;
+		super.dispose();
 	}
 
 	getState(): RouteState {
@@ -123,8 +147,9 @@ class RouteOwner extends BaseModule {
 	}
 
 	private applyToDocument(): void {
-		document.documentElement.dataset['siteRoute'] = this.state.current;
-		document.documentElement.dataset['routeGeneration'] = String(this.state.generation);
+		setDataset(document.documentElement, 'siteRoute', this.state.current);
+		setDataset(document.documentElement, 'routeGeneration', this.state.generation);
+		setDataset(document.documentElement, 'routeState', this.state.pageState);
 	}
 
 	private bindAstro(): void {
@@ -148,14 +173,35 @@ class RouteOwner extends BaseModule {
 	private readonly handleBeforePreparation = (event: Event): void => {
 		const transitionEvent = event as TransitionBeforePreparationEvent;
 		const originalLoader = transitionEvent.loader;
-		const exitWork = this.emitPreparation(transitionEvent.to, transitionEvent.signal);
+		const previousRoute = this.state.current;
+		const nextRoute = this.readSiteRoute(transitionEvent.to);
+		const id = this.createTransitionId(transitionEvent.signal);
+		let aborted = false;
+		const abortTransition = (): void => {
+			if (aborted) return;
+			aborted = true;
+			this.emitAbort(id);
+		};
+		const exitWork = this.emitPreparation({
+			id,
+			to: transitionEvent.to,
+			signal: transitionEvent.signal,
+			previousRoute,
+			nextRoute,
+			fromPathname: this.state.pathname,
+			toPathname: transitionEvent.to.pathname,
+		}).catch((error: unknown) => {
+			abortTransition();
+			throw error;
+		});
+		void exitWork.catch(() => undefined);
 
 		transitionEvent.loader = async (): Promise<void> => {
 			try {
-				await originalLoader();
-				await exitWork;
+				await Promise.all([originalLoader(), exitWork]);
+				this.assertActiveTransition(id, transitionEvent.signal);
 			} catch (error) {
-				this.emitAbort();
+				abortTransition();
 				throw error;
 			}
 		};
@@ -163,8 +209,11 @@ class RouteOwner extends BaseModule {
 
 	private readonly handleBeforeSwap = (event: Event): void => {
 		const transitionEvent = event as TransitionBeforeSwapEvent;
+		const id = this.readTransitionId(transitionEvent.signal);
+		if (!this.isActiveTransition(id)) return;
 		let swap = transitionEvent.swap;
 		this.emitBeforeSwap({
+			id,
 			newDocument: transitionEvent.newDocument,
 			wrapSwap(wrapper) {
 				const previous = swap;
@@ -184,45 +233,92 @@ class RouteOwner extends BaseModule {
 		this.requestFrame('route:url');
 	};
 
-	private async emitPreparation(to: URL, signal: AbortSignal): Promise<void> {
-		const previousRoute = this.state.current;
-		const nextRoute = this.readSiteRoute(to);
-		this.refreshState('exiting', { from: previousRoute, to: nextRoute });
+	private async emitPreparation(event: RoutePreparation): Promise<void> {
+		if (!this.isActiveTransition(event.id)) return;
+		this.refreshState('exiting', { from: event.previousRoute, to: event.nextRoute });
 		this.applyToDocument();
 		this.requestFrame('route:preparation');
-		await Promise.all(Array.from(this.preparationHandlers).map((handler) => handler({ to, signal, previousRoute, nextRoute })));
+		await Promise.all(Array.from(this.preparationHandlers).map((handler) => handler(event)));
 	}
 
 	private emitBeforeSwap(event: RouteSwap): void {
 		this.refreshState('swapping');
 		this.applyToDocument();
-		for (const handler of this.beforeSwapHandlers) handler(event);
+		for (const handler of Array.from(this.beforeSwapHandlers)) {
+			try {
+				handler(event);
+			} catch (error) {
+				this.reportError('route.beforeSwap', error);
+			}
+		}
 		this.requestFrame('route:before-swap');
 	}
 
 	private emitAfterSwap(): void {
-		this.refreshState('idle');
+		const id = this.activeTransitionId;
+		this.refreshState('entering');
 		delete this.state.from;
 		delete this.state.to;
 		this.applyToDocument();
-		for (const handler of this.afterSwapHandlers) handler();
+		this.emitRouteHandlers('route.afterSwap', this.afterSwapHandlers, { id: id ?? 0 });
 		this.requestFrame('route:after-swap');
 	}
 
 	private emitLoad(): void {
+		const id = this.activeTransitionId;
 		this.refreshState('loaded');
 		this.applyToDocument();
-		for (const handler of this.loadHandlers) handler();
-		this.setPageState('idle');
+		try {
+			this.emitRouteHandlers('route.load', this.loadHandlers, { id: id ?? 0 });
+		} finally {
+			this.setPageState('idle');
+			this.activeTransitionId = undefined;
+		}
 	}
 
-	private emitAbort(): void {
+	private emitAbort(id: number): void {
+		if (!this.isActiveTransition(id)) return;
 		this.refreshState('idle');
 		delete this.state.from;
 		delete this.state.to;
 		this.applyToDocument();
-		for (const handler of this.abortHandlers) handler();
+		this.activeTransitionId = undefined;
+		this.emitRouteHandlers('route.abort', this.abortHandlers, { id });
 		this.requestFrame('route:abort');
+	}
+
+	private emitRouteHandlers(name: string, handlers: ReadonlySet<RouteHandler>, event: RouteEvent): void {
+		for (const handler of Array.from(handlers)) {
+			try {
+				handler(event);
+			} catch (error) {
+				this.reportError(name, error);
+			}
+		}
+	}
+
+	private createTransitionId(signal: AbortSignal): number {
+		this.nextTransitionId += 1;
+		const id = this.nextTransitionId;
+		this.activeTransitionId = id;
+		this.transitionIds.set(signal, id);
+		return id;
+	}
+
+	private readTransitionId(signal?: AbortSignal): number {
+		return (signal && this.transitionIds.get(signal)) || this.activeTransitionId || 0;
+	}
+
+	private isActiveTransition(id: number | undefined): id is number {
+		return id !== undefined && id !== 0 && id === this.activeTransitionId;
+	}
+
+	private assertActiveTransition(id: number, signal: AbortSignal): void {
+		if (signal.aborted) {
+			throw signal.reason instanceof Error ? signal.reason : new DOMException('Route transition aborted', 'AbortError');
+		}
+		if (this.isActiveTransition(id)) return;
+		throw new DOMException('Route transition superseded', 'AbortError');
 	}
 }
 

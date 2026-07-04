@@ -33,6 +33,9 @@ const sources = parseMediaSources(src);
 const resolvedFetchPriority = fetchPriority ?? (loading === 'eager' ? 'high' : undefined);
 const totalRatio = sources.reduce((sum, item) => sum + item.ratio, 0);
 const shouldShowControls = controls || !autoplay;
+const mediaAssetClass = 'block size-full object-cover select-none data-[fit=contain]:object-contain';
+const passiveMediaAssetClass = `${mediaAssetClass} pointer-events-none`;
+const interactiveMediaAssetClass = `${mediaAssetClass} pointer-events-auto`;
 const figureStyle = [
 	`--media-ratio:${totalRatio}`,
 	'--render-skip-intrinsic-size:calc(min(calc(100vw - (var(--space-page) * 2)), var(--measure-media)) / var(--media-ratio))',
@@ -54,7 +57,7 @@ const figureStyle = [
 					{item.kind === 'video' ? (
 						<>
 							<video
-								class="block size-full object-cover pointer-events-none select-none data-[fit=contain]:object-contain"
+								class={shouldShowControls ? interactiveMediaAssetClass : passiveMediaAssetClass}
 								data-media-video
 								data-media-asset
 								data-src={item.displayUrl}
@@ -70,10 +73,10 @@ const figureStyle = [
 								crossorigin="anonymous"
 								draggable="false"
 							/>
-							<noscript>
-								<video
-									class="block size-full object-cover pointer-events-none select-none data-[fit=contain]:object-contain"
-									src={item.displayUrl}
+								<noscript>
+									<video
+										class={interactiveMediaAssetClass}
+										src={item.displayUrl}
 									data-media-asset
 									data-fit={fit}
 									aria-label={alt || undefined}
@@ -90,7 +93,7 @@ const figureStyle = [
 						</>
 					) : (
 						<img
-							class="block size-full object-cover pointer-events-none select-none data-[fit=contain]:object-contain"
+							class={passiveMediaAssetClass}
 							src={item.displayUrl}
 							srcset={item.srcset}
 							sizes={item.sizes}

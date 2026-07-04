@@ -341,6 +341,7 @@ class MotionOwner extends BaseModule {
 		this.clearExitState();
 		this.clearSiteRouteMotion();
 		this.syncSiteRoute();
+		this.observeRevealTargets();
 	};
 
 	private readonly handleBeforeSwap = (event: RouteSwap): void => {

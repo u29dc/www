@@ -3,10 +3,9 @@ import { formatDate, getPublicArtifacts } from '../lib/artifacts';
 import { SITE } from '../data/site';
 import { originParagraphs, protocols } from '../data/copy';
 import { artifactMarkdownUrl, artifactTextUrl, artifactUrl, toArtifactMarkdown } from '../lib/markdown';
+import { absoluteSiteUrl } from '../lib/seo';
 
 const EMBED_ARTIFACTS = true;
-
-const shouldEmbedArtifacts = (import.meta.env['PUBLIC_LLMS_EMBED_ARTIFACTS'] ?? String(EMBED_ARTIFACTS)) === 'true';
 
 const origin = originParagraphs.join('\n\n');
 
@@ -28,9 +27,9 @@ const officialChannels = [
 	'500px: https://500px.com/p/u29dc',
 	'IMDb: https://www.imdb.com/name/nm10729970',
 	'Last updated: May 2026',
-	`Full sitemap: ${SITE.url}/sitemap.xml`,
-	`RSS: ${SITE.url}/rss.xml`,
-	`JSON Feed: ${SITE.url}/feed.json`,
+	`Full sitemap: ${absoluteSiteUrl('/sitemap.xml')}`,
+	`RSS: ${absoluteSiteUrl(SITE.feeds.rss)}`,
+	`JSON Feed: ${absoluteSiteUrl(SITE.feeds.json)}`,
 ].join('\n');
 
 const buildProtocols = (): string =>
@@ -48,7 +47,7 @@ const joinMarkdownBlocks = (blocks: string[]): string =>
 
 export const GET: APIRoute = async () => {
 	const artifacts = await getPublicArtifacts();
-	const artifactsText = shouldEmbedArtifacts
+	const artifactsText = EMBED_ARTIFACTS
 		? artifacts.map(toArtifactMarkdown).join('\n\n---\n\n')
 		: artifacts
 				.map(

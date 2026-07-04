@@ -231,12 +231,26 @@ class LinesOwner extends BaseModule {
 
 		applySequenceTiming(measuredSequence, lineOptions);
 
-		const preparedSequence = measuredSequence.map((measured) => {
-			const prepared = mountLineReveal(measured);
-			this.preparedTargets.set(measured.target, prepared);
-			this.observePreparedWidth(prepared);
-			return prepared;
-		});
+		const preparedSequence: PreparedLineReveal[] = [];
+		try {
+			for (const measured of measuredSequence) {
+				const prepared = mountLineReveal(measured);
+				this.preparedTargets.set(measured.target, prepared);
+				preparedSequence.push(prepared);
+				this.observePreparedWidth(prepared);
+			}
+		} catch {
+			for (const prepared of preparedSequence) {
+				this.cancelPrepared(prepared);
+			}
+			for (const measured of measuredSequence) {
+				markFallback(measured.target);
+			}
+			markLineGroupComplete(root);
+			this.totalLineCount = Math.max(0, this.totalLineCount - measuredSequence.reduce((total, measured) => total + measured.lineCount, 0));
+			this.activeTargetCount = Math.max(0, this.activeTargetCount - measuredSequence.length);
+			return;
+		}
 
 		this.queueOrPlay(root, preparedSequence);
 	}

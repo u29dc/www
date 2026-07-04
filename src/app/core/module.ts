@@ -22,6 +22,7 @@ export type Context = {
 	get theme(): ThemeState;
 	requestFrame: (reason?: string) => void;
 	nextFrame: (reason: string, callback: () => void) => () => void;
+	reportError: (name: string, error: unknown) => void;
 };
 
 export type Module = {
@@ -37,7 +38,7 @@ export type Module = {
 export abstract class BaseModule implements Module {
 	abstract readonly name: string;
 
-	protected context?: Context;
+	protected context: Context | undefined;
 	protected cleanups: Array<() => void> = [];
 
 	preinit(context: Context): void {
@@ -53,7 +54,22 @@ export abstract class BaseModule implements Module {
 	update(_frame: Frame): boolean | void {}
 
 	dispose(): void {
-		for (const cleanup of this.cleanups.splice(0)) cleanup();
+		const errors: unknown[] = [];
+		try {
+			for (const cleanup of this.cleanups.splice(0)) {
+				try {
+					cleanup();
+				} catch (error) {
+					errors.push(error);
+				}
+			}
+		} finally {
+			this.context = undefined;
+		}
+		if (errors.length === 1) throw errors[0];
+		if (errors.length > 1) {
+			throw new AggregateError(errors, `${this.name} failed to run ${errors.length} cleanup callbacks`);
+		}
 	}
 
 	protected addCleanup(cleanup: () => void): void {
@@ -66,5 +82,9 @@ export abstract class BaseModule implements Module {
 
 	protected nextFrame(reason: string, callback: () => void): () => void {
 		return this.context?.nextFrame(reason, callback) ?? (() => {});
+	}
+
+	protected reportError(name: string, error: unknown): void {
+		this.context?.reportError(name, error);
 	}
 }

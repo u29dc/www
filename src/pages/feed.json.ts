@@ -2,8 +2,7 @@ import type { APIRoute } from 'astro';
 import { getPublicArtifacts, type ArtifactEntry } from '../lib/artifacts';
 import { SITE } from '../data/site';
 import { artifactMarkdownUrl, artifactTextUrl, artifactUrl } from '../lib/markdown';
-
-const FEED_PATH = '/feed.json';
+import { absoluteSiteUrl } from '../lib/seo';
 
 type JsonFeedAuthor = {
 	name: string;
@@ -39,8 +38,6 @@ type JsonFeed = {
 	authors: JsonFeedAuthor[];
 	items: JsonFeedItem[];
 };
-
-const feedUrl = (): string => new URL(FEED_PATH, SITE.url).toString();
 
 const getArtifactContentText = (entry: ArtifactEntry): string =>
 	[entry.data.description, `Web: ${artifactUrl(entry)}`, `Markdown: ${artifactMarkdownUrl(entry)}`, `Text: ${artifactTextUrl(entry)}`].join('\n\n');
@@ -81,7 +78,7 @@ const buildFeed = (artifacts: ArtifactEntry[]): JsonFeed => ({
 	version: 'https://jsonfeed.org/version/1.1',
 	title: SITE.name,
 	home_page_url: SITE.url,
-	feed_url: feedUrl(),
+	feed_url: absoluteSiteUrl(SITE.feeds.json),
 	description: SITE.description,
 	language: SITE.lang,
 	authors: [

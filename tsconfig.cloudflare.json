@@ -1,0 +1,14 @@
+{
+	"compilerOptions": {
+		"allowJs": false,
+		"lib": ["ES2024"],
+		"module": "preserve",
+		"moduleResolution": "bundler",
+		"noEmit": true,
+		"skipLibCheck": false,
+		"strict": true,
+		"types": ["@cloudflare/workers-types"]
+	},
+	"include": ["wrangler.d.ts"],
+	"exclude": ["dist", "node_modules", ".tmp"]
+}

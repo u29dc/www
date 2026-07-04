@@ -1,7 +1,7 @@
 import type { ArtifactEntry } from './artifacts';
 import { formatDate } from './artifacts';
-import { SITE } from '../data/site';
 import { parseMediaSource } from './media';
+import { absoluteSiteUrl } from './seo';
 import remarkGfm from 'remark-gfm';
 import remarkMdx from 'remark-mdx';
 import remarkParse from 'remark-parse';
@@ -18,19 +18,17 @@ const rawFiles = rawModules as Record<string, string>;
 
 const FRONTMATTER_PATTERN = /^---\n([\s\S]*?)\n---\n?/;
 
-const extractFrontmatter = (raw: string): string => raw.match(FRONTMATTER_PATTERN)?.[1] ?? '';
+const contentIdFromPath = (path: string): string | undefined =>
+	path
+		.replaceAll('\\', '/')
+		.split('/')
+		.at(-1)
+		?.replace(/\.mdx$/i, '');
 
-const extractSlug = (raw: string): string | undefined => {
-	const slug = extractFrontmatter(raw)
-		.match(/^slug:\s*['"]?([^'"\n]+)['"]?$/m)?.[1]
-		?.trim();
-	return slug && slug.length > 0 ? slug : undefined;
-};
-
-const rawBySlug = new Map(
-	Object.values(rawFiles)
-		.map((raw) => [extractSlug(raw), raw])
-		.filter((entry): entry is [string, string] => typeof entry[0] === 'string'),
+const rawByContentId = new Map(
+	Object.entries(rawFiles)
+		.map(([path, raw]) => [contentIdFromPath(path), raw])
+		.filter((entry): entry is [string, string] => typeof entry[0] === 'string' && entry[0].length > 0),
 );
 
 const stripFrontmatter = (raw: string): string => raw.replace(FRONTMATTER_PATTERN, '');
@@ -142,6 +140,13 @@ const transformTextComponent = (node: MarkdownNode): MarkdownNode => {
 		return { type: 'link', url: href, title: null, children };
 	}
 
+	if (node.name === 'Citation' || node.name === 'MdxCitation') {
+		const href = getAttributeValue(node, 'href');
+		if (!href) throw new Error(`${node.name} is missing href${componentLocation(node)}`);
+		const label = getAttributeValue(node, 'label') || getAttributeValue(node, 'title') || 'source';
+		return linkNode(href, label);
+	}
+
 	throw new Error(`Unsupported inline MDX component "${node.name ?? 'unknown'}"${componentLocation(node)}`);
 };
 
@@ -203,23 +208,24 @@ const findFirstMdxMediaSource = (nodes: MarkdownNode[], predicate: (source: stri
 	return undefined;
 };
 
-export const getRawArtifactMarkdown = (slug: string): string => {
-	const raw = rawBySlug.get(slug);
+export const getRawArtifactMarkdown = (entry: ArtifactEntry): string => {
+	const filePathId = entry.filePath ? contentIdFromPath(entry.filePath) : undefined;
+	const raw = rawByContentId.get(entry.id) ?? (filePathId ? rawByContentId.get(filePathId) : undefined);
 	if (!raw) {
-		throw new Error(`Missing raw MDX source for slug "${slug}"`);
+		throw new Error(`Missing raw MDX source for artifact "${entry.data.slug}"`);
 	}
 	return raw;
 };
 
 export const getFirstArtifactMediaSource = (entry: ArtifactEntry): string | undefined => {
-	const raw = getRawArtifactMarkdown(entry.data.slug);
+	const raw = getRawArtifactMarkdown(entry);
 	const tree = markdownParser.parse(stripFrontmatter(raw)) as unknown as MarkdownNode;
 
 	return findFirstMdxMediaSource(tree.children ?? []);
 };
 
 export const getFirstArtifactImageMediaSource = (entry: ArtifactEntry): string | undefined => {
-	const raw = getRawArtifactMarkdown(entry.data.slug);
+	const raw = getRawArtifactMarkdown(entry);
 	const tree = markdownParser.parse(stripFrontmatter(raw)) as unknown as MarkdownNode;
 
 	return findFirstMdxMediaSource(tree.children ?? [], (source) => parseMediaSource(source).kind === 'image');
@@ -233,11 +239,11 @@ export const toMarkdownBody = (raw: string): string => {
 	return cleanBlock(String(body));
 };
 
-export const artifactUrl = (entry: ArtifactEntry): string => new URL(`/${entry.data.slug}/`, SITE.url).toString();
+export const artifactUrl = (entry: ArtifactEntry): string => absoluteSiteUrl(`/${entry.data.slug}/`);
 
-export const artifactMarkdownUrl = (entry: ArtifactEntry): string => new URL(`/${entry.data.slug}.md`, SITE.url).toString();
+export const artifactMarkdownUrl = (entry: ArtifactEntry): string => absoluteSiteUrl(`/${entry.data.slug}.md`);
 
-export const artifactTextUrl = (entry: ArtifactEntry): string => new URL(`/${entry.data.slug}.txt`, SITE.url).toString();
+export const artifactTextUrl = (entry: ArtifactEntry): string => absoluteSiteUrl(`/${entry.data.slug}.txt`);
 
 export const toArtifactMarkdown = (entry: ArtifactEntry): string => {
 	const details = [
@@ -255,7 +261,7 @@ export const toArtifactMarkdown = (entry: ArtifactEntry): string => {
 		if (entry.data.venue) details.push(`Venue: ${entry.data.venue}`);
 	}
 
-	const raw = getRawArtifactMarkdown(entry.data.slug);
+	const raw = getRawArtifactMarkdown(entry);
 
 	return cleanBlock([`# ${entry.data.title}`, entry.data.description, details.join('\n'), '---', toMarkdownBody(raw)].join('\n\n'));
 };

@@ -1,6 +1,7 @@
 import type { Context, Frame, Module } from './module';
 import type { DeviceProfile, InputState, RouteState, ScrollState, ThemeState } from './state';
-import { setTimerScheduler } from './timer';
+import { cancelRuntimeTimers, setTimerScheduler } from './timer';
+import { setDataset } from '../utils/dom';
 
 export type AppConfig = {
 	getProfile: () => DeviceProfile;
@@ -8,6 +9,7 @@ export type AppConfig = {
 	getInput: () => InputState;
 	getScroll: () => ScrollState;
 	getTheme: () => ThemeState;
+	beforeFrame?: (frame: Frame) => void;
 	afterFrame?: (frame: Frame) => void;
 };
 
@@ -47,6 +49,7 @@ export class App {
 
 	start(): void {
 		if (!isBrowser || this.started) return;
+		setDataset(document.documentElement, 'runtime', 'booting');
 		this.started = true;
 		this.context = this.createContext();
 		this.resetTimerScheduler = setTimerScheduler((name, callback) => {
@@ -57,14 +60,17 @@ export class App {
 		for (const module of this.modules) this.runLifecycle(module, 'init');
 		for (const module of this.modules) this.runLifecycle(module, 'resize');
 
-		document.documentElement.dataset['runtime'] = 'ready';
 		window.addEventListener('resize', this.handleResize, { passive: true });
 		document.addEventListener('visibilitychange', this.handleVisibilityChange);
+		setDataset(document.documentElement, 'runtime', 'ready');
+		setDataset(document.documentElement, 'runtimeVisible', String(document.visibilityState === 'visible'));
 		this.requestFrame('app:start');
 	}
 
 	refreshPage(reason = 'route:refresh'): void {
 		if (!this.started) return;
+		setDataset(document.documentElement, 'runtime', 'ready');
+		setDataset(document.documentElement, 'runtimeVisible', String(document.visibilityState === 'visible'));
 		for (const module of this.modules) this.runLifecycle(module, 'refresh');
 		for (const module of this.modules) this.runLifecycle(module, 'resize');
 		this.requestFrame(reason);
@@ -72,7 +78,7 @@ export class App {
 
 	requestFrame(reason = 'request'): void {
 		this.lastReason = reason;
-		if (!isBrowser) return;
+		if (!isBrowser || !this.started || document.visibilityState !== 'visible') return;
 		if (this.ticking) {
 			this.requestedDuringTick = true;
 			return;
@@ -93,16 +99,25 @@ export class App {
 	dispose(): void {
 		if (!this.started) return;
 		this.started = false;
-		if (this.rafId !== 0) {
-			cancelAnimationFrame(this.rafId);
-			this.rafId = 0;
+		try {
+			if (this.rafId !== 0) {
+				cancelAnimationFrame(this.rafId);
+				this.rafId = 0;
+			}
+			window.removeEventListener('resize', this.handleResize);
+			document.removeEventListener('visibilitychange', this.handleVisibilityChange);
+			for (const module of [...this.modules].toReversed()) this.runDispose(module);
+			this.pendingCallbacks.length = 0;
+			cancelRuntimeTimers();
+		} catch (error) {
+			this.recordError({ name: 'dispose' }, error);
+		} finally {
+			this.resetTimerScheduler?.();
+			this.resetTimerScheduler = undefined;
+			this.ticking = false;
+			this.requestedDuringTick = false;
+			this.lastTime = 0;
 		}
-		window.removeEventListener('resize', this.handleResize);
-		document.removeEventListener('visibilitychange', this.handleVisibilityChange);
-		for (const module of [...this.modules].toReversed()) this.runDispose(module);
-		this.pendingCallbacks.length = 0;
-		this.resetTimerScheduler?.();
-		this.resetTimerScheduler = undefined;
 	}
 
 	getTrace(): ModuleTrace[] {
@@ -115,6 +130,7 @@ export class App {
 				root: document,
 				requestFrame: (reason?: string) => this.requestFrame(reason),
 				nextFrame: (reason: string, callback: () => void) => this.nextFrame(reason, callback),
+				reportError: (name: string, error: unknown) => this.recordError({ name }, error),
 			},
 			{
 				profile: { get: () => this.config.getProfile() },
@@ -128,20 +144,26 @@ export class App {
 
 	private createFrame(timestamp: number): Frame {
 		const rawdt = this.lastTime === 0 ? 0 : timestamp - this.lastTime;
+		const frameIndex = this.frameIndex + 1;
+		const profile = this.config.getProfile();
+		const route = this.config.getRoute();
+		const input = this.config.getInput();
+		const scroll = this.config.getScroll();
+		const theme = this.config.getTheme();
 		this.lastTime = timestamp;
-		this.frameIndex += 1;
+		this.frameIndex = frameIndex;
 
 		return {
-			index: this.frameIndex,
+			index: frameIndex,
 			now: timestamp,
 			rawdt,
 			dt: Math.min(Math.max(rawdt, 0), MAX_DELTA_MS) / 1000,
 			visible: document.visibilityState === 'visible',
-			profile: this.config.getProfile(),
-			route: this.config.getRoute(),
-			input: this.config.getInput(),
-			scroll: this.config.getScroll(),
-			theme: this.config.getTheme(),
+			profile,
+			route,
+			input,
+			scroll,
+			theme,
 		};
 	}
 
@@ -187,31 +209,45 @@ export class App {
 
 	private readonly tick = (timestamp: number): void => {
 		this.rafId = 0;
+		if (!this.started || document.visibilityState !== 'visible') return;
 		this.ticking = true;
 		this.requestedDuringTick = false;
 
-		const frame = this.createFrame(timestamp);
 		let needsNextFrame = false;
+		let shouldContinue = false;
 
-		this.runPendingCallbacks();
-		for (const module of this.modules) {
-			if (!module.update) continue;
+		try {
+			const frame = this.createFrame(timestamp);
+
 			try {
-				needsNextFrame = module.update.call(module, frame) === true || needsNextFrame;
+				this.config.beforeFrame?.(frame);
 			} catch (error) {
-				this.recordError(module, error);
+				this.recordError({ name: 'beforeFrame' }, error);
 			}
-		}
-		this.config.afterFrame?.(frame);
 
-		const shouldContinue = needsNextFrame || this.requestedDuringTick || this.pendingCallbacks.some((callback) => !callback.cancelled);
-		this.ticking = false;
+			this.runPendingCallbacks();
+			for (const module of this.modules) {
+				if (!module.update) continue;
+				try {
+					needsNextFrame = module.update.call(module, frame) === true || needsNextFrame;
+				} catch (error) {
+					this.recordError(module, error);
+				}
+			}
 
-		if (shouldContinue) {
-			this.requestFrame(this.lastReason);
-			return;
+			try {
+				this.config.afterFrame?.(frame);
+			} catch (error) {
+				this.recordError({ name: 'afterFrame' }, error);
+			}
+		} catch (error) {
+			this.recordError({ name: 'frame' }, error);
+		} finally {
+			shouldContinue = needsNextFrame || this.requestedDuringTick || this.pendingCallbacks.some((callback) => !callback.cancelled);
+			this.ticking = false;
+			if (!shouldContinue) this.lastTime = 0;
 		}
-		this.lastTime = 0;
+		if (shouldContinue) this.requestFrame(this.lastReason);
 	};
 
 	private readonly handleResize = (): void => {
@@ -221,6 +257,7 @@ export class App {
 
 	private readonly handleVisibilityChange = (): void => {
 		this.lastTime = 0;
-		this.requestFrame('document:visibility');
+		setDataset(document.documentElement, 'runtimeVisible', String(document.visibilityState === 'visible'));
+		if (document.visibilityState === 'visible') this.requestFrame('document:visibility');
 	};
 }

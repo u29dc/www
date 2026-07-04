@@ -1,14 +1,13 @@
 import type { APIRoute } from 'astro';
 import { getPublicArtifacts } from '../lib/artifacts';
 import { SITE } from '../data/site';
+import { absoluteSiteUrl, escapeXml } from '../lib/seo';
 
 type SitemapEntry = {
 	url: string;
 	lastModified: Date;
 	changeFrequency: 'monthly';
 };
-
-const escapeXml = (value: string): string => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&apos;');
 
 const buildSitemap = (entries: SitemapEntry[]): string => {
 	const body = entries
@@ -29,30 +28,30 @@ const buildSitemap = (entries: SitemapEntry[]): string => {
 
 export const GET: APIRoute = async () => {
 	const artifacts = await getPublicArtifacts();
-	const latestArtifactDate = artifacts[0]?.data.date ?? new Date();
+	const latestArtifactDate = artifacts[0]?.data.date ?? SITE.updatedAt;
 	const entries: SitemapEntry[] = [
 		{
-			url: new URL('/', SITE.url).toString(),
-			lastModified: new Date(),
+			url: absoluteSiteUrl('/'),
+			lastModified: SITE.updatedAt,
 			changeFrequency: 'monthly',
 		},
 		{
-			url: new URL('/llms.txt', SITE.url).toString(),
-			lastModified: new Date(),
+			url: absoluteSiteUrl(SITE.feeds.llms),
+			lastModified: SITE.updatedAt,
 			changeFrequency: 'monthly',
 		},
 		{
-			url: new URL('/rss.xml', SITE.url).toString(),
+			url: absoluteSiteUrl(SITE.feeds.rss),
 			lastModified: latestArtifactDate,
 			changeFrequency: 'monthly',
 		},
 		{
-			url: new URL('/feed.json', SITE.url).toString(),
+			url: absoluteSiteUrl(SITE.feeds.json),
 			lastModified: latestArtifactDate,
 			changeFrequency: 'monthly',
 		},
 		...artifacts.map((entry) => ({
-			url: new URL(`/${entry.data.slug}/`, SITE.url).toString(),
+			url: absoluteSiteUrl(`/${entry.data.slug}/`),
 			lastModified: entry.data.date,
 			changeFrequency: 'monthly' as const,
 		})),
@@ -60,7 +59,9 @@ export const GET: APIRoute = async () => {
 
 	return new Response(buildSitemap(entries), {
 		headers: {
+			'Cache-Control': 'public, max-age=0, must-revalidate',
 			'Content-Type': 'application/xml; charset=utf-8',
+			'X-Content-Type-Options': 'nosniff',
 		},
 	});
 };
