@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { formatDate, getPublicArtifacts } from '../lib/artifacts';
 import { SITE } from '../data/site';
-import { originParagraphs, protocols } from '../data/copy';
+import { originParagraphs } from '../data/copy';
 import { artifactMarkdownUrl, artifactTextUrl, artifactUrl, toArtifactMarkdown } from '../lib/markdown';
 import { absoluteSiteUrl } from '../lib/seo';
 
@@ -32,13 +32,6 @@ const officialChannels = [
 	`JSON Feed: ${absoluteSiteUrl(SITE.feeds.json)}`,
 ].join('\n');
 
-const buildProtocols = (): string =>
-	protocols
-		.map((protocol) => {
-			return `- ${protocol.name}: ${protocol.description}.`;
-		})
-		.join('\n');
-
 const joinMarkdownBlocks = (blocks: string[]): string =>
 	`${blocks
 		.map((block) => block.trim())
@@ -56,18 +49,7 @@ export const GET: APIRoute = async () => {
 				)
 				.join('\n');
 
-	const body = joinMarkdownBlocks([
-		`# ${SITE.name}`,
-		SITE.description,
-		'## Origin',
-		origin,
-		'## Protocols',
-		buildProtocols(),
-		'## Artifacts',
-		artifactsText,
-		'## Official Channels',
-		officialChannels,
-	]);
+	const body = joinMarkdownBlocks([`# ${SITE.name}`, SITE.description, '## Origin', origin, '## Artifacts', artifactsText, '## Official Channels', officialChannels]);
 
 	return new Response(body, {
 		headers: {

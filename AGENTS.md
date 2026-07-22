@@ -67,7 +67,7 @@
 ## 5. Architecture
 
 - [`src/layouts/layout.astro`](src/layouts/layout.astro) owns global CSS, metadata, canonical/OG/Twitter tags, font preloads, the persistent header, grid guide, page shell, route router, and the single browser runtime import.
-- [`src/pages/index.astro`](src/pages/index.astro) composes the homepage in this order: origin, protocols, artifact studies, artifact fragments, optional signals, connect.
+- [`src/pages/index.astro`](src/pages/index.astro) composes the homepage in this order: origin, artifact studies, artifact fragments, optional signals, connect.
 - [`src/pages/[slug].astro`](src/pages/[slug].astro) renders artifact detail pages with article metadata, MDX content, hidden metadata, and connect footer.
 - [`src/pages/[slug].md.ts`](src/pages/[slug].md.ts), [`src/pages/[slug].txt.ts`](src/pages/[slug].txt.ts), [`src/pages/llms.txt.ts`](src/pages/llms.txt.ts), [`src/pages/rss.xml.ts`](src/pages/rss.xml.ts), and [`src/pages/feed.json.ts`](src/pages/feed.json.ts) are first-class machine-readable surfaces. Keep them aligned with visible content when copy or MDX behavior changes.
 - [`src/lib/seo.ts`](src/lib/seo.ts) centralizes site-local path validation, absolute URL construction, XML escaping, feed sorting, and fallback feed dates for generated routes.

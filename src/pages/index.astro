@@ -2,7 +2,6 @@
 import ArtifactList from '../components/artifacts/list.astro';
 import Connect from '../components/chrome/connect.astro';
 import Origin from '../components/home/origin.astro';
-import Protocols from '../components/home/protocols.astro';
 import Signals from '../components/home/signals.astro';
 import Layout from '../layouts/layout.astro';
 import { getFragments, getStudies } from '../lib/artifacts';
@@ -14,7 +13,6 @@ const fragments = await getFragments();
 <Layout>
 	<main class="layout-grid gap-y-(--space-6) py-(--space-6)" data-content-panel>
 		<Origin />
-		<Protocols />
 		<ArtifactList id="studies" title="Artifacts / Studies" entries={studies} />
 		<ArtifactList id="fragments" title="Artifacts / Fragments" entries={fragments} />
 		<Signals />

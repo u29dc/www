@@ -128,7 +128,6 @@
 	--connect-indicator-size: 0.88em;
 	--connect-indicator-gap: 0.4em;
 	--connect-indicator-duration: 1.2s;
-	--protocol-row-columns: 3.25rem minmax(0, 1fr);
 }
 
 :root[data-motion-quality='no-blur'] {

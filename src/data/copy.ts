@@ -11,6 +11,10 @@ export const originLinks = {
 		href: 'https://www.instagram.com/lotuscars/',
 		mark: 'lotus',
 	},
+	isembard: {
+		label: 'Isembard',
+		href: 'https://isembard.com/',
+	},
 	porsche: {
 		label: 'Porsche',
 		href: 'https://www.porsche.com/',
@@ -59,24 +63,9 @@ export const signals: SiteLink[] = [];
 
 export const originParagraphs = [
 	'Most of the technology that will matter in the next decade is already becoming possible. The machines will run. The tech will work. The prototypes will become products. What remains is the passage into the world: belief, adoption, permission, memory, demand. A future can be engineered and still fail to become imaginable to the people who have to fund it, buy it, work on it, regulate it, defend it, or live beside it.',
-	'I have spent the last decade working around that passage: from architecture at Salon to arts and media at Nohlab, creative engineering at Lusion and Artificial Rome, cultural and immersive projects across Porsche, Outernet London, the National Taiwan Museum of Fine Arts, Akbank Sanat, and Battersea Power Station, then creative direction at Lotus during the shift from petrol to electric. Different rooms, different mediums, same pressure: something difficult trying to become visible without becoming smaller.',
-	'I am narrowing that range now through Incomplete Infinity, for companies whose work is too consequential to remain trapped inside technical explanation. Energy, climate, robotics: fields where the proof is hard-won, but proof alone rarely carries far enough. The work is narrative architecture, creative strategy, and proof-making for the fragile passage between what has been built and what the world is ready to believe.',
+	'I have spent the last decade working around that passage: from architecture at Salon to arts and media at Nohlab, creative engineering at Lusion and Artificial Rome, cultural and immersive projects across Porsche, Outernet London, the National Taiwan Museum of Fine Arts, Akbank Sanat, and Battersea Power Station, then creative direction at Lotus during the shift from petrol to electric. I now work as Brand and Design Director at Isembard, shaping brand, design, and proof systems for infrastructure that has to be understood before it can be trusted. Different rooms, different mediums, same pressure: something difficult trying to become visible without becoming smaller.',
+	'Through Incomplete Infinity, that same concern stays focused on companies whose work is too consequential to remain trapped inside technical explanation. Energy, climate, robotics: fields where the proof is hard-won, but proof alone rarely carries far enough. The work is narrative architecture, creative strategy, and proof-making for the fragile passage between what has been built and what the world is ready to believe.',
 	'The name is deliberate. Complete systems close. Incomplete ones invite participation. I am interested in structures open enough to be entered, precise enough to be trusted, and strange enough to resist becoming another polished surface. Structures that can hold a technical claim, a commercial decision, and a human reason for caring at the same time.',
-] as const;
-
-export const protocols = [
-	{
-		name: 'MAP',
-		description: 'Audit coherence and return actionable routes forward',
-	},
-	{
-		name: 'ARC',
-		description: 'Architecture for strategy, direction, and scalable artifacts',
-	},
-	{
-		name: 'ADV',
-		description: 'Ongoing counsel to keep shipped work narratively coherent',
-	},
 ] as const;
 
 export const connectLinks = {
