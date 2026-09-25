@@ -113,14 +113,21 @@ const mediaToMarkdownNodes = (node: MarkdownNode): MarkdownNode[] => {
 		throw new Error(`MdxMedia is missing src${componentLocation(node)}`);
 	}
 
-	return sources.map((source) => {
+	const alt = getAttributeValue(node, 'alt');
+	const caption = getAttributeValue(node, 'caption');
+	const credit = getAttributeValue(node, 'credit');
+	const mediaNodes: MarkdownNode[] = sources.map((source) => {
 		const media = parseMediaSource(source);
 		const label = media.kind === 'video' ? 'Video' : 'Image';
 		return {
 			type: 'paragraph',
-			children: [linkNode(media.displayUrl, `${label}: ${media.path}`)],
+			children: [linkNode(media.displayUrl, `${label}: ${alt || media.path}`)],
 		};
 	});
+	for (const text of [caption, credit]) {
+		if (text) mediaNodes.push({ type: 'paragraph', children: [{ type: 'text', value: text }] });
+	}
+	return mediaNodes;
 };
 
 const transformTextComponent = (node: MarkdownNode): MarkdownNode => {
@@ -158,7 +165,17 @@ const transformFlowComponent = (node: MarkdownNode): MarkdownNode[] => {
 	}
 
 	if (node.name === 'MdxQuote' || node.name === 'Quote') {
-		return [{ type: 'blockquote', children }];
+		const attribution: MarkdownNode[] = [];
+		for (const text of [getAttributeValue(node, 'author'), getAttributeValue(node, 'source')]) {
+			if (text) attribution.push({ type: 'text', value: text });
+		}
+		const reference = getAttributeValue(node, 'reference');
+		const href = getAttributeValue(node, 'href');
+		if (reference) attribution.push(href ? linkNode(href, reference) : { type: 'text', value: reference });
+		const quote: MarkdownNode = { type: 'blockquote', children };
+		return attribution.length === 0
+			? [quote]
+			: [quote, { type: 'paragraph', children: [{ type: 'text', value: '— ' }, ...attribution.flatMap((item, index) => (index === 0 ? [item] : [{ type: 'text', value: ', ' }, item]))] }];
 	}
 
 	if (node.name === 'MdxSpacer' || node.name === 'Spacer') {
@@ -253,6 +270,7 @@ export const toArtifactMarkdown = (entry: ArtifactEntry): string => {
 		`Markdown: ${artifactMarkdownUrl(entry)}`,
 		`Text: ${artifactTextUrl(entry)}`,
 	];
+	if (entry.data.updatedAt) details.splice(2, 0, `Updated: ${formatDate(entry.data.updatedAt)}`);
 
 	if (entry.data.type === 'study') {
 		details.push(`Client: ${entry.data.client}`);

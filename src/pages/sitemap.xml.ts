@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { getPublicArtifacts } from '../lib/artifacts';
 import { SITE } from '../data/site';
-import { absoluteSiteUrl, escapeXml } from '../lib/seo';
+import { absoluteSiteUrl, escapeXml, getModifiedDate, latestModifiedDate } from '../lib/seo';
 
 type SitemapEntry = {
 	url: string;
@@ -28,7 +28,7 @@ const buildSitemap = (entries: SitemapEntry[]): string => {
 
 export const GET: APIRoute = async () => {
 	const artifacts = await getPublicArtifacts();
-	const latestArtifactDate = artifacts[0]?.data.date ?? SITE.updatedAt;
+	const latestArtifactDate = latestModifiedDate(artifacts.map((entry) => entry.data));
 	const entries: SitemapEntry[] = [
 		{
 			url: absoluteSiteUrl('/'),
@@ -37,7 +37,7 @@ export const GET: APIRoute = async () => {
 		},
 		{
 			url: absoluteSiteUrl(SITE.feeds.llms),
-			lastModified: SITE.updatedAt,
+			lastModified: latestArtifactDate,
 			changeFrequency: 'monthly',
 		},
 		{
@@ -52,7 +52,7 @@ export const GET: APIRoute = async () => {
 		},
 		...artifacts.map((entry) => ({
 			url: absoluteSiteUrl(`/${entry.data.slug}/`),
-			lastModified: entry.data.date,
+			lastModified: getModifiedDate(entry.data),
 			changeFrequency: 'monthly' as const,
 		})),
 	];

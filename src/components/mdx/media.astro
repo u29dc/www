@@ -1,41 +1,37 @@
 ---
 import { parseMediaSources } from '../../lib/media';
 
-type Props = {
+type MediaDescription = { alt: string; decorative?: false } | { alt?: never; decorative: true };
+
+type Props = MediaDescription & {
 	src: string | string[];
-	alt?: string;
 	caption?: string;
 	credit?: string;
 	fit?: 'cover' | 'contain';
 	loading?: 'lazy' | 'eager';
-	autoplay?: boolean;
-	controls?: boolean;
-	loop?: boolean;
-	muted?: boolean;
 	fetchPriority?: 'high' | 'low' | 'auto';
 };
 
 const {
 	src,
 	alt = '',
+	decorative = false,
 	caption,
 	credit,
 	fit = 'cover',
 	loading = 'lazy',
-	autoplay = true,
-	controls = false,
-	loop = true,
-	muted = true,
 	fetchPriority,
 } = Astro.props;
+
+if (!decorative && alt.trim().length === 0) {
+	throw new Error('MdxMedia requires descriptive alt text or an explicit decorative prop');
+}
 
 const sources = parseMediaSources(src);
 const resolvedFetchPriority = fetchPriority ?? (loading === 'eager' ? 'high' : undefined);
 const totalRatio = sources.reduce((sum, item) => sum + item.ratio, 0);
-const shouldShowControls = controls || !autoplay;
 const mediaAssetClass = 'block size-full object-cover select-none data-[fit=contain]:object-contain';
 const passiveMediaAssetClass = `${mediaAssetClass} pointer-events-none`;
-const interactiveMediaAssetClass = `${mediaAssetClass} pointer-events-auto`;
 const figureStyle = [
 	`--media-ratio:${totalRatio}`,
 	'--render-skip-intrinsic-size:calc(min(calc(100vw - (var(--space-page) * 2)), var(--measure-media)) / var(--media-ratio))',
@@ -44,7 +40,7 @@ const figureStyle = [
 ].join(';');
 ---
 
-<figure class="my-(--space-5) grid gap-(--space-2)" style={figureStyle} data-count={sources.length} data-reveal data-render-skip="auto">
+<figure class="my-(--space-5) grid min-w-0 gap-(--space-2)" style={figureStyle} data-count={sources.length} data-reveal data-render-skip="auto">
 	<div class="flex w-full overflow-hidden bg-surface max-[42rem]:grid max-[42rem]:[aspect-ratio:auto]" style="aspect-ratio:var(--media-ratio);" data-media-frame>
 		{
 			sources.map((item) => (
@@ -52,45 +48,26 @@ const figureStyle = [
 					class="relative grid min-w-0 shrink-0 place-items-center overflow-hidden rounded-(--radius-thin) max-[42rem]:w-full max-[42rem]:[flex-basis:auto!important]"
 					style={`--item-ratio:${item.ratio}; --item-basis:${(item.ratio / totalRatio) * 100}%; flex-basis:var(--item-basis); aspect-ratio:var(--item-ratio);`}
 					data-media-item
-					data-alt={alt || undefined}
+						data-alt={alt || 'Media unavailable'}
 				>
 					{item.kind === 'video' ? (
-						<>
-							<video
-								class={shouldShowControls ? interactiveMediaAssetClass : passiveMediaAssetClass}
-								data-media-video
-								data-media-asset
-								data-src={item.displayUrl}
-								data-autoplay={autoplay ? 'true' : 'false'}
-								data-fit={fit}
-								aria-label={alt || undefined}
-								preload="none"
-								poster={item.posterUrl}
-								muted={muted}
-								loop={loop}
-								playsinline
-								controls={shouldShowControls}
-								crossorigin="anonymous"
-								draggable="false"
-							/>
-								<noscript>
-									<video
-										class={interactiveMediaAssetClass}
-										src={item.displayUrl}
-									data-media-asset
-									data-fit={fit}
-									aria-label={alt || undefined}
-									preload="metadata"
-									poster={item.posterUrl}
-									muted
-									loop={loop}
-									playsinline
-									controls
-									crossorigin="anonymous"
-									draggable="false"
-								/>
-							</noscript>
-						</>
+						<video
+							class={passiveMediaAssetClass}
+							src={item.displayUrl}
+							data-media-video
+							data-media-asset
+							data-src={item.displayUrl}
+							data-autoplay="true"
+							data-fit={fit}
+							aria-label={alt || 'Decorative animation'}
+							preload="none"
+							poster={item.posterUrl}
+							muted
+							loop
+							playsinline
+							crossorigin="anonymous"
+							draggable="false"
+						/>
 					) : (
 						<img
 							class={passiveMediaAssetClass}

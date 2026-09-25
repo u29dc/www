@@ -31,7 +31,7 @@ export const SITE = {
 	url: 'https://u29dc.com',
 	locale: 'en_GB',
 	lang: 'en-GB',
-	updatedAt: new Date('2026-07-04T00:00:00.000Z'),
+	updatedAt: new Date('2026-09-25T00:00:00.000Z'),
 	themeColorLight: '#f7f7f7',
 	themeColorDark: '#18191b',
 	backgroundColor: '#f7f7f7',

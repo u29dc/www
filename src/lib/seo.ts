@@ -21,6 +21,16 @@ export type FeedItem = {
 	contentText?: string;
 };
 
+type ContentDates = {
+	date: Date;
+	updatedAt?: Date | undefined;
+};
+
+export const getModifiedDate = (entry: ContentDates): Date => entry.updatedAt ?? entry.date;
+
+export const latestModifiedDate = (entries: readonly ContentDates[], fallback = SITE.updatedAt): Date =>
+	new Date(Math.max(fallback.getTime(), ...entries.map((entry) => getModifiedDate(entry).getTime())));
+
 const SITE_PATH_ERROR = 'must be a root-relative path without protocol, query, hash, or backslash';
 const SITE_LOCAL_ERROR = 'must be site-local without protocol or backslash';
 

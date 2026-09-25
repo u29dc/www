@@ -22,7 +22,7 @@ export const markStyles: Record<LinkMark, MarkStyle> = {
 	'akbank-sanat': {
 		fallbackClass: 'bg-[#ed1c24]',
 		image: akbankMark,
-		accent: '#ed1c24',
+		accent: '#e01820',
 		accentText: '#ffffff',
 	},
 	infinity: {
@@ -31,7 +31,7 @@ export const markStyles: Record<LinkMark, MarkStyle> = {
 	instagram: {
 		fallbackClass: 'bg-[#e4405f]',
 		image: instagramMark,
-		accent: '#e4405f',
+		accent: '#d92e50',
 		accentText: '#ffffff',
 	},
 	isembard: {

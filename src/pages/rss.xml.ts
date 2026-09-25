@@ -2,9 +2,9 @@ import type { APIRoute } from 'astro';
 import { getPublicArtifacts, type ArtifactEntry } from '../lib/artifacts';
 import { SITE } from '../data/site';
 import { artifactUrl } from '../lib/markdown';
-import { absoluteSiteUrl, escapeXml } from '../lib/seo';
+import { absoluteSiteUrl, escapeXml, latestModifiedDate } from '../lib/seo';
 
-const getLastBuildDate = (artifacts: ArtifactEntry[]): Date => artifacts[0]?.data.date ?? SITE.updatedAt;
+const getLastBuildDate = (artifacts: ArtifactEntry[]): Date => latestModifiedDate(artifacts.map((entry) => entry.data));
 
 const getArtifactType = (entry: ArtifactEntry): string => (entry.data.type === 'study' ? 'Study' : 'Writing');
 

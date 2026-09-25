@@ -21,9 +21,6 @@ https://www.u29dc.workers.dev/*
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
 
-/fonts/*
-  Cache-Control: public, max-age=31536000, immutable
-
 /boot.js
   Cache-Control: public, max-age=0, must-revalidate
 
@@ -34,3 +31,6 @@ https://www.u29dc.workers.dev/*
 /*.txt
   Content-Type: text/plain; charset=utf-8
   X-Content-Type-Options: nosniff
+
+# scripts/output.ts adds exact article .md/.txt noindex rules to the built copy.
+# Keep discovery files such as llms.txt and robots.txt outside that policy.

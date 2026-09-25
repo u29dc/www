@@ -1,6 +1,6 @@
 @font-face {
 	font-family: 'Geist Sans';
-	src: url('/fonts/geist/Geist-Variable.woff2') format('woff2');
+	src: url('../assets/fonts/geist/Geist-Variable.woff2') format('woff2');
 	font-style: normal;
 	font-weight: 100 900;
 	font-display: swap;
@@ -8,7 +8,7 @@
 
 @font-face {
 	font-family: 'Geist Sans';
-	src: url('/fonts/geist/Geist-Italic[wght].woff2') format('woff2');
+	src: url('../assets/fonts/geist/Geist-Italic[wght].woff2') format('woff2');
 	font-style: italic;
 	font-weight: 100 900;
 	font-display: swap;
@@ -16,7 +16,7 @@
 
 @font-face {
 	font-family: 'Geist Mono';
-	src: url('/fonts/geist/GeistMono-Variable.woff2') format('woff2');
+	src: url('../assets/fonts/geist/GeistMono-Variable.woff2') format('woff2');
 	font-style: normal;
 	font-weight: 100 900;
 	font-display: swap;
@@ -24,7 +24,7 @@
 
 @font-face {
 	font-family: 'Geist Mono';
-	src: url('/fonts/geist/GeistMono-Italic[wght].woff2') format('woff2');
+	src: url('../assets/fonts/geist/GeistMono-Italic[wght].woff2') format('woff2');
 	font-style: italic;
 	font-weight: 100 900;
 	font-display: swap;
@@ -32,7 +32,7 @@
 
 @font-face {
 	font-family: 'Geist Pixel Square';
-	src: url('/fonts/geist/GeistPixel-Square.woff2') format('woff2');
+	src: url('../assets/fonts/geist/GeistPixel-Square.woff2') format('woff2');
 	font-style: normal;
 	font-weight: 500;
 	font-display: optional;
@@ -40,7 +40,7 @@
 
 @font-face {
 	font-family: 'Geist Pixel Grid';
-	src: url('/fonts/geist/GeistPixel-Grid.woff2') format('woff2');
+	src: url('../assets/fonts/geist/GeistPixel-Grid.woff2') format('woff2');
 	font-style: normal;
 	font-weight: 500;
 	font-display: optional;
@@ -48,7 +48,7 @@
 
 @font-face {
 	font-family: 'Geist Pixel Line';
-	src: url('/fonts/geist/GeistPixel-Line.woff2') format('woff2');
+	src: url('../assets/fonts/geist/GeistPixel-Line.woff2') format('woff2');
 	font-style: normal;
 	font-weight: 500;
 	font-display: optional;
@@ -56,7 +56,7 @@
 
 @font-face {
 	font-family: 'Geist Pixel Circle';
-	src: url('/fonts/geist/GeistPixel-Circle.woff2') format('woff2');
+	src: url('../assets/fonts/geist/GeistPixel-Circle.woff2') format('woff2');
 	font-style: normal;
 	font-weight: 500;
 	font-display: optional;
@@ -64,7 +64,7 @@
 
 @font-face {
 	font-family: 'Geist Pixel Triangle';
-	src: url('/fonts/geist/GeistPixel-Triangle.woff2') format('woff2');
+	src: url('../assets/fonts/geist/GeistPixel-Triangle.woff2') format('woff2');
 	font-style: normal;
 	font-weight: 500;
 	font-display: optional;
@@ -72,7 +72,7 @@
 
 @font-face {
 	font-family: 'Libre Caslon Condensed';
-	src: url('/fonts/libre-caslon-condensed/LibreCaslonCondensed[wght].woff2') format('woff2');
+	src: url('../assets/fonts/libre-caslon-condensed/LibreCaslonCondensed[wght].woff2') format('woff2');
 	font-style: normal;
 	font-weight: 400 700;
 	font-display: swap;
@@ -80,7 +80,7 @@
 
 @font-face {
 	font-family: 'Libre Caslon Condensed';
-	src: url('/fonts/libre-caslon-condensed/LibreCaslonCondensed-Italic[wght].woff2') format('woff2');
+	src: url('../assets/fonts/libre-caslon-condensed/LibreCaslonCondensed-Italic[wght].woff2') format('woff2');
 	font-style: italic;
 	font-weight: 400 700;
 	font-display: swap;

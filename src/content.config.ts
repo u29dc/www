@@ -6,6 +6,7 @@ const baseSchema = z.object({
 	title: z.string(),
 	description: z.string(),
 	date: z.coerce.date(),
+	updatedAt: z.coerce.date().optional(),
 	slug: z.string(),
 	isArtifactItem: z.boolean().default(true),
 	thumbnailMedia: z.string().optional(),
@@ -14,27 +15,31 @@ const baseSchema = z.object({
 	hoverPreviewAlt: z.string().optional(),
 	hoverPreviewFit: z.enum(['cover', 'contain']).optional(),
 	ogImage: z.string().optional(),
-	ogTextTone: z.enum(['auto', 'dark', 'light']).optional(),
 	tags: z.array(z.string()).default([]),
 });
 
 const artifacts = defineCollection({
 	loader: glob({ base: './src/content', pattern: '*.mdx' }),
-	schema: z.discriminatedUnion('type', [
-		baseSchema.extend({
-			type: z.literal('study'),
-			client: z.string(),
-			role: z.string(),
-			mode: z.enum(['COM', 'LAB', 'MAP']),
-			venue: z.string().optional(),
-			featured: z.boolean().optional(),
-			isConfidential: z.boolean().optional(),
+	schema: z
+		.discriminatedUnion('type', [
+			baseSchema.extend({
+				type: z.literal('study'),
+				client: z.string(),
+				role: z.string(),
+				mode: z.enum(['COM', 'LAB', 'MAP']),
+				venue: z.string().optional(),
+				featured: z.boolean().optional(),
+				isConfidential: z.boolean().optional(),
+			}),
+			baseSchema.extend({
+				type: z.literal('fragment'),
+				excerpt: z.string(),
+			}),
+		])
+		.refine((entry) => !entry.updatedAt || entry.updatedAt >= entry.date, {
+			message: 'updatedAt must not precede the publication date',
+			path: ['updatedAt'],
 		}),
-		baseSchema.extend({
-			type: z.literal('fragment'),
-			excerpt: z.string(),
-		}),
-	]),
 });
 
 export const collections = { artifacts };

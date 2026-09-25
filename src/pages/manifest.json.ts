@@ -10,7 +10,6 @@ const manifest = {
 	background_color: SITE.backgroundColor,
 	theme_color: SITE.themeColorLight,
 	icons: SITE.icons,
-	orientation: 'portrait',
 	categories: SITE.keywords,
 	lang: SITE.lang,
 } as const;

@@ -3,7 +3,7 @@ import { formatDate, getPublicArtifacts } from '../lib/artifacts';
 import { SITE } from '../data/site';
 import { originParagraphs } from '../data/copy';
 import { artifactMarkdownUrl, artifactTextUrl, artifactUrl, toArtifactMarkdown } from '../lib/markdown';
-import { absoluteSiteUrl } from '../lib/seo';
+import { absoluteSiteUrl, latestModifiedDate } from '../lib/seo';
 
 const EMBED_ARTIFACTS = true;
 
@@ -17,7 +17,6 @@ const officialChannels = [
 	'LinkedIn (Personal): https://linkedin.com/in/u29dc',
 	'LinkedIn (Company): https://linkedin.com/company/u29dc',
 	'Behance: https://behance.net/u29dc',
-	'Dribbble: https://dribbble.com/u29dc',
 	'GitHub: https://github.com/u29dc',
 	'Twitter: https://twitter.com/u29dc',
 	'YouTube: https://youtube.com/@u29dc',
@@ -26,7 +25,6 @@ const officialChannels = [
 	'TikTok: https://tiktok.com/@u29dc',
 	'500px: https://500px.com/p/u29dc',
 	'IMDb: https://www.imdb.com/name/nm10729970',
-	'Last updated: May 2026',
 	`Full sitemap: ${absoluteSiteUrl('/sitemap.xml')}`,
 	`RSS: ${absoluteSiteUrl(SITE.feeds.rss)}`,
 	`JSON Feed: ${absoluteSiteUrl(SITE.feeds.json)}`,
@@ -49,7 +47,8 @@ export const GET: APIRoute = async () => {
 				)
 				.join('\n');
 
-	const body = joinMarkdownBlocks([`# ${SITE.name}`, SITE.description, '## Origin', origin, '## Artifacts', artifactsText, '## Official Channels', officialChannels]);
+	const updatedAt = formatDate(latestModifiedDate(artifacts.map((entry) => entry.data)));
+	const body = joinMarkdownBlocks([`# ${SITE.name}`, SITE.description, `Last updated: ${updatedAt}`, '## Origin', origin, '## Artifacts', artifactsText, '## Official Channels', officialChannels]);
 
 	return new Response(body, {
 		headers: {

@@ -32,7 +32,9 @@ const IMAGE_VARIANTS: MediaVariant[] = [
 	{ label: 'md', width: 1280, url: '' },
 	{ label: 'lg', width: 2000, url: '' },
 ];
-const MEDIA_SIZES = 'min(calc(100vw - (var(--space-page) * 2)), var(--measure-media))';
+// HTML sizes cannot resolve CSS custom properties. Keep these lengths aligned with
+// --space-page, --measure-media, and the stacked-media breakpoint.
+const MEDIA_SIZES = 'min(calc(100vw - clamp(2rem, 4vw, 4rem)), 52rem)';
 
 const parseRatio = (source: string): { path: string; ratio: number } => {
 	const match = source.match(/^(.+)@([0-9]+(?:\.[0-9]+)?)$/);
@@ -177,5 +179,11 @@ export const parseMediaSources = (source: string | string[]): MediaSource[] => {
 	if (parsed.length === 0) {
 		throw new Error('MdxMedia requires at least one source');
 	}
-	return parsed;
+	if (parsed.length === 1) return parsed;
+
+	const totalRatio = parsed.reduce((sum, item) => sum + item.ratio, 0);
+	return parsed.map((item) => ({
+		...item,
+		...(item.srcset ? { sizes: `(width < 42rem) ${MEDIA_SIZES}, calc(${MEDIA_SIZES} * ${item.ratio / totalRatio})` } : {}),
+	}));
 };

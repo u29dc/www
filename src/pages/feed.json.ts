@@ -16,6 +16,7 @@ type JsonFeedItem = {
 	summary: string;
 	content_text: string;
 	date_published: string;
+	date_modified?: string;
 	tags: string[];
 	_u29dc: {
 		type: 'study' | 'fragment';
@@ -69,6 +70,7 @@ const buildItem = (entry: ArtifactEntry): JsonFeedItem => {
 		summary: entry.data.description,
 		content_text: getArtifactContentText(entry),
 		date_published: entry.data.date.toISOString(),
+		...(entry.data.updatedAt ? { date_modified: entry.data.updatedAt.toISOString() } : {}),
 		tags: getArtifactTags(entry),
 		_u29dc: extension,
 	};
