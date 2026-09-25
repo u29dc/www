@@ -1,6 +1,7 @@
 import type { LinkMark } from './links';
 import akbankMark from '../assets/akbank.webp?inline';
 import instagramMark from '../assets/instagram.webp?inline';
+import isembardMark from '../assets/isembard.svg?inline';
 import linkedinMark from '../assets/linkedin.webp?inline';
 import lotusMark from '../assets/lotus.webp?inline';
 import lusionMark from '../assets/lusion.webp?inline';
@@ -12,6 +13,7 @@ import salonMark from '../assets/salon.webp?inline';
 type MarkStyle = {
 	fallbackClass: string;
 	image?: string;
+	mask?: string;
 	accent?: string;
 	accentText?: string;
 };
@@ -31,6 +33,11 @@ export const markStyles: Record<LinkMark, MarkStyle> = {
 		image: instagramMark,
 		accent: '#e4405f',
 		accentText: '#ffffff',
+	},
+	isembard: {
+		fallbackClass: 'bg-ink',
+		// Official SVG: https://isembard.com/favicon.svg
+		mask: isembardMark,
 	},
 	linkedin: {
 		fallbackClass: 'bg-[#2867b2]',

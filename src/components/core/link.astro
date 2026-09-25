@@ -131,7 +131,9 @@ const ActiveIcon = iconComponents[activeIcon];
 				{shouldRenderPillIcon && (
 					<span class="inline-block size-(--link-pill-icon-size) shrink-0 select-none text-current [line-height:0] selection:bg-transparent" aria-hidden="true">
 						{mark ? (
-							markImages[mark] ? (
+							markStyle?.mask ? (
+								<span class="block size-full bg-current" style={{ mask: `url("${markStyle.mask}") center / contain no-repeat` }} />
+							) : markImages[mark] ? (
 								<img class="block size-full rounded-none object-contain select-none pointer-events-none" src={markImages[mark]} alt="" width="64" height="64" decoding="async" draggable="false" />
 							) : (
 								<span class:list={['block size-full rounded-full', markClasses[mark]]} />
@@ -162,7 +164,9 @@ const ActiveIcon = iconComponents[activeIcon];
 				{shouldRenderIcon && (
 					<span class="ml-(--link-text-icon-margin) inline-block size-(--link-text-icon-size) select-none align-[var(--link-text-icon-align)] text-muted transition-colors duration-(--duration-quick) ease-(--ease-settle) [line-height:0] selection:bg-transparent selection:text-muted group-hover/link:text-ink" aria-hidden="true">
 						{mark ? (
-							markImages[mark] ? (
+							markStyle?.mask ? (
+								<span class="block size-full bg-current" style={{ mask: `url("${markStyle.mask}") center / contain no-repeat` }} />
+							) : markImages[mark] ? (
 								<img class="block size-full rounded-none object-contain select-none pointer-events-none" src={markImages[mark]} alt="" width="64" height="64" decoding="async" draggable="false" />
 							) : (
 								<span class:list={['block size-full rounded-full', markClasses[mark]]} />

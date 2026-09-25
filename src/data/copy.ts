@@ -14,6 +14,7 @@ export const originLinks = {
 	isembard: {
 		label: 'Isembard',
 		href: 'https://isembard.com/',
+		mark: 'isembard',
 	},
 	porsche: {
 		label: 'Porsche',
