@@ -4,6 +4,7 @@
 		@apply bg-ground text-ink;
 		@apply font-sans antialiased [font-synthesis:none] [text-rendering:optimizeLegibility];
 		scrollbar-gutter: stable;
+		scroll-padding-top: calc(var(--space-6) + var(--space-5) + var(--type-body) * var(--leading-body) + var(--space-4));
 		scrollbar-width: none;
 	}
 

@@ -44,7 +44,7 @@ class ThemeOwner extends BaseModule {
 
 	subscribe(callback: ThemeSubscriber): () => void {
 		this.subscribers.add(callback);
-		callback(this.getState());
+		this.notifySubscriber(callback);
 		return () => {
 			this.subscribers.delete(callback);
 		};
@@ -72,8 +72,16 @@ class ThemeOwner extends BaseModule {
 		writeThemeColorMeta(scheme);
 
 		if (changed) {
-			for (const subscriber of this.subscribers) subscriber(this.getState());
+			for (const subscriber of this.subscribers) this.notifySubscriber(subscriber);
 			this.requestFrame(`theme:${reason}`);
+		}
+	}
+
+	private notifySubscriber(subscriber: ThemeSubscriber): void {
+		try {
+			subscriber(this.getState());
+		} catch (error) {
+			this.reportError('theme.subscriber', error);
 		}
 	}
 

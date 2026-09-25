@@ -6,13 +6,23 @@ import { onRouteBeforeSwap } from '../systems/route';
 const VIDEO_SELECTOR = 'video[data-media-video]';
 const IMAGE_SELECTOR = 'img[data-media-asset]';
 
+type VideoState = {
+	intersecting: boolean;
+	userPaused: boolean;
+	playing: boolean;
+	pendingPauses: number;
+	resume: boolean;
+	cleanup: () => void;
+};
+
 class MediaOwner extends BaseModule {
 	readonly name = 'media';
 
 	private initialized = false;
-	private readonly videos = new Set<HTMLVideoElement>();
-	private readonly images = new Set<HTMLImageElement>();
+	private readonly videos = new Map<HTMLVideoElement, VideoState>();
+	private readonly images = new Map<HTMLImageElement, () => void>();
 	private observer: IntersectionObserver | undefined;
+	private pageHidden = false;
 
 	override preinit(context: Context): void {
 		super.preinit(context);
@@ -44,6 +54,12 @@ class MediaOwner extends BaseModule {
 		initDeviceProfile();
 		this.addCleanup(subscribeDeviceProfile(this.handleMotionChange));
 		this.addCleanup(onRouteBeforeSwap(() => this.cleanupMedia()));
+		document.addEventListener('visibilitychange', this.handleVisibilityChange);
+		window.addEventListener('pagehide', this.handlePageHide);
+		window.addEventListener('pageshow', this.handlePageShow);
+		this.addCleanup(() => document.removeEventListener('visibilitychange', this.handleVisibilityChange));
+		this.addCleanup(() => window.removeEventListener('pagehide', this.handlePageHide));
+		this.addCleanup(() => window.removeEventListener('pageshow', this.handlePageShow));
 	}
 
 	private ensureObserver(): IntersectionObserver {
@@ -51,6 +67,9 @@ class MediaOwner extends BaseModule {
 			(entries) => {
 				for (const entry of entries) {
 					if (!(entry.target instanceof HTMLVideoElement)) continue;
+					const state = this.videos.get(entry.target);
+					if (!state) continue;
+					state.intersecting = entry.isIntersecting;
 					if (entry.isIntersecting) {
 						this.playVideo(entry.target);
 					} else {
@@ -76,24 +95,34 @@ class MediaOwner extends BaseModule {
 		return video.dataset['autoplay'] === 'true' && profile.motionQuality !== 'reduced' && profile.networkProfile !== 'save-data';
 	}
 
-	private enableVideoControls(video: HTMLVideoElement): void {
-		video.controls = true;
-		video.classList.remove('pointer-events-none');
-		video.classList.add('pointer-events-auto');
-	}
-
 	private playVideo(video: HTMLVideoElement): void {
-		this.loadVideo(video);
-		if (!this.shouldAutoplay(video)) {
-			this.enableVideoControls(video);
+		const state = this.videos.get(video);
+		if (!state || !state.intersecting || document.hidden || this.pageHidden || state.userPaused || video.hidden) return;
+		// Native controls update paused before dispatching their pause event.
+		if (video.paused && state.playing) {
+			state.userPaused = true;
+			state.playing = false;
+			state.resume = false;
 			return;
 		}
-		video.play().catch(() => {
-			this.enableVideoControls(video);
+		this.loadVideo(video);
+		if (!this.shouldAutoplay(video) && !state.resume) {
+			return;
+		}
+		state.resume = false;
+		state.playing = true;
+		void video.play().catch(() => {
+			if (!this.videos.has(video)) return;
+			if (video.paused) state.playing = false;
 		});
 	}
 
 	private pauseVideo(video: HTMLVideoElement): void {
+		const state = this.videos.get(video);
+		if (!state || video.paused) return;
+		state.playing = false;
+		state.resume = !state.userPaused;
+		state.pendingPauses += 1;
 		video.pause();
 	}
 
@@ -108,8 +137,32 @@ class MediaOwner extends BaseModule {
 		const observer = this.ensureObserver();
 		for (const video of document.querySelectorAll<HTMLVideoElement>(VIDEO_SELECTOR)) {
 			if (this.videos.has(video)) continue;
-			this.videos.add(video);
-			video.addEventListener('error', () => this.markMediaError(video), { once: true });
+			const state: VideoState = { intersecting: false, userPaused: false, playing: false, pendingPauses: 0, resume: false, cleanup: () => {} };
+			const handlePause = (): void => {
+				if (state.pendingPauses > 0) {
+					state.pendingPauses -= 1;
+					return;
+				}
+				state.userPaused = true;
+				state.playing = false;
+				state.resume = false;
+			};
+			const handlePlay = (): void => {
+				if (video.paused) return;
+				state.userPaused = false;
+				state.playing = true;
+				if (document.hidden || this.pageHidden || !state.intersecting) this.pauseVideo(video);
+			};
+			const handleError = (): void => this.markMediaError(video);
+			video.addEventListener('pause', handlePause);
+			video.addEventListener('play', handlePlay);
+			video.addEventListener('error', handleError);
+			state.cleanup = (): void => {
+				video.removeEventListener('pause', handlePause);
+				video.removeEventListener('play', handlePlay);
+				video.removeEventListener('error', handleError);
+			};
+			this.videos.set(video, state);
 			observer.observe(video);
 		}
 	}
@@ -117,17 +170,22 @@ class MediaOwner extends BaseModule {
 	private observeImages(): void {
 		for (const image of document.querySelectorAll<HTMLImageElement>(IMAGE_SELECTOR)) {
 			if (this.images.has(image)) continue;
-			this.images.add(image);
-			image.addEventListener('error', () => this.markMediaError(image), { once: true });
+			const handleError = (): void => this.markMediaError(image);
+			this.images.set(image, () => image.removeEventListener('error', handleError));
+			image.addEventListener('error', handleError, { once: true });
 			if (image.complete && image.naturalWidth === 0) this.markMediaError(image);
 		}
 	}
 
 	private cleanupMedia(): void {
-		for (const video of this.videos) {
-			this.pauseVideo(video);
+		for (const [video, state] of this.videos) {
+			state.cleanup();
+			video.pause();
+			video.removeAttribute('src');
+			video.load();
 			this.observer?.unobserve(video);
 		}
+		for (const cleanup of this.images.values()) cleanup();
 		this.videos.clear();
 		this.images.clear();
 	}
@@ -136,17 +194,36 @@ class MediaOwner extends BaseModule {
 		const profile = getDeviceProfile();
 		const shouldStopMotion = profile.motionQuality === 'reduced' || profile.networkProfile === 'save-data';
 
-		for (const video of this.videos) {
+		for (const [video, state] of this.videos) {
 			if (shouldStopMotion) {
-				this.enableVideoControls(video);
 				this.pauseVideo(video);
+				state.resume = false;
 				continue;
 			}
-			const rect = video.getBoundingClientRect();
-			if (rect.top < window.innerHeight && rect.bottom > 0) {
-				this.playVideo(video);
-			}
+			this.playVideo(video);
 		}
+	};
+
+	private suspendVideos(): void {
+		for (const video of this.videos.keys()) this.pauseVideo(video);
+	}
+
+	private readonly handleVisibilityChange = (): void => {
+		if (document.hidden) {
+			this.suspendVideos();
+			return;
+		}
+		for (const video of this.videos.keys()) this.playVideo(video);
+	};
+
+	private readonly handlePageHide = (): void => {
+		this.pageHidden = true;
+		this.suspendVideos();
+	};
+
+	private readonly handlePageShow = (): void => {
+		this.pageHidden = false;
+		this.handleVisibilityChange();
 	};
 }
 

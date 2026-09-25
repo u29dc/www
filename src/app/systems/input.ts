@@ -128,7 +128,12 @@ class InputOwner extends BaseModule {
 		this.addCleanup(() => document.removeEventListener('visibilitychange', this.handleVisibilityChange));
 	}
 
+	override refresh(): void {
+		this.releaseActiveInput();
+	}
+
 	override dispose(): void {
+		this.releaseActiveInput();
 		this.pointerHandlers.clear();
 		this.wheelHandlers.clear();
 		this.clickHandlers.clear();
@@ -230,23 +235,20 @@ class InputOwner extends BaseModule {
 	}
 
 	private releaseActiveInput(): void {
-		const hasActiveInput = this.state.pointer.isDown || this.activeKeys.size > 0 || this.state.keyboard.activeKeys.length > 0;
+		const pointer = this.state.pointer;
+		const hasActiveInput = pointer.isDown || pointer.target !== null || pointer.path.length > 0 || this.activeKeys.size > 0 || this.state.keyboard.activeKeys.length > 0;
 		if (!hasActiveInput) return;
 		this.activeKeys.clear();
 		this.state = {
 			...this.state,
 			generation: this.nextGeneration(),
 			pointer: {
-				...this.state.pointer,
-				dx: 0,
-				dy: 0,
-				vx: 0,
-				vy: 0,
-				isDown: false,
-				wasPressed: false,
-				wasReleased: false,
-				relatedTarget: null,
-				exited: false,
+				...emptyPointer(),
+				x: pointer.x,
+				y: pointer.y,
+				nx: pointer.nx,
+				ny: pointer.ny,
+				exited: true,
 			},
 			keyboard: {
 				...this.state.keyboard,
@@ -254,6 +256,7 @@ class InputOwner extends BaseModule {
 				activeKeys: [],
 			},
 		};
+		this.emitPointerIntent({ type: 'cancel', x: pointer.x, y: pointer.y, target: null, relatedTarget: null, path: [] });
 		this.requestFrame('input:release');
 	}
 

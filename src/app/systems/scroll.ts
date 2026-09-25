@@ -4,7 +4,7 @@ import { focusElement, pathClosest } from '../utils/dom';
 import { clamp, damp } from '../utils/math';
 import { initDeviceProfile, subscribeDeviceProfile } from './device';
 import { type InputClickIntent, type InputWheelIntent, onInputClickIntent, onInputWheelIntent } from './input';
-import { onRouteAfterSwap, onRouteLoad, setRouteHash } from './route';
+import { onRouteAfterSwap, onRouteLoad, syncRouteLocation } from './route';
 
 type AnimatorOptions = {
 	lerp: number;
@@ -29,6 +29,8 @@ class ScrollOwner extends BaseModule {
 	private direction: ScrollDirection = 0;
 	private limit = 0;
 	private programmatic = false;
+	private anchorFrameCancel: (() => void) | undefined;
+	private historyFrameCancel: (() => void) | undefined;
 	private readonly animator = new ScrollAnimator({ lerp: SCROLL_LERP, settlePx: SETTLE_PX });
 
 	override preinit(context: Context): void {
@@ -79,7 +81,12 @@ class ScrollOwner extends BaseModule {
 	}
 
 	override dispose(): void {
+		this.anchorFrameCancel?.();
+		this.anchorFrameCancel = undefined;
+		this.historyFrameCancel?.();
+		this.historyFrameCancel = undefined;
 		super.dispose();
+		this.initialized = false;
 		this.syncFromWindow('native');
 	}
 
@@ -103,7 +110,11 @@ class ScrollOwner extends BaseModule {
 
 		initDeviceProfile();
 		window.addEventListener('scroll', this.handleNativeScroll, { passive: true });
+		window.addEventListener('popstate', this.handleHistoryChange, { passive: true });
+		window.addEventListener('hashchange', this.handleHistoryChange, { passive: true });
 		this.addCleanup(() => window.removeEventListener('scroll', this.handleNativeScroll));
+		this.addCleanup(() => window.removeEventListener('popstate', this.handleHistoryChange));
+		this.addCleanup(() => window.removeEventListener('hashchange', this.handleHistoryChange));
 		this.addCleanup(onInputWheelIntent(this.handleWheelIntent));
 		this.addCleanup(onInputClickIntent(this.handleClickIntent));
 		this.addCleanup(subscribeDeviceProfile(this.applyCapability));
@@ -184,25 +195,6 @@ class ScrollOwner extends BaseModule {
 		this.requestFrame(`scroll:${source}`);
 	}
 
-	private scrollTo(y: number, source: ScrollSource): void {
-		this.measureLimit();
-		const target = clamp(y, 0, this.limit);
-		if (!this.enabled) {
-			window.scrollTo(0, target);
-			this.syncFromWindow(source);
-			return;
-		}
-
-		const current = clamp(window.scrollY, 0, this.limit);
-		this.actual = current;
-		this.animated = current;
-		this.target = target;
-		this.source = source;
-		this.active = true;
-		this.animator.start(current, target);
-		this.requestFrame(`scroll:${source}`);
-	}
-
 	private readonly handleWheelIntent = (intent: InputWheelIntent): void => {
 		if (shouldUseNativeWheel(intent, this.enabled)) return;
 
@@ -213,17 +205,23 @@ class ScrollOwner extends BaseModule {
 	private readonly handleClickIntent = (intent: InputClickIntent): void => {
 		if (!intent.isPrimary || intent.defaultPrevented || intent.isModified) return;
 		const anchor = pathClosest<HTMLAnchorElement>(intent.path, 'a[href]');
-		if (!anchor || anchor.target || anchor.download) return;
+		if (!anchor || (anchor.target && anchor.target !== '_self') || anchor.hasAttribute('download')) return;
 		const url = new URL(anchor.href, window.location.href);
 		if (url.origin !== window.location.origin || url.pathname !== window.location.pathname || url.search !== window.location.search || !url.hash) return;
 		const target = findAnchorTarget(url.hash);
 		if (!target) return;
 
-		intent.preventDefault();
-		const y = target === document.documentElement ? 0 : target.getBoundingClientRect().top + window.scrollY;
-		this.scrollTo(y, 'anchor');
-		setRouteHash(url.hash);
-		focusElement(target);
+		// Astro owns hash navigation and its history index. Let its normal link
+		// handler scroll, then synchronize without starting a second animation.
+		this.handleInterrupt();
+		this.anchorFrameCancel?.();
+		this.anchorFrameCancel = this.nextFrame('scroll:anchor', () => {
+			this.anchorFrameCancel = undefined;
+			if (window.location.href !== url.href || !target.isConnected) return;
+			this.syncFromWindow('anchor');
+			syncRouteLocation();
+			focusElement(target);
+		});
 	};
 
 	private readonly handleNativeScroll = (): void => {
@@ -245,8 +243,22 @@ class ScrollOwner extends BaseModule {
 	};
 
 	private readonly handleRouteSync = (): void => {
+		this.anchorFrameCancel?.();
+		this.anchorFrameCancel = undefined;
+		this.historyFrameCancel?.();
+		this.historyFrameCancel = undefined;
 		this.syncFromWindow('route');
 		this.applyCapability();
+	};
+
+	private readonly handleHistoryChange = (): void => {
+		this.historyFrameCancel?.();
+		this.syncFromWindow('route');
+		this.historyFrameCancel = this.nextFrame('scroll:history', () => {
+			this.historyFrameCancel = undefined;
+			this.syncFromWindow('route');
+			syncRouteLocation();
+		});
 	};
 }
 

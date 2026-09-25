@@ -35,6 +35,7 @@ class MotionOwner extends BaseModule {
 
 	override dispose(): void {
 		super.dispose();
+		this.finishPanelIntro();
 		this.clearRevealFallback();
 		this.clearLineGroupRevealHandles();
 		this.clearExitState();
@@ -341,7 +342,7 @@ class MotionOwner extends BaseModule {
 		this.clearExitState();
 		this.clearSiteRouteMotion();
 		this.syncSiteRoute();
-		this.observeRevealTargets();
+		this.initializeReveals();
 	};
 
 	private readonly handleBeforeSwap = (event: RouteSwap): void => {

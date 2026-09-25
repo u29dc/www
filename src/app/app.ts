@@ -2,7 +2,7 @@ import { App } from './core/app';
 import { device, getDeviceProfile } from './systems/device';
 import { flushInputFrame, getInputState, input } from './systems/input';
 import { motion } from './systems/motion';
-import { getRouteState, onRouteAfterSwap, route } from './systems/route';
+import { getRouteState, onRouteAbort, onRouteAfterSwap, route } from './systems/route';
 import { getScrollState, scroll } from './systems/scroll';
 import { getThemeState, theme } from './systems/theme';
 import { lines } from './ui/lines';
@@ -24,3 +24,6 @@ const app = new App([...systems, ...ui], {
 
 app.start();
 onRouteAfterSwap(() => app.refreshPage('route:after-swap'));
+onRouteAbort(({ needsRefresh }) => {
+	if (needsRefresh) app.refreshPage('route:abort');
+});

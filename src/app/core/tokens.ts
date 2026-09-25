@@ -20,7 +20,6 @@ export const MOTION = {
 		staggerMs: 26,
 		maxTotalMs: 1_150,
 		handoffMs: 90,
-		staggeredLines: 24,
 		completionBufferMs: 80,
 		groupCompleteBufferMs: 8,
 		groupFollowOverlapMs: 400,
@@ -28,7 +27,8 @@ export const MOTION = {
 		liteMaxTokens: 120,
 		fullMaxLinesPerTarget: 32,
 		liteMaxLinesPerTarget: 6,
-		liteMeasureBudgetMs: 10,
+		fullMeasureBudgetMs: 4,
+		liteMeasureBudgetMs: 2,
 		widthChangeTolerancePx: 1,
 		lineTopTolerancePx: 3,
 		minRectSizePx: 0.2,
@@ -69,9 +69,4 @@ export const readDurationToken = (propertyName: string, fallbackMilliseconds: nu
 	if (rawValue.endsWith('s')) return value * 1_000;
 
 	return value;
-};
-
-export const readNumberToken = (propertyName: string, fallback: number): number => {
-	const value = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue(propertyName).trim());
-	return Number.isFinite(value) ? value : fallback;
 };

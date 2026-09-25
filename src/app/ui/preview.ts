@@ -1,4 +1,4 @@
-import { BaseModule, type Context, type Frame } from '../core/module';
+import { BaseModule, type Context } from '../core/module';
 import { setTimer, type TimerHandle } from '../core/timer';
 import { MOTION } from '../core/tokens';
 import { clamp } from '../utils/math';
@@ -35,13 +35,16 @@ type PreviewSlot = {
 	kind: PreviewKind;
 	ready: boolean;
 	lastUsed: number;
+	disposed: boolean;
 	motionHandle?: TimerHandle;
 	pauseHandle?: TimerHandle;
+	frameCallback?: number;
 	poster?: HTMLImageElement;
 };
 
 type VideoFrameRequester = HTMLVideoElement & {
 	requestVideoFrameCallback?: (callback: () => void) => number;
+	cancelVideoFrameCallback?: (handle: number) => void;
 };
 
 const TARGET_SELECTOR = '[data-hover-preview-target]';
@@ -73,7 +76,9 @@ class PreviewOwner extends BaseModule {
 	private cardResizeObserver: ResizeObserver | undefined;
 	private readonly idleCancels = new Set<() => void>();
 	private hasPrewarmedImages = false;
+	private prewarmPending = false;
 	private initialized = false;
+	private pageHidden = false;
 	private positionActive = false;
 	private shouldWritePosition = false;
 	private shouldSleepAfterWrite = false;
@@ -98,8 +103,7 @@ class PreviewOwner extends BaseModule {
 		this.requestPositionFrame();
 	}
 
-	override update(frame: Frame): boolean | void {
-		if (!frame.visible) this.pauseAllVideos();
+	override update(): boolean | void {
 		if (!this.positionActive) {
 			return false;
 		}
@@ -131,6 +135,12 @@ class PreviewOwner extends BaseModule {
 		this.addCleanup(() => document.removeEventListener('line-reveal-group-complete', this.prewarmImagePreviews));
 		this.addCleanup(onRouteBeforeSwap(() => this.disposePreviewElements()));
 		this.addCleanup(subscribeDeviceProfile(this.handleDeviceProfileChange));
+		document.addEventListener('visibilitychange', this.handleVisibilityChange);
+		window.addEventListener('pagehide', this.handlePageHide);
+		window.addEventListener('pageshow', this.handlePageShow);
+		this.addCleanup(() => document.removeEventListener('visibilitychange', this.handleVisibilityChange));
+		this.addCleanup(() => window.removeEventListener('pagehide', this.handlePageHide));
+		this.addCleanup(() => window.removeEventListener('pageshow', this.handlePageShow));
 	}
 
 	private isEnabled(): boolean {
@@ -139,7 +149,7 @@ class PreviewOwner extends BaseModule {
 	}
 
 	private canPlayPreviewVideo(): boolean {
-		return canUseHoverVideo(getDeviceProfile()) && !document.hidden;
+		return canUseHoverVideo(getDeviceProfile()) && !document.hidden && !this.pageHidden;
 	}
 
 	private isReducedMotion(): boolean {
@@ -329,8 +339,17 @@ class PreviewOwner extends BaseModule {
 	}
 
 	private markSlotReady(slot: PreviewSlot): void {
+		if (slot.disposed || slot.root.dataset['mediaState'] === 'missing') return;
+		if (this.isVideoSlot(slot) && !slot.media.src) return;
 		slot.ready = true;
 		slot.root.dataset['ready'] = 'true';
+	}
+
+	private markSlotMissing(slot: PreviewSlot): void {
+		if (slot.disposed) return;
+		this.pauseVideoSlot(slot);
+		slot.root.dataset['mediaState'] = 'missing';
+		slot.media.hidden = true;
 	}
 
 	private createImageElement(config: PreviewConfig): HTMLImageElement {
@@ -366,10 +385,9 @@ class PreviewOwner extends BaseModule {
 		video.muted = true;
 		video.loop = true;
 		video.playsInline = true;
-		video.preload = 'metadata';
+		video.preload = 'none';
 		video.crossOrigin = 'anonymous';
 		video.draggable = false;
-		video.src = config.src;
 		video.style.objectFit = config.fit;
 		return video;
 	}
@@ -397,7 +415,9 @@ class PreviewOwner extends BaseModule {
 		root.dataset['hoverPreviewSlot'] = '';
 		root.dataset['state'] = 'idle';
 		root.dataset['kind'] = config.kind;
-		root.dataset['ready'] = config.kind === 'image' ? 'true' : 'false';
+		root.dataset['ready'] = 'false';
+		root.dataset['posterState'] = config.posterSrc ? 'available' : 'missing';
+		root.dataset['previewFallback'] = 'Preview unavailable';
 
 		const media = config.kind === 'image' ? this.createImageElement(config) : this.createVideoElement(config);
 		const poster = config.kind === 'video' ? this.createPosterElement(config) : undefined;
@@ -407,19 +427,25 @@ class PreviewOwner extends BaseModule {
 			media,
 			config,
 			kind: config.kind,
-			ready: config.kind === 'image',
+			ready: false,
 			lastUsed: 0,
+			disposed: false,
 			...(poster ? { poster } : {}),
 		};
 
-		if (poster) root.append(poster);
+		if (poster) {
+			poster.addEventListener('error', () => {
+				if (slot.disposed) return;
+				root.dataset['posterState'] = 'missing';
+				poster.hidden = true;
+			});
+			root.append(poster);
+		}
 		root.append(media);
 
 		if (media instanceof HTMLImageElement) {
 			media.addEventListener('load', () => this.markSlotReady(slot), { once: true });
-			media.addEventListener('error', () => {
-				root.dataset['mediaState'] = 'missing';
-			});
+			media.addEventListener('error', () => this.markSlotMissing(slot));
 			if (media.complete && media.naturalWidth > 0) this.markSlotReady(slot);
 			void media
 				.decode?.()
@@ -428,9 +454,7 @@ class PreviewOwner extends BaseModule {
 		} else {
 			media.addEventListener('loadeddata', () => this.markSlotReady(slot));
 			media.addEventListener('canplay', () => this.markSlotReady(slot));
-			media.addEventListener('error', () => {
-				root.dataset['mediaState'] = 'missing';
-			});
+			media.addEventListener('error', () => this.markSlotMissing(slot));
 		}
 
 		this.getPreviewElements().deck.append(root);
@@ -453,14 +477,32 @@ class PreviewOwner extends BaseModule {
 	private pauseVideoSlot(slot: PreviewSlot): void {
 		if (!this.isVideoSlot(slot)) return;
 		this.clearPauseHandle(slot);
+		this.cancelVideoFrame(slot);
 		slot.media.pause();
+	}
+
+	private cancelVideoFrame(slot: PreviewSlot): void {
+		if (slot.frameCallback === undefined || !this.isVideoSlot(slot)) return;
+		(slot.media as VideoFrameRequester).cancelVideoFrameCallback?.(slot.frameCallback);
+		delete slot.frameCallback;
+	}
+
+	private releaseVideoSlot(slot: PreviewSlot): void {
+		if (!this.isVideoSlot(slot)) return;
+		this.pauseVideoSlot(slot);
+		if (slot.media.src) {
+			slot.media.removeAttribute('src');
+			slot.media.load();
+		}
+		slot.ready = false;
+		slot.root.dataset['ready'] = 'false';
 	}
 
 	private pauseVideoSlotSoon(slot: PreviewSlot): void {
 		if (!this.isVideoSlot(slot)) return;
 		this.clearPauseHandle(slot);
 		slot.pauseHandle = setTimer('preview.video.pause', MOTION.preview.pauseDelayMs, () => {
-			if (slot !== this.activeSlot) slot.media.pause();
+			if (slot !== this.activeSlot) this.pauseVideoSlot(slot);
 			delete slot.pauseHandle;
 		});
 	}
@@ -478,19 +520,27 @@ class PreviewOwner extends BaseModule {
 	}
 
 	private playVideoSlot(slot: PreviewSlot): void {
-		if (!this.isVideoSlot(slot) || !this.canPlayPreviewVideo()) return;
+		if (!this.isVideoSlot(slot) || !this.canPlayPreviewVideo() || slot.disposed || slot.root.dataset['mediaState'] === 'missing') return;
 
 		this.clearPauseHandle(slot);
-		if (!slot.ready) {
+		if (!slot.media.src) slot.media.src = slot.config.src;
+		if (!slot.ready && slot.frameCallback === undefined) {
 			const frameRequester = slot.media as VideoFrameRequester;
-			frameRequester.requestVideoFrameCallback?.(() => this.markSlotReady(slot));
+			const handle = frameRequester.requestVideoFrameCallback?.(() => {
+				delete slot.frameCallback;
+				this.markSlotReady(slot);
+			});
+			if (handle !== undefined) slot.frameCallback = handle;
 		}
-		void slot.media.play().catch(() => {});
+		void slot.media.play().catch(() => {
+			if (this.isVideoSlot(slot) && slot.media.paused) this.cancelVideoFrame(slot);
+		});
 	}
 
 	private removeSlot(slot: PreviewSlot): void {
+		slot.disposed = true;
 		this.clearSlotMotionHandle(slot);
-		this.pauseVideoSlot(slot);
+		this.releaseVideoSlot(slot);
 		slot.root.remove();
 		this.slots.delete(slot.key);
 	}
@@ -562,28 +612,40 @@ class PreviewOwner extends BaseModule {
 			cancel();
 		}
 		this.idleCancels.clear();
+		this.prewarmPending = false;
+	}
+
+	private canPrewarmImages(): boolean {
+		const profile = getDeviceProfile();
+		return (
+			this.isEnabled() && !document.hidden && !this.pageHidden && !this.isReducedMotion() && profile.tier !== 'low' && profile.networkProfile !== 'save-data' && profile.networkProfile !== 'slow'
+		);
 	}
 
 	private readonly prewarmImagePreviews = (): void => {
-		if (this.hasPrewarmedImages || document.hidden || this.isReducedMotion()) return;
-		const profile = getDeviceProfile();
-		if (profile.tier === 'low' || profile.networkProfile === 'save-data') return;
+		if (this.hasPrewarmedImages || this.prewarmPending || !this.canPrewarmImages()) return;
 
 		const targets = Array.from(document.querySelectorAll<HTMLElement>(`${TARGET_SELECTOR}[data-hover-preview-kind="image"]`))
 			.filter((target) => this.isRevealReady(target))
 			.slice(0, 3);
 		if (targets.length === 0) return;
 
-		this.hasPrewarmedImages = true;
+		this.prewarmPending = true;
 		this.idle(() => {
+			this.prewarmPending = false;
+			if (!this.canPrewarmImages()) return;
+			const sources = new Set<string>();
 			for (const target of targets) {
+				if (!target.isConnected || !this.isRevealReady(target)) continue;
 				const src = target.dataset['hoverPreviewSrc'];
-				if (!src) continue;
+				if (!src || sources.has(src)) continue;
+				sources.add(src);
 				const image = new Image();
 				image.decoding = 'async';
 				image.src = src;
 				void image.decode?.().catch(() => {});
 			}
+			this.hasPrewarmedImages = sources.size > 0;
 		});
 	};
 
@@ -720,7 +782,7 @@ class PreviewOwner extends BaseModule {
 	}
 
 	private showPreview(target: HTMLElement, pointer: { x: number; y: number }): void {
-		if (!this.isEnabled()) return;
+		if (!this.isEnabled() || document.hidden || this.pageHidden) return;
 		if (!this.isRevealReady(target)) {
 			this.hidePreview(target);
 			return;
@@ -806,9 +868,7 @@ class PreviewOwner extends BaseModule {
 		this.clearIdleCallbacks();
 
 		for (const slot of this.slots.values()) {
-			this.clearSlotMotionHandle(slot);
-			this.pauseVideoSlot(slot);
-			slot.root.remove();
+			this.removeSlot(slot);
 		}
 		this.slots.clear();
 		this.activeSlot = undefined;
@@ -901,10 +961,40 @@ class PreviewOwner extends BaseModule {
 			return;
 		}
 		if (!this.canPlayPreviewVideo()) {
-			this.pauseAllVideos();
+			for (const slot of this.slots.values()) this.releaseVideoSlot(slot);
 		}
 		this.handleMotionChange();
 		this.prewarmImagePreviews();
+	};
+
+	private suspendPreview(): void {
+		this.pauseAllVideos();
+		this.clearIdleCallbacks();
+		this.clearHideHandle();
+		this.clearActiveState();
+		this.activeSlot = undefined;
+		this.hasPosition = false;
+		this.stopAnimation();
+		for (const slot of this.slots.values()) this.setSlotIdle(slot);
+		if (this.elements) {
+			this.elements.root.dataset['state'] = 'hidden';
+			this.elements.root.hidden = true;
+		}
+	}
+
+	private readonly handleVisibilityChange = (): void => {
+		if (document.hidden) this.suspendPreview();
+		else this.prewarmImagePreviews();
+	};
+
+	private readonly handlePageHide = (): void => {
+		this.pageHidden = true;
+		this.suspendPreview();
+	};
+
+	private readonly handlePageShow = (): void => {
+		this.pageHidden = false;
+		this.handleVisibilityChange();
 	};
 }
 

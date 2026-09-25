@@ -19,18 +19,46 @@ type PendingCallback = {
 	cancelled: boolean;
 };
 
-type ModuleTrace = {
-	name: string;
-	lastError?: string;
+type ErrorPhase = 'preinit' | 'init' | 'refresh' | 'resize' | 'update' | 'dispose' | 'callback' | 'beforeFrame' | 'afterFrame' | 'frame' | 'reported';
+
+type RuntimeError = {
+	owner: string;
+	phase: ErrorPhase;
+	type: 'Error' | 'TypeError' | 'RangeError' | 'ReferenceError' | 'SyntaxError' | 'AggregateError' | 'Unknown';
+	count: number;
+	firstFrame: number;
+	lastFrame: number;
+};
+
+export type RuntimeDiagnostics = {
+	version: 1;
+	running: boolean;
+	frame: number;
+	pendingCallbacks: number;
+	errors: RuntimeError[];
+};
+
+type DiagnosticsWindow = Window & {
+	wwwRuntimeDiagnostics?: () => RuntimeDiagnostics;
 };
 
 const MAX_DELTA_MS = 64;
-const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
+const MAX_ERROR_RECORDS = 20;
+const isBrowser = (): boolean => typeof window !== 'undefined' && typeof document !== 'undefined';
+
+const errorType = (error: unknown): RuntimeError['type'] => {
+	if (error instanceof TypeError) return 'TypeError';
+	if (error instanceof RangeError) return 'RangeError';
+	if (error instanceof ReferenceError) return 'ReferenceError';
+	if (error instanceof SyntaxError) return 'SyntaxError';
+	if (error instanceof AggregateError) return 'AggregateError';
+	return error instanceof Error ? 'Error' : 'Unknown';
+};
 
 export class App {
 	private readonly modules: readonly Module[];
 	private readonly config: AppConfig;
-	private readonly traces = new Map<string, ModuleTrace>();
+	private readonly traces = new Map<string, RuntimeError>();
 	private readonly pendingCallbacks: PendingCallback[] = [];
 	private context: Context | undefined;
 	private rafId = 0;
@@ -41,6 +69,7 @@ export class App {
 	private lastTime = 0;
 	private lastReason = 'start';
 	private resetTimerScheduler: (() => void) | undefined;
+	private previousDiagnostics: (() => RuntimeDiagnostics) | undefined;
 
 	constructor(modules: readonly Module[], config: AppConfig) {
 		this.modules = modules;
@@ -48,13 +77,13 @@ export class App {
 	}
 
 	start(): void {
-		if (!isBrowser || this.started) return;
+		if (!isBrowser() || this.started) return;
 		setDataset(document.documentElement, 'runtime', 'booting');
 		this.started = true;
 		this.context = this.createContext();
-		this.resetTimerScheduler = setTimerScheduler((name, callback) => {
-			this.nextFrame(name, callback);
-		});
+		this.resetTimerScheduler = setTimerScheduler((name, callback) => this.nextFrame(name, callback));
+		this.previousDiagnostics = (window as DiagnosticsWindow).wwwRuntimeDiagnostics;
+		(window as DiagnosticsWindow).wwwRuntimeDiagnostics = this.readDiagnostics;
 
 		for (const module of this.modules) this.runLifecycle(module, 'preinit');
 		for (const module of this.modules) this.runLifecycle(module, 'init');
@@ -78,7 +107,7 @@ export class App {
 
 	requestFrame(reason = 'request'): void {
 		this.lastReason = reason;
-		if (!isBrowser || !this.started || document.visibilityState !== 'visible') return;
+		if (!isBrowser() || !this.started || document.visibilityState !== 'visible') return;
 		if (this.ticking) {
 			this.requestedDuringTick = true;
 			return;
@@ -93,6 +122,8 @@ export class App {
 		this.requestFrame(reason);
 		return () => {
 			pending.cancelled = true;
+			const index = this.pendingCallbacks.indexOf(pending);
+			if (index !== -1) this.pendingCallbacks.splice(index, 1);
 		};
 	}
 
@@ -110,19 +141,33 @@ export class App {
 			this.pendingCallbacks.length = 0;
 			cancelRuntimeTimers();
 		} catch (error) {
-			this.recordError({ name: 'dispose' }, error);
+			this.recordError({ name: 'app' }, error, 'dispose');
 		} finally {
 			this.resetTimerScheduler?.();
 			this.resetTimerScheduler = undefined;
 			this.ticking = false;
 			this.requestedDuringTick = false;
 			this.lastTime = 0;
+			const diagnosticsWindow = window as DiagnosticsWindow;
+			if (diagnosticsWindow.wwwRuntimeDiagnostics === this.readDiagnostics) {
+				if (this.previousDiagnostics) diagnosticsWindow.wwwRuntimeDiagnostics = this.previousDiagnostics;
+				else delete diagnosticsWindow.wwwRuntimeDiagnostics;
+			}
+			this.previousDiagnostics = undefined;
 		}
 	}
 
-	getTrace(): ModuleTrace[] {
-		return this.modules.map((module) => this.traces.get(module.name) ?? { name: module.name });
+	getTrace(): RuntimeError[] {
+		return Array.from(this.traces.values(), (trace) => ({ ...trace }));
 	}
+
+	private readonly readDiagnostics = (): RuntimeDiagnostics => ({
+		version: 1,
+		running: this.started,
+		frame: this.frameIndex,
+		pendingCallbacks: this.pendingCallbacks.filter((pending) => !pending.cancelled).length,
+		errors: this.getTrace(),
+	});
 
 	private createContext(): Context {
 		return Object.defineProperties(
@@ -130,7 +175,7 @@ export class App {
 				root: document,
 				requestFrame: (reason?: string) => this.requestFrame(reason),
 				nextFrame: (reason: string, callback: () => void) => this.nextFrame(reason, callback),
-				reportError: (name: string, error: unknown) => this.recordError({ name }, error),
+				reportError: (name: string, error: unknown) => this.recordError({ name }, error, 'reported'),
 			},
 			{
 				profile: { get: () => this.config.getProfile() },
@@ -173,7 +218,7 @@ export class App {
 		try {
 			callback.call(module, this.context);
 		} catch (error) {
-			this.recordError(module, error);
+			this.recordError(module, error, method);
 		}
 	}
 
@@ -181,7 +226,7 @@ export class App {
 		try {
 			module.dispose?.();
 		} catch (error) {
-			this.recordError(module, error);
+			this.recordError(module, error, 'dispose');
 		}
 	}
 
@@ -192,17 +237,33 @@ export class App {
 			try {
 				pending.callback();
 			} catch (error) {
-				this.recordError({ name: pending.name }, error);
+				this.recordError({ name: pending.name }, error, 'callback');
 			}
 		}
 	}
 
-	private recordError(module: Pick<Module, 'name'>, error: unknown): void {
-		const message = error instanceof Error ? error.message : String(error);
-		this.traces.set(module.name, { name: module.name, lastError: message });
+	private recordError(module: Pick<Module, 'name'>, error: unknown, phase: ErrorPhase): void {
+		const name = module.name.replace(/^timer:/, '');
+		const owner = this.modules.find((candidate) => name === candidate.name || name.startsWith(`${candidate.name}.`) || name.startsWith(`${candidate.name}:`))?.name ?? 'app';
+		const type = errorType(error);
+		const key = `${owner}:${phase}:${type}`;
+		const previous = this.traces.get(key);
+		this.traces.delete(key);
+		this.traces.set(key, {
+			owner,
+			phase,
+			type,
+			count: Math.min((previous?.count ?? 0) + 1, Number.MAX_SAFE_INTEGER),
+			firstFrame: previous?.firstFrame ?? this.frameIndex,
+			lastFrame: this.frameIndex,
+		});
+		if (this.traces.size > MAX_ERROR_RECORDS) {
+			const oldest = this.traces.keys().next().value;
+			if (oldest !== undefined) this.traces.delete(oldest);
+		}
 		if (import.meta.env.DEV) {
 			queueMicrotask(() => {
-				throw error instanceof Error ? error : new Error(`[app:${module.name}] ${message}`);
+				throw error instanceof Error ? error : new Error(`[app:${module.name}] ${String(error)}`);
 			});
 		}
 	}
@@ -222,7 +283,7 @@ export class App {
 			try {
 				this.config.beforeFrame?.(frame);
 			} catch (error) {
-				this.recordError({ name: 'beforeFrame' }, error);
+				this.recordError({ name: 'app' }, error, 'beforeFrame');
 			}
 
 			this.runPendingCallbacks();
@@ -231,17 +292,17 @@ export class App {
 				try {
 					needsNextFrame = module.update.call(module, frame) === true || needsNextFrame;
 				} catch (error) {
-					this.recordError(module, error);
+					this.recordError(module, error, 'update');
 				}
 			}
 
 			try {
 				this.config.afterFrame?.(frame);
 			} catch (error) {
-				this.recordError({ name: 'afterFrame' }, error);
+				this.recordError({ name: 'app' }, error, 'afterFrame');
 			}
 		} catch (error) {
-			this.recordError({ name: 'frame' }, error);
+			this.recordError({ name: 'app' }, error, 'frame');
 		} finally {
 			shouldContinue = needsNextFrame || this.requestedDuringTick || this.pendingCallbacks.some((callback) => !callback.cancelled);
 			this.ticking = false;

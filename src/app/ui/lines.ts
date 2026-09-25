@@ -1,6 +1,6 @@
 import { BaseModule, type Context } from '../core/module';
-import { delayTimer, setTimer, type TimerHandle } from '../core/timer';
-import { MOTION, readDurationToken, readNumberToken } from '../core/tokens';
+import { setTimer, type TimerHandle } from '../core/timer';
+import { MOTION, readDurationToken } from '../core/tokens';
 import { getDeviceProfile, getLineRevealProfile, initDeviceProfile, subscribeDeviceProfile } from '../systems/device';
 import { onRouteBeforeSwap, type RouteSwap } from '../systems/route';
 import {
@@ -8,6 +8,7 @@ import {
 	initLinePlanCache,
 	measureLineReveal,
 	mountLineReveal,
+	onLineTypographyChange,
 	type LineRevealOptions,
 	type LineRevealProfile,
 	type MeasuredLineReveal,
@@ -47,6 +48,7 @@ class LinesOwner extends BaseModule {
 	private observedCurrentDocument = false;
 	private activeProfileKey = readLineProfileKey();
 	private initialized = false;
+	private preparationQueue: Promise<void> = Promise.resolve();
 
 	override preinit(context: Context): void {
 		super.preinit(context);
@@ -79,6 +81,9 @@ class LinesOwner extends BaseModule {
 
 		initDeviceProfile();
 		initLinePlanCache();
+		this.addCleanup(onLineTypographyChange(this.handleTypographyChange));
+		document.addEventListener('focusin', this.handleFocus);
+		this.addCleanup(() => document.removeEventListener('focusin', this.handleFocus));
 		this.addCleanup(onRouteBeforeSwap(this.handleBeforeSwap));
 		this.addCleanup(
 			subscribeDeviceProfile((profile) => {
@@ -139,7 +144,7 @@ class LinesOwner extends BaseModule {
 					if (!entry.isIntersecting || !(entry.target instanceof HTMLElement)) continue;
 
 					this.intersectionObserver?.unobserve(entry.target);
-					void this.prepareSequence(entry.target, this.sequenceTargets.get(entry.target) ?? [], signal, { waitForLayout: true }).catch(() => {
+					void this.enqueueSequence(entry.target, this.sequenceTargets.get(entry.target) ?? [], signal, { waitForLayout: true }).catch(() => {
 						if (!signal.aborted) this.fallbackDocument();
 					});
 				}
@@ -155,7 +160,7 @@ class LinesOwner extends BaseModule {
 			}
 
 			if (observeOptions.immediateVisible && isInViewport(sequence.root)) {
-				void this.prepareSequence(sequence.root, sequence.targets, signal, { waitForLayout: observeOptions.waitForLayout ?? false }).catch(() => {
+				void this.enqueueSequence(sequence.root, sequence.targets, signal, { waitForLayout: observeOptions.waitForLayout ?? false }).catch(() => {
 					if (!signal.aborted) this.fallbackDocument();
 				});
 				continue;
@@ -175,6 +180,7 @@ class LinesOwner extends BaseModule {
 	}
 
 	private async prepareSequence(root: HTMLElement, targets: HTMLElement[], signal: AbortSignal, options: { waitForLayout: boolean }): Promise<void> {
+		if (signal.aborted) return;
 		const pendingTargets = targets.filter(isPendingLineTarget);
 		if (pendingTargets.length === 0) {
 			markLineGroupComplete(root);
@@ -190,10 +196,17 @@ class LinesOwner extends BaseModule {
 
 		if (options.waitForLayout) {
 			await waitForFonts(signal);
+			if (signal.aborted) return;
 			await this.waitForNextFrame(signal);
 		}
 
 		if (signal.aborted) return;
+		// Never mask readable text with geometry measured in a fallback font.
+		if (document.fonts?.status === 'loading') {
+			for (const target of pendingTargets) markFallback(target);
+			markLineGroupComplete(root);
+			return;
+		}
 
 		const measuredSequence: MeasuredLineReveal[] = [];
 		const fallbackTargets: HTMLElement[] = [];
@@ -254,6 +267,26 @@ class LinesOwner extends BaseModule {
 
 		this.queueOrPlay(root, preparedSequence);
 	}
+
+	private enqueueSequence(root: HTMLElement, targets: HTMLElement[], signal: AbortSignal, options: { waitForLayout: boolean }): Promise<void> {
+		// Serialize independent groups while keeping each group's lines on one timeline.
+		const work = this.preparationQueue.then(() => this.prepareSequence(root, targets, signal, options));
+		this.preparationQueue = work.catch(() => undefined);
+		return work;
+	}
+
+	private readonly handleTypographyChange = (): void => {
+		for (const prepared of this.preparedTargets.values()) this.cancelPrepared(prepared);
+	};
+
+	private readonly handleFocus = (event: FocusEvent): void => {
+		if (!(event.target instanceof Element)) return;
+		const target = event.target.closest<HTMLElement>(TARGET_SELECTOR);
+		if (!target) return;
+		const prepared = this.preparedTargets.get(target);
+		if (prepared) this.cancelPrepared(prepared);
+		else if (!isTerminalLineTarget(target)) markFallback(target);
+	};
 
 	private queueOrPlay(root: HTMLElement, sequence: PreparedLineReveal[]): void {
 		const first = sequence[0];
@@ -434,6 +467,7 @@ class LinesOwner extends BaseModule {
 	}
 
 	private waitForNextFrame(signal: AbortSignal): Promise<void> {
+		if (signal.aborted) return Promise.resolve();
 		return new Promise((resolve) => {
 			let timeout: TimerHandle | undefined;
 			let cancelFrame: (() => void) | undefined;
@@ -558,21 +592,32 @@ const getOptions = (): LineRevealOptions | undefined => {
 		staggerMs: readDurationToken('--duration-line-reveal-stagger', MOTION.line.staggerMs),
 		maxTotalMs: readDurationToken('--duration-line-reveal-max', MOTION.line.maxTotalMs),
 		handoffMs: readDurationToken('--duration-line-reveal-handoff', MOTION.line.handoffMs),
-		staggeredLines: readNumberToken('--line-reveal-staggered-lines', MOTION.line.staggeredLines),
 		completionBufferMs: MOTION.line.completionBufferMs,
 		maxTokens: profile === 'full' ? MOTION.line.fullMaxTokens : MOTION.line.liteMaxTokens,
 		maxLinesPerTarget: profile === 'full' ? MOTION.line.fullMaxLinesPerTarget : MOTION.line.liteMaxLinesPerTarget,
-		measureBudgetMs: profile === 'full' ? Number.POSITIVE_INFINITY : MOTION.line.liteMeasureBudgetMs,
+		measureBudgetMs: profile === 'full' ? MOTION.line.fullMeasureBudgetMs : MOTION.line.liteMeasureBudgetMs,
 	};
 };
 
-const delay = (milliseconds: number, signal: AbortSignal): Promise<void> => delayTimer('lines.delay', milliseconds, signal);
-
 const waitForFonts = async (signal: AbortSignal): Promise<void> => {
 	const fonts = document.fonts;
-	if (!fonts) return;
+	if (signal.aborted || !fonts || fonts.status === 'loaded') return;
 
-	await Promise.race([fonts.ready.then(() => undefined), delay(MOTION.line.fontWaitMs, signal)]);
+	await new Promise<void>((resolve) => {
+		let timeout: TimerHandle | undefined;
+		let finished = false;
+		const finish = (): void => {
+			if (finished) return;
+			finished = true;
+			timeout?.cancel();
+			signal.removeEventListener('abort', finish);
+			resolve();
+		};
+
+		timeout = setTimer('lines.fonts', MOTION.line.fontWaitMs, finish);
+		signal.addEventListener('abort', finish, { once: true });
+		void fonts.ready.then(finish, finish);
+	});
 };
 
 const isInViewport = (element: HTMLElement): boolean => {
@@ -600,16 +645,15 @@ function markFallback(target: HTMLElement): void {
 
 const applySequenceTiming = (sequence: MeasuredLineReveal[], options: LineRevealOptions): void => {
 	const lineCount = sequence.reduce((sum, measured) => sum + measured.lineCount, 0);
-	const staggeredLineCount = Math.min(lineCount, Math.max(0, Math.floor(options.staggeredLines)));
 	const maxStaggerWindow = Math.max(0, options.maxTotalMs - options.durationMs);
-	const sequenceStagger = staggeredLineCount > 1 ? Math.min(options.staggerMs, maxStaggerWindow / (staggeredLineCount - 1)) : 0;
+	const sequenceStagger = lineCount > 1 ? Math.min(options.staggerMs, maxStaggerWindow / (lineCount - 1)) : 0;
 	let lineIndex = 0;
 
 	for (const measured of sequence) {
 		const lineDelaysMs = measured.lines.map(() => {
-			const delayIndex = staggeredLineCount > 0 ? Math.min(lineIndex, staggeredLineCount - 1) : 0;
+			const delay = lineIndex * sequenceStagger;
 			lineIndex += 1;
-			return delayIndex * sequenceStagger;
+			return delay;
 		});
 		const maxDelayMs = Math.max(0, ...lineDelaysMs);
 

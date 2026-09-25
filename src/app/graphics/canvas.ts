@@ -34,7 +34,7 @@ export interface Renderer {
 	start(): void;
 	stop(): void;
 	update(timestamp: number, deltaSeconds: number): boolean;
-	renderOnce(): void;
+	renderOnce(): boolean;
 	dispose(): void;
 }
 
@@ -269,7 +269,8 @@ float fill(in float x) {
 }
 
 float fill(float x, float size, float edge) {
-	return 1.0 - smoothstep(size - edge, size + edge, x);
+	float width = max(edge, 0.00001);
+	return 1.0 - smoothstep(size - width, size + width, x);
 }
 
 void main() {
@@ -281,7 +282,7 @@ void main() {
 	float horizontalBlur = 0.0;
 	float rightGradient = 0.0;
 	if (st.x < u_blurStart) {
-		float gradient = smoothstep(u_blurStart, 0.0, st.x);
+		float gradient = 1.0 - smoothstep(0.0, max(u_blurStart, 0.00001), st.x);
 		horizontalBlur = pow(gradient, 2.0) * u_defaultBlurIntensity;  // Quadratic falloff
 		rightGradient = gradient;  // Used for halo spread calculation
 	}
@@ -417,14 +418,18 @@ function createStaticBuffer(gl: WebGL2RenderingContext, data: Float32Array, item
 		throw new Error('Failed to create buffer.');
 	}
 
-	gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-	gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
-
-	return {
-		buffer,
-		itemSize,
-		itemCount: data.length / itemSize,
-	};
+	try {
+		gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+		gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+		return {
+			buffer,
+			itemSize,
+			itemCount: data.length / itemSize,
+		};
+	} catch (error) {
+		gl.deleteBuffer(buffer);
+		throw error;
+	}
 }
 
 function createFullscreenQuad(gl: WebGL2RenderingContext): BufferDescriptor {
@@ -449,47 +454,42 @@ function compileShader(gl: WebGL2RenderingContext, type: number, source: string)
 		throw new Error('Failed to allocate shader.');
 	}
 
-	gl.shaderSource(shader, source);
-	gl.compileShader(shader);
-
-	const success = gl.getShaderParameter(shader, gl.COMPILE_STATUS) as boolean;
-	if (!success) {
-		const log = gl.getShaderInfoLog(shader) ?? 'Unknown shader compilation error.';
+	try {
+		gl.shaderSource(shader, source);
+		gl.compileShader(shader);
+		if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+			throw new Error(gl.getShaderInfoLog(shader) ?? 'Unknown shader compilation error.');
+		}
+		return shader;
+	} catch (error) {
 		gl.deleteShader(shader);
-		throw new Error(log);
+		throw error;
 	}
-
-	return shader;
 }
 
 function createProgram(gl: WebGL2RenderingContext, sources: ShaderSources): WebGLProgram {
-	const vertexShader = compileShader(gl, gl.VERTEX_SHADER, sources.vertex);
-	const fragmentShader = compileShader(gl, gl.FRAGMENT_SHADER, sources.fragment);
-
-	const program = gl.createProgram();
-	if (!program) {
-		gl.deleteShader(vertexShader);
-		gl.deleteShader(fragmentShader);
-		throw new Error('Failed to allocate shader program.');
+	let vertexShader: WebGLShader | undefined;
+	let fragmentShader: WebGLShader | undefined;
+	let program: WebGLProgram | null = null;
+	try {
+		vertexShader = compileShader(gl, gl.VERTEX_SHADER, sources.vertex);
+		fragmentShader = compileShader(gl, gl.FRAGMENT_SHADER, sources.fragment);
+		program = gl.createProgram();
+		if (!program) throw new Error('Failed to allocate shader program.');
+		gl.attachShader(program, vertexShader);
+		gl.attachShader(program, fragmentShader);
+		gl.linkProgram(program);
+		if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+			throw new Error(gl.getProgramInfoLog(program) ?? 'Unknown shader linking error.');
+		}
+		return program;
+	} catch (error) {
+		if (program) gl.deleteProgram(program);
+		throw error;
+	} finally {
+		if (vertexShader) gl.deleteShader(vertexShader);
+		if (fragmentShader) gl.deleteShader(fragmentShader);
 	}
-
-	gl.attachShader(program, vertexShader);
-	gl.attachShader(program, fragmentShader);
-	gl.linkProgram(program);
-
-	const success = gl.getProgramParameter(program, gl.LINK_STATUS) as boolean;
-	if (!success) {
-		const log = gl.getProgramInfoLog(program) ?? 'Unknown shader linking error.';
-		gl.deleteProgram(program);
-		gl.deleteShader(vertexShader);
-		gl.deleteShader(fragmentShader);
-		throw new Error(log);
-	}
-
-	gl.deleteShader(vertexShader);
-	gl.deleteShader(fragmentShader);
-
-	return program;
 }
 
 type UniformMap<TKeys extends readonly string[]> = {
@@ -541,316 +541,335 @@ export function createRenderer(
 ): Renderer {
 	const diagnosticsMode = options.diagnosticsMode ?? getWebglDiagnosticsMode();
 	const gl = createGraphicsContext(canvas);
-	const program = createProgram(gl, {
-		vertex: LOGO_VERTEX_SHADER,
-		fragment: LOGO_FRAGMENT_SHADER,
-	});
-
-	gl.useProgram(program);
-	gl.enable(gl.BLEND);
-	gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-	gl.disable(gl.DEPTH_TEST);
-
-	const fullscreenQuad = createFullscreenQuad(gl);
-	const positionLocation = gl.getAttribLocation(program, 'a_position');
-	if (positionLocation === -1) {
-		logEvent('WEBGL', 'LOGO', 'ATTRIB-MISSING', {
-			attribute: 'a_position',
-		});
-	}
-
-	const vao = gl.createVertexArray();
-	if (!vao) {
-		logEvent('WEBGL', 'LOGO', 'VAO-MISSING');
-		throw new Error('Failed to allocate vertex array.');
-	}
-
-	gl.bindVertexArray(vao);
-	gl.bindBuffer(gl.ARRAY_BUFFER, fullscreenQuad.buffer);
-	gl.vertexAttribPointer(positionLocation, fullscreenQuad.itemSize, gl.FLOAT, false, 0, 0);
-	gl.enableVertexAttribArray(positionLocation);
-	gl.bindVertexArray(null);
-	gl.bindBuffer(gl.ARRAY_BUFFER, null);
-
-	const uniforms = resolveUniforms(gl, program, UNIFORM_NAMES);
-	const dprCap = options.dprCap ?? 1.5;
-
-	let state = { ...initialState };
-	let dimensions = measureCanvas(state.width, state.height, dprCap);
-	const mousePosition = {
-		x: dimensions.width / 2,
-		y: dimensions.height / 2,
-	};
-	const dampedMouse = { ...mousePosition };
-	let hasPointerInteraction = false;
-	let hasLoggedFirstFrame = false;
-	let hasValidatedFrame = false;
-	let hasContextFailure = false;
-
-	const colorCache = new Map<string, [number, number, number]>();
-
-	const failOnContextError = (reason: 'context-lost' | 'context-restored' | 'gl-error', message: string): void => {
-		if (hasContextFailure) return;
-		hasContextFailure = true;
-		logEvent('WEBGL', 'LOGO', 'FAIL', { reason, message });
-		onFatalContextError?.(reason);
-	};
-
-	const checkGlError = (phase: string): boolean => {
-		if (!shouldRunFullWebglDiagnostics(diagnosticsMode)) return true;
-
-		const error = gl.getError();
-		if (error !== gl.NO_ERROR) {
-			logEvent('WEBGL', 'LOGO', 'GL-ERROR', {
-				phase,
-				error,
-			});
-			if (phase === 'beforeDraw' || phase === 'afterDraw' || phase === 'updateResolutionUniforms' || phase === 'validateFrame') {
-				failOnContextError('gl-error', `Critical GL error (${error}) during ${phase}`);
-				return false;
+	const cleanups: Array<() => void> = [];
+	const releaseResources = (): void => {
+		for (const cleanup of cleanups.splice(0).toReversed()) {
+			try {
+				cleanup();
+			} catch {
+				// Attempt every release even if the context has failed.
 			}
 		}
-		return true;
 	};
+	try {
+		const program = createProgram(gl, {
+			vertex: LOGO_VERTEX_SHADER,
+			fragment: LOGO_FRAGMENT_SHADER,
+		});
+		cleanups.push(() => gl.deleteProgram(program));
 
-	const handleContextLost = (event: Event): void => {
-		const contextEvent = event as WebGLContextEvent;
-		contextEvent.preventDefault();
-		failOnContextError('context-lost', contextEvent.statusMessage || 'WebGL context lost');
-	};
+		gl.useProgram(program);
+		gl.enable(gl.BLEND);
+		gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+		gl.disable(gl.DEPTH_TEST);
 
-	const handleContextRestored = (): void => {
-		failOnContextError('context-restored', 'WebGL context restored unexpectedly');
-	};
-
-	const updateResolutionUniforms = (nextDimensions: CanvasDimensions): void => {
-		applyCanvasSize(canvas, gl, nextDimensions);
-		setUniform2f(uniforms.u_resolution, nextDimensions.pixelWidth, nextDimensions.pixelHeight, gl);
-		setUniform1f(uniforms.u_pixelRatio, nextDimensions.dpr, gl);
-		checkGlError('updateResolutionUniforms');
-	};
-
-	const applyStaticUniforms = (current: State): void => {
-		setUniform1f(uniforms.u_rectWidth, 2.0, gl);
-		setUniform1f(uniforms.u_rectHeight, 0.5, gl);
-		setUniform1f(uniforms.u_roundness, current.roundness, gl);
-		setUniform1f(uniforms.u_blurStart, current.blurStart, gl);
-		setUniform1f(uniforms.u_defaultBlurIntensity, current.defaultBlurIntensity, gl);
-		setUniform1f(uniforms.u_mouseBlurSize, current.mouseBlurSize, gl);
-		setUniform1f(uniforms.u_mouseBlurIntensity, current.mouseBlurIntensity, gl);
-		setUniform1f(uniforms.u_noiseIntensity, current.noiseIntensity, gl);
-		setUniform1f(uniforms.u_noiseScale, current.noiseScale, gl);
-		checkGlError('applyStaticUniforms');
-	};
-
-	const applyThemeUniforms = (variant: Theme): void => {
-		const widthMultiplier = 0.75;
-		const heightMultiplier = variant === 'dark' ? 0.1 : 0.5;
-		setUniform1f(uniforms.u_widthSpreadMultiplier, widthMultiplier, gl);
-		setUniform1f(uniforms.u_heightSpreadMultiplier, heightMultiplier, gl);
-
-		const colorHex = variant === 'dark' ? '#ffffff' : '#000000';
-		const cached = colorCache.get(colorHex) ?? hexToRgb(colorHex);
-		if (!colorCache.has(colorHex)) {
-			colorCache.set(colorHex, cached);
-		}
-		setUniform3f(uniforms.u_color, cached[0], cached[1], cached[2], gl);
-		checkGlError('applyThemeUniforms');
-	};
-
-	const setPointer = (clientX: number, clientY: number): void => {
-		const rect = canvas.getBoundingClientRect();
-		mousePosition.x = clientX - rect.left;
-		mousePosition.y = clientY - rect.top;
-		hasPointerInteraction = true;
-	};
-
-	canvas.addEventListener('webglcontextlost', handleContextLost, {
-		passive: false,
-	});
-	canvas.addEventListener('webglcontextrestored', handleContextRestored);
-
-	applyStaticUniforms(state);
-	applyThemeUniforms(state.theme);
-	updateResolutionUniforms(dimensions);
-
-	let isRunning = false;
-	let isDisposed = false;
-	let resizeObserver: ResizeObserver | null = null;
-
-	const drawFrame = (timestamp: number, deltaSeconds: number): void => {
-		if (isDisposed || hasContextFailure) return;
-		if (!hasLoggedFirstFrame) {
-			hasLoggedFirstFrame = true;
-			logEvent('WEBGL', 'LOGO', 'FRAME-START', {
-				delta: deltaSeconds * 1000,
-				now: timestamp,
+		const fullscreenQuad = createFullscreenQuad(gl);
+		cleanups.push(() => disposeBuffer(gl, fullscreenQuad));
+		const positionLocation = gl.getAttribLocation(program, 'a_position');
+		if (positionLocation === -1) {
+			logEvent('WEBGL', 'LOGO', 'ATTRIB-MISSING', {
+				attribute: 'a_position',
 			});
 		}
 
-		dampedMouse.x = damp(dampedMouse.x, mousePosition.x, 8, deltaSeconds);
-		dampedMouse.y = damp(dampedMouse.y, mousePosition.y, 8, deltaSeconds);
+		const vao = gl.createVertexArray();
+		if (!vao) {
+			logEvent('WEBGL', 'LOGO', 'VAO-MISSING');
+			throw new Error('Failed to allocate vertex array.');
+		}
+		cleanups.push(() => gl.deleteVertexArray(vao));
 
-		gl.useProgram(program);
 		gl.bindVertexArray(vao);
-		gl.clearColor(0, 0, 0, 0);
-		gl.clear(gl.COLOR_BUFFER_BIT);
-
-		setUniform2f(uniforms.u_mouse, dampedMouse.x, dampedMouse.y, gl);
-		if (!checkGlError('beforeDraw')) return;
-
-		gl.drawArrays(gl.TRIANGLES, 0, fullscreenQuad.itemCount);
+		gl.bindBuffer(gl.ARRAY_BUFFER, fullscreenQuad.buffer);
+		gl.vertexAttribPointer(positionLocation, fullscreenQuad.itemSize, gl.FLOAT, false, 0, 0);
+		gl.enableVertexAttribArray(positionLocation);
 		gl.bindVertexArray(null);
+		gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
-		if (!checkGlError('afterDraw')) return;
-		validateFrameOutput();
-	};
+		const uniforms = resolveUniforms(gl, program, UNIFORM_NAMES);
+		const dprCap = options.dprCap ?? 1.5;
 
-	const update = (timestamp: number, deltaSeconds: number): boolean => {
-		if (!isRunning || isDisposed || hasContextFailure) {
-			return false;
-		}
-		drawFrame(timestamp, deltaSeconds);
-		return shouldAnimate();
-	};
+		let state = { ...initialState };
+		let dimensions = measureCanvas(state.width, state.height, dprCap);
+		const mousePosition = {
+			x: dimensions.width / 2,
+			y: dimensions.height / 2,
+		};
+		const dampedMouse = { ...mousePosition };
+		let hasPointerInteraction = false;
+		let hasLoggedFirstFrame = false;
+		let hasValidatedFrame = false;
+		let hasContextFailure = false;
+		let needsDraw = true;
 
-	function shouldAnimate(): boolean {
-		return Math.abs(dampedMouse.x - mousePosition.x) > 0.001 || Math.abs(dampedMouse.y - mousePosition.y) > 0.001;
-	}
+		const colorCache = new Map<string, [number, number, number]>();
 
-	function validateFrameOutput(): void {
-		if (!shouldRunFullWebglDiagnostics(diagnosticsMode)) return;
-		if (hasValidatedFrame || hasContextFailure) return;
-		hasValidatedFrame = true;
+		const failOnContextError = (reason: 'context-lost' | 'context-restored' | 'gl-error', message: string): void => {
+			if (hasContextFailure) return;
+			hasContextFailure = true;
+			logEvent('WEBGL', 'LOGO', 'FAIL', { reason, message });
+			onFatalContextError?.(reason);
+		};
 
-		const { pixelWidth, pixelHeight } = dimensions;
-		if (pixelWidth <= 0 || pixelHeight <= 0) {
-			failOnContextError('gl-error', 'Logo canvas has an empty backing buffer.');
-			return;
-		}
+		const checkGlError = (phase: string, force = false): boolean => {
+			if (!force && !shouldRunFullWebglDiagnostics(diagnosticsMode)) return true;
 
-		const pixels = new Uint8Array(pixelWidth * pixelHeight * 4);
-		gl.readPixels(0, 0, pixelWidth, pixelHeight, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-		let alphaSum = 0;
-		for (let index = 3; index < pixels.length; index += 4) {
-			alphaSum += pixels[index] ?? 0;
-		}
+			const error = gl.getError();
+			if (error !== gl.NO_ERROR) {
+				logEvent('WEBGL', 'LOGO', 'GL-ERROR', {
+					phase,
+					error,
+				});
+				if (phase === 'beforeDraw' || phase === 'afterDraw' || phase === 'updateResolutionUniforms' || phase === 'validateFrame') {
+					failOnContextError('gl-error', `Critical GL error (${error}) during ${phase}`);
+					return false;
+				}
+			}
+			return true;
+		};
 
-		if (!checkGlError('validateFrame')) return;
-		if (alphaSum <= 0) {
-			failOnContextError('gl-error', 'Logo rendered a fully transparent frame.');
-			return;
-		}
+		const handleContextLost = (event: Event): void => {
+			const contextEvent = event as WebGLContextEvent;
+			contextEvent.preventDefault();
+			failOnContextError('context-lost', contextEvent.statusMessage || 'WebGL context lost');
+		};
 
-		logEvent('WEBGL', 'LOGO', 'FRAME-VALIDATED', {
-			alphaSum,
-			pixelWidth,
-			pixelHeight,
+		const handleContextRestored = (): void => {
+			failOnContextError('context-restored', 'WebGL context restored unexpectedly');
+		};
+
+		const updateResolutionUniforms = (nextDimensions: CanvasDimensions): void => {
+			applyCanvasSize(canvas, gl, nextDimensions);
+			setUniform2f(uniforms.u_resolution, nextDimensions.pixelWidth, nextDimensions.pixelHeight, gl);
+			setUniform1f(uniforms.u_pixelRatio, nextDimensions.dpr, gl);
+			checkGlError('updateResolutionUniforms');
+		};
+
+		const applyStaticUniforms = (current: State): void => {
+			setUniform1f(uniforms.u_rectWidth, 2.0, gl);
+			setUniform1f(uniforms.u_rectHeight, 0.5, gl);
+			setUniform1f(uniforms.u_roundness, current.roundness, gl);
+			setUniform1f(uniforms.u_blurStart, current.blurStart, gl);
+			setUniform1f(uniforms.u_defaultBlurIntensity, current.defaultBlurIntensity, gl);
+			setUniform1f(uniforms.u_mouseBlurSize, current.mouseBlurSize, gl);
+			setUniform1f(uniforms.u_mouseBlurIntensity, current.mouseBlurIntensity, gl);
+			setUniform1f(uniforms.u_noiseIntensity, current.noiseIntensity, gl);
+			setUniform1f(uniforms.u_noiseScale, current.noiseScale, gl);
+			checkGlError('applyStaticUniforms');
+		};
+
+		const applyThemeUniforms = (variant: Theme): void => {
+			const widthMultiplier = 0.75;
+			const heightMultiplier = variant === 'dark' ? 0.1 : 0.5;
+			setUniform1f(uniforms.u_widthSpreadMultiplier, widthMultiplier, gl);
+			setUniform1f(uniforms.u_heightSpreadMultiplier, heightMultiplier, gl);
+
+			const colorHex = variant === 'dark' ? '#ffffff' : '#000000';
+			const cached = colorCache.get(colorHex) ?? hexToRgb(colorHex);
+			if (!colorCache.has(colorHex)) {
+				colorCache.set(colorHex, cached);
+			}
+			setUniform3f(uniforms.u_color, cached[0], cached[1], cached[2], gl);
+			checkGlError('applyThemeUniforms');
+		};
+
+		const setPointer = (clientX: number, clientY: number): void => {
+			const rect = canvas.getBoundingClientRect();
+			mousePosition.x = clientX - rect.left;
+			mousePosition.y = clientY - rect.top;
+			hasPointerInteraction = true;
+		};
+
+		canvas.addEventListener('webglcontextlost', handleContextLost, {
+			passive: false,
 		});
-	}
+		canvas.addEventListener('webglcontextrestored', handleContextRestored);
+		cleanups.push(() => canvas.removeEventListener('webglcontextlost', handleContextLost));
+		cleanups.push(() => canvas.removeEventListener('webglcontextrestored', handleContextRestored));
 
-	const start = (): void => {
-		if (isRunning || isDisposed) return;
-		isRunning = true;
-		renderOnce();
-	};
-
-	const stop = (): void => {
-		if (!isRunning) return;
-		isRunning = false;
-	};
-
-	const renderOnce = (): void => {
-		drawFrame(performance.now(), 0);
-	};
-
-	const handleResize = (overrides?: Partial<Pick<CanvasDimensions, 'width' | 'height'>>): void => {
-		const targetWidth = overrides?.width ?? state.width;
-		const targetHeight = overrides?.height ?? state.height;
-		dimensions = measureCanvas(targetWidth, targetHeight, dprCap);
-		gl.useProgram(program);
-		updateResolutionUniforms(dimensions);
-
-		if (!hasPointerInteraction) {
-			mousePosition.x = dimensions.width / 2;
-			mousePosition.y = dimensions.height / 2;
-			dampedMouse.x = mousePosition.x;
-			dampedMouse.y = mousePosition.y;
-			if (isRunning) renderOnce();
-			return;
-		}
-
-		mousePosition.x = Math.min(Math.max(mousePosition.x, 0), dimensions.width);
-		mousePosition.y = Math.min(Math.max(mousePosition.y, 0), dimensions.height);
-		if (isRunning) {
-			renderOnce();
-		}
-	};
-
-	if (typeof ResizeObserver !== 'undefined') {
-		resizeObserver = new ResizeObserver(() => {
-			handleResize();
-		});
-		resizeObserver.observe(canvas);
-	} else if (typeof window !== 'undefined') {
-		window.addEventListener('resize', handleWindowResize);
-	}
-
-	function handleWindowResize(): void {
-		handleResize();
-	}
-
-	const resize = (nextDimensions?: Partial<Pick<CanvasDimensions, 'width' | 'height'>>): void => {
-		handleResize(nextDimensions);
-	};
-
-	const setState = (nextState: State): void => {
-		const previousTheme = state.theme;
-		state = { ...nextState };
-		gl.useProgram(program);
 		applyStaticUniforms(state);
-		if (state.theme !== previousTheme) {
-			applyThemeUniforms(state.theme);
+		applyThemeUniforms(state.theme);
+		updateResolutionUniforms(dimensions);
+		if (hasContextFailure) throw new Error('WebGL initialization failed.');
+
+		let isRunning = false;
+		let isDisposed = false;
+		const drawFrame = (timestamp: number, deltaSeconds: number): boolean => {
+			if (isDisposed || hasContextFailure) return false;
+			if (!hasLoggedFirstFrame) {
+				hasLoggedFirstFrame = true;
+				logEvent('WEBGL', 'LOGO', 'FRAME-START', {
+					delta: deltaSeconds * 1000,
+					now: timestamp,
+				});
+			}
+
+			dampedMouse.x = damp(dampedMouse.x, mousePosition.x, 8, deltaSeconds);
+			dampedMouse.y = damp(dampedMouse.y, mousePosition.y, 8, deltaSeconds);
+
+			gl.useProgram(program);
+			gl.bindVertexArray(vao);
+			gl.clearColor(0, 0, 0, 0);
+			gl.clear(gl.COLOR_BUFFER_BIT);
+
+			setUniform2f(uniforms.u_mouse, dampedMouse.x, dampedMouse.y, gl);
+			if (!checkGlError('beforeDraw')) return false;
+
+			gl.drawArrays(gl.TRIANGLES, 0, fullscreenQuad.itemCount);
+			gl.bindVertexArray(null);
+
+			if (!checkGlError('afterDraw') || !validateFrameOutput()) return false;
+			needsDraw = false;
+			return true;
+		};
+
+		const update = (timestamp: number, deltaSeconds: number): boolean => {
+			if (!isRunning || isDisposed || hasContextFailure) {
+				return false;
+			}
+			if (needsDraw || shouldAnimate()) drawFrame(timestamp, deltaSeconds);
+			return shouldAnimate();
+		};
+
+		function shouldAnimate(): boolean {
+			return Math.abs(dampedMouse.x - mousePosition.x) > 0.001 || Math.abs(dampedMouse.y - mousePosition.y) > 0.001;
 		}
-		if (isRunning) {
+
+		function validateFrameOutput(): boolean {
+			if (hasContextFailure) return false;
+			if (hasValidatedFrame) return true;
+
+			const { pixelWidth, pixelHeight } = dimensions;
+			if (pixelWidth <= 0 || pixelHeight <= 0) {
+				failOnContextError('gl-error', 'Logo canvas has an empty backing buffer.');
+				return false;
+			}
+
+			// The logo covers its center. Production samples only 3x3 pixels once;
+			// development inspects the entire first frame for shader diagnostics.
+			const full = shouldRunFullWebglDiagnostics(diagnosticsMode);
+			const sampleWidth = full ? pixelWidth : Math.min(3, pixelWidth);
+			const sampleHeight = full ? pixelHeight : Math.min(3, pixelHeight);
+			const pixels = new Uint8Array(sampleWidth * sampleHeight * 4);
+			gl.readPixels(Math.floor((pixelWidth - sampleWidth) / 2), Math.floor((pixelHeight - sampleHeight) / 2), sampleWidth, sampleHeight, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+			let alphaSum = 0;
+			for (let index = 3; index < pixels.length; index += 4) {
+				alphaSum += pixels[index] ?? 0;
+			}
+
+			if (!checkGlError('validateFrame', true)) return false;
+			if (alphaSum <= 0) {
+				failOnContextError('gl-error', 'Logo rendered a fully transparent frame.');
+				return false;
+			}
+			hasValidatedFrame = true;
+
+			logEvent('WEBGL', 'LOGO', 'FRAME-VALIDATED', {
+				alphaSum,
+				pixelWidth,
+				pixelHeight,
+			});
+			return true;
+		}
+
+		const start = (): void => {
+			if (isRunning || isDisposed) return;
+			isRunning = true;
 			renderOnce();
+		};
+
+		const stop = (): void => {
+			if (!isRunning) return;
+			isRunning = false;
+		};
+
+		const renderOnce = (): boolean => {
+			return drawFrame(performance.now(), 0);
+		};
+
+		const handleResize = (overrides?: Partial<Pick<CanvasDimensions, 'width' | 'height'>>): void => {
+			const targetWidth = overrides?.width ?? state.width;
+			const targetHeight = overrides?.height ?? state.height;
+			const nextDimensions = measureCanvas(targetWidth, targetHeight, dprCap);
+			if (nextDimensions.width === dimensions.width && nextDimensions.height === dimensions.height && nextDimensions.dpr === dimensions.dpr) return;
+			dimensions = nextDimensions;
+			needsDraw = true;
+			gl.useProgram(program);
+			updateResolutionUniforms(dimensions);
+
+			if (!hasPointerInteraction) {
+				mousePosition.x = dimensions.width / 2;
+				mousePosition.y = dimensions.height / 2;
+				dampedMouse.x = mousePosition.x;
+				dampedMouse.y = mousePosition.y;
+				if (isRunning) renderOnce();
+				return;
+			}
+
+			mousePosition.x = Math.min(Math.max(mousePosition.x, 0), dimensions.width);
+			mousePosition.y = Math.min(Math.max(mousePosition.y, 0), dimensions.height);
+			if (isRunning) {
+				renderOnce();
+			}
+		};
+
+		if (typeof ResizeObserver !== 'undefined') {
+			const resizeObserver = new ResizeObserver(() => {
+				handleResize();
+			});
+			cleanups.push(() => resizeObserver.disconnect());
+			resizeObserver.observe(canvas);
+		} else if (typeof window !== 'undefined') {
+			window.addEventListener('resize', handleWindowResize);
+			cleanups.push(() => window.removeEventListener('resize', handleWindowResize));
 		}
-	};
 
-	const dispose = (): void => {
-		if (isDisposed) return;
-		isDisposed = true;
-
-		stop();
-
-		canvas.removeEventListener('webglcontextlost', handleContextLost);
-		canvas.removeEventListener('webglcontextrestored', handleContextRestored);
-
-		if (resizeObserver) {
-			resizeObserver.disconnect();
-			resizeObserver = null;
+		function handleWindowResize(): void {
+			handleResize();
 		}
 
-		if (!resizeObserver && typeof window !== 'undefined') {
-			window.removeEventListener('resize', handleWindowResize);
-		}
+		const resize = (nextDimensions?: Partial<Pick<CanvasDimensions, 'width' | 'height'>>): void => {
+			handleResize(nextDimensions);
+		};
 
-		gl.bindVertexArray(null);
-		gl.deleteVertexArray(vao);
-		disposeBuffer(gl, fullscreenQuad);
-		gl.deleteProgram(program);
+		const setState = (nextState: State): void => {
+			const previousTheme = state.theme;
+			state = { ...nextState };
+			needsDraw = true;
+			gl.useProgram(program);
+			applyStaticUniforms(state);
+			if (state.theme !== previousTheme) {
+				applyThemeUniforms(state.theme);
+			}
+			if (isRunning) {
+				renderOnce();
+			}
+		};
 
-		logEvent('WEBGL', 'RENDERER', 'DISPOSED');
-	};
+		const dispose = (): void => {
+			if (isDisposed) return;
+			isDisposed = true;
 
-	return {
-		resize,
-		setState,
-		setPointer,
-		start,
-		stop,
-		update,
-		renderOnce,
-		dispose,
-	};
+			stop();
+
+			gl.bindVertexArray(null);
+			releaseResources();
+
+			logEvent('WEBGL', 'RENDERER', 'DISPOSED');
+		};
+
+		return {
+			resize,
+			setState,
+			setPointer,
+			start,
+			stop,
+			update,
+			renderOnce,
+			dispose,
+		};
+	} catch (error) {
+		releaseResources();
+		throw error;
+	}
 }

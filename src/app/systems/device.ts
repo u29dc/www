@@ -52,6 +52,7 @@ export const DEVICE_THRESHOLDS = {
 	calibrationDelayMs: 1200,
 	longTaskMediumCount: 3,
 	longTaskLowCount: 8,
+	longTaskWindowMs: 30_000,
 } as const;
 
 const DEFAULT_DPR = 1;
@@ -75,6 +76,8 @@ class DeviceOwner extends BaseModule {
 	private calibrating = false;
 	private longTaskCount = 0;
 	private lastLongTaskTier: PerformanceTier = 'high';
+	private longTaskTimestamps: number[] = [];
+	private longTaskExpiryHandle: TimerHandle | undefined;
 	private longTaskObserver: PerformanceObserver | undefined;
 	private connection: NetworkInformationLike | undefined;
 	private reducedMotionQuery: MediaQueryList | undefined;
@@ -94,6 +97,10 @@ class DeviceOwner extends BaseModule {
 
 	override update(frame: Frame): boolean | void {
 		if (!this.calibrating) return false;
+		if (!frame.visible || document.hidden) {
+			this.resetCalibrationSamples();
+			return false;
+		}
 
 		if (this.calibrationPrevious > 0 && frame.now > this.calibrationPrevious) {
 			this.calibrationSamples.push(frame.now - this.calibrationPrevious);
@@ -122,12 +129,18 @@ class DeviceOwner extends BaseModule {
 		this.cancelCalibrationIdleCallback();
 		this.longTaskObserver?.disconnect();
 		this.longTaskObserver = undefined;
+		this.longTaskExpiryHandle?.cancel();
+		this.longTaskExpiryHandle = undefined;
+		this.longTaskTimestamps = [];
+		this.longTaskCount = 0;
+		this.lastLongTaskTier = 'high';
 		this.connection = undefined;
 		this.subscribers.clear();
 		this.calibrationSamples = [];
 		this.calibrationPrevious = 0;
 		this.calibrating = false;
 		this.calibrationStarted = false;
+		this.calibrationFps = undefined;
 		this.initialized = false;
 		this.routeBound = false;
 	}
@@ -148,6 +161,7 @@ class DeviceOwner extends BaseModule {
 	}
 
 	refreshProfile(reason = 'refresh'): DeviceProfile {
+		this.pruneLongTasks();
 		return this.setProfile(this.buildProfile(this.calibrationFps === undefined ? 'static-signals' : 'calibrated', reason));
 	}
 
@@ -233,7 +247,7 @@ class DeviceOwner extends BaseModule {
 		const networkProfile = readNetworkProfile(saveData, effectiveType);
 		const displayProfile = readDisplayProfile(viewportWidth);
 		const reasons = [reason];
-		const tierCandidate = scoreTier(reasons, {
+		const tier = scoreTier(reasons, {
 			reducedMotion,
 			...(hardwareConcurrency !== undefined ? { cores: hardwareConcurrency } : {}),
 			...(deviceMemory !== undefined ? { memory: deviceMemory } : {}),
@@ -241,7 +255,6 @@ class DeviceOwner extends BaseModule {
 			...(this.calibrationFps !== undefined ? { rafFps: this.calibrationFps } : {}),
 			...(this.longTaskCount > 0 ? { longTasks: this.longTaskCount } : {}),
 		});
-		const tier = this.applyTierHysteresis(this.profile, tierCandidate, reasons);
 		const motionQuality = deriveMotionQuality(tier, reducedMotion, saveData);
 		const inputProfile = readInputProfile(coarsePointer, finePointer);
 		const dprCap = deriveDprCap(tier, displayProfile, devicePixelRatio);
@@ -264,7 +277,7 @@ class DeviceOwner extends BaseModule {
 			lineProfile: tier === 'low' || inputProfile === 'coarse' ? 'lite' : 'full',
 			allowWebglMotion: motionQuality !== 'reduced' && tier !== 'low',
 			allowWebglHighDpr: motionQuality !== 'reduced' && tier === 'high',
-			allowHoverVideo: motionQuality !== 'reduced' && networkProfile !== 'save-data' && tier !== 'low' && allowFineHover,
+			allowHoverVideo: motionQuality !== 'reduced' && networkProfile !== 'save-data' && networkProfile !== 'slow' && tier !== 'low' && allowFineHover,
 			allowPixelReveal: motionQuality !== 'reduced' && tier !== 'low',
 			allowContentVisibility: isContentVisibilitySupported(),
 			reasons,
@@ -285,17 +298,6 @@ class DeviceOwner extends BaseModule {
 				...(this.longTaskCount > 0 ? { longTaskCount: this.longTaskCount } : {}),
 			},
 		};
-	}
-
-	private applyTierHysteresis(previous: DeviceProfile, next: PerformanceTier, reasons: string[]): PerformanceTier {
-		if (!previous.signals.clientReady || previous.tier === next) return next;
-		if (previous.signals.reducedMotion) return next;
-		if (next === 'low') return next;
-		if (previous.tier === 'low' && next === 'medium' && this.calibrationFps !== undefined && this.calibrationFps < DEVICE_THRESHOLDS.mediumRafFps) {
-			reasons.push('hysteresis:hold-low');
-			return 'low';
-		}
-		return next;
 	}
 
 	private queueRefresh(reason: string): void {
@@ -328,8 +330,14 @@ class DeviceOwner extends BaseModule {
 	};
 
 	private readonly handleVisibilityChange = (): void => {
+		if (this.calibrating) this.resetCalibrationSamples();
 		if (!document.hidden) this.refreshProfile('visibility:visible');
 	};
+
+	private resetCalibrationSamples(): void {
+		this.calibrationSamples = [];
+		this.calibrationPrevious = 0;
+	}
 
 	private cancelCalibrationIdleCallback(): void {
 		if (this.calibrationIdleHandle === undefined || !isBrowser()) return;
@@ -369,15 +377,36 @@ class DeviceOwner extends BaseModule {
 		try {
 			this.longTaskObserver = new PerformanceObserver((list) => {
 				const previousTier = this.lastLongTaskTier;
-				this.longTaskCount += list.getEntries().length;
-				this.lastLongTaskTier = readLongTaskTier(this.longTaskCount);
-				if (this.lastLongTaskTier === previousTier) return;
-				this.refreshProfile('observer:longtask');
+				for (const entry of list.getEntries()) this.longTaskTimestamps.push(entry.startTime + entry.duration);
+				this.pruneLongTasks();
+				this.scheduleLongTaskExpiry();
+				if (this.lastLongTaskTier !== previousTier) this.refreshProfile('observer:longtask');
 			});
 			this.longTaskObserver.observe({ entryTypes: ['longtask'] });
 		} catch {
 			this.longTaskObserver = undefined;
 		}
+	}
+
+	private pruneLongTasks(): void {
+		const cutoff = performance.now() - DEVICE_THRESHOLDS.longTaskWindowMs;
+		this.longTaskTimestamps = this.longTaskTimestamps.filter((timestamp) => timestamp > cutoff);
+		this.longTaskCount = this.longTaskTimestamps.length;
+		this.lastLongTaskTier = readLongTaskTier(this.longTaskCount);
+	}
+
+	private scheduleLongTaskExpiry(): void {
+		this.longTaskExpiryHandle?.cancel();
+		this.longTaskExpiryHandle = undefined;
+		const oldest = this.longTaskTimestamps[0];
+		if (oldest === undefined) return;
+		this.longTaskExpiryHandle = setTimer('device.longtask.expiry', Math.max(1, oldest + DEVICE_THRESHOLDS.longTaskWindowMs - performance.now()), () => {
+			this.longTaskExpiryHandle = undefined;
+			const previousTier = this.lastLongTaskTier;
+			this.pruneLongTasks();
+			if (this.lastLongTaskTier !== previousTier) this.refreshProfile('observer:longtask-expiry');
+			this.scheduleLongTaskExpiry();
+		});
 	}
 
 	private setupListeners(): void {

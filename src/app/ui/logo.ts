@@ -29,7 +29,7 @@ type Controller = {
 };
 
 const LOGO_SELECTOR = '[data-logo]';
-const MOBILE_WIDTH_PX = 767;
+const MOBILE_MEDIA_QUERY = '(width < 42rem)';
 
 class LogoOwner extends BaseModule {
 	readonly name = 'logo';
@@ -96,15 +96,20 @@ class LogoOwner extends BaseModule {
 		if (!canvas || !fallback) return undefined;
 
 		const config = readConfig(element);
-		let isMobile = readIsMobile();
+		const mobileQuery = window.matchMedia(MOBILE_MEDIA_QUERY);
+		let isMobile = mobileQuery.matches;
 		let prefersReducedMotion = getDeviceProfile().motionQuality === 'reduced';
 		let isPageVisible = document.visibilityState === 'visible';
 		let isInView = !config.enableObservation || typeof IntersectionObserver === 'undefined';
 		let hasRenderedStatic = false;
 		let hasFatalFallback = false;
-		let isFallbackVisible = false;
+		let isFallbackVisible = true;
 		let isDisposed = false;
 		let renderer: Renderer | null = null;
+		let pointerRenderer: Renderer | null = null;
+		let pointerX = 0;
+		let pointerY = 0;
+		let pointerScroll = 0;
 		let deviceProfile = getDeviceProfile();
 		let rendererDprCap = getDprCap(deviceProfile);
 		let activeTheme: Theme = resolveTheme(config.theme, readDocumentTheme());
@@ -117,6 +122,7 @@ class LogoOwner extends BaseModule {
 		const shouldUseStaticFallback = (): boolean => !canUseWebglMotion(deviceProfile) || prefersReducedMotion;
 
 		const applyActivity = (): void => {
+			if (isDisposed) return;
 			if (renderer && shouldUseStaticFallback()) {
 				renderer.dispose();
 				renderer = null;
@@ -159,10 +165,12 @@ class LogoOwner extends BaseModule {
 				});
 			}
 			if (!renderer || isDisposed) return;
-			renderer.setState(nextState);
-			renderer.resize({ width: nextState.width, height: nextState.height });
-			if (!renderer || !canUseWebglMotion(deviceProfile) || prefersReducedMotion) {
-				renderer.renderOnce();
+			const activeRenderer = renderer;
+			activeRenderer.setState(nextState);
+			if (renderer !== activeRenderer) return;
+			activeRenderer.resize({ width: nextState.width, height: nextState.height });
+			if (renderer === activeRenderer && (!canUseWebglMotion(deviceProfile) || prefersReducedMotion)) {
+				activeRenderer.renderOnce();
 				hasRenderedStatic = true;
 			}
 		};
@@ -187,8 +195,8 @@ class LogoOwner extends BaseModule {
 
 		const mountRenderer = (): void => {
 			const state = currentState();
-			hideFallback(element, canvas, fallback);
-			isFallbackVisible = false;
+			showFallback(element, canvas, fallback, state, { failed: false, reason: 'initializing' });
+			isFallbackVisible = true;
 
 			try {
 				rendererDprCap = getDprCap(deviceProfile);
@@ -196,6 +204,9 @@ class LogoOwner extends BaseModule {
 					diagnosticsMode: getWebglDiagnosticsMode(),
 					dprCap: rendererDprCap,
 				});
+				if (!renderer.renderOnce() || !renderer) return;
+				hideFallback(element, canvas, fallback);
+				isFallbackVisible = false;
 				recordWebglDiagnostic({
 					feature: 'logo',
 					stage: 'mount',
@@ -203,6 +214,8 @@ class LogoOwner extends BaseModule {
 					data: { deviceTier: deviceProfile.tier },
 				});
 			} catch (error) {
+				renderer?.dispose();
+				renderer = null;
 				recordWebglDiagnostic({
 					feature: 'logo',
 					stage: 'mount',
@@ -240,7 +253,6 @@ class LogoOwner extends BaseModule {
 		};
 
 		const applyDeviceProfile = (nextProfile: DeviceProfile): void => {
-			const previousCanUseWebgl = canUseWebglMotion(deviceProfile);
 			const previousDprCap = rendererDprCap;
 			deviceProfile = nextProfile;
 			prefersReducedMotion = deviceProfile.motionQuality === 'reduced';
@@ -251,11 +263,6 @@ class LogoOwner extends BaseModule {
 				renderer = null;
 				hasRenderedStatic = false;
 				rendererDprCap = nextDprCap;
-			}
-
-			if (!previousCanUseWebgl && canUseWebglMotion(deviceProfile) && isFallbackVisible && !hasFatalFallback && !prefersReducedMotion) {
-				isFallbackVisible = false;
-				hideFallback(element, canvas, fallback);
 			}
 
 			applyState();
@@ -296,7 +303,7 @@ class LogoOwner extends BaseModule {
 		const controller: Controller = {
 			update: (frame) => {
 				const nextTheme = resolveTheme(config.theme, frame.theme.scheme);
-				const nextMobile = frame.profile.signals.viewportWidth <= MOBILE_WIDTH_PX;
+				const nextMobile = mobileQuery.matches;
 				const nextCapabilityKey = [frame.profile.generation, frame.visible ? 'visible' : 'hidden', isInView ? 'in-view' : 'out-of-view', nextMobile ? 'mobile' : 'desktop', nextTheme].join(
 					':',
 				);
@@ -310,13 +317,24 @@ class LogoOwner extends BaseModule {
 				}
 
 				if (renderer && canUseWebglMotion(deviceProfile) && !prefersReducedMotion && frame.input.pointer.path.includes(element)) {
-					renderer.setPointer(frame.input.pointer.x, frame.input.pointer.y);
+					const { x, y } = frame.input.pointer;
+					// Scrolling moves the logo beneath a stationary pointer; damping alone does not.
+					if (pointerRenderer !== renderer || pointerX !== x || pointerY !== y || pointerScroll !== frame.scroll.actual) {
+						renderer.setPointer(x, y);
+						pointerRenderer = renderer;
+						pointerX = x;
+						pointerY = y;
+						pointerScroll = frame.scroll.actual;
+					}
+				} else {
+					pointerRenderer = null;
 				}
 
 				return renderer?.update(frame.now, frame.dt) ?? false;
 			},
 			resize: () => {
-				applyMobile(readIsMobile());
+				pointerRenderer = null;
+				applyMobile(mobileQuery.matches);
 				renderer?.resize({ width: currentState().width, height: currentState().height });
 			},
 			dispose: () => {
@@ -389,8 +407,6 @@ const readDocumentTheme = (): Theme => {
 	if (rootTheme === 'light' || rootTheme === 'dark') return rootTheme;
 	return 'light';
 };
-
-const readIsMobile = (): boolean => window.innerWidth <= MOBILE_WIDTH_PX;
 
 const buildState = (config: Config, isMobile: boolean, theme: Theme): State => {
 	const width = isMobile ? config.mobileWidth : config.width;

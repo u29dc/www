@@ -11,7 +11,6 @@ export type LineRevealOptions = {
 	staggerMs: number;
 	maxTotalMs: number;
 	handoffMs: number;
-	staggeredLines: number;
 	completionBufferMs: number;
 	maxTokens: number;
 	maxLinesPerTarget: number;
@@ -85,19 +84,9 @@ type CachedLinePlan = LinePlanSignature & {
 	lastUsed: number;
 };
 
-type TextToken = {
-	kind: 'text';
-	text: string;
-	rect: Rect;
-};
+type Token = { rect: Rect };
 
-type ElementToken = {
-	kind: 'element';
-	element: HTMLElement;
-	rect: Rect;
-};
-
-type Token = TextToken | ElementToken;
+type MeasurementBudget = { remaining: number; deadline: number };
 
 type Line = {
 	tokens: Token[];
@@ -128,7 +117,6 @@ const ATOMIC_SELECTOR = ['a', 'button', 'canvas', 'code', 'input', 'kbd', 'selec
 const ATOMIC_SIGNATURE_SELECTOR = 'a, button, canvas, code, input, kbd, select, svg, textarea, video, [data-line-atomic], [data-link-arrow], [data-footnote-ref]';
 const FOCUSABLE_CLONE_SELECTOR = ['a[href]', 'button', 'input', 'select', 'textarea', 'video[controls]', '[tabindex]', '[contenteditable]:not([contenteditable="false"])'].join(',');
 const UNSUPPORTED_SELECTOR = 'br, iframe, table, script, style';
-const TOKEN_PATTERN = /\S+/gu;
 const LINE_TOP_TOLERANCE = MOTION.line.lineTopTolerancePx;
 const MIN_RECT_SIZE = MOTION.line.minRectSizePx;
 const OVERLAY_EDGE_PAD = MOTION.line.overlayEdgePadPx;
@@ -139,6 +127,7 @@ const parentRecords = new WeakMap<HTMLElement, ParentRecord>();
 const planCache = new Map<string, CachedLinePlan>();
 let fontGeneration = 0;
 let hasInitializedLinePlanCache = false;
+const typographyListeners = new Set<() => void>();
 
 const isHTMLElement = (node: Node): node is HTMLElement => node instanceof HTMLElement;
 const isBrowser = (): boolean => typeof window !== 'undefined' && typeof document !== 'undefined';
@@ -233,37 +222,35 @@ const sanitizeClone = (element: HTMLElement): HTMLElement => {
 	return clone;
 };
 
-const collectTextTokens = (node: Text, tokens: Token[]): void => {
-	const value = node.data;
-	TOKEN_PATTERN.lastIndex = 0;
-
-	let match = TOKEN_PATTERN.exec(value);
-	while (match) {
-		const text = match[0];
-		const start = match.index;
-		const end = start + text.length;
-		const rects = readRangeRects(node, start, end);
-
-		for (const rect of rects) {
-			tokens.push({ kind: 'text', text, rect });
-		}
-
-		match = TOKEN_PATTERN.exec(value);
-	}
+const consumeBudget = (budget: MeasurementBudget, count = 1): void => {
+	budget.remaining -= count;
+	if (budget.remaining < 0) throw new Error('line-reveal-token-budget');
+	if (performance.now() > budget.deadline) throw new Error('line-reveal-measure-budget');
 };
 
-const collectElementToken = (element: HTMLElement, tokens: Token[]): void => {
+const collectTextTokens = (node: Text, tokens: Token[], budget: MeasurementBudget): void => {
+	const words = node.data.match(/\S+/gu);
+	if (!words) return;
+	consumeBudget(budget, words.length);
+	// A range already exposes the browser's line fragments. Reading each word
+	// separately repeats the same layout query without adding useful geometry.
+	for (const rect of readRangeRects(node, 0, node.length)) tokens.push({ rect });
+};
+
+const collectElementToken = (element: HTMLElement, tokens: Token[], budget: MeasurementBudget): void => {
+	consumeBudget(budget);
 	const rects = Array.from(element.getClientRects()).map(toRect).filter(isVisibleRect);
 
 	for (const rect of rects) {
-		tokens.push({ kind: 'element', element, rect });
+		tokens.push({ rect });
 	}
 };
 
-const collectTokens = (root: Node, tokens: Token[]): void => {
+const collectTokens = (root: Node, tokens: Token[], budget: MeasurementBudget): void => {
 	for (const node of root.childNodes) {
+		if (performance.now() > budget.deadline) throw new Error('line-reveal-measure-budget');
 		if (node.nodeType === Node.TEXT_NODE) {
-			collectTextTokens(node as Text, tokens);
+			collectTextTokens(node as Text, tokens, budget);
 			continue;
 		}
 
@@ -274,11 +261,11 @@ const collectTokens = (root: Node, tokens: Token[]): void => {
 		}
 
 		if (shouldTreatElementAsAtomic(node)) {
-			collectElementToken(node, tokens);
+			collectElementToken(node, tokens, budget);
 			continue;
 		}
 
-		collectTokens(node, tokens);
+		collectTokens(node, tokens, budget);
 	}
 };
 
@@ -432,15 +419,22 @@ const clearLinePlanCache = (): void => {
 	planCache.clear();
 };
 
+const clearForTypographyChange = (): void => {
+	fontGeneration += 1;
+	clearLinePlanCache();
+	for (const listener of typographyListeners) listener();
+};
+
+export const onLineTypographyChange = (listener: () => void): (() => void) => {
+	typographyListeners.add(listener);
+	return () => typographyListeners.delete(listener);
+};
+
 export const initLinePlanCache = (): void => {
 	if (!isBrowser() || hasInitializedLinePlanCache) return;
 	hasInitializedLinePlanCache = true;
 
-	const clearForTypographyChange = (): void => {
-		fontGeneration += 1;
-		clearLinePlanCache();
-	};
-
+	document.fonts?.addEventListener?.('loading', clearForTypographyChange);
 	document.fonts?.addEventListener?.('loadingdone', clearForTypographyChange);
 
 	const observer = new MutationObserver((entries) => {
@@ -597,7 +591,7 @@ export const measureLineReveal = (target: HTMLElement, options: LineRevealOption
 		? linesFromCachedPlan(cachedPlan, targetRect)
 		: (() => {
 				const tokens: Token[] = [];
-				collectTokens(target, tokens);
+				collectTokens(target, tokens, { remaining: options.maxTokens, deadline: start + options.measureBudgetMs });
 
 				if (tokens.length === 0 || tokens.length > options.maxTokens) {
 					throw new Error('line-reveal-token-budget');
