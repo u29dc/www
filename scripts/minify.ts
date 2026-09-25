@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { minify as minifyHtml } from '@minify-html/node';
 import { parse, serialize, type DefaultTreeAdapterMap } from 'parse5';
 import { minifySync, parseSync } from 'rolldown/utils';
@@ -12,8 +13,6 @@ interface FileResult {
 	changed: boolean;
 }
 
-const distPath = path.resolve('dist');
-const clientDistPath = path.join(distPath, 'client');
 const bootScriptPath = '/boot.js';
 const targetExtensions = new Set(['.js', '.mjs']);
 const htmlExtension = '.html';
@@ -105,14 +104,14 @@ function patchBootScriptIntegrityNode(node: HtmlDocument | HtmlChildNode, integr
 	return patched;
 }
 
-async function computeBootScriptIntegrity(): Promise<string> {
+async function computeBootScriptIntegrity(clientDistPath: string): Promise<string> {
 	const filePath = path.join(clientDistPath, bootScriptPath);
 	const source = await readFile(filePath);
 	const hash = createHash('sha512').update(source).digest('base64');
 	return `sha512-${hash}`;
 }
 
-async function patchBootScriptIntegrity(integrity: string): Promise<number> {
+async function patchBootScriptIntegrity(clientDistPath: string, integrity: string): Promise<number> {
 	const htmlTargets = await collectHtmlTargets(clientDistPath);
 	let patchedFiles = 0;
 
@@ -129,8 +128,14 @@ async function patchBootScriptIntegrity(integrity: string): Promise<number> {
 	return patchedFiles;
 }
 
-async function minifyScriptFile(filePath: string): Promise<FileResult> {
-	const source = await readFile(filePath, 'utf8');
+function assertNoDiagnostics(filePath: string, stage: string, errors: readonly { message: string }[]): void {
+	if (errors.length > 0) {
+		throw new Error(`${filePath}: ${stage} failed\n${errors.map((error) => error.message).join('\n')}`);
+	}
+}
+
+export function minifyScript(source: string, filePath: string): string {
+	assertNoDiagnostics(filePath, 'source validation', parseSync(filePath, source, { sourceType: 'module' }).errors);
 	const result = minifySync(filePath, source, {
 		module: true,
 		compress: false,
@@ -140,24 +145,28 @@ async function minifyScriptFile(filePath: string): Promise<FileResult> {
 		},
 		sourcemap: false,
 	});
+	assertNoDiagnostics(filePath, 'minification', result.errors);
+	assertNoDiagnostics(filePath, 'output validation', parseSync(filePath, result.code, { sourceType: 'module' }).errors);
+	return result.code;
+}
 
-	parseSync(filePath, result.code, {
-		sourceType: 'module',
-	});
+async function prepareScriptFile(filePath: string): Promise<{ result: FileResult; code: string; filePath: string }> {
+	const source = await readFile(filePath, 'utf8');
+	const code = minifyScript(source, filePath);
 
 	const before = byteLength(source);
-	const after = byteLength(result.code);
-	const changed = result.code !== source && after <= before;
-
-	if (changed) {
-		await writeFile(filePath, result.code);
-	}
+	const after = byteLength(code);
+	const changed = code !== source && after <= before;
 
 	return {
-		path: path.relative(process.cwd(), filePath),
-		before,
-		after: changed ? after : before,
-		changed,
+		filePath,
+		code,
+		result: {
+			path: path.relative(process.cwd(), filePath),
+			before,
+			after: changed ? after : before,
+			changed,
+		},
 	};
 }
 
@@ -195,7 +204,9 @@ function reportResults(label: string, results: FileResult[]): void {
 	console.log(`Minified ${changed.length}/${results.length} ${label} files. ${before} -> ${after} bytes (-${saved}).`);
 }
 
-async function main(): Promise<void> {
+export async function minifyBuild(directory = 'dist'): Promise<void> {
+	const distPath = path.resolve(directory);
+	const clientDistPath = path.join(distPath, 'client');
 	const exists = await stat(distPath)
 		.then((details) => details.isDirectory())
 		.catch(() => false);
@@ -205,11 +216,16 @@ async function main(): Promise<void> {
 	}
 
 	const scriptTargets = await collectScriptTargets(distPath);
-	const scriptResults = await Promise.all(scriptTargets.map((filePath) => minifyScriptFile(filePath)));
-	reportResults('JS', scriptResults);
+	const scripts = await Promise.all(scriptTargets.map((filePath) => prepareScriptFile(filePath)));
+	// Validate every source and result before replacing any generated JavaScript.
+	await Promise.all(scripts.filter(({ result }) => result.changed).map(({ filePath, code }) => writeFile(filePath, code)));
+	reportResults(
+		'JS',
+		scripts.map(({ result }) => result),
+	);
 
-	const integrity = await computeBootScriptIntegrity();
-	const patchedFiles = await patchBootScriptIntegrity(integrity);
+	const integrity = await computeBootScriptIntegrity(clientDistPath);
+	const patchedFiles = await patchBootScriptIntegrity(clientDistPath, integrity);
 	const htmlTargets = await collectHtmlTargets(clientDistPath);
 	const htmlResults = await Promise.all(htmlTargets.map((filePath) => minifyHtmlFile(filePath)));
 	reportResults('HTML', htmlResults);
@@ -217,4 +233,6 @@ async function main(): Promise<void> {
 	console.log(`Added ${integrity.slice(0, 19)}... SRI for ${bootScriptPath} in ${patchedFiles} HTML files.`);
 }
 
-await main();
+if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
+	await minifyBuild();
+}

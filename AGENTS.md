@@ -16,11 +16,12 @@
 │   ├── components/         chrome, home, artifacts, MDX, logo, and core UI components
 │   ├── content/            authored MDX artifacts
 │   ├── data/               site copy, links, mark metadata, and constants
-│   ├── assets/             flat imported source assets such as tiny inlined mark WebPs
+│   ├── assets/             imported marks and local font sources
 │   ├── app/                browser runtime: core loop, systems, UI owners, graphics, and runtime utilities
 │   ├── lib/                portable content, media URL, markdown, and build/export utilities
 │   └── styles/             tokens, base, layout, prose, preview, and motion CSS
-├── public/                 static headers, icons, local fonts, logo, and OG image
+├── public/                 static headers, icons, logo, and OG image
+├── tests/                  runtime regression tests using node:test
 ├── astro.config.ts         Astro, MDX, Tailwind, GLSL string minification, and Cloudflare adapter config
 ├── wrangler.jsonc          Cloudflare Worker and asset deployment config
 └── AGENTS.md               canonical repo-level agent instructions
@@ -45,10 +46,12 @@
 
 ## 4. Commands
 
+- Toolchain: Bun `1.4.2` via `packageManager`; supported engines require Bun `>=1.4.2` and Node `>=22.22.1`.
 - `bun install` - install dependencies and refresh the lockfile.
 - `bun run dev` - start Astro locally on `localhost:3000`.
-- `bun run build` - build the Astro site.
+- `bun run build` - build and minify the Astro site, then validate generated output and article export headers.
 - `bun run preview` - preview the production build.
+- `bun run test` - run the regression suite with Bun's runner and the portable `node:test` API.
 - `bun run deploy` - run `bun run util:check`, then deploy with Wrangler.
 - `bun run cf:deploy:dry` - run the full quality gate, then run a Wrangler dry-run deploy.
 - `bun run cf:dev` - build and run the Cloudflare Worker locally with Wrangler.
@@ -60,8 +63,9 @@
 - `bun run util:format:check` - verify formatting without writing files.
 - `bun run util:lint` - lint and auto-fix with Oxlint.
 - `bun run util:lint:check` - lint without writing files.
-- `bun run util:types` - run Astro diagnostics plus script, Cloudflare, and generated Worker type checks.
-- `bun run util:check` - verify formatting, lint, type-check, and build without writing source files.
+- `bun run util:types` - run Astro diagnostics plus script, test, Cloudflare, and generated Worker type checks.
+- `bun run util:output` - validate generated page/export invariants and write exact noindex header rules for article Markdown/text exports.
+- `bun run util:check` - verify formatting, lint, types, regression tests, and build without writing source files.
 - `bun run util:clean` - remove Astro/build caches.
 
 ## 5. Architecture
@@ -74,6 +78,7 @@
 - Runtime behavior uses `data-*` attributes as the contract between Astro markup, CSS, and `src/app/*`. Extend the existing hook contract for new runtime state.
 - [`src/app/app.ts`](src/app/app.ts) is the browser composition root. It starts systems first (`device`, `theme`, `route`, `input`, `scroll`, `motion`) and UI owners second (`lines`, `media`, `preview`, `logo`).
 - [`src/app/core/app.ts`](src/app/core/app.ts) is the only app-owned `requestAnimationFrame` scheduler. Runtime modules request frames through context and return `true` from `update()` only while they need continuous work; frame callbacks must be isolated so one owner cannot leave the loop in a stuck ticking state.
+- `window.wwwRuntimeDiagnostics()` returns a bounded, in-memory runtime snapshot for debugging: owner/phase/error-category counts, frame positions, and pending callback count. It excludes error messages, stacks, URLs, DOM content, and user data; it sends and persists nothing.
 - [`src/app/core/module.ts`](src/app/core/module.ts) defines the lifecycle module contract. Owner files should read in this order: imports, types/constants, class fields, lifecycle methods `preinit`, `init`, `refresh`, `resize`, `update`, `dispose`, then private helpers and exports.
 - [`src/app/core/state.ts`](src/app/core/state.ts) owns stable cross-owner state types so `core` does not import downstream systems or UI.
 - [`src/app/core/tokens.ts`](src/app/core/tokens.ts) centralizes TypeScript-side motion, preview, media, and line-reveal timing defaults. Keep it aligned with [`src/styles/tokens.css`](src/styles/tokens.css) when CSS motion tokens change.
@@ -97,7 +102,7 @@ Runtime philosophy:
 - MDX frontmatter controls artifact type, date, visibility, thumbnails, hover previews, and export metadata. `isArtifactItem: false` hides an artifact from public listings and exports.
 - [`src/lib/markdown.ts`](src/lib/markdown.ts) powers markdown/text exports and first-media extraction. Changes here affect article routes, `llms.txt`, and hover preview defaults.
 - Rich origin copy in [`src/components/home/origin.astro`](src/components/home/origin.astro) and plain origin copy in [`src/data/copy.ts`](src/data/copy.ts) should stay semantically aligned.
-- Local fonts live under [`public/fonts`](public/fonts). Tiny link mark WebPs live flat under [`src/assets`](src/assets) and are imported inline by [`src/data/marks.ts`](src/data/marks.ts). Article media resolves through the configured media base URL, currently `https://storage.u29dc.com/assets/`.
+- Local font sources live under [`src/assets/fonts`](src/assets/fonts); CSS and layout imports produce fingerprinted asset URLs. Tiny link marks live flat under [`src/assets`](src/assets) and are imported inline by [`src/data/marks.ts`](src/data/marks.ts). Article media resolves through the configured media base URL, currently `https://storage.u29dc.com/assets/`.
 - This repository is public. Keep private vault material, client-sensitive detail, secrets, and personal runtime data in private systems outside the repo.
 
 ## 7. Conventions
@@ -108,7 +113,7 @@ Runtime philosophy:
 - The browser experience is an Astro-rendered document plus raw TypeScript owners under `src/app`; route, scroll, motion, preview, media, and graphics behavior should fit that ownership model.
 - Prefer plain `.astro`, `.mdx`, `.ts`, and CSS files until a heavier abstraction is clearly useful.
 - Prefer one-word filenames for runtime owners and helpers where they stay clear: `app.ts`, `module.ts`, `input.ts`, `theme.ts`, `scroll.ts`, `motion.ts`, `lines.ts`, `media.ts`, `logo.ts`, `route.ts`, `canvas.ts`.
-- Keep `src/app` import direction simple: `app -> core/systems/ui`, `systems -> core/utils`, `ui -> core/systems/graphics/utils`, `graphics -> core/utils`, and `utils -> no app owners`.
+- Keep `src/app` import direction simple: `app -> core/systems/ui`, `core -> core/utils`, `systems -> core/utils` with acyclic peer-system dependencies, `ui -> core/systems/graphics/utils` with local UI helpers such as `measure`, `graphics -> core/utils`, and `utils -> no app owners`. Core never imports systems or UI.
 - Keep `src/lib` free of browser runtime ownership. It is for portable content/export utilities, not app lifecycle, frame scheduling, or visual controllers.
 - Prefer inline Tailwind utilities for component-local styling. Keep shared CSS for tokens, document defaults, layout primitives, MDX prose, animation selectors, and runtime state selectors.
 - Use Lucide icons for standard interface icons. Reserve custom drawing for logos, graphics, and bespoke visual effects.
@@ -126,6 +131,7 @@ Runtime philosophy:
 ## 9. Validation
 
 - Required gate for code, config, content-export, and dependency changes: `bun run util:check`.
+- Runtime regressions belong in [`tests`](tests), with build/output checks beside their build scripts. Preserve deterministic lifecycle, cancellation, failure isolation, and fallback coverage; browser checks still verify layout and actual interaction behavior.
 - For dependency or config changes, run `bun install` first when the lockfile may need to change.
 - For visual work, run `bun run dev` and verify desktop and mobile browser views before reporting completion.
 - For hover previews, page transitions, smooth scroll, and WebGL work, verify client-side navigation as well as first load.
